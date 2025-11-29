@@ -3,7 +3,7 @@
   grid-template-columns: repeat(5, 1fr);
 
   width: 100%;
-  height: calc(100vh - var(--ct-header-height) - 5rem);
+  height: calc(100vh - var(--ct-header-height) - var(--ct-palette-header-height) - var(--ct-body-top-padding));
 }
 
 .single-palette-color {
@@ -52,10 +52,21 @@
   }
 }
 
+.color-palette-header-container {
+  height: var(--ct-palette-header-height);
+
+  border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+}
+
 .color-palette-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+}
+
+.color-palette-style-switcher {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .shades {

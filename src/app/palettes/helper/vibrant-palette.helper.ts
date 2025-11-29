@@ -7,11 +7,16 @@ import {paletteColorFrom} from '@palettes/models/palette-color.model';
 import {Palette} from "@palettes/models/palette.model";
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {colorName} from "@common/helpers/color-name.helper";
+import {styleCaptionFor} from "@palettes/models/palette-style.model";
 
 
 /**
  * Generates a set of vibrant and balanced colors based on a given hue or
  * a random seed hue.
+ *
+ * The palette consists of three accent colors and two light colors. The
+ * accent colors are derived from the given hue, and the light colors are
+ * derived from the complementary colors of the accent colors.
  *
  * @param {number} [seedHue] - The hue value to base the color generation on.
  *                             If omitted, a random value is used.
@@ -46,7 +51,7 @@ export function generateVibrantBalanced(seedHue?: number): Palette {
 
   const palette: Palette = {
     id: "",
-    name: `Vibrant Balanced – ${colorName(accents[0])}`,
+    name: `${styleCaptionFor("vibrant-balanced")} – ${colorName(accents[0])}`,
     style: "vibrant-balanced",
     color0: paletteColorFrom(accents[0], "color0"),
     color1: paletteColorFrom(accents[1], "color1"),

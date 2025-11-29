@@ -1,12 +1,12 @@
-import {Component, effect, inject, input} from '@angular/core';
+import {Component, computed, effect, inject, input} from '@angular/core';
 import {SinglePaletteColor} from '@palettes/components/single-palette-color/single-palette-color';
 import {GeneratorStyleSwitcher} from '@palettes/components/generator-style-switcher/generator-style-switcher';
 import {PALETTE_SLOTS} from "@palettes/models/palette.model";
-import {PaletteColor} from "@palettes/models/palette-color.model";
 import {AppStateStore} from "@core/app-state.store";
 import {isRestorable} from "@palettes/helper/palette-id.helper";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
+import {styleCaptionFor, styleDescriptionFor} from "@palettes/models/palette-style.model";
 
 
 @Component({
@@ -25,6 +25,16 @@ export class ColorPalette {
 
   protected readonly PALETTE_SLOTS = PALETTE_SLOTS;
   protected readonly palette = this.#stateStore.currentPalette;
+  protected readonly style = this.#stateStore.paletteStyle;
+
+  protected readonly styleName = computed(() => {
+    return styleCaptionFor(this.style());
+  });
+
+  protected readonly styleDescription = computed(() => {
+    return styleDescriptionFor(this.style());
+  });
+
 
   public readonly paletteId = input.required<string>();
 
@@ -42,11 +52,6 @@ export class ColorPalette {
 
       this.#dispatch.restorePalette(paletteId);
     });
-  }
-
-
-  protected onColorChanged(color: PaletteColor) {
-    this.#dispatch.updatePaletteColor(color);
   }
 
 }

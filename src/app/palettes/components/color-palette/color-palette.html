@@ -1,15 +1,21 @@
-<div class="container-fluid color-palette-header mb-3">
-  <h2>
-    {{ palette().name }}
-    <small class="text-muted fs-6">({{ palette().id }})</small>
-  </h2>
-  <app-generator-style-switcher/>
+<div class="container-fluid color-palette-header-container">
+  <div class="color-palette-header">
+    <h2 class="fs-4">
+      {{ palette().name }}
+    </h2>
+
+    <app-generator-style-switcher/>
+  </div>
+
+  <strong class="text-muted">{{ styleName() }}</strong>
+  <p class="text-muted">
+    {{ styleDescription() }}
+  </p>
 </div>
 
 <div class="color-palette">
   @for (slot of PALETTE_SLOTS; track $index) {
     <app-single-palette-color [color]="palette()[slot]"
-                              [slot]="slot"
-                              (colorChanged)="onColorChanged($event)"/>
+                              [slot]="slot"/>
   }
 </div>

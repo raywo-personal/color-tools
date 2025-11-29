@@ -78,5 +78,8 @@ export function styleChangedReducer(
   event: EventInstance<"[Palettes] styleChanged", PaletteStyle>,
   state: AppState
 ) {
-  return {paletteStyle: event.payload};
+  const newStyle = event.payload;
+  const newPalette = generatePalette(newStyle);
+
+  return {paletteStyle: newStyle, currentPalette: newPalette};
 }

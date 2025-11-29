@@ -1,4 +1,4 @@
-import {Component, computed, input, output, signal} from '@angular/core';
+import {Component, computed, input, signal} from '@angular/core';
 import {contrastingColor, contrastingMutedColor} from '@common/helpers/contrasting-color.helper';
 import {ToggleButton} from '@common/components/toggle-button/toggle-button';
 import {PaletteColor} from "@palettes/models/palette-color.model";
@@ -6,6 +6,8 @@ import {PaletteSlot} from "@palettes/models/palette.model";
 import {SingleColorShades} from "@palettes/components/single-color-shades/single-color-shades";
 import {Color} from "chroma-js";
 import {colorName} from "@common/helpers/color-name.helper";
+import {injectDispatch} from "@ngrx/signals/events";
+import {palettesEvents} from "@core/palettes/palettes.events";
 
 
 @Component({
@@ -18,6 +20,8 @@ import {colorName} from "@common/helpers/color-name.helper";
   styles: ``,
 })
 export class SinglePaletteColor {
+
+  readonly #dispatch = injectDispatch(palettesEvents);
 
   protected readonly colorName = computed(() => {
     return colorName(this.color().color);
@@ -44,16 +48,15 @@ export class SinglePaletteColor {
 
   public readonly color = input.required<PaletteColor>();
   public readonly slot = input.required<PaletteSlot>();
-  public readonly colorChanged = output<PaletteColor>();
 
 
   protected copyToClipboard() {
-    navigator.clipboard.writeText(this.colorHex());
+    void navigator.clipboard.writeText(this.colorHex());
   }
 
 
   protected onToggleClick(current: boolean) {
-    this.colorChanged.emit({
+    this.#dispatch.updatePaletteColor({
       ...this.color(),
       isPinned: current
     });
@@ -67,10 +70,11 @@ export class SinglePaletteColor {
 
   protected updateColor(color: Color) {
     this.showShades.set(false);
-    this.colorChanged.emit({
+
+    this.#dispatch.updatePaletteColor({
       ...this.color(),
       color
-    })
+    });
   }
 
 }

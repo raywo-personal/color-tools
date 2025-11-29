@@ -1,18 +1,28 @@
 import {Component, inject} from '@angular/core';
-import {PaletteStyle} from '@palettes/models/palette-style.model';
+import {PaletteStyles} from '@palettes/models/palette-style.model';
 import {FormsModule} from '@angular/forms';
 import {AppStateStore} from "@core/app-state.store";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
+import {StyleButton} from "@palettes/components/style-button/style-button";
+import {NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle} from "@ng-bootstrap/ng-bootstrap";
 
 
 @Component({
   selector: 'app-generator-style-switcher',
   imports: [
-    FormsModule
+    FormsModule,
+    StyleButton,
+    NgbDropdown,
+    NgbDropdownToggle,
+    NgbDropdownMenu,
+    NgbDropdownItem
   ],
   templateUrl: './generator-style-switcher.html',
   styles: ``,
+  host: {
+    "class": "color-palette-style-switcher"
+  }
 })
 export class GeneratorStyleSwitcher {
 
@@ -21,15 +31,11 @@ export class GeneratorStyleSwitcher {
 
   protected readonly style = this.#stateStore.paletteStyle;
   protected readonly useRandom = this.#stateStore.useRandomStyle;
+  protected readonly styles = PaletteStyles;
 
 
   protected useRandomChanged(value: boolean) {
     this.#dispatch.useRandomChanged(value);
-  }
-
-
-  protected setStyle(style: PaletteStyle) {
-    this.#dispatch.styleChanged(style);
   }
 
 }
