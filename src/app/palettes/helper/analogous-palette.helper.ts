@@ -2,21 +2,27 @@ import {Palette} from "@palettes/models/palette.model";
 import {fromHsl} from "@common/helpers/color-from-hsl.helper";
 import {styleCaptionFor} from "@palettes/models/palette-style.model";
 import {colorName} from "@common/helpers/color-name.helper";
-import {paletteColorFrom} from "@palettes/models/palette-color.model";
+import {PaletteColor, paletteColorFrom} from "@palettes/models/palette-color.model";
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {clamp01} from "@common/helpers/hsl.helper";
 import {vary} from "@palettes/helper/number.helper";
 import {analogRange, splitComplement} from "@common/helpers/hue.helper";
 
 
-export function generateAnalogous(seedHue?: number): Palette {
-  const h0 = seedHue ?? Math.random() * 360;
+export function generateAnalogous(fixedColors: PaletteColor[] = [],
+                                  seedHue?: number): Palette {
+  let h0 = seedHue ?? Math.random() * 360;
 
-  const neutral = fromHsl({
+  let neutral = fromHsl({
     h: h0,
     s: clamp01(vary(0.6, 0.03)),
     l: clamp01(vary(0.34, 0.05))
   });
+
+  if (fixedColors.length > 0 && fixedColors[0].slot === "color0") {
+    h0 = fixedColors[0].color.hsl()[0];
+    neutral = fixedColors[0].color;
+  }
 
   const analogs = analogRange(h0, 28, 2)
     .map(h => fromHsl({

@@ -7,13 +7,15 @@ import {isRestorable} from "@palettes/helper/palette-id.helper";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {styleCaptionFor, styleDescriptionFor} from "@palettes/models/palette-style.model";
+import {HueSliderComponent} from "@common/components/hue-slider/hue-slider";
 
 
 @Component({
   selector: 'app-color-palette',
   imports: [
     SinglePaletteColor,
-    GeneratorStyleSwitcher
+    GeneratorStyleSwitcher,
+    HueSliderComponent
   ],
   templateUrl: './color-palette.html',
   styles: ``,
@@ -35,6 +37,11 @@ export class ColorPalette {
     return styleDescriptionFor(this.style());
   });
 
+  protected readonly hue = computed(() => {
+    const palette = this.palette();
+
+    return palette.color0.color.hsl()[0];
+  });
 
   public readonly paletteId = input.required<string>();
 
@@ -52,6 +59,11 @@ export class ColorPalette {
 
       this.#dispatch.restorePalette(paletteId);
     });
+  }
+
+
+  protected onHueChanged(hue: number) {
+    this.#dispatch.seedHueChanged(hue);
   }
 
 }

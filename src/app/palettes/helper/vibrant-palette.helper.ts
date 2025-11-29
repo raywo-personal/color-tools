@@ -3,7 +3,7 @@ import {triad} from '@common/helpers/hue.helper';
 import {fromHsl} from '@common/helpers/color-from-hsl.helper';
 import {vary} from '@palettes/helper/number.helper';
 import {clamp01} from '@common/helpers/hsl.helper';
-import {paletteColorFrom} from '@palettes/models/palette-color.model';
+import {PaletteColor, paletteColorFrom} from '@palettes/models/palette-color.model';
 import {Palette} from "@palettes/models/palette.model";
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {colorName} from "@common/helpers/color-name.helper";
@@ -18,13 +18,23 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
  * accent colors are derived from the given hue, and the light colors are
  * derived from the complementary colors of the accent colors.
  *
+ * @param fixedColors - Optional fixed colors to use as the neutral color. If
+ *                      provided, the first color in the array must be the
+ *                      neutral color. If not provided, a random neutral color
+ *                      is generated.
  * @param {number} [seedHue] - The hue value to base the color generation on.
  *                             If omitted, a random value is used.
  * @return {Palette} The palette with the generated colors, with vibrant and
  *                   complementary characteristics.
  */
-export function generateVibrantBalanced(seedHue?: number): Palette {
-  const h0 = seedHue ?? randomBetween(0, 360);
+export function generateVibrantBalanced(fixedColors: PaletteColor[] = [],
+                                        seedHue?: number): Palette {
+  let h0 = seedHue ?? randomBetween(0, 360);
+
+  if (fixedColors.length > 0 && fixedColors[0].slot === "color0") {
+    h0 = fixedColors[0].color.hsl()[0];
+  }
+
   const tri = triad(h0);
   const baseS = 0.75;
   const baseL = 0.52;
@@ -35,6 +45,10 @@ export function generateVibrantBalanced(seedHue?: number): Palette {
       l: clamp01(vary(baseL, 0.08))
     })
   );
+
+  if (fixedColors.length > 0 && fixedColors[0].slot === "color0") {
+    accents[0] = fixedColors[0].color;
+  }
 
   // Helle, gedämpfte Ergänzungstöne
   const light1 = fromHsl({

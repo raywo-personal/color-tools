@@ -2,7 +2,7 @@ import {fromHsl} from '@common/helpers/color-from-hsl.helper';
 import {clamp01} from '@common/helpers/hsl.helper';
 import {vary} from '@palettes/helper/number.helper';
 import {analogRange, splitComplement} from '@common/helpers/hue.helper';
-import {paletteColorFrom} from '@palettes/models/palette-color.model';
+import {PaletteColor, paletteColorFrom} from '@palettes/models/palette-color.model';
 import {Palette} from "@palettes/models/palette.model";
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {colorName} from "@common/helpers/color-name.helper";
@@ -16,6 +16,10 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
  * The palette consists of five colors: neutral, analogous, pastel, and
  * complementary.
  *
+ * @param fixedColors - Optional fixed colors to use as the neutral color. If
+ *                      provided, the first color in the array must be the
+ *                      neutral color. If not provided, a random neutral color
+ *                      is generated.
  * @param {number} [seedHue] - Optional seed hue (in degrees) to generate the
  *                             color palette. If not provided, a random hue
  *                             is used.
@@ -23,14 +27,20 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
  *                   muted analog split palette, including neutral, analogous,
  *                   pastel, and complementary tones.
  */
-export function generateMutedAnalogSplit(seedHue?: number): Palette {
-  const h0 = seedHue ?? Math.random() * 360;
+export function generateMutedAnalogSplit(fixedColors: PaletteColor[] = [],
+                                         seedHue?: number): Palette {
+  let h0 = seedHue ?? Math.random() * 360;
 
-  const neutral = fromHsl({
+  let neutral = fromHsl({
     h: h0,
-    s: clamp01(vary(0.06, 0.03)),
+    s: clamp01(vary(0.6, 0.03)),
     l: clamp01(vary(0.34, 0.05))
   });
+
+  if (fixedColors.length > 0 && fixedColors[0].slot === "color0") {
+    h0 = fixedColors[0].color.hsl()[0];
+    neutral = fixedColors[0].color;
+  }
 
   const analogs = analogRange(h0, 28, 2)
     .map(h => fromHsl({

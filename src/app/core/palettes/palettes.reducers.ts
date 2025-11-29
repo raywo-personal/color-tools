@@ -3,8 +3,9 @@ import {generatePalette} from "@palettes/helper/palette.helper";
 import {Palette} from "@palettes/models/palette.model";
 import {PaletteStyle, randomStyle} from "@palettes/models/palette-style.model";
 import {paletteFromId, paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
-import {PaletteColor} from "@palettes/models/palette-color.model";
+import {PaletteColor, paletteColorFrom} from "@palettes/models/palette-color.model";
 import {AppState} from "@core/models/app-state.model";
+import chroma from "chroma-js";
 
 
 export function newRandomPaletteReducer(
@@ -82,4 +83,19 @@ export function styleChangedReducer(
   const newPalette = generatePalette(newStyle);
 
   return {paletteStyle: newStyle, currentPalette: newPalette};
+}
+
+
+export function seedHueChangedReducer(
+  this: void,
+  event: EventInstance<"[Palettes] seedHueChanged", number>,
+  state: AppState
+) {
+  const hue = event.payload;
+  const style = state.paletteStyle;
+  const color0 = state.currentPalette.color0.color;
+  const newColor = chroma.hsl(hue, color0.hsl()[1], color0.hsl()[2])
+  const palette = generatePalette(style, [paletteColorFrom(newColor, "color0")]);
+
+  return {currentPalette: palette};
 }

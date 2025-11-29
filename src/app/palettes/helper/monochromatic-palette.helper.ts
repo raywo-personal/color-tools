@@ -1,13 +1,14 @@
 import {Palette} from "@palettes/models/palette.model";
 import {colorName} from "@common/helpers/color-name.helper";
-import {paletteColorFrom} from "@palettes/models/palette-color.model";
+import {PaletteColor, paletteColorFrom} from "@palettes/models/palette-color.model";
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {randomBetween} from "@common/helpers/random.helper";
 import {fromHsl} from "@common/helpers/color-from-hsl.helper";
 import {styleCaptionFor} from "@palettes/models/palette-style.model";
 
 
-export function generateMonochromatic(seedHue?: number): Palette {
+export function generateMonochromatic(fixedColors: PaletteColor[] = [],
+                                      seedHue?: number): Palette {
   const hue = seedHue ?? randomBetween(0, 360);
   const color0 = fromHsl({h: hue, s: 70, l: 30});
   const color1 = fromHsl({h: hue, s: 60, l: 45});

@@ -8,27 +8,30 @@ import {generateComplementary} from "@palettes/helper/complementary-palette.help
 import {generateTriadic} from "@palettes/helper/triadic-palette.helper";
 import {generateAnalogous} from "@palettes/helper/analogous-palette.helper";
 import {generateSplitComplementary} from "@palettes/helper/split-complementary-palette.helper";
+import {PaletteColor} from "@palettes/models/palette-color.model";
 
 
-export function generatePalette(style: PaletteStyle, seedHue?: number): Palette {
+export function generatePalette(style: PaletteStyle,
+                                fixedColors: PaletteColor[] = [],
+                                seedHue?: number): Palette {
   switch (style) {
-    case 'vibrant-balanced':
-      return generateVibrantBalanced(seedHue);
+    case "analogous":
+      return generateAnalogous(fixedColors, seedHue);
     case 'muted-analog-split':
-      return generateMutedAnalogSplit(seedHue);
-    case 'high-contrast':
-      return generateHighContrast(seedHue);
+      return generateMutedAnalogSplit(fixedColors, seedHue);
     case "monochromatic":
-      return generateMonochromatic(seedHue);
-    case "complementary":
-      return generateComplementary(seedHue);
+      return generateMonochromatic(fixedColors, seedHue);
+    case 'vibrant-balanced':
+      return generateVibrantBalanced(fixedColors, seedHue);
+    case 'high-contrast':
+      return generateHighContrast(fixedColors, seedHue);
     case "triadic":
       return generateTriadic(seedHue);
-    case "analogous":
-      return generateAnalogous(seedHue);
+    case "complementary":
+      return generateComplementary(seedHue);
     case "split-complementary":
       return generateSplitComplementary(seedHue);
     default:
-      return generateAnalogous(seedHue);
+      return generateAnalogous(fixedColors, seedHue);
   }
 }

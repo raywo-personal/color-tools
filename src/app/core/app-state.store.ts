@@ -7,7 +7,15 @@ import {palettesEvents} from "./palettes/palettes.events";
 import {loadAppStateReducer} from "./common/persistence.reducers";
 import {commonEvents} from "./common/common.events";
 import {colorThemeChangedReducer} from "./common/common.reducers";
-import {newRandomPaletteReducer, paletteChangedReducer, restorePaletteReducer, styleChangedReducer, updatePaletteColorReducer, useRandomChangedReducer} from "@core/palettes/palettes.reducers";
+import {
+  newRandomPaletteReducer,
+  paletteChangedReducer,
+  restorePaletteReducer,
+  seedHueChangedReducer,
+  styleChangedReducer,
+  updatePaletteColorReducer,
+  useRandomChangedReducer
+} from "@core/palettes/palettes.reducers";
 import {initialState} from "@core/models/app-state.model";
 import {allEffects} from "@core/all-effects";
 
@@ -29,7 +37,8 @@ export const AppStateStore = signalStore(
     on(palettesEvents.updatePaletteColor, updatePaletteColorReducer),
     on(palettesEvents.paletteChanged, paletteChangedReducer),
     on(palettesEvents.useRandomChanged, useRandomChangedReducer),
-    on(palettesEvents.styleChanged, styleChangedReducer)
+    on(palettesEvents.styleChanged, styleChangedReducer),
+    on(palettesEvents.seedHueChanged, seedHueChangedReducer)
   ),
   withEffects(allEffects)
 );

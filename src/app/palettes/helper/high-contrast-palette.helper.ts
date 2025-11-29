@@ -3,7 +3,7 @@ import {vary} from '@palettes/helper/number.helper';
 import {clamp01} from '@common/helpers/hsl.helper';
 import {complement} from '@common/helpers/hue.helper';
 import {Palette} from "@palettes/models/palette.model";
-import {paletteColorFrom} from "@palettes/models/palette-color.model";
+import {PaletteColor, paletteColorFrom} from "@palettes/models/palette-color.model";
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {colorName} from "@common/helpers/color-name.helper";
 import {styleCaptionFor} from "@palettes/models/palette-style.model";
@@ -25,14 +25,20 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
  *                   of high contrast, including vibrant accents, deep tones,
  *                   and near-white.
  */
-export function generateHighContrast(seedHue?: number): Palette {
-  const h0 = seedHue ?? Math.random() * 360;
+export function generateHighContrast(fixedColors: PaletteColor[] = [],
+                                     seedHue?: number): Palette {
+  let h0 = seedHue ?? Math.random() * 360;
 
-  const accent1 = fromHsl({
+  let accent1 = fromHsl({
     h: vary(h0, 5),
     s: clamp01(vary(1.0, 0.0)), // maximal
     l: clamp01(vary(0.50, 0.04))
   });
+
+  if (fixedColors.length > 0 && fixedColors[0].slot === "color0") {
+    h0 = fixedColors[0].color.hsl()[0];
+    accent1 = fixedColors[0].color;
+  }
 
   const accent2 = fromHsl({
     h: vary(complement(h0), 6),
