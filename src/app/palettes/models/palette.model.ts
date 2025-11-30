@@ -15,7 +15,8 @@ interface PaletteBasics {
 
 }
 
-export type Palette = PaletteBasics & Record<PaletteSlot, PaletteColor>;
+export type PaletteColors = Record<PaletteSlot, PaletteColor>;
+export type Palette = PaletteBasics & PaletteColors;
 
 
 export const EMPTY_PALETTE: Palette = {

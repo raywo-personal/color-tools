@@ -3,8 +3,8 @@ import {provideRouter, withComponentInputBinding} from '@angular/router';
 
 import {routes} from './app.routes';
 import {injectDispatch} from "@ngrx/signals/events";
-import {persistenceEvents} from "./core/common/persistence.events";
-import {AppStateStore} from "./core/app-state.store";
+import {persistenceEvents} from "@core/common/persistence.events";
+import {AppStateStore} from "@core/app-state.store";
 
 
 function initializeApp(this: void): void {

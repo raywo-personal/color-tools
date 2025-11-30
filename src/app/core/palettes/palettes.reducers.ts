@@ -1,11 +1,10 @@
 import {EventInstance} from "@ngrx/signals/events";
 import {generatePalette} from "@palettes/helper/palette.helper";
-import {Palette} from "@palettes/models/palette.model";
+import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {PaletteStyle, randomStyle} from "@palettes/models/palette-style.model";
 import {paletteFromId, paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
-import {PaletteColor, paletteColorFrom} from "@palettes/models/palette-color.model";
+import {PaletteColor} from "@palettes/models/palette-color.model";
 import {AppState} from "@core/models/app-state.model";
-import chroma from "chroma-js";
 
 
 export function newRandomPaletteReducer(
@@ -13,17 +12,12 @@ export function newRandomPaletteReducer(
   event: EventInstance<"[Palettes] newRandomPalette", void>,
   state: AppState
 ) {
-  if (state.useRandomStyle) {
-    const style: PaletteStyle = randomStyle();
-
-    return {
-      currentPalette: generatePalette(style),
-      paletteStyle: style
-    };
-  }
+  const paletteColors = getPinnedPaletteColors(state);
+  const style = state.useRandomStyle ? randomStyle() : state.paletteStyle;
 
   return {
-    currentPalette: generatePalette(state.paletteStyle)
+    currentPalette: generatePalette(style, paletteColors),
+    paletteStyle: style
   };
 }
 
@@ -80,7 +74,8 @@ export function styleChangedReducer(
   state: AppState
 ) {
   const newStyle = event.payload;
-  const newPalette = generatePalette(newStyle);
+  const paletteColors = getPinnedPaletteColors(state);
+  const newPalette = generatePalette(newStyle, paletteColors);
 
   return {paletteStyle: newStyle, currentPalette: newPalette};
 }
@@ -93,9 +88,21 @@ export function seedHueChangedReducer(
 ) {
   const hue = event.payload;
   const style = state.paletteStyle;
-  const color0 = state.currentPalette.color0.color;
-  const newColor = chroma.hsl(hue, color0.hsl()[1], color0.hsl()[2])
-  const palette = generatePalette(style, [paletteColorFrom(newColor, "color0")]);
+  const paletteColors = getPinnedPaletteColors(state);
+  const palette = generatePalette(style, paletteColors);
 
   return {currentPalette: palette};
+}
+
+
+function getPinnedPaletteColors(state: AppState) {
+  const paletteColors: Partial<PaletteColors> = {};
+
+  PALETTE_SLOTS.forEach(slot => {
+    const color = state.currentPalette[slot];
+
+    if (color.isPinned) paletteColors[slot] = color;
+  });
+
+  return paletteColors;
 }

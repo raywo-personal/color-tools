@@ -2,8 +2,8 @@ import {fromHsl} from '@common/helpers/color-from-hsl.helper';
 import {vary} from '@palettes/helper/number.helper';
 import {clamp01} from '@common/helpers/hsl.helper';
 import {complement} from '@common/helpers/hue.helper';
-import {Palette} from "@palettes/models/palette.model";
-import {PaletteColor, paletteColorFrom} from "@palettes/models/palette-color.model";
+import {Palette, PaletteColors} from "@palettes/models/palette.model";
+import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {colorName} from "@common/helpers/color-name.helper";
 import {styleCaptionFor} from "@palettes/models/palette-style.model";
@@ -18,6 +18,11 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
  * accent will be a slightly cooler color. The last color will be a
  * near-white color.
  *
+ * @param paletteColors - Optional fixed colors to use when generating the
+ *             						palette. Each provided color is left untouched, and
+ * 						            the remaining colors are generated based on the
+ * 						            provided seed hue. If no colors are provided, a
+ * 						            random neutral color is generated.
  * @param {number} [seedHue] - An optional base hue value in degrees (0-360)
  *                             used to generate the color palette. If not
  *                             provided, a random hue is used.
@@ -25,54 +30,70 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
  *                   of high contrast, including vibrant accents, deep tones,
  *                   and near-white.
  */
-export function generateHighContrast(fixedColors: PaletteColor[] = [],
+export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
                                      seedHue?: number): Palette {
-  let h0 = seedHue ?? Math.random() * 360;
+  const baseColor = paletteColors.color0?.color;
+  const h0 = baseColor ? baseColor.hsl()[0] : seedHue ?? Math.random() * 360;
 
-  let accent1 = fromHsl({
-    h: vary(h0, 5),
-    s: clamp01(vary(1.0, 0.0)), // maximal
-    l: clamp01(vary(0.50, 0.04))
-  });
+  // accent 1
+  const color0 = paletteColors.color0 ?? paletteColorFrom(
+    fromHsl({
+      h: vary(h0, 5),
+      s: clamp01(vary(1.0, 0.0)), // maximal
+      l: clamp01(vary(0.50, 0.04))
+    }),
+    "color0"
+  );
 
-  if (fixedColors.length > 0 && fixedColors[0].slot === "color0") {
-    h0 = fixedColors[0].color.hsl()[0];
-    accent1 = fixedColors[0].color;
-  }
+  // accent 2
+  const color1 = paletteColors.color1 ?? paletteColorFrom(
+    fromHsl({
+      h: vary(complement(h0), 6),
+      s: clamp01(vary(1.0, 0.0)),
+      l: clamp01(vary(0.50, 0.06))
+    }),
+    "color1"
+  );
 
-  const accent2 = fromHsl({
-    h: vary(complement(h0), 6),
-    s: clamp01(vary(1.0, 0.0)),
-    l: clamp01(vary(0.50, 0.06))
-  });
+  // deep tone
+  const color2 = paletteColors.color2 ?? paletteColorFrom(
+    fromHsl({
+      h: vary(h0 + 20, 10),
+      s: clamp01(vary(0.08, 0.05)),
+      l: clamp01(vary(0.15, 0.03))
+    }),
+    "color2"
+  );
 
-  const deep = fromHsl({
-    h: vary(h0 + 20, 10),
-    s: clamp01(vary(0.08, 0.05)),
-    l: clamp01(vary(0.15, 0.03))
-  });
+  // dark accent
+  const color3 = paletteColors.color3 ?? paletteColorFrom(
+    fromHsl({
+      h: vary(h0 + 220, 10),
+      s: clamp01(vary(0.45, 0.10)),
+      l: clamp01(vary(0.32, 0.06))
+    }),
+    "color3"
+  );
 
-  const darkAccent = fromHsl({
-    h: vary(h0 + 220, 10),
-    s: clamp01(vary(0.45, 0.10)),
-    l: clamp01(vary(0.32, 0.06))
-  });
-
-  const nearWhite = fromHsl({
-    h: vary(h0 + 200, 8),
-    s: clamp01(vary(1.0, 0.0)),
-    l: clamp01(vary(0.96, 0.02))
-  });
+  // near white
+  const color4 = paletteColors.color4 ?? paletteColorFrom(
+    fromHsl({
+      h: vary(h0 + 200, 8),
+      s: clamp01(vary(1.0, 0.0)),
+      l: clamp01(vary(0.96, 0.02))
+    }),
+    "color4"
+  );
 
   const palette: Palette = {
     id: "",
-    name: `${styleCaptionFor("high-contrast")} – ${colorName(accent1)}`,
+    name: `${styleCaptionFor("high-contrast")} – ${colorName(color0.color)}`,
     style: "high-contrast",
-    color0: paletteColorFrom(accent1, "color0"),
-    color1: paletteColorFrom(accent2, "color1"),
-    color2: paletteColorFrom(darkAccent, "color2"),
-    color3: paletteColorFrom(deep, "color3"),
-    color4: paletteColorFrom(nearWhite, "color4"),
+    color0,
+    color1,
+    color2,
+    color3,
+    color4
   };
   palette.id = paletteIdFromPalette(palette);
 

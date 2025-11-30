@@ -1,4 +1,4 @@
-import {Component, computed, input, linkedSignal, signal} from '@angular/core';
+import {Component, computed, effect, input, linkedSignal, signal} from '@angular/core';
 import {contrastingColor, contrastingMutedColor} from '@common/helpers/contrasting-color.helper';
 import {ToggleButton} from '@common/components/toggle-button/toggle-button';
 import {PaletteColor} from "@palettes/models/palette-color.model";
@@ -44,6 +44,7 @@ export class SinglePaletteColor {
   });
 
   protected readonly isPinned = computed(() => {
+    // console.log("color", this.color())
     return this.color().isPinned;
   });
 
@@ -57,6 +58,13 @@ export class SinglePaletteColor {
 
   public readonly color = input.required<PaletteColor>();
   public readonly slot = input.required<PaletteSlot>();
+
+
+  constructor() {
+    effect(() => {
+      console.log("color", this.color())
+    });
+  }
 
 
   protected copyToClipboard() {
