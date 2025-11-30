@@ -8,6 +8,7 @@ import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {colorName} from "@common/helpers/color-name.helper";
 import {styleCaptionFor} from "@palettes/models/palette-style.model";
 import {Color} from "chroma-js";
+import {randomBetween} from "@common/helpers/random.helper";
 
 
 /**
@@ -32,7 +33,7 @@ import {Color} from "chroma-js";
 export function generateMutedAnalogSplit(paletteColors: Partial<PaletteColors> = {},
                                          seedHue?: number): Palette {
   const existingNeutral = paletteColors.color0;
-  const h0 = seedHue ?? Math.random() * 360;
+  const h0 = seedHue ?? randomBetween(0, 360);
 
   const color0 = existingNeutral ?? paletteColorFrom(
     fromHsl({

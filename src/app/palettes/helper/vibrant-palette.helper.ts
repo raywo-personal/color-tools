@@ -7,6 +7,7 @@ import {Palette, PaletteColors, PaletteSlot} from "@palettes/models/palette.mode
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {colorName} from "@common/helpers/color-name.helper";
 import {styleCaptionFor} from "@palettes/models/palette-style.model";
+import {randomBetween} from "@common/helpers/random.helper";
 
 
 /**
@@ -30,7 +31,7 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
 export function generateVibrantBalanced(paletteColors: Partial<PaletteColors> = {},
                                         seedHue?: number): Palette {
   const baseColor = paletteColors.color0?.color;
-  const h0 = baseColor ? baseColor.hsl()[0] : seedHue ?? Math.random() * 360;
+  const h0 = baseColor ? baseColor.hsl()[0] : seedHue ?? randomBetween(0, 360);
 
   const createAccent = (hue: number) => fromHsl({
     h: vary(hue, 6),

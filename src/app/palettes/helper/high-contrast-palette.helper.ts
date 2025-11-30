@@ -7,6 +7,7 @@ import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {colorName} from "@common/helpers/color-name.helper";
 import {styleCaptionFor} from "@palettes/models/palette-style.model";
+import {randomBetween} from "@common/helpers/random.helper";
 
 
 /**
@@ -19,10 +20,10 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
  * near-white color.
  *
  * @param paletteColors - Optional fixed colors to use when generating the
- *             						palette. Each provided color is left untouched, and
- * 						            the remaining colors are generated based on the
- * 						            provided seed hue. If no colors are provided, a
- * 						            random neutral color is generated.
+ *                        palette. Each provided color is left untouched, and
+ *                        the remaining colors are generated based on the
+ *                        provided seed hue. If no colors are provided, a
+ *                        random neutral color is generated.
  * @param {number} [seedHue] - An optional base hue value in degrees (0-360)
  *                             used to generate the color palette. If not
  *                             provided, a random hue is used.
@@ -33,7 +34,7 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
 export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
                                      seedHue?: number): Palette {
   const baseColor = paletteColors.color0?.color;
-  const h0 = baseColor ? baseColor.hsl()[0] : seedHue ?? Math.random() * 360;
+  const h0 = baseColor ? baseColor.hsl()[0] : seedHue ?? randomBetween(0, 360);
 
   // accent 1
   const color0 = paletteColors.color0 ?? paletteColorFrom(

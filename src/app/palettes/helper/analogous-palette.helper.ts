@@ -8,12 +8,27 @@ import {clamp01} from "@common/helpers/hsl.helper";
 import {vary} from "@palettes/helper/number.helper";
 import {analogRange, splitComplement} from "@common/helpers/hue.helper";
 import {Color} from "chroma-js";
+import {randomBetween} from "@common/helpers/random.helper";
 
 
+/**
+ * Generates an analogous color palette based on the provided paletteColors and
+ * an optional seed hue.
+ *
+ * @param {Partial<PaletteColors>} paletteColors - Optional fixed colors to use
+ *                when generating the palette. Each provided color is left
+ *                untouched, and the remaining colors are generated based on
+ *                the provided seed hue. If no colors are provided, a random
+ *                neutral color is generated.
+ * @param {number} [seedHue] - An optional base hue value in degrees (0-360)
+ *                             used to generate the color palette. If not
+ *                             provided, a random hue is used.
+ * @return {Palette} A complete analogous palette containing five colors.
+ */
 export function generateAnalogous(paletteColors: Partial<PaletteColors> = {},
                                   seedHue?: number): Palette {
   const existingNeutral = paletteColors.color0;
-  const h0 = seedHue ?? Math.random() * 360;
+  const h0 = seedHue ?? randomBetween(0, 360);
 
   const color0 = existingNeutral ?? paletteColorFrom(
     fromHsl({

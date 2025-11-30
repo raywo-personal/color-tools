@@ -25,11 +25,11 @@ export function generatePalette(style: PaletteStyle,
     case 'high-contrast':
       return generateHighContrast(paletteColors, seedHue);
     case "triadic":
-      return generateTriadic(seedHue);
+      return generateTriadic(paletteColors, seedHue);
     case "complementary":
-      return generateComplementary(seedHue);
+      return generateComplementary(paletteColors, seedHue);
     case "split-complementary":
-      return generateSplitComplementary(seedHue);
+      return generateSplitComplementary(paletteColors, seedHue);
     default:
       return generateAnalogous(paletteColors, seedHue);
   }
