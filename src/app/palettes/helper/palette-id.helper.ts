@@ -1,7 +1,7 @@
 import chroma, {Color} from "chroma-js";
 import {base62ToBigInt, bigIntToBase62} from "@common/helpers/base62.helper";
 import {PaletteStyle, PaletteStyles, randomStyle} from "@palettes/models/palette-style.model";
-import {Palette} from "@palettes/models/palette.model";
+import {Palette, PALETTE_SLOTS} from "@palettes/models/palette.model";
 import {paletteName} from "@palettes/helper/palette-name.helper";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
 
@@ -14,22 +14,21 @@ import {paletteColorFrom} from "@palettes/models/palette-color.model";
  * @return {string} A unique identifier for the given palette.
  */
 export function paletteIdFromPalette(palette: Palette): string {
+  const paletteColors = PALETTE_SLOTS.map(slot => palette[slot]);
+
   const colors: Color[] = [
-    palette.color0.color,
-    palette.color1.color,
-    palette.color2.color,
-    palette.color3.color,
-    palette.color4.color,
-    palette.color0.startingColor,
-    palette.color1.startingColor,
-    palette.color2.startingColor,
-    palette.color3.startingColor,
-    palette.color4.startingColor,
+    ...paletteColors.map(pc => pc.color),
+    ...paletteColors.map(pc => pc.startingColor),
   ];
 
-  return paletteIdFromColors(colors, palette.style);
-}
+  // Create a bitmask for the pinned state
+  const pinnedMask = paletteColors
+    .reduce((mask, pc, index) => {
+      return pc.isPinned ? mask | (1 << index) : mask;
+    }, 0);
 
+  return paletteIdFromColors(colors, palette.style, pinnedMask);
+}
 
 /**
  * Generates a palette object from a given palette ID.
@@ -48,25 +47,24 @@ export function paletteFromId(id: string): Palette {
     throw new Error("Palette ID is not restorable");
   }
 
-  const colors = colorsFromPaletteId(id);
-  let style = randomStyle();
+  const colors = colorsFromId(id);
+  const pinnedMask = pinnedMaskFromId(id);
+  const style = styleFromPaletteId(id);
 
-  try {
-    style = styleFromPaletteId(id);
-  } catch (err: unknown) {
-    const error = err as Error;
-    console.info("Style not found. Using random style.", error.message);
-  }
+  const paletteColors = PALETTE_SLOTS
+    .reduce((acc, slot, index) => {
+      const isPinned = (pinnedMask & (1 << index)) !== 0;
+      // Colors 0-4 are the main colors, 5-9 are the starting colors
+      acc[slot] = paletteColorFrom(colors[index], slot, colors[index + 5], isPinned);
+
+      return acc;
+    }, {} as any);
 
   return {
-    id: id,
+    id,
     name: paletteName(style, colors[0]),
     style,
-    color0: paletteColorFrom(colors[0], "color0", colors[5]),
-    color1: paletteColorFrom(colors[1], "color1", colors[6]),
-    color2: paletteColorFrom(colors[2], "color2", colors[7]),
-    color3: paletteColorFrom(colors[3], "color3", colors[8]),
-    color4: paletteColorFrom(colors[4], "color4", colors[9]),
+    ...paletteColors
   } as Palette;
 }
 
@@ -79,7 +77,7 @@ export function paletteFromId(id: string): Palette {
  */
 export function isRestorable(id: string): boolean {
   try {
-    colorsFromPaletteId(id);
+    validatePaletteId(id);
     return true;
   } catch (err) {
     return false;
@@ -88,11 +86,12 @@ export function isRestorable(id: string): boolean {
 
 
 /**
- * Generates a unique palette ID based on an array of colors and a specified
- * palette style.
+ * Generates a unique palette ID based on an array of palette colors and a
+ * specified palette style.
  *
  * This ID will start with a style index and then contain a base62-encoded
- * representation of the RGB values of the colors and starting colors.
+ * representation of the RGB values representing the colors and starting
+ * colors. It ends with a bitmask indicating which colors are pinned.
  *
  * @param {Color[]} colors - An array of 10 Color objects used to define the
  *                           palette. The first five colors represent the actual
@@ -100,12 +99,15 @@ export function isRestorable(id: string): boolean {
  *                           colors.
  * @param {PaletteStyle} style - The style of the palette, which must be a
  *                               valid member of the `PaletteStyles` array.
+ * @param pinnedMask - A bitmask indicating which colors are pinned.
  * @return {string} A unique string identifier for the palette, constructed
  *                  using the colors and style.
  * @throws {Error} If the number of colors is not exactly 10 or if the
  *                 specified style is invalid.
  */
-function paletteIdFromColors(colors: Color[], style: PaletteStyle): string {
+function paletteIdFromColors(colors: Color[],
+                             style: PaletteStyle,
+                             pinnedMask: number = 0): string {
   if (colors.length !== 10) {
     throw new Error('Exactly 10 colors required');
   }
@@ -122,6 +124,9 @@ function paletteIdFromColors(colors: Color[], style: PaletteStyle): string {
     bytes.push(Math.round(r), Math.round(g), Math.round(b));
   });
 
+  // Append the pinned mask as the last byte
+  bytes.push(pinnedMask);
+
   // Convert all bytes to a single big integer
   let bigNumber = 0n;
   bytes.forEach(byte => {
@@ -133,33 +138,14 @@ function paletteIdFromColors(colors: Color[], style: PaletteStyle): string {
 
 
 /**
- * Decodes a palette ID to extract an array of colors.
- *
- * @param {string} id - A string representing the palette ID. The ID must be
- *                      at least 41 characters long.
- * @return {Color[]} An array of Color objects derived from the given palette ID.
- * @throws {Error} Throws an error if the palette ID is shorter than 41 characters.
+ * Extracts the colors from a palette ID.
  */
-function colorsFromPaletteId(id: string): Color[] {
-  if (id.length < 40 || id.length > 42) {
-    throw new Error("Palette ID must be at least 41 characters long! Actual length: " + id.length);
-  }
-
-  // Omit style index
-  const colorData = id.substring(1);
-  const bigNumber = base62ToBigInt(colorData);
-
-  const bytesToRead = 30;
-  const bytes: number[] = [];
-  let remaining = bigNumber;
-
-  for (let i = 0; i < bytesToRead; i++) {
-    bytes.unshift(Number(remaining % 256n));
-    remaining = remaining / 256n;
-  }
-
+function colorsFromId(id: string): Color[] {
+  const bytes = getBytesFromId(id);
   const colors: Color[] = [];
-  for (let i = 0; i < bytesToRead; i += 3) {
+
+  // We expect exactly 30 bytes for colors (10 colors * 3 RGB channels)
+  for (let i = 0; i < 30; i += 3) {
     const color = chroma.rgb(bytes[i], bytes[i + 1], bytes[i + 2]);
     colors.push(color);
   }
@@ -169,25 +155,83 @@ function colorsFromPaletteId(id: string): Color[] {
 
 
 /**
+ * Extracts the pinned mask from a palette ID.
+ */
+function pinnedMaskFromId(id: string): number {
+  const bytes = getBytesFromId(id);
+
+  // If we have 31 bytes, the last one is the pinned mask
+  if (bytes.length === 31) {
+    return bytes[30];
+  }
+
+  return 0;
+}
+
+/**
+ * Decodes the ID into a raw byte array.
+ */
+function getBytesFromId(id: string): number[] {
+  validatePaletteId(id);
+
+  // Omit style index
+  const colorData = id.substring(1);
+  const bigNumber = base62ToBigInt(colorData);
+
+  const bytes: number[] = [];
+  let remaining = bigNumber;
+
+  // Extract all bytes
+  while (remaining > 0n) {
+    bytes.unshift(Number(remaining % 256n));
+    remaining = remaining / 256n;
+  }
+
+  // Ensure we have enough bytes (padding with 0 if necessary)
+  // Standard payload is 30 bytes (old format) or 31 bytes (new format with pinned mask)
+  while (bytes.length < 30) {
+    bytes.unshift(0);
+  }
+
+  return bytes;
+}
+
+
+/**
+ * Validates the given palette ID to ensure it has the correct length.
+ *
+ * @param {string} id - The palette ID to be validated.
+ * @return {void} Throws an error if the palette ID does not meet the required
+ *                length criteria.
+ */
+function validatePaletteId(id: string): void {
+  // Adjusted max length check to allow for the extra byte (31 bytes vs 30 bytes)
+  // 30 bytes ~ 40 base62 chars. 31 bytes ~ 42 base62 chars.
+  if (id.length < 40 || id.length > 44) {
+    throw new Error("Palette ID has invalid length! Actual length: " + id.length);
+  }
+}
+
+
+/**
  * Retrieves the style associated with the given palette ID.
- * The palette ID is expected to start with a valid style index.
- * Throws an error if the ID is invalid or the style index is out of range.
+ * The palette ID is expected to start with a valid style index. If the style
+ * could not be determined, a random style is returned instead.
  *
  * @param {string} id - The unique palette ID used to determine the style. Must
  *                      be exactly 42 characters long.
  * @return {PaletteStyle} The style object corresponding to the provided
- *                        palette ID.
+ *                        palette ID or a random style if the ID is invalid.
  */
 function styleFromPaletteId(id: string): PaletteStyle {
-  if (!id || id.length < 41 || id.length > 42) {
-    throw new Error("Invalid palette ID: incorrect length: " + id.length);
-  }
+  validatePaletteId(id);
 
   // Erste Stelle ist der Style-Index
   const styleIndex = parseInt(id[0], 10);
 
   if (isNaN(styleIndex) || styleIndex < 0 || styleIndex >= PaletteStyles.length) {
-    throw new Error(`Invalid style index in palette ID: ${id[0]}`);
+    console.info("Style not found. Using random style.");
+    return randomStyle();
   }
 
   return PaletteStyles[styleIndex];
