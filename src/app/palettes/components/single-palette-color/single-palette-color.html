@@ -10,16 +10,27 @@
          (colorSelected)="updateColor($event)">
     </div>
   } @else {
+    @if (isEditing()) {
+      <div class="palette-hsl-edit">
+        <app-hsl-color-edit [(color)]="editingColor"
+                            (colorChange)="updateColor($event)"/>
+      </div>
+    }
+
     <div class="tools">
       <button type="button"
               class="btn"
+              ngbTooltip="New random color"
+              [openDelay]="300"
               (click)="copyToClipboard()">
         <i class="bi bi-shuffle"></i>
-        <span class="visually-hidden">Copy to clipboard</span>
+        <span class="visually-hidden">New random color</span>
       </button>
 
       <button type="button"
               class="btn"
+              ngbTooltip="Show tints & shades"
+              [openDelay]="300"
               (click)="showTintsAndShades()">
         <i class="bi bi-bookshelf"></i>
         <span class="visually-hidden">Tints & Shades</span>
@@ -27,6 +38,8 @@
 
       <button type="button"
               class="btn"
+              ngbTooltip="Copy to clipboard"
+              [openDelay]="300"
               (click)="copyToClipboard()">
         <i class="bi bi-copy"></i>
         <span class="visually-hidden">Copy to clipboard</span>
@@ -38,7 +51,25 @@
               [initialState]="isPinned()"
               [openDelay]="300"
               (currentState)="onToggleClick($event)">
-        Toggle pin color
+        Pin color
+      </button>
+
+      <button type="button"
+              class="btn"
+              ngbTooltip="Edit color"
+              [openDelay]="300"
+              (click)="toggleEditing()">
+        <i class="bi bi-pencil"></i>
+        <span class="visually-hidden">Edit color</span>
+      </button>
+
+      <button type="button"
+              class="btn"
+              ngbTooltip="Reset color"
+              [openDelay]="300"
+              (click)="resetColor()">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        <span class="visually-hidden">Reset color</span>
       </button>
     </div>
 

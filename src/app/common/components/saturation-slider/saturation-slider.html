@@ -1,0 +1,10 @@
+<div class="slider-container">
+  <input class="slider sat-slider"
+         type="range"
+         min="0"
+         max="100"
+         [style.--ct-sat-slider-color-hue]="hue()"
+         [style.--ct-sat-slider-color-l]="luminance()"
+         [(ngModel)]="sat"
+         (ngModelChange)="onSatChanged($event)"/>
+</div>

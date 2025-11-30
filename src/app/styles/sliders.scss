@@ -1,0 +1,79 @@
+.slider-container {
+  --ct-slider-thumb-width: 0.75rem;
+  --ct-slider-thumb-height: 1.25rem;
+  --ct-slider-track-height: 0.5rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+
+    width: 100%;
+    height: var(--ct-slider-track-height);
+    background-color: transparent;
+    border-radius: var(--bs-border-radius);
+    outline: none;
+    cursor: pointer;
+
+    // Pseudo-elements must be split across multiple rulesets to have an effect.
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+
+      width: var(--ct-slider-thumb-width);
+      height: var(--ct-slider-thumb-height);
+      background: white;
+      border: 1px solid #333;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+
+    &::-moz-range-thumb {
+      width: var(--ct-slider-thumb-width);
+      height: var(--ct-slider-thumb-height);
+      background: white;
+      border: 2px solid #333;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  }
+
+  .hue-slider {
+    background: linear-gradient(
+        to right,
+        hsl(0, 100%, 50%),
+        hsl(60, 100%, 50%),
+        hsl(120, 100%, 50%),
+        hsl(180, 100%, 50%),
+        hsl(240, 100%, 50%),
+        hsl(300, 100%, 50%),
+        hsl(360, 100%, 50%)
+    );
+  }
+
+  .sat-slider {
+    background: linear-gradient(
+        to right,
+        hsl(var(--ct-sat-slider-color-hue), 0%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 10%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 20%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 30%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 40%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 50%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 60%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 70%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 80%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 90%, var(--ct-sat-slider-color-l)),
+        hsl(var(--ct-sat-slider-color-hue), 100%, var(--ct-sat-slider-color-l))
+    );
+  }
+
+  .lum-slider {
+    background: linear-gradient(to right, black, white);
+  }
+}
+

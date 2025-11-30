@@ -50,6 +50,16 @@
     width: fit-content;
     margin-inline: auto;
   }
+
+  .palette-hsl-edit {
+    margin-inline: 0.5rem;
+    padding-inline: 0.75rem;
+
+    background-color: hsl(0 0 100 / 0.2);
+
+    border: var(--bs-border-width) solid hsl(0 0 100 / 0.4);
+    border-radius: var(--bs-border-radius);
+  }
 }
 
 .color-palette-header-container {

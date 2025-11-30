@@ -9,7 +9,7 @@ import {randomBetween} from "@common/helpers/random.helper";
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: "./hue-slider.html",
-  styleUrl: "./hue-slider.scss"
+  styles: ``,
 })
 export class HueSliderComponent {
 

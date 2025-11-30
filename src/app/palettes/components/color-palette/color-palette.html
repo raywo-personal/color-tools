@@ -13,8 +13,6 @@
   </p>
 </div>
 
-<app-hue-slider [hue]="hue()" (hueChanged)="onHueChanged($event)"/>
-
 <div class="color-palette">
   @for (slot of PALETTE_SLOTS; track $index) {
     <app-single-palette-color [color]="palette()[slot]"

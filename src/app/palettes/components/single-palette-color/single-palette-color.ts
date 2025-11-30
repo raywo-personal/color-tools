@@ -1,4 +1,4 @@
-import {Component, computed, input, signal} from '@angular/core';
+import {Component, computed, input, linkedSignal, signal} from '@angular/core';
 import {contrastingColor, contrastingMutedColor} from '@common/helpers/contrasting-color.helper';
 import {ToggleButton} from '@common/components/toggle-button/toggle-button';
 import {PaletteColor} from "@palettes/models/palette-color.model";
@@ -8,13 +8,17 @@ import {Color} from "chroma-js";
 import {colorName} from "@common/helpers/color-name.helper";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
+import {HslColorEdit} from "@common/components/hsl-color-edit/hsl-color-edit";
 
 
 @Component({
   selector: 'app-single-palette-color',
   imports: [
     ToggleButton,
-    SingleColorShades
+    SingleColorShades,
+    NgbTooltip,
+    HslColorEdit
   ],
   templateUrl: './single-palette-color.html',
   styles: ``,
@@ -44,6 +48,11 @@ export class SinglePaletteColor {
   });
 
   protected readonly showShades = signal(false);
+  protected readonly isEditing = signal(false);
+
+  protected readonly editingColor = linkedSignal(() => {
+    return this.color().color;
+  });
 
 
   public readonly color = input.required<PaletteColor>();
@@ -75,6 +84,18 @@ export class SinglePaletteColor {
       ...this.color(),
       color
     });
+  }
+
+
+  protected toggleEditing() {
+    this.isEditing.set(!this.isEditing());
+  }
+
+
+  protected resetColor() {
+    this.color().color = this.color().startingColor;
+
+    this.#dispatch.updatePaletteColor(this.color());
   }
 
 }
