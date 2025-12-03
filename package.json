@@ -22,7 +22,7 @@
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
-    "chroma-js": "^3.1.2",
+    "chroma-js": "^3.2.0",
     "color-namer": "^1.4.0",
     "rxjs": "~7.8.2",
     "tslib": "^2.8.1"

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm test:*)",
+      "Bash(npx ng test:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

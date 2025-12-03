@@ -7,6 +7,14 @@ import {paletteColorFrom} from "@palettes/models/palette-color.model";
 
 
 /**
+ * Expected length of the base62-encoded part of the palette ID.
+ * This represents 31 bytes (30 for RGB values + 1 for pinned mask) encoded in base62.
+ * Maximum value: 256^31 - 1 requires 42 characters in base62.
+ */
+const PALETTE_ID_BASE62_LENGTH = 42;
+
+
+/**
  * Generates a unique palette ID based on the colors and style of the
  * provided palette.
  *
@@ -133,7 +141,8 @@ function paletteIdFromColors(colors: Color[],
     bigNumber = bigNumber * 256n + BigInt(byte);
   });
 
-  return `${styleIndex}${bigIntToBase62(bigNumber)}`;
+  // Use fixed length to ensure a consistent I D length regardless of color values
+  return `${styleIndex}${bigIntToBase62(bigNumber, PALETTE_ID_BASE62_LENGTH)}`;
 }
 
 
@@ -187,9 +196,9 @@ function getBytesFromId(id: string): number[] {
     remaining = remaining / 256n;
   }
 
-  // Ensure we have enough bytes (padding with 0 if necessary)
-  // Standard payload is 30 bytes (old format) or 31 bytes (new format with pinned mask)
-  while (bytes.length < 30) {
+  // Ensure we have exactly 31 bytes (30 for RGB values + 1 for pinned mask)
+  // Pad with leading zeros if necessary
+  while (bytes.length < 31) {
     bytes.unshift(0);
   }
 
@@ -205,10 +214,11 @@ function getBytesFromId(id: string): number[] {
  *                length criteria.
  */
 function validatePaletteId(id: string): void {
-  // Adjusted max length check to allow for the extra byte (31 bytes vs 30 bytes)
-  // 30 bytes ~ 40 base62 chars. 31 bytes ~ 42 base62 chars.
-  if (id.length < 40 || id.length > 44) {
-    throw new Error("Palette ID has invalid length! Actual length: " + id.length);
+  // Expected length: 1 (style index) + 42 (base62-encoded 31 bytes) = 43 characters
+  const expectedLength = 1 + PALETTE_ID_BASE62_LENGTH;
+
+  if (id.length !== expectedLength) {
+    throw new Error(`Palette ID has invalid length! Expected: ${expectedLength}, Actual: ${id.length}`);
   }
 }
 
