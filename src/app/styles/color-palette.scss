@@ -98,6 +98,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
 
   background-color: var(--ct-shade-bg);
   color: var(--ct-shade-color);
@@ -110,6 +111,11 @@
     display: none;
   }
 
+  .shade-current-label {
+    display: none;
+  }
+
+  .shade-current-label.show,
   .shade-base-label.show {
     display: block;
   }
