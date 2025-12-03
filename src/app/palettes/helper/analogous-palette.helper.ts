@@ -18,8 +18,8 @@ import {randomBetween} from "@common/helpers/random.helper";
  * @param {Partial<PaletteColors>} paletteColors - Optional fixed colors to use
  *                when generating the palette. Each provided color is left
  *                untouched, and the remaining colors are generated based on
- *                the provided seed hue. If no colors are provided, a random
- *                neutral color is generated.
+ *                the full HSL values of the pinned color. If no colors are
+ *                provided, a random neutral color is generated.
  * @param {number} [seedHue] - An optional base hue value in degrees (0-360)
  *                             used to generate the color palette. If not
  *                             provided, a random hue is used.
@@ -28,13 +28,17 @@ import {randomBetween} from "@common/helpers/random.helper";
 export function generateAnalogous(paletteColors: Partial<PaletteColors> = {},
                                   seedHue?: number): Palette {
   const existingNeutral = paletteColors.color0;
-  const h0 = seedHue ?? randomBetween(0, 360);
+
+  const [h, s, l] = existingNeutral?.color.hsl() ?? [];
+  const h0 = h ?? seedHue ?? randomBetween(0, 360);
+  const s0 = s ?? 0.6;
+  const l0 = l ?? 0.34;
 
   const color0 = existingNeutral ?? paletteColorFrom(
     fromHsl({
       h: h0,
-      s: clamp01(vary(0.6, 0.03)),
-      l: clamp01(vary(0.34, 0.05))
+      s: clamp01(vary(s0, 0.03)),
+      l: clamp01(vary(l0, 0.05))
     }),
     "color0"
   );
@@ -45,8 +49,8 @@ export function generateAnalogous(paletteColors: Partial<PaletteColors> = {},
     analogs = analogRange(h0, 28, 2)
       .map(h => fromHsl({
           h: vary(h, 5),
-          s: clamp01(vary(0.60, 0.10)),
-          l: clamp01(vary(0.50, 0.10))
+          s: clamp01(vary(s0, 0.10)),
+          l: clamp01(vary(l0 + 0.16, 0.10))
         })
       );
   }
@@ -58,8 +62,8 @@ export function generateAnalogous(paletteColors: Partial<PaletteColors> = {},
   const color2 = paletteColors.color2 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 + 20, 6),
-      s: clamp01(vary(0.55, 0.10)),
-      l: clamp01(vary(0.82, 0.05))
+      s: clamp01(vary(s0 - 0.05, 0.10)),
+      l: clamp01(vary(l0 + 0.48, 0.05))
     }),
     "color2"
   );
@@ -68,8 +72,8 @@ export function generateAnalogous(paletteColors: Partial<PaletteColors> = {},
   const color3 = paletteColors.color3 ?? paletteColorFrom(
     fromHsl({
       h: vary(splitComplement(h0, 28)[0], 6),
-      s: clamp01(vary(0.28, 0.08)),
-      l: clamp01(vary(0.32, 0.08))
+      s: clamp01(vary(s0 - 0.32, 0.08)),
+      l: clamp01(vary(l0 - 0.02, 0.08))
     }),
     "color3"
   );
