@@ -31,12 +31,15 @@ import {randomBetween} from "@common/helpers/random.helper";
 export function generateVibrantBalanced(paletteColors: Partial<PaletteColors> = {},
                                         seedHue?: number): Palette {
   const baseColor = paletteColors.color0?.color;
-  const h0 = baseColor ? baseColor.hsl()[0] : seedHue ?? randomBetween(0, 360);
+  const [h, s, l] = baseColor?.hsl() ?? [];
+  const h0 = h ?? seedHue ?? randomBetween(0, 360);
+  const s0 = s ?? 0.75;
+  const l0 = l ?? 0.52;
 
   const createAccent = (hue: number) => fromHsl({
     h: vary(hue, 6),
-    s: clamp01(vary(0.75, 0.10)),
-    l: clamp01(vary(0.52, 0.08))
+    s: clamp01(vary(s0, 0.10)),
+    l: clamp01(vary(l0, 0.08))
   })
 
   const accents = triad(h0)
@@ -53,8 +56,8 @@ export function generateVibrantBalanced(paletteColors: Partial<PaletteColors> = 
   const color3 = paletteColors.color3 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 + 60, 8),
-      s: clamp01(vary(0.35, 0.10)),
-      l: clamp01(vary(0.78, 0.06))
+      s: clamp01(vary(s0 - 0.40, 0.10)),
+      l: clamp01(vary(l0 + 0.26, 0.06))
     }),
     "color3"
   );
@@ -62,8 +65,8 @@ export function generateVibrantBalanced(paletteColors: Partial<PaletteColors> = 
   const color4 = paletteColors.color4 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 - 20, 8),
-      s: clamp01(vary(0.30, 0.08)),
-      l: clamp01(vary(0.70, 0.06))
+      s: clamp01(vary(s0 - 0.45, 0.08)),
+      l: clamp01(vary(l0 + 0.18, 0.06))
     }),
     "color4"
   );

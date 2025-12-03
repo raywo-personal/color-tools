@@ -8,24 +8,31 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
 
 
 const VARIANTS = [
-  {s: 70, l: 30}, // color0
-  {s: 60, l: 45}, // color1
-  {s: 50, l: 60}, // color2
-  {s: 40, l: 75}, // color3
-  {s: 30, l: 85}, // color4
+  {s: 0, l: 0},    // color0 (base)
+  {s: -10, l: 15}, // color1
+  {s: -20, l: 30}, // color2
+  {s: -30, l: 45}, // color3
+  {s: -40, l: 55}, // color4
 ];
 
 export function generateMonochromatic(paletteColors: Partial<PaletteColors> = {},
                                       seedHue?: number): Palette {
   const baseColor = paletteColors.color0?.color;
-  const hue = baseColor ? baseColor.hsl()[0] : (seedHue ?? randomBetween(0, 360));
+  const [h, s, l] = baseColor?.hsl() ?? [];
+  const hue = h ?? seedHue ?? randomBetween(0, 360);
+  const baseSat = s ?? 0.70;
+  const baseLight = l ?? 0.30;
 
   const colors = VARIANTS
     .map((variant, index) => {
       const slot = `color${index}` as PaletteSlot;
 
       return paletteColors[slot] ?? paletteColorFrom(
-        fromHsl({h: hue, s: variant.s, l: variant.l}),
+        fromHsl({
+          h: hue,
+          s: baseSat + variant.s / 100,
+          l: baseLight + variant.l / 100
+        }),
         slot
       );
     });
@@ -40,7 +47,7 @@ export function generateMonochromatic(paletteColors: Partial<PaletteColors> = {}
     color1,
     color2,
     color3,
-    color4,
+    color4
   };
   palette.id = paletteIdFromPalette(palette);
 

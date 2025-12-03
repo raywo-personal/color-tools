@@ -34,14 +34,17 @@ import {randomBetween} from "@common/helpers/random.helper";
 export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
                                      seedHue?: number): Palette {
   const baseColor = paletteColors.color0?.color;
-  const h0 = baseColor ? baseColor.hsl()[0] : seedHue ?? randomBetween(0, 360);
+  const [h, s, l] = baseColor?.hsl() ?? [];
+  const h0 = h ?? seedHue ?? randomBetween(0, 360);
+  const s0 = s ?? 1.0;
+  const l0 = l ?? 0.50;
 
   // accent 1
   const color0 = paletteColors.color0 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0, 5),
-      s: clamp01(vary(1.0, 0.0)), // maximal
-      l: clamp01(vary(0.50, 0.04))
+      s: clamp01(vary(s0, 0.0)), // maximal
+      l: clamp01(vary(l0, 0.04))
     }),
     "color0"
   );
@@ -50,8 +53,8 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   const color1 = paletteColors.color1 ?? paletteColorFrom(
     fromHsl({
       h: vary(complement(h0), 6),
-      s: clamp01(vary(1.0, 0.0)),
-      l: clamp01(vary(0.50, 0.06))
+      s: clamp01(vary(s0, 0.0)),
+      l: clamp01(vary(l0, 0.06))
     }),
     "color1"
   );
@@ -60,8 +63,8 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   const color2 = paletteColors.color2 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 + 20, 10),
-      s: clamp01(vary(0.08, 0.05)),
-      l: clamp01(vary(0.15, 0.03))
+      s: clamp01(vary(s0 - 0.92, 0.05)),
+      l: clamp01(vary(l0 - 0.35, 0.03))
     }),
     "color2"
   );
@@ -70,8 +73,8 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   const color3 = paletteColors.color3 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 + 220, 10),
-      s: clamp01(vary(0.45, 0.10)),
-      l: clamp01(vary(0.32, 0.06))
+      s: clamp01(vary(s0 - 0.55, 0.10)),
+      l: clamp01(vary(l0 - 0.18, 0.06))
     }),
     "color3"
   );
@@ -80,8 +83,8 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   const color4 = paletteColors.color4 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 + 200, 8),
-      s: clamp01(vary(1.0, 0.0)),
-      l: clamp01(vary(0.96, 0.02))
+      s: clamp01(vary(s0, 0.0)),
+      l: clamp01(vary(l0 + 0.46, 0.02))
     }),
     "color4"
   );

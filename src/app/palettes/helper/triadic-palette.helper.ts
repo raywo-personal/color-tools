@@ -31,13 +31,16 @@ import {vary} from "@palettes/helper/number.helper";
 export function generateTriadic(paletteColors: Partial<PaletteColors> = {},
                                 seedHue?: number): Palette {
   const baseColor = paletteColors.color0?.color;
-  const hue = baseColor ? baseColor.hsl()[0] : seedHue ?? Math.random() * 360;
+  const [h, s, l] = baseColor?.hsl() ?? [];
+  const hue = h ?? seedHue ?? Math.random() * 360;
+  const baseSat = s ?? 0.70;
+  const baseLight = l ?? 0.50;
 
   const firstThree = triad(hue)
     .map((h, index) => {
       const slot = `color${index}` as keyof PaletteColors;
 
-      return paletteColors[slot] ?? paletteColorFrom(fromHsl({h, s: 70, l: 50}), slot);
+      return paletteColors[slot] ?? paletteColorFrom(fromHsl({h, s: baseSat, l: baseLight}), slot);
     });
 
   const [color0, color1, color2] = firstThree;
@@ -45,16 +48,16 @@ export function generateTriadic(paletteColors: Partial<PaletteColors> = {},
   const color3 = paletteColors.color3 ?? paletteColorFrom(
     fromHsl({
       h: (triad(hue))[0],
-      s: clamp01(vary(0.05, 0.03)),
-      l: clamp01(vary(0.55, 0.05))
+      s: clamp01(vary(baseSat - 0.65, 0.03)),
+      l: clamp01(vary(baseLight + 0.05, 0.05))
     }),
     "color3"
   );
   const color4 = paletteColors.color4 ?? paletteColorFrom(
     fromHsl({
       h: (triad(hue))[1],
-      s: clamp01(vary(0.05, 0.03)),
-      l: clamp01(vary(0.55, 0.05))
+      s: clamp01(vary(baseSat - 0.65, 0.03)),
+      l: clamp01(vary(baseLight + 0.05, 0.05))
     }),
     "color4"
   );

@@ -5,7 +5,8 @@ import {styleCaptionFor} from "@palettes/models/palette-style.model";
 import {colorName} from "@common/helpers/color-name.helper";
 import {PaletteColor, paletteColorFrom} from "@palettes/models/palette-color.model";
 import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
-import {hueWrap} from "@common/helpers/hsl.helper";
+import {clamp01, hueWrap} from "@common/helpers/hsl.helper";
+import {vary} from "@palettes/helper/number.helper";
 
 
 /**
@@ -28,18 +29,42 @@ import {hueWrap} from "@common/helpers/hsl.helper";
 export function generateSplitComplementary(paletteColors: Partial<PaletteColors> = {},
                                            seedHue?: number): Palette {
   const baseColor = paletteColors.color0?.color;
-  const hue = baseColor ? baseColor.hsl()[0] : seedHue ?? randomBetween(0, 360);
+  const [h, s, l] = baseColor?.hsl() ?? [];
+  const hue = h ?? seedHue ?? randomBetween(0, 360);
+  const baseSat = s ?? 0.70;
+  const baseLight = l ?? 0.50;
 
   const createColor =
     (slot: PaletteSlot, h: number, s: number, l: number): PaletteColor => {
       return paletteColors[slot] ?? paletteColorFrom(fromHsl({h, s, l}), slot);
     };
 
-  const color0 = createColor("color0", hue, 70, 50);
-  const color1 = createColor("color1", hueWrap(hue + 150), 70, 50);
-  const color2 = createColor("color2", hueWrap(hue + 210), 70, 50);
-  const color3 = createColor("color3", hue, 40, 70);
-  const color4 = createColor("color4", hueWrap(hue + 180), 30, 80);
+  const variationAmount = 0.025;
+  const color0 = createColor("color0", hue, baseSat, baseLight);
+  const color1 = createColor(
+    "color1",
+    hueWrap(hue + 150),
+    clamp01(vary(baseSat, variationAmount)),
+    clamp01(vary(baseLight, variationAmount))
+  );
+  const color2 = createColor(
+    "color2",
+    hueWrap(hue + 210),
+    clamp01(vary(baseSat, variationAmount)),
+    clamp01(vary(baseLight, variationAmount))
+  );
+  const color3 = createColor(
+    "color3",
+    hue,
+    clamp01(vary(baseSat - 0.30, variationAmount)),
+    clamp01(vary(baseLight + 0.20, variationAmount))
+  );
+  const color4 = createColor(
+    "color4",
+    hueWrap(hue + 180),
+    clamp01(vary(baseSat - 0.40, variationAmount)),
+    clamp01(vary(baseLight + 0.30, variationAmount))
+  );
 
   const palette: Palette = {
     id: "",
