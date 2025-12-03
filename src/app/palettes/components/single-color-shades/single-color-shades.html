@@ -1,7 +1,12 @@
 @for (shade of shades(); track $index) {
   <div class="shade clickable"
-       [style]="{'--ct-shade-bg': shade, '--ct-shade-color': textColor(shade)}"
+       [style.--ct-shade-bg]="shade.hex()"
+       [style.--ct-shade-color]="textColor(shade)"
        (click)="onShadeClick(shade)">
+    <div class="shade-current-label"
+         [class.show]="isCurrentColor(shade)">
+      <i class="bi bi-check"></i>
+    </div>
     <div class="shade-base-label"
          [class.show]="isBaseColor(shade)">
       <i class="bi bi-asterisk"></i>

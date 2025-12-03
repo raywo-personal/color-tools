@@ -3,7 +3,7 @@
   grid-template-columns: repeat(5, 1fr);
 
   width: 100%;
-  height: calc(100vh - var(--ct-header-height) - 5rem);
+  height: calc(100vh - var(--ct-header-height) - var(--ct-palette-header-height) - var(--ct-body-top-padding));
 }
 
 .single-palette-color {
@@ -50,12 +50,33 @@
     width: fit-content;
     margin-inline: auto;
   }
+
+  .palette-hsl-edit {
+    margin-inline: 0.5rem;
+    padding-inline: 0.75rem;
+
+    background-color: hsl(0deg 0% 100% / 0.2);
+
+    border: var(--bs-border-width) solid hsl(0deg 0% 100% / 0.4);
+    border-radius: var(--bs-border-radius);
+  }
+}
+
+.color-palette-header-container {
+  height: var(--ct-palette-header-height);
+
+  border-bottom: var(--bs-border-width) solid var(--bs-border-color);
 }
 
 .color-palette-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+}
+
+.color-palette-style-switcher {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .shades {
@@ -77,6 +98,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
 
   background-color: var(--ct-shade-bg);
   color: var(--ct-shade-color);
@@ -89,6 +111,11 @@
     display: none;
   }
 
+  .shade-current-label {
+    display: none;
+  }
+
+  .shade-current-label.show,
   .shade-base-label.show {
     display: block;
   }

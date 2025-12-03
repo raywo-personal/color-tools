@@ -13,6 +13,7 @@ export const palettesEvents = eventGroup({
     updatePaletteColor: type<PaletteColor>(),
     paletteChanged: type<Palette>(),
     useRandomChanged: type<boolean>(),
-    styleChanged: type<PaletteStyle>()
+    styleChanged: type<PaletteStyle>(),
+    seedHueChanged: type<number>()
   }
 })

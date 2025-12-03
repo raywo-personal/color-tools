@@ -33,6 +33,11 @@ export class SingleColorShades {
 
 
   protected isBaseColor(color: Color): boolean {
+    return color.hex() === this.color().startingColor.hex();
+  }
+
+
+  protected isCurrentColor(color: Color): boolean {
     return color.hex() === this.color().color.hex();
   }
 

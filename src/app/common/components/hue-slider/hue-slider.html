@@ -1,0 +1,8 @@
+<div class="slider-container">
+  <input class="slider hue-slider"
+         type="range"
+         min="0"
+         max="360"
+         [(ngModel)]="hue"
+         (ngModelChange)="onHueChanged($event)"/>
+</div>

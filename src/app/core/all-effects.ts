@@ -16,7 +16,7 @@ import {saveStateEffect} from "@core/common/persistence.effects";
 
 export function allEffects(
   this: void,
-  // Must be unknown because otherwise we would  have circular referencing
+  // Must be unknown because otherwise we would have circular referencing
   // between AppStateStore and Effects.
   store: unknown,
   events = inject(Events),

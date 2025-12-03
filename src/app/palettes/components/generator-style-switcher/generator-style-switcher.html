@@ -1,61 +1,35 @@
-<div class="form-check form-switch form-check-inline">
-  <input class="form-check-input"
-         type="checkbox"
-         name="styleRadio"
-         id="random"
-         value="random"
-         [ngModel]="useRandom()"
-         (ngModelChange)="useRandomChanged($event)"
-         role="switch"
-         switch>
-  <label class="form-check-label" for="random">
-    Random
-  </label>
+<div class="hstack gap-2 align-self-end">
+  <div class="form-check form-switch form-check-inline">
+    <input class="form-check-input"
+           type="checkbox"
+           name="styleRadio"
+           id="random"
+           value="random"
+           [ngModel]="useRandom()"
+           (ngModelChange)="useRandomChanged($event)"
+           role="switch"
+           switch>
+    <label class="form-check-label" for="random">
+      Use random style
+    </label>
+  </div>
+
+
+  <div class="d-inline-block" ngbDropdown>
+    <button type="button"
+            class="btn btn-outline-secondary"
+            id="styleSwitcher"
+            [disabled]="useRandom()"
+            ngbDropdownToggle>
+      {{ styleCaption() }}
+    </button>
+
+    <div ngbDropdownMenu aria-labelledby="styleSwitcher">
+      @for (style of styles; track $index) {
+        <button ngbDropdownItem app-style-button [forStyle]="style"></button>
+      }
+    </div>
+  </div>
 </div>
 
-<div class="btn-group"
-     role="group"
-     aria-label="Palette creation style selector">
-  <button type="button"
-          class="btn btn-outline-secondary"
-          [class.active]="style() === 'vibrant-balanced'"
-          (click)="setStyle('vibrant-balanced')"
-          [disabled]="useRandom()">
-    <span class="me-2">
-      @if (style() === "vibrant-balanced") {
-        <i class="bi bi-check-lg"></i>
-      } @else {
-        &nbsp;
-      }
-    </span>
-    Vibrant
-  </button>
-  <button type="button"
-          class="btn btn-outline-secondary"
-          [class.active]="style() === 'muted-analog-split'"
-          (click)="setStyle('muted-analog-split')"
-          [disabled]="useRandom()">
-    <span class="me-2">
-      @if (style() === "muted-analog-split") {
-        <i class="bi bi-check-lg"></i>
-      } @else {
-        &nbsp;
-      }
-    </span>
-    Muted analog split
-  </button>
-  <button type="button"
-          class="btn btn-outline-secondary"
-          [class.active]="style() === 'high-contrast'"
-          (click)="setStyle('high-contrast')"
-          [disabled]="useRandom()">
-    <span class="me-2">
-      @if (style() === "high-contrast") {
-        <i class="bi bi-check-lg"></i>
-      } @else {
-        &nbsp;
-      }
-    </span>
-    High contrast
-  </button>
-</div>
+

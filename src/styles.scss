@@ -8,6 +8,7 @@
 @use "app/styles/dark-mode";
 @use "app/styles/converter";
 @use "app/styles/color-palette";
+@use "app/styles/sliders";
 
 
 /* Override Bootstrap Icons font-display. "swap" is recommended. */
@@ -20,6 +21,8 @@
 
 :root, :host {
   --ct-header-height: 80px;
+  --ct-palette-header-height: 6rem;
+  --ct-body-top-padding: 1.5rem;
   --ct-header-bg: var(--bs-body-bg);
   --ct-gutter-x: 1rem;
   --ct-scroll-shadow: hsla(0 0% 0% / 0.1) 0 0.5rem 1rem;
@@ -45,7 +48,7 @@ table.color-swatches {
 }
 
 .main {
-  padding-top: 1.5rem;
+  padding-top: var(--ct-body-top-padding);
 }
 
 .clickable {

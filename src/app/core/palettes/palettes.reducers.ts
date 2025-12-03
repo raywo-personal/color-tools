@@ -1,6 +1,6 @@
 import {EventInstance} from "@ngrx/signals/events";
 import {generatePalette} from "@palettes/helper/palette.helper";
-import {Palette} from "@palettes/models/palette.model";
+import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {PaletteStyle, randomStyle} from "@palettes/models/palette-style.model";
 import {paletteFromId, paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {PaletteColor} from "@palettes/models/palette-color.model";
@@ -12,17 +12,12 @@ export function newRandomPaletteReducer(
   event: EventInstance<"[Palettes] newRandomPalette", void>,
   state: AppState
 ) {
-  if (state.useRandomStyle) {
-    const style: PaletteStyle = randomStyle();
-
-    return {
-      currentPalette: generatePalette(style),
-      paletteStyle: style
-    };
-  }
+  const paletteColors = getPinnedPaletteColors(state);
+  const style = state.useRandomStyle ? randomStyle() : state.paletteStyle;
 
   return {
-    currentPalette: generatePalette(state.paletteStyle)
+    currentPalette: generatePalette(style, paletteColors),
+    paletteStyle: style
   };
 }
 
@@ -78,5 +73,36 @@ export function styleChangedReducer(
   event: EventInstance<"[Palettes] styleChanged", PaletteStyle>,
   state: AppState
 ) {
-  return {paletteStyle: event.payload};
+  const newStyle = event.payload;
+  const paletteColors = getPinnedPaletteColors(state);
+  const newPalette = generatePalette(newStyle, paletteColors);
+
+  return {paletteStyle: newStyle, currentPalette: newPalette};
+}
+
+
+export function seedHueChangedReducer(
+  this: void,
+  event: EventInstance<"[Palettes] seedHueChanged", number>,
+  state: AppState
+) {
+  const hue = event.payload;
+  const style = state.paletteStyle;
+  const paletteColors = getPinnedPaletteColors(state);
+  const palette = generatePalette(style, paletteColors);
+
+  return {currentPalette: palette};
+}
+
+
+function getPinnedPaletteColors(state: AppState) {
+  const paletteColors: Partial<PaletteColors> = {};
+
+  PALETTE_SLOTS.forEach(slot => {
+    const color = state.currentPalette[slot];
+
+    if (color.isPinned) paletteColors[slot] = color;
+  });
+
+  return paletteColors;
 }
