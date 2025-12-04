@@ -9,6 +9,7 @@ export const palettesEvents = eventGroup({
   source: "Palettes",
   events: {
     newRandomPalette: type<void>(),
+    newPalette: type<void>(),
     restorePalette: type<string>(),
     updatePaletteColor: type<PaletteColor>(),
     paletteChanged: type<Palette>(),

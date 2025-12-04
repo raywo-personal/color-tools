@@ -10,6 +10,19 @@ import {AppState} from "@core/models/app-state.model";
 export function newRandomPaletteReducer(
   this: void,
   event: EventInstance<"[Palettes] newRandomPalette", void>,
+) {
+  const style: PaletteStyle = "random";
+
+  return {
+    currentPalette: generatePalette(style),
+    paletteStyle: style
+  };
+}
+
+
+export function newPaletteReducer(
+  this: void,
+  event: EventInstance<"[Palettes] newPalette", void>,
   state: AppState
 ) {
   const paletteColors = getPinnedPaletteColors(state);
