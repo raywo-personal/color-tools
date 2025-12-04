@@ -1,8 +1,9 @@
 import {Events} from "@ngrx/signals/events";
-import {tap} from "rxjs";
 import {Router} from "@angular/router";
 import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
+import {converterEvents} from "@core/converter/converter.events";
+import {tap} from "rxjs";
 
 
 export function navigateToPaletteIdEffect(
@@ -16,10 +17,11 @@ export function navigateToPaletteIdEffect(
   return events
     .on(
       palettesEvents.newRandomPalette,
-      palettesEvents.updatePaletteColor
+      palettesEvents.updatePaletteColor,
+      converterEvents.useColorAsPaletteStarter
     )
     .pipe(
-      tap(event => {
+      tap(() => {
         const palette = typedStore.currentPalette();
         void router.navigate(["/palettes", palette.id]);
       })

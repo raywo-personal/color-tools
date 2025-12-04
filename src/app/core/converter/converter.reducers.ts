@@ -4,6 +4,8 @@ import {createShades, createTints} from "@common/helpers/tints-and-shades.helper
 import {ColorSpace} from "@common/models/color-space.model";
 import {AppState} from "@core/models/app-state.model";
 import {contrastingColor} from "@common/helpers/contrasting-color.helper";
+import {paletteColorFrom} from "@palettes/models/palette-color.model";
+import {generatePalette} from "@palettes/helper/palette.helper";
 
 
 export function newRandomColorReducer(
@@ -95,4 +97,18 @@ export function useAsBackgroundReducer(
   state: AppState
 ) {
   return {useAsBackground: event.payload};
+}
+
+
+export function useColorAsPaletteStarterReducer(
+  this: void,
+  event: EventInstance<"[Converter] useColorAsPaletteStarter", Color>,
+  state: AppState
+) {
+  const color = event.payload;
+  const style = state.paletteStyle;
+  const color0 = paletteColorFrom(color, "color0", color, true);
+  const palette = generatePalette(style, {color0});
+
+  return {currentPalette: palette};
 }

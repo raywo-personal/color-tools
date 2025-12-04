@@ -1,5 +1,5 @@
 import {Component, computed, inject} from '@angular/core';
-import {BackgroundButtons} from "@converter/components/background-buttons/background-buttons";
+import {FunctionButtons} from "@converter/components/background-buttons/function-buttons";
 import {ColorPreview} from "@converter/components/color-preview/color-preview/color-preview";
 import {ColorSwatches} from "@converter/components/color-swatches/color-swatches";
 import {HexInput} from "@converter/components/hex-input/hex-input";
@@ -12,7 +12,7 @@ import {AppStateStore} from "@core/app-state.store";
 @Component({
   selector: 'app-converter',
   imports: [
-    BackgroundButtons,
+    FunctionButtons,
     ColorPreview,
     ColorSwatches,
     HexInput,

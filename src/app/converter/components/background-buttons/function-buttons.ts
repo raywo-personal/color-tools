@@ -5,12 +5,12 @@ import {AppStateStore} from "@core/app-state.store";
 
 
 @Component({
-  selector: 'app-background-buttons',
+  selector: 'app-function-buttons',
   imports: [],
-  templateUrl: './background-buttons.html',
+  templateUrl: './function-buttons.html',
   styles: ``
 })
-export class BackgroundButtons {
+export class FunctionButtons {
 
   readonly #stateStore = inject(AppStateStore);
   readonly #dispatch = injectDispatch(converterEvents);
@@ -26,6 +26,13 @@ export class BackgroundButtons {
 
   protected restoreBackground() {
     this.#dispatch.useAsBackgroundChanged(false);
+  }
+
+
+  protected useAsPaletteStarter() {
+    const currentColor = this.#stateStore.currentColor();
+
+    this.#dispatch.useColorAsPaletteStarter(currentColor);
   }
 
 }
