@@ -4,7 +4,7 @@ import {randomBetween} from "@common/helpers/random.helper";
 
 
 @Component({
-  selector: 'app-luminance-slider',
+  selector: 'ct-luminance-slider',
   imports: [
     FormsModule
   ],

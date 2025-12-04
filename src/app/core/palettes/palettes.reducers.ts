@@ -24,8 +24,7 @@ export function newRandomPaletteReducer(
 
 export function restorePaletteReducer(
   this: void,
-  event: EventInstance<"[Palettes] restorePalette", string>,
-  state: AppState
+  event: EventInstance<"[Palettes] restorePalette", string>
 ) {
   const paletteId = event.payload;
   const palette = paletteFromId(paletteId);
@@ -52,8 +51,7 @@ export function updatePaletteColorReducer(
 
 export function paletteChangedReducer(
   this: void,
-  event: EventInstance<"[Palettes] paletteChanged", Palette>,
-  state: AppState
+  event: EventInstance<"[Palettes] paletteChanged", Palette>
 ) {
   return {currentPalette: event.payload};
 }
@@ -61,8 +59,7 @@ export function paletteChangedReducer(
 
 export function useRandomChangedReducer(
   this: void,
-  event: EventInstance<"[Palettes] useRandomChanged", boolean>,
-  state: AppState
+  event: EventInstance<"[Palettes] useRandomChanged", boolean>
 ) {
   return {useRandomStyle: event.payload};
 }
@@ -89,7 +86,7 @@ export function seedHueChangedReducer(
   const hue = event.payload;
   const style = state.paletteStyle;
   const paletteColors = getPinnedPaletteColors(state);
-  const palette = generatePalette(style, paletteColors);
+  const palette = generatePalette(style, paletteColors, hue);
 
   return {currentPalette: palette};
 }

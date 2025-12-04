@@ -9,7 +9,7 @@ import {NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle} from "
 
 
 @Component({
-  selector: 'app-generator-style-switcher',
+  selector: 'ct-generator-style-switcher',
   imports: [
     FormsModule,
     StyleButton,

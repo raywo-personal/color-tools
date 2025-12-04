@@ -7,7 +7,7 @@ import {converterEvents} from "@core/converter/converter.events";
 
 
 @Component({
-  selector: 'app-paste-target',
+  selector: 'ct-paste-target',
   imports: [
     FormsModule
   ],

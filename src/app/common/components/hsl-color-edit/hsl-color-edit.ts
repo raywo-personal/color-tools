@@ -6,7 +6,7 @@ import chroma, {Color} from "chroma-js";
 
 
 @Component({
-  selector: 'app-hsl-color-edit',
+  selector: 'ct-hsl-color-edit',
   imports: [
     HueSliderComponent,
     LuminanceSlider,

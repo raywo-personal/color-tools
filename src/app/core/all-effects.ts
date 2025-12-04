@@ -9,9 +9,9 @@ import {ColorThemeService} from "@common/services/color-theme.service";
 import {Router} from "@angular/router";
 import {colorThemeChangeEffect} from "@core/common/common.effects";
 import {colorChangedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
-import {navigateToPaletteIdEffect} from "@core/palettes/palettes.effects";
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
+import {navigateToPaletteIdEffect} from "@core/common/navigation.effects";
 
 
 export function allEffects(

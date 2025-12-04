@@ -10,7 +10,7 @@ import {styleCaptionFor, styleDescriptionFor} from "@palettes/models/palette-sty
 
 
 @Component({
-  selector: 'app-color-palette',
+  selector: 'ct-color-palette',
   imports: [
     SinglePaletteColor,
     GeneratorStyleSwitcher

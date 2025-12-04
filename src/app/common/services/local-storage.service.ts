@@ -39,10 +39,6 @@ export class LocalStorage {
     return v ?? fallback;
   }
 
-  public get$<K extends SettingKey>(key: K): BehaviorSubject<SettingsMap[K]> {
-    return this.settings.get(key) as BehaviorSubject<SettingsMap[K]>;
-  }
-
 
   public clearSettings(): void {
     localStorage.clear();

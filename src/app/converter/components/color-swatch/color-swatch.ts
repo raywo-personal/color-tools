@@ -9,7 +9,7 @@ import {converterEvents} from "@core/converter/converter.events";
 
 
 @Component({
-  selector: 'app-color-swatch',
+  selector: 'ct-color-swatch',
   imports: [
     NgTemplateOutlet,
     KeyValueDisplay,
@@ -40,7 +40,7 @@ export class ColorSwatch {
 
 
   protected copyToClipboard() {
-    navigator.clipboard.writeText(this.cssToCopy());
+    void navigator.clipboard.writeText(this.cssToCopy());
   }
 
 

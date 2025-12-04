@@ -13,7 +13,7 @@ import {HslColorEdit} from "@common/components/hsl-color-edit/hsl-color-edit";
 
 
 @Component({
-  selector: 'app-single-palette-color',
+  selector: 'ct-single-palette-color',
   imports: [
     ToggleButton,
     SingleColorShades,

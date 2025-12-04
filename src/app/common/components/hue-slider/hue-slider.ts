@@ -5,7 +5,7 @@ import {randomBetween} from "@common/helpers/random.helper";
 
 
 @Component({
-  selector: 'app-hue-slider',
+  selector: 'ct-hue-slider',
   standalone: true,
   imports: [FormsModule],
   templateUrl: "./hue-slider.html",

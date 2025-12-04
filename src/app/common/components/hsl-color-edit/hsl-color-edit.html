@@ -1,19 +1,19 @@
 <div class="hstack">
   H
-  <app-hue-slider class="w-100"
+  <ct-hue-slider class="w-100"
                   [hue]="colorHue()"
                   (hueChanged)="updateHue($event)"/>
 </div>
 <div class="hstack">
   S
-  <app-saturation-slider class="w-100"
+  <ct-saturation-slider class="w-100"
                          [sat]="colorSaturation()"
                          (satChanged)="updateSaturation($event)"
                          [baseColor]="color()"/>
 </div>
 <div class="hstack">
   L
-  <app-luminance-slider class="w-100"
+  <ct-luminance-slider class="w-100"
                         [lum]="colorLuminance()"
                         (lumChanged)="updateLuminance($event)"/>
 </div>

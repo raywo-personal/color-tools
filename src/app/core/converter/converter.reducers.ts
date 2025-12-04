@@ -4,6 +4,8 @@ import {createShades, createTints} from "@common/helpers/tints-and-shades.helper
 import {ColorSpace} from "@common/models/color-space.model";
 import {AppState} from "@core/models/app-state.model";
 import {contrastingColor} from "@common/helpers/contrasting-color.helper";
+import {paletteColorFrom} from "@palettes/models/palette-color.model";
+import {generatePalette} from "@palettes/helper/palette.helper";
 
 
 export function newRandomColorReducer(
@@ -82,8 +84,7 @@ export function useBezierReducer(
 
 export function displayColorSpaceReducer(
   this: void,
-  event: EventInstance<"[Converter] displayColorSpaceChanged", ColorSpace>,
-  state: AppState
+  event: EventInstance<"[Converter] displayColorSpaceChanged", ColorSpace>
 ) {
   return {displayColorSpace: event.payload};
 }
@@ -91,8 +92,21 @@ export function displayColorSpaceReducer(
 
 export function useAsBackgroundReducer(
   this: void,
-  event: EventInstance<"[Converter] useAsBackgroundChanged", boolean>,
-  state: AppState
+  event: EventInstance<"[Converter] useAsBackgroundChanged", boolean>
 ) {
   return {useAsBackground: event.payload};
+}
+
+
+export function useColorAsPaletteStarterReducer(
+  this: void,
+  event: EventInstance<"[Converter] useColorAsPaletteStarter", Color>,
+  state: AppState
+) {
+  const color = event.payload;
+  const style = state.paletteStyle;
+  const color0 = paletteColorFrom(color, "color0", color, true);
+  const palette = generatePalette(style, {color0});
+
+  return {currentPalette: palette};
 }

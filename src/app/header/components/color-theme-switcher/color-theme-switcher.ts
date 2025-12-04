@@ -2,12 +2,12 @@ import {Component, inject} from '@angular/core';
 import {NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle} from '@ng-bootstrap/ng-bootstrap';
 import {ColorTheme} from '@common/models/color-theme.model';
 import {injectDispatch} from "@ngrx/signals/events";
-import {commonEvents} from "../../../core/common/common.events";
-import {AppStateStore} from "../../../core/app-state.store";
+import {commonEvents} from "@core/common/common.events";
+import {AppStateStore} from "@core/app-state.store";
 
 
 @Component({
-  selector: 'app-color-mode-switcher',
+  selector: 'ct-color-mode-switcher',
   imports: [
     NgbDropdown,
     NgbDropdownToggle,

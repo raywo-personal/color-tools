@@ -12,7 +12,7 @@
   } @else {
     @if (isEditing()) {
       <div class="palette-hsl-edit">
-        <app-hsl-color-edit [(color)]="editingColor"
+        <ct-hsl-color-edit [(color)]="editingColor"
                             (colorChange)="updateColor($event)"/>
       </div>
     }
