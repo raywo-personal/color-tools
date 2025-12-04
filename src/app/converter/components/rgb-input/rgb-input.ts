@@ -10,7 +10,7 @@ import {AppStateStore} from "@core/app-state.store";
 
 
 @Component({
-  selector: 'app-rgb-input',
+  selector: 'ct-rgb-input',
   imports: [
     ReactiveFormsModule,
     FormsModule,

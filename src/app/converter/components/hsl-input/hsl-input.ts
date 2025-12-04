@@ -10,7 +10,7 @@ import {converterEvents} from "@core/converter/converter.events";
 
 
 @Component({
-  selector: 'app-hsl-input',
+  selector: 'ct-hsl-input',
   imports: [
     ReactiveFormsModule,
     FormsModule,

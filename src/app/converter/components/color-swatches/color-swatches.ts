@@ -9,7 +9,7 @@ import {converterEvents} from "@core/converter/converter.events";
 
 
 @Component({
-  selector: 'app-color-swatches',
+  selector: 'ct-color-swatches',
   imports: [
     ColorSwatch,
     DecimalPipe,

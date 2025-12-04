@@ -8,7 +8,7 @@ import {converterEvents} from "@core/converter/converter.events";
 
 
 @Component({
-  selector: 'app-hex-input',
+  selector: 'ct-hex-input',
   imports: [
     FormsModule,
     CopyCss

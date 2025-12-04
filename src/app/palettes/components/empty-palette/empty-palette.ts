@@ -4,7 +4,7 @@ import {palettesEvents} from "@core/palettes/palettes.events";
 
 
 @Component({
-  selector: 'app-empty-palette',
+  selector: 'ct-empty-palette',
   imports: [],
   template: ``,
   styles: ``,

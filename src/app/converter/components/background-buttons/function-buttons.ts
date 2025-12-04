@@ -5,7 +5,7 @@ import {AppStateStore} from "@core/app-state.store";
 
 
 @Component({
-  selector: 'app-function-buttons',
+  selector: 'ct-function-buttons',
   imports: [],
   templateUrl: './function-buttons.html',
   styles: ``

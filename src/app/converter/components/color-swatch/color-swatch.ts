@@ -9,7 +9,7 @@ import {converterEvents} from "@core/converter/converter.events";
 
 
 @Component({
-  selector: 'app-color-swatch',
+  selector: 'ct-color-swatch',
   imports: [
     NgTemplateOutlet,
     KeyValueDisplay,

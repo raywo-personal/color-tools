@@ -10,7 +10,7 @@ import {AppStateStore} from "@core/app-state.store";
 
 
 @Component({
-  selector: 'app-converter',
+  selector: 'ct-converter',
   imports: [
     FunctionButtons,
     ColorPreview,

@@ -4,7 +4,7 @@
       {{ palette().name }}
     </h2>
 
-    <app-generator-style-switcher/>
+    <ct-generator-style-switcher/>
   </div>
 
   <strong class="text-muted">{{ styleName() }}</strong>
@@ -15,7 +15,7 @@
 
 <div class="color-palette">
   @for (slot of PALETTE_SLOTS; track $index) {
-    <app-single-palette-color [color]="palette()[slot]"
+    <ct-single-palette-color [color]="palette()[slot]"
                               [slot]="slot"/>
   }
 </div>

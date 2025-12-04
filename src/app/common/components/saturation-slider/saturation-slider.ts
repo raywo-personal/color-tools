@@ -5,7 +5,7 @@ import chroma from "chroma-js";
 
 
 @Component({
-  selector: 'app-saturation-slider',
+  selector: 'ct-saturation-slider',
   imports: [
     FormsModule
   ],

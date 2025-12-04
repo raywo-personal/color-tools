@@ -67,14 +67,14 @@
   <tr>
     @for (color of tintColors(); track $index) {
       <td>
-        <app-color-swatch [color]="color" [colorMode]="colorSpace()"/>
+        <ct-color-swatch [color]="color" [colorMode]="colorSpace()"/>
       </td>
     }
   </tr>
   <tr>
     @for (color of shadeColors(); track $index) {
       <td>
-        <app-color-swatch [color]="color" [colorMode]="colorSpace()"/>
+        <ct-color-swatch [color]="color" [colorMode]="colorSpace()"/>
       </td>
     }
   </tr>

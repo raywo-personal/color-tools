@@ -4,7 +4,7 @@ import {RouterOutlet} from '@angular/router';
 
 
 @Component({
-  selector: 'app-root',
+  selector: 'ct-root',
   imports: [TopBar, RouterOutlet],
   templateUrl: './app.html',
   styles: ``

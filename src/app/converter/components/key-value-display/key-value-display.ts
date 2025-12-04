@@ -3,7 +3,7 @@ import {DecimalPipe} from '@angular/common';
 
 
 @Component({
-  selector: 'app-key-value-display',
+  selector: 'ct-key-value-display',
   imports: [
     DecimalPipe
   ],
