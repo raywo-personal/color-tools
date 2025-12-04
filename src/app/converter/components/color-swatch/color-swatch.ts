@@ -40,7 +40,7 @@ export class ColorSwatch {
 
 
   protected copyToClipboard() {
-    navigator.clipboard.writeText(this.cssToCopy());
+    void navigator.clipboard.writeText(this.cssToCopy());
   }
 
 

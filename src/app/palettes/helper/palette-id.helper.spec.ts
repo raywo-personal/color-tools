@@ -185,7 +185,7 @@ describe('Palette ID Helper', () => {
 
       const restoredPalette = paletteFromId(id);
 
-      PALETTE_SLOTS.forEach((slot, index) => {
+      PALETTE_SLOTS.forEach(slot => {
         const originalColor = originalPalette[slot].color;
         const restoredColor = restoredPalette[slot].color;
 
@@ -219,7 +219,7 @@ describe('Palette ID Helper', () => {
 
       const restoredPalette = paletteFromId(id);
 
-      PALETTE_SLOTS.forEach((slot, index) => {
+      PALETTE_SLOTS.forEach(slot => {
         const originalStarting = originalPalette[slot].startingColor;
         const restoredStarting = restoredPalette[slot].startingColor;
 

@@ -84,8 +84,7 @@ export function useBezierReducer(
 
 export function displayColorSpaceReducer(
   this: void,
-  event: EventInstance<"[Converter] displayColorSpaceChanged", ColorSpace>,
-  state: AppState
+  event: EventInstance<"[Converter] displayColorSpaceChanged", ColorSpace>
 ) {
   return {displayColorSpace: event.payload};
 }
@@ -93,8 +92,7 @@ export function displayColorSpaceReducer(
 
 export function useAsBackgroundReducer(
   this: void,
-  event: EventInstance<"[Converter] useAsBackgroundChanged", boolean>,
-  state: AppState
+  event: EventInstance<"[Converter] useAsBackgroundChanged", boolean>
 ) {
   return {useAsBackground: event.payload};
 }

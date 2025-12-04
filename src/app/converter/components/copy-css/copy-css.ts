@@ -36,7 +36,7 @@ export class CopyCss {
 
 
   protected copyToClipboard(value: string) {
-    navigator.clipboard.writeText(value);
+    void navigator.clipboard.writeText(value);
   }
 
 }

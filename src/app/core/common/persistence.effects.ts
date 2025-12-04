@@ -12,7 +12,7 @@ export function saveStateEffect(events: Events,
   return events
     .on(persistenceEvents.saveAppState)
     .pipe(
-      tap(event => {
+      tap(() => {
         console.info("Saving app state to persistence ...");
 
         // `store` is unknown, because if it where AppStateStore, we would have

@@ -1,5 +1,5 @@
 <div class="color-swatch-container"
-     style="--ct-swatch-border-color: {{color().hex()}}">
+     [style.--ct-swatch-border-color]="color().hex()">
   <div class="color-swatch"
        [style.--ct-bg-color]="color().hex()">
     <div class="color-swatch-overlay">
@@ -51,24 +51,24 @@
 
 <ng-template #hslTemplate>
   <ct-key-value-display key="hue"
-                         [value]="color().hsl()[0]"
-                         [precision]="2"/>
+                        [value]="color().hsl()[0]"
+                        [precision]="2"/>
   <ct-key-value-display key="sat"
-                         [value]="color().hsl()[1]"
-                         [precision]="2"/>
+                        [value]="color().hsl()[1]"
+                        [precision]="2"/>
   <ct-key-value-display key="lum"
-                         [value]="color().hsl()[2]"
-                         [precision]="2"/>
+                        [value]="color().hsl()[2]"
+                        [precision]="2"/>
 </ng-template>
 
 <ng-template #rgbTemplate>
   <ct-key-value-display key="red"
-                         [value]="color().rgb()[0]"
-                         [precision]="0"/>
+                        [value]="color().rgb()[0]"
+                        [precision]="0"/>
   <ct-key-value-display key="green"
-                         [value]="color().rgb()[1]"
-                         [precision]="0"/>
+                        [value]="color().rgb()[1]"
+                        [precision]="0"/>
   <ct-key-value-display key="blue"
-                         [value]="color().rgb()[2]"
-                         [precision]="0"/>
+                        [value]="color().rgb()[2]"
+                        [precision]="0"/>
 </ng-template>
