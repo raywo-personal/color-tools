@@ -41,9 +41,9 @@ export const initialState: AppState = {
   tintColors: createTints(initialColor, true, true),
   shadeColors: createShades(initialColor, true, true),
 
-  paletteStyle: "muted-analog-split",
+  paletteStyle: "random",
   useRandomStyle: false,
-  currentPalette: generatePalette("muted-analog-split"),
+  currentPalette: generatePalette("random"),
 
   colorTheme: "system"
 };

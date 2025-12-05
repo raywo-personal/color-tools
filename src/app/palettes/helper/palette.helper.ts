@@ -8,16 +8,22 @@ import {generateComplementary} from "@palettes/helper/complementary-palette.help
 import {generateTriadic} from "@palettes/helper/triadic-palette.helper";
 import {generateAnalogous} from "@palettes/helper/analogous-palette.helper";
 import {generateSplitComplementary} from "@palettes/helper/split-complementary-palette.helper";
+import {generateHarmonic} from "@palettes/helper/harmonic-palette.helper";
+import {generateRandom} from "@palettes/helper/random-palette.helper";
 
 
 export function generatePalette(style: PaletteStyle,
                                 paletteColors: Partial<PaletteColors> = {},
                                 seedHue?: number): Palette {
   switch (style) {
+    case "random":
+      return generateRandom(paletteColors, seedHue);
     case "analogous":
       return generateAnalogous(paletteColors, seedHue);
     case 'muted-analog-split':
       return generateMutedAnalogSplit(paletteColors, seedHue);
+    case "harmonic":
+      return generateHarmonic(paletteColors, seedHue);
     case "monochromatic":
       return generateMonochromatic(paletteColors, seedHue);
     case 'vibrant-balanced':
@@ -31,6 +37,6 @@ export function generatePalette(style: PaletteStyle,
     case "split-complementary":
       return generateSplitComplementary(paletteColors, seedHue);
     default:
-      return generateAnalogous(paletteColors, seedHue);
+      return generateRandom(paletteColors, seedHue);
   }
 }
