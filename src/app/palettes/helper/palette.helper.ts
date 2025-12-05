@@ -1,4 +1,4 @@
-import {PaletteStyle} from '@palettes/models/palette-style.model';
+import {PaletteStyle, styleCaptionFor} from '@palettes/models/palette-style.model';
 import {generateVibrantBalanced} from '@palettes/helper/vibrant-palette.helper';
 import {generateMutedAnalogSplit} from '@palettes/helper/muted-analog-split-palette.helper';
 import {generateHighContrast} from '@palettes/helper/high-contrast-palette.helper';
@@ -10,6 +10,9 @@ import {generateAnalogous} from "@palettes/helper/analogous-palette.helper";
 import {generateSplitComplementary} from "@palettes/helper/split-complementary-palette.helper";
 import {generateHarmonic} from "@palettes/helper/harmonic-palette.helper";
 import {generateRandom} from "@palettes/helper/random-palette.helper";
+import {paletteIdFrom} from "@palettes/helper/palette-id.helper";
+import {colorName} from "@common/helpers/color-name.helper";
+import {paletteName} from "@palettes/helper/palette-name.helper";
 
 
 export function generatePalette(style: PaletteStyle,
@@ -39,4 +42,25 @@ export function generatePalette(style: PaletteStyle,
     default:
       return generateRandom(paletteColors, seedHue);
   }
+}
+
+
+export function paletteFrom(paletteColors: PaletteColors,
+                            style: PaletteStyle): Palette {
+  const palette: Palette = {
+    id: "",
+    name: "",
+    style,
+    ...paletteColors
+  };
+  palette.id = paletteIdFrom(paletteColors, style);
+  palette.name = paletteName(style, paletteColors.color0.color);
+
+  return palette;
+}
+
+
+export function paletteNameFrom(paletteColors: PaletteColors,
+                                style: PaletteStyle): string {
+  return `${styleCaptionFor("random")} – ${colorName(paletteColors.color0.color)}`;
 }

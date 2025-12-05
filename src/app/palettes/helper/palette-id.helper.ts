@@ -1,7 +1,7 @@
 import chroma, {Color} from "chroma-js";
 import {base62ToBigInt, bigIntToBase62} from "@common/helpers/base62.helper";
 import {PaletteStyle, PaletteStyles, randomStyle} from "@palettes/models/palette-style.model";
-import {Palette, PALETTE_SLOTS} from "@palettes/models/palette.model";
+import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {paletteName} from "@palettes/helper/palette-name.helper";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
 
@@ -14,7 +14,28 @@ import {paletteColorFrom} from "@palettes/models/palette-color.model";
 const PALETTE_ID_BASE62_LENGTH = 42;
 
 
+export function paletteIdFrom(paletteColors: PaletteColors,
+                              style: PaletteStyle): string {
+  const pColors = PALETTE_SLOTS
+    .map(slot => paletteColors[slot]);
+
+  const colors: Color[] = [
+    ...pColors.map(pc => pc.color),
+    ...pColors.map(pc => pc.startingColor),
+  ];
+
+  // Create a bitmask for the pinned state
+  const pinnedMask = pColors
+    .reduce((mask, pc, index) => {
+      return pc.isPinned ? mask | (1 << index) : mask;
+    }, 0);
+
+  return paletteIdFromColors(colors, style, pinnedMask);
+}
+
+
 /**
+ * @deprecated Use `paletteIdFrom` instead.
  * Generates a unique palette ID based on the colors and style of the
  * provided palette.
  *
@@ -37,6 +58,7 @@ export function paletteIdFromPalette(palette: Palette): string {
 
   return paletteIdFromColors(colors, palette.style, pinnedMask);
 }
+
 
 /**
  * Generates a palette object from a given palette ID.

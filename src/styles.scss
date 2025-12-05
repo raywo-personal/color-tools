@@ -9,6 +9,7 @@
 @use "app/styles/converter";
 @use "app/styles/color-palette";
 @use "app/styles/sliders";
+@use "app/styles/drag-n-drop";
 
 
 /* Override Bootstrap Icons font-display. "swap" is recommended. */
@@ -53,6 +54,10 @@ table.color-swatches {
 
 .clickable {
   cursor: pointer;
+}
+
+.draggable {
+  cursor: ew-resize !important;
 }
 
 .title-bar {

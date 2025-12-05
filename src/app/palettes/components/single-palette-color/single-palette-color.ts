@@ -10,18 +10,27 @@ import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {HslColorEdit} from "@common/components/hsl-color-edit/hsl-color-edit";
+import {CdkDragHandle} from "@angular/cdk/drag-drop";
 
 
 @Component({
-  selector: 'ct-single-palette-color',
+  selector: 'div[ct-single-palette-color]',
   imports: [
     ToggleButton,
     SingleColorShades,
     NgbTooltip,
-    HslColorEdit
+    HslColorEdit,
+    CdkDragHandle
   ],
   templateUrl: './single-palette-color.html',
   styles: ``,
+  host: {
+    "class": "palette-color",
+    "[class.showing-shades]": "showShades()",
+    "[style.--ct-color-bg-color]": "colorHex()",
+    "[style.--ct-color-text-color]": "textColor().hex()",
+    "[style.--ct-color-muted-text-color]": "mutedTextColor().hex()"
+  }
 })
 export class SinglePaletteColor {
 
@@ -35,6 +44,10 @@ export class SinglePaletteColor {
     return this.color().color.hex().toUpperCase();
   });
 
+  protected readonly colorHexCaption = computed(() => {
+    return this.colorHex().replace("#", "");
+  });
+
   protected readonly textColor = computed(() => {
     return contrastingColor(this.color().color);
   });
@@ -44,7 +57,6 @@ export class SinglePaletteColor {
   });
 
   protected readonly isPinned = computed(() => {
-    // console.log("color", this.color())
     return this.color().isPinned;
   });
 

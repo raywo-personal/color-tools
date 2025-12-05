@@ -18,6 +18,7 @@ export function navigateToPaletteIdEffect(
     .on(
       palettesEvents.newRandomPalette,
       palettesEvents.updatePaletteColor,
+      palettesEvents.paletteChanged,
       converterEvents.useColorAsPaletteStarter
     )
     .pipe(

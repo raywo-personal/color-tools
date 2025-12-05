@@ -13,9 +13,17 @@
   </p>
 </div>
 
-<div class="color-palette">
+<div class="color-palette"
+     cdkDropList
+     cdkDropListOrientation="horizontal">
   @for (slot of PALETTE_SLOTS; track $index) {
-    <ct-single-palette-color [color]="palette()[slot]"
-                              [slot]="slot"/>
+    <div ct-single-palette-color
+         class="single-palette-color"
+         [color]="palette()[slot]"
+         [slot]="slot"
+         cdkDrag
+         cdkDragBoundary=".color-palette"
+         (cdkDragDropped)="drop($event)">
+    </div>
   }
 </div>
