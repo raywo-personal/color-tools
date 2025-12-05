@@ -14,6 +14,14 @@ import {paletteColorFrom} from "@palettes/models/palette-color.model";
 const PALETTE_ID_BASE62_LENGTH = 42;
 
 
+/**
+ * Generates a unique palette ID based on the provided colors and style.
+ *
+ * @param {PaletteColors} paletteColors - The PaletteColors object, the palette
+ *                                        is based upon.
+ * @param {PaletteStyle} style - The style of the palette.
+ * @return {string} A unique identifier for the given palette.
+ */
 export function paletteIdFrom(paletteColors: PaletteColors,
                               style: PaletteStyle): string {
   const pColors = PALETTE_SLOTS
@@ -31,32 +39,6 @@ export function paletteIdFrom(paletteColors: PaletteColors,
     }, 0);
 
   return paletteIdFromColors(colors, style, pinnedMask);
-}
-
-
-/**
- * @deprecated Use `paletteIdFrom` instead.
- * Generates a unique palette ID based on the colors and style of the
- * provided palette.
- *
- * @param {Palette} palette - The palette object containing color and style data.
- * @return {string} A unique identifier for the given palette.
- */
-export function paletteIdFromPalette(palette: Palette): string {
-  const paletteColors = PALETTE_SLOTS.map(slot => palette[slot]);
-
-  const colors: Color[] = [
-    ...paletteColors.map(pc => pc.color),
-    ...paletteColors.map(pc => pc.startingColor),
-  ];
-
-  // Create a bitmask for the pinned state
-  const pinnedMask = paletteColors
-    .reduce((mask, pc, index) => {
-      return pc.isPinned ? mask | (1 << index) : mask;
-    }, 0);
-
-  return paletteIdFromColors(colors, palette.style, pinnedMask);
 }
 
 

@@ -1,12 +1,10 @@
 import {Palette, PaletteColors, PaletteSlot} from "@palettes/models/palette.model";
 import {randomBetween} from "@common/helpers/random.helper";
 import {fromHsl} from "@common/helpers/color-from-hsl.helper";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
-import {colorName} from "@common/helpers/color-name.helper";
 import {PaletteColor, paletteColorFrom} from "@palettes/models/palette-color.model";
-import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {clamp01, hueWrap} from "@common/helpers/hsl.helper";
-import {vary} from "@palettes/helper/number.helper";
+import {vary} from "@palettes/helper/variation.helper";
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 /**
@@ -40,43 +38,33 @@ export function generateSplitComplementary(paletteColors: Partial<PaletteColors>
     };
 
   const variationAmount = 0.025;
-  const color0 = createColor("color0", hue, baseSat, baseLight);
-  const color1 = createColor(
+  const pColors = {} as PaletteColors;
+
+  pColors.color0 = createColor("color0", hue, baseSat, baseLight);
+  pColors.color1 = createColor(
     "color1",
     hueWrap(hue + 150),
     clamp01(vary(baseSat, variationAmount)),
     clamp01(vary(baseLight, variationAmount))
   );
-  const color2 = createColor(
+  pColors.color2 = createColor(
     "color2",
     hueWrap(hue + 210),
     clamp01(vary(baseSat, variationAmount)),
     clamp01(vary(baseLight, variationAmount))
   );
-  const color3 = createColor(
+  pColors.color3 = createColor(
     "color3",
     hue,
     clamp01(vary(baseSat - 0.30, variationAmount)),
     clamp01(vary(baseLight + 0.20, variationAmount))
   );
-  const color4 = createColor(
+  pColors.color4 = createColor(
     "color4",
     hueWrap(hue + 180),
     clamp01(vary(baseSat - 0.40, variationAmount)),
     clamp01(vary(baseLight + 0.30, variationAmount))
   );
 
-  const palette: Palette = {
-    id: "",
-    name: `${styleCaptionFor("split-complementary")} – ${colorName(color0.color)}`,
-    style: "split-complementary",
-    color0,
-    color1,
-    color2,
-    color3,
-    color4
-  };
-  palette.id = paletteIdFromPalette(palette);
-
-  return palette;
+  return paletteFrom(pColors, "split-complementary");
 }

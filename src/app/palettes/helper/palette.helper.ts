@@ -1,4 +1,4 @@
-import {PaletteStyle, styleCaptionFor} from '@palettes/models/palette-style.model';
+import {PaletteStyle} from '@palettes/models/palette-style.model';
 import {generateVibrantBalanced} from '@palettes/helper/vibrant-palette.helper';
 import {generateMutedAnalogSplit} from '@palettes/helper/muted-analog-split-palette.helper';
 import {generateHighContrast} from '@palettes/helper/high-contrast-palette.helper';
@@ -11,7 +11,6 @@ import {generateSplitComplementary} from "@palettes/helper/split-complementary-p
 import {generateHarmonic} from "@palettes/helper/harmonic-palette.helper";
 import {generateRandom} from "@palettes/helper/random-palette.helper";
 import {paletteIdFrom} from "@palettes/helper/palette-id.helper";
-import {colorName} from "@common/helpers/color-name.helper";
 import {paletteName} from "@palettes/helper/palette-name.helper";
 
 
@@ -45,22 +44,21 @@ export function generatePalette(style: PaletteStyle,
 }
 
 
+/**
+ * Generates a palette object based on the provided palette colors and style.
+ *
+ * @param {PaletteColors} paletteColors - An object containing the colors of
+ *                                        the palette.
+ * @param {PaletteStyle} style - The style configuration for the palette.
+ * @return {Palette} A complete palette object that includes an ID, name,
+ *                   style, and color definitions.
+ */
 export function paletteFrom(paletteColors: PaletteColors,
                             style: PaletteStyle): Palette {
-  const palette: Palette = {
-    id: "",
-    name: "",
+  return {
+    id: paletteIdFrom(paletteColors, style),
+    name: paletteName(style, paletteColors.color0.color),
     style,
     ...paletteColors
   };
-  palette.id = paletteIdFrom(paletteColors, style);
-  palette.name = paletteName(style, paletteColors.color0.color);
-
-  return palette;
-}
-
-
-export function paletteNameFrom(paletteColors: PaletteColors,
-                                style: PaletteStyle): string {
-  return `${styleCaptionFor("random")} – ${colorName(paletteColors.color0.color)}`;
 }

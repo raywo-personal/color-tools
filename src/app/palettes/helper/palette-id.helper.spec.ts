@@ -1,8 +1,9 @@
 import chroma, {Color} from 'chroma-js';
-import {isRestorable, paletteFromId, paletteIdFromPalette} from './palette-id.helper';
-import {Palette, PALETTE_SLOTS} from '@palettes/models/palette.model';
+import {isRestorable, paletteFromId} from './palette-id.helper';
+import {Palette, PALETTE_SLOTS, PaletteColors} from '@palettes/models/palette.model';
 import {paletteColorFrom} from '@palettes/models/palette-color.model';
 import {PaletteStyle, PaletteStyles} from '@palettes/models/palette-style.model';
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 describe('Palette ID Helper', () => {
@@ -16,22 +17,18 @@ describe('Palette ID Helper', () => {
     style: PaletteStyle,
     pinnedStates: boolean[] = [false, false, false, false, false]
   ): Palette {
-    const paletteColors = PALETTE_SLOTS.reduce((acc, slot, index) => {
-      acc[slot] = paletteColorFrom(
-        colors[index],
-        slot,
-        startingColors[index],
-        pinnedStates[index]
-      );
-      return acc;
-    }, {} as any);
+    const paletteColors = PALETTE_SLOTS
+      .reduce((acc, slot, index) => {
+        acc[slot] = paletteColorFrom(
+          colors[index],
+          slot,
+          startingColors[index],
+          pinnedStates[index]
+        );
+        return acc;
+      }, {} as PaletteColors);
 
-    return {
-      id: '',
-      name: 'Test Palette',
-      style,
-      ...paletteColors
-    } as Palette;
+    return paletteFrom(paletteColors, style);
   }
 
   describe('paletteIdFromPalette', () => {
@@ -46,7 +43,7 @@ describe('Palette ID Helper', () => {
       ];
       const palette = createTestPalette(colors, colors, 'analogous');
 
-      const id = paletteIdFromPalette(palette);
+      const id = palette.id
 
       expect(id).toBeDefined();
       expect(typeof id).toBe('string');
@@ -75,8 +72,8 @@ describe('Palette ID Helper', () => {
       ];
       const brightPalette = createTestPalette(brightColors, brightColors, 'monochromatic');
 
-      const darkId = paletteIdFromPalette(darkPalette);
-      const brightId = paletteIdFromPalette(brightPalette);
+      const darkId = darkPalette.id;
+      const brightId = brightPalette.id;
 
       // Both IDs should have exactly the same length (43 characters)
       expect(darkId.length).toBe(43);
@@ -92,10 +89,11 @@ describe('Palette ID Helper', () => {
         chroma('#FF00FF')
       ];
 
-      const ids = PaletteStyles.map(style => {
-        const palette = createTestPalette(colors, colors, style);
-        return paletteIdFromPalette(palette);
-      });
+      const ids = PaletteStyles
+        .map(style => {
+          const palette = createTestPalette(colors, colors, style);
+          return palette.id;
+        });
 
       // All IDs should be unique
       const uniqueIds = new Set(ids);
@@ -115,8 +113,8 @@ describe('Palette ID Helper', () => {
         'analogous'
       );
 
-      const id1 = paletteIdFromPalette(palette1);
-      const id2 = paletteIdFromPalette(palette2);
+      const id1 = palette1.id;
+      const id2 = palette2.id;
 
       expect(id1).not.toBe(id2);
     });
@@ -144,8 +142,8 @@ describe('Palette ID Helper', () => {
         [true, false, true, false, true]
       );
 
-      const id1 = paletteIdFromPalette(paletteNoPinned);
-      const id2 = paletteIdFromPalette(paletteWithPinned);
+      const id1 = paletteNoPinned.id;
+      const id2 = paletteWithPinned.id;
 
       expect(id1).not.toBe(id2);
     });
@@ -164,7 +162,7 @@ describe('Palette ID Helper', () => {
           chroma('#FF00FF')
         ];
         const originalPalette = createTestPalette(colors, colors, style);
-        const id = paletteIdFromPalette(originalPalette);
+        const id = originalPalette.id;
 
         const restoredPalette = paletteFromId(id);
 
@@ -181,7 +179,7 @@ describe('Palette ID Helper', () => {
         chroma('#FF00FF')
       ];
       const originalPalette = createTestPalette(colors, colors, 'analogous');
-      const id = paletteIdFromPalette(originalPalette);
+      const id = originalPalette.id;
 
       const restoredPalette = paletteFromId(id);
 
@@ -215,7 +213,7 @@ describe('Palette ID Helper', () => {
         chroma('#AA00AA')
       ];
       const originalPalette = createTestPalette(colors, startingColors, 'analogous');
-      const id = paletteIdFromPalette(originalPalette);
+      const id = originalPalette.id;
 
       const restoredPalette = paletteFromId(id);
 
@@ -242,7 +240,7 @@ describe('Palette ID Helper', () => {
       ];
       const pinnedStates = [true, false, true, false, true];
       const originalPalette = createTestPalette(colors, colors, 'analogous', pinnedStates);
-      const id = paletteIdFromPalette(originalPalette);
+      const id = originalPalette.id;
 
       const restoredPalette = paletteFromId(id);
 
@@ -261,7 +259,7 @@ describe('Palette ID Helper', () => {
       ];
       const pinnedStates = [true, true, true, true, true];
       const originalPalette = createTestPalette(colors, colors, 'triadic', pinnedStates);
-      const id = paletteIdFromPalette(originalPalette);
+      const id = originalPalette.id;
 
       const restoredPalette = paletteFromId(id);
 
@@ -280,7 +278,7 @@ describe('Palette ID Helper', () => {
       ];
       const pinnedStates = [false, false, false, false, false];
       const originalPalette = createTestPalette(colors, colors, 'complementary', pinnedStates);
-      const id = paletteIdFromPalette(originalPalette);
+      const id = originalPalette.id;
 
       const restoredPalette = paletteFromId(id);
 
@@ -299,7 +297,7 @@ describe('Palette ID Helper', () => {
         chroma('#00FF00')  // Green
       ];
       const originalPalette = createTestPalette(colors, colors, 'monochromatic');
-      const id = paletteIdFromPalette(originalPalette);
+      const id = originalPalette.id;
 
       // ID should have fixed length
       expect(id.length).toBe(43);
@@ -336,7 +334,7 @@ describe('Palette ID Helper', () => {
       const style: PaletteStyle = 'vibrant-balanced';
 
       const originalPalette = createTestPalette(colors, startingColors, style, pinnedStates);
-      const id = paletteIdFromPalette(originalPalette);
+      const id = originalPalette.id;
       const restoredPalette = paletteFromId(id);
 
       // Verify style
@@ -376,7 +374,7 @@ describe('Palette ID Helper', () => {
         chroma('#FF00FF')
       ];
       const palette = createTestPalette(colors, colors, 'analogous');
-      const id = paletteIdFromPalette(palette);
+      const id = palette.id;
 
       expect(isRestorable(id)).toBe(true);
     });
@@ -414,7 +412,7 @@ describe('Palette ID Helper', () => {
 
       PaletteStyles.forEach(style => {
         const palette = createTestPalette(colors, colors, style);
-        const id = paletteIdFromPalette(palette);
+        const id = palette.id;
 
         expect(isRestorable(id)).toBe(true);
       });
@@ -434,7 +432,7 @@ describe('Palette ID Helper', () => {
           chroma('#FF00FF')
         ];
         const palette = createTestPalette(colors, colors, style);
-        const id = paletteIdFromPalette(palette);
+        const id = palette.id;
 
         expect(id[0]).toBe(index.toString());
       });
@@ -449,7 +447,7 @@ describe('Palette ID Helper', () => {
         chroma('#FF00FF')
       ];
       const palette = createTestPalette(colors, colors, 'analogous');
-      const id = paletteIdFromPalette(palette);
+      const id = palette.id;
 
       const base62Part = id.substring(1);
       const base62Regex = /^[0-9A-Za-z]+$/;
@@ -469,8 +467,8 @@ describe('Palette ID Helper', () => {
       const palette1 = createTestPalette(colors, colors, 'triadic', [true, false, true, false, false]);
       const palette2 = createTestPalette(colors, colors, 'triadic', [true, false, true, false, false]);
 
-      const id1 = paletteIdFromPalette(palette1);
-      const id2 = paletteIdFromPalette(palette2);
+      const id1 = palette1.id;
+      const id2 = palette2.id;
 
       expect(id1).toBe(id2);
     });
@@ -505,7 +503,7 @@ describe('Palette ID Helper', () => {
         chroma('#040404')
       ];
       const palette = createTestPalette(darkColors, darkColors, 'monochromatic');
-      const id = paletteIdFromPalette(palette);
+      const id = palette.id;
 
       // ID should always be exactly 43 characters with leading zero padding
       expect(id.length).toBe(43);
@@ -536,7 +534,7 @@ describe('Palette ID Helper', () => {
         chroma('#FFFFF9')
       ];
       const palette = createTestPalette(brightColors, brightColors, 'vibrant-balanced');
-      const id = paletteIdFromPalette(palette);
+      const id = palette.id;
 
       expect(isRestorable(id)).toBe(true);
 
@@ -560,7 +558,7 @@ describe('Palette ID Helper', () => {
         chroma('#101010')
       ];
       const palette = createTestPalette(extremeColors, extremeColors, 'high-contrast');
-      const id = paletteIdFromPalette(palette);
+      const id = palette.id;
 
       expect(isRestorable(id)).toBe(true);
 
