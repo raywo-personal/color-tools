@@ -1,7 +1,7 @@
 import chroma, {Color} from "chroma-js";
 import {base62ToBigInt, bigIntToBase62} from "@common/helpers/base62.helper";
 import {PaletteStyle, PaletteStyles, randomStyle} from "@palettes/models/palette-style.model";
-import {Palette, PALETTE_SLOTS} from "@palettes/models/palette.model";
+import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {paletteName} from "@palettes/helper/palette-name.helper";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
 
@@ -15,28 +15,32 @@ const PALETTE_ID_BASE62_LENGTH = 42;
 
 
 /**
- * Generates a unique palette ID based on the colors and style of the
- * provided palette.
+ * Generates a unique palette ID based on the provided colors and style.
  *
- * @param {Palette} palette - The palette object containing color and style data.
+ * @param {PaletteColors} paletteColors - The PaletteColors object, the palette
+ *                                        is based upon.
+ * @param {PaletteStyle} style - The style of the palette.
  * @return {string} A unique identifier for the given palette.
  */
-export function paletteIdFromPalette(palette: Palette): string {
-  const paletteColors = PALETTE_SLOTS.map(slot => palette[slot]);
+export function paletteIdFrom(paletteColors: PaletteColors,
+                              style: PaletteStyle): string {
+  const pColors = PALETTE_SLOTS
+    .map(slot => paletteColors[slot]);
 
   const colors: Color[] = [
-    ...paletteColors.map(pc => pc.color),
-    ...paletteColors.map(pc => pc.startingColor),
+    ...pColors.map(pc => pc.color),
+    ...pColors.map(pc => pc.startingColor),
   ];
 
   // Create a bitmask for the pinned state
-  const pinnedMask = paletteColors
+  const pinnedMask = pColors
     .reduce((mask, pc, index) => {
       return pc.isPinned ? mask | (1 << index) : mask;
     }, 0);
 
-  return paletteIdFromColors(colors, palette.style, pinnedMask);
+  return paletteIdFromColors(colors, style, pinnedMask);
 }
+
 
 /**
  * Generates a palette object from a given palette ID.

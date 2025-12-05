@@ -10,6 +10,8 @@ import {generateAnalogous} from "@palettes/helper/analogous-palette.helper";
 import {generateSplitComplementary} from "@palettes/helper/split-complementary-palette.helper";
 import {generateHarmonic} from "@palettes/helper/harmonic-palette.helper";
 import {generateRandom} from "@palettes/helper/random-palette.helper";
+import {paletteIdFrom} from "@palettes/helper/palette-id.helper";
+import {paletteName} from "@palettes/helper/palette-name.helper";
 
 
 export function generatePalette(style: PaletteStyle,
@@ -39,4 +41,24 @@ export function generatePalette(style: PaletteStyle,
     default:
       return generateRandom(paletteColors, seedHue);
   }
+}
+
+
+/**
+ * Generates a palette object based on the provided palette colors and style.
+ *
+ * @param {PaletteColors} paletteColors - An object containing the colors of
+ *                                        the palette.
+ * @param {PaletteStyle} style - The style configuration for the palette.
+ * @return {Palette} A complete palette object that includes an ID, name,
+ *                   style, and color definitions.
+ */
+export function paletteFrom(paletteColors: PaletteColors,
+                            style: PaletteStyle): Palette {
+  return {
+    id: paletteIdFrom(paletteColors, style),
+    name: paletteName(style, paletteColors.color0.color),
+    style,
+    ...paletteColors
+  };
 }

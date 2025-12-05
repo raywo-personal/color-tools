@@ -1,12 +1,10 @@
 import {Palette, PaletteColors, PaletteSlot} from "@palettes/models/palette.model";
 import {randomBetween} from "@common/helpers/random.helper";
 import {fromHsl} from "@common/helpers/color-from-hsl.helper";
-import {colorName} from "@common/helpers/color-name.helper";
 import {PaletteColor, paletteColorFrom} from "@palettes/models/palette-color.model";
-import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
 import {hueWrap} from "@common/helpers/hsl.helper";
-import {vary} from "@palettes/helper/number.helper";
+import {vary} from "@palettes/helper/variation.helper";
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 /**
@@ -46,23 +44,13 @@ export function generateComplementary(paletteColors: Partial<PaletteColors> = {}
       return paletteColors[slot] ?? paletteColorFrom(fromHsl({h, s, l}), slot);
     };
 
-  const color0 = createColor("color0", h0, s0, l0);
-  const color1 = createColor("color1", h0Complement, s0, l0);
-  const color2 = createColor("color2", h0, s2, l2);
-  const color3 = createColor("color3", h0Complement, s3, l3);
-  const color4 = createColor("color4", h0, s4, l4);
+  const pColors = {} as PaletteColors;
 
-  const palette: Palette = {
-    id: "",
-    name: `${styleCaptionFor("complementary")} – ${colorName(color0.color)}`,
-    style: "complementary",
-    color0,
-    color1,
-    color2,
-    color3,
-    color4
-  };
-  palette.id = paletteIdFromPalette(palette);
+  pColors.color0 = createColor("color0", h0, s0, l0);
+  pColors.color1 = createColor("color1", h0Complement, s0, l0);
+  pColors.color2 = createColor("color2", h0, s2, l2);
+  pColors.color3 = createColor("color3", h0Complement, s3, l3);
+  pColors.color4 = createColor("color4", h0, s4, l4);
 
-  return palette;
+  return paletteFrom(pColors, "complementary");
 }

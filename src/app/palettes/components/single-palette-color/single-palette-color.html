@@ -1,81 +1,83 @@
-@let hex = colorHex();
-
-<div class="single-palette-color"
-     [class.showing-shades]="showShades()"
-     [style.--ct-color-bg-color]="hex"
-     [style.--ct-color-text-color]="textColor().hex()"
-     [style.--ct-color-muted-text-color]="mutedTextColor().hex()">
-  @if (showShades()) {
-    <div app-single-color-shades [color]="color()"
-         (colorSelected)="updateColor($event)">
+@if (showShades()) {
+  <div app-single-color-shades [color]="color()"
+       (colorSelected)="updateColor($event)">
+  </div>
+} @else {
+  @if (isEditing()) {
+    <div class="palette-hsl-edit">
+      <ct-hsl-color-edit [(color)]="editingColor"
+                         (colorChange)="updateColor($event)"/>
     </div>
-  } @else {
-    @if (isEditing()) {
-      <div class="palette-hsl-edit">
-        <ct-hsl-color-edit [(color)]="editingColor"
-                            (colorChange)="updateColor($event)"/>
-      </div>
-    }
-
-    <div class="tools">
-      <button type="button"
-              class="btn"
-              ngbTooltip="New random color"
-              [openDelay]="300"
-              (click)="copyToClipboard()">
-        <i class="bi bi-shuffle"></i>
-        <span class="visually-hidden">New random color</span>
-      </button>
-
-      <button type="button"
-              class="btn"
-              ngbTooltip="Show tints & shades"
-              [openDelay]="300"
-              (click)="showTintsAndShades()">
-        <i class="bi bi-bookshelf"></i>
-        <span class="visually-hidden">Tints & Shades</span>
-      </button>
-
-      <button type="button"
-              class="btn"
-              ngbTooltip="Copy to clipboard"
-              [openDelay]="300"
-              (click)="copyToClipboard()">
-        <i class="bi bi-copy"></i>
-        <span class="visually-hidden">Copy to clipboard</span>
-      </button>
-
-      <button app-toggle-button
-              onClass="bi bi-pin-fill"
-              offClass="bi bi-pin-angle"
-              [initialState]="isPinned()"
-              [openDelay]="300"
-              (currentState)="onToggleClick($event)">
-        Pin color
-      </button>
-
-      <button type="button"
-              class="btn"
-              ngbTooltip="Edit color"
-              [openDelay]="300"
-              (click)="toggleEditing()">
-        <i class="bi bi-pencil"></i>
-        <span class="visually-hidden">Edit color</span>
-      </button>
-
-      <button type="button"
-              class="btn"
-              ngbTooltip="Reset color"
-              [openDelay]="300"
-              (click)="resetColor()">
-        <i class="bi bi-arrow-counterclockwise"></i>
-        <span class="visually-hidden">Reset color</span>
-      </button>
-    </div>
-
-    <div class="color-hex mt-4">
-      {{ hex.replace("#", "") }}
-    </div>
-    <div class="color-name">{{ colorName() }}</div>
   }
-</div>
+
+  <div class="tools">
+    <div class="draggable"
+         ngbTooltip="Move color"
+         [openDelay]="300"
+         cdkDragHandle>
+      <i class="bi bi-arrow-left-short"></i>
+      <i class="bi bi-grip-vertical"></i>
+      <i class="bi bi-arrow-right-short"></i>
+      <span class="visually-hidden">Move color</span>
+    </div>
+
+    <button type="button"
+            class="btn"
+            ngbTooltip="New random color"
+            [openDelay]="300"
+            (click)="copyToClipboard()">
+      <i class="bi bi-shuffle"></i>
+      <span class="visually-hidden">New random color</span>
+    </button>
+
+    <button type="button"
+            class="btn"
+            ngbTooltip="Show tints & shades"
+            [openDelay]="300"
+            (click)="showTintsAndShades()">
+      <i class="bi bi-bookshelf"></i>
+      <span class="visually-hidden">Tints & Shades</span>
+    </button>
+
+    <button type="button"
+            class="btn"
+            ngbTooltip="Copy to clipboard"
+            [openDelay]="300"
+            (click)="copyToClipboard()">
+      <i class="bi bi-copy"></i>
+      <span class="visually-hidden">Copy to clipboard</span>
+    </button>
+
+    <button app-toggle-button
+            onClass="bi bi-pin-fill"
+            offClass="bi bi-pin-angle"
+            [initialState]="isPinned()"
+            [openDelay]="300"
+            (currentState)="onToggleClick($event)">
+      Pin color
+    </button>
+
+    <button type="button"
+            class="btn"
+            ngbTooltip="Edit color"
+            [openDelay]="300"
+            (click)="toggleEditing()">
+      <i class="bi bi-pencil"></i>
+      <span class="visually-hidden">Edit color</span>
+    </button>
+
+    <button type="button"
+            class="btn"
+            ngbTooltip="Reset color"
+            [openDelay]="300"
+            (click)="resetColor()">
+      <i class="bi bi-arrow-counterclockwise"></i>
+      <span class="visually-hidden">Reset color</span>
+    </button>
+  </div>
+
+  <div class="color-hex mt-4">
+    {{ colorHexCaption() }}
+  </div>
+  <div class="color-name">{{ colorName() }}</div>
+}

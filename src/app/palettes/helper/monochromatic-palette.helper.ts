@@ -1,10 +1,8 @@
-import {Palette, PaletteColors, PaletteSlot} from "@palettes/models/palette.model";
-import {colorName} from "@common/helpers/color-name.helper";
+import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
-import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {randomBetween} from "@common/helpers/random.helper";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
 import chroma from "chroma-js";
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 export function generateMonochromatic(paletteColors: Partial<PaletteColors> = {},
@@ -21,35 +19,21 @@ export function generateMonochromatic(paletteColors: Partial<PaletteColors> = {}
     sat < 0.30 ? 0 : 0.30,
     lum > 0.85 ? 1.0 : 0.85
   );
-  const scale = chroma
+
+  const scaleColors = chroma
     .bezier([start.hex(), end.hex()])
     .scale()
-    .correctLightness();
+    .correctLightness()
+    .colors(PALETTE_SLOTS.length);
 
-  const colors = scale
-    .colors(5)
-    .map((hexColor, index) => {
-      const slot = `color${index}` as PaletteSlot;
+  const pColors = PALETTE_SLOTS
+    .reduce((acc, slot, index) => {
+      acc[slot] =
+        paletteColors[slot] ??
+        paletteColorFrom(chroma(scaleColors[index]), slot);
 
-      return paletteColors[slot] ?? paletteColorFrom(
-        chroma(hexColor),
-        slot
-      );
-    });
+      return acc;
+    }, {} as PaletteColors);
 
-  const [color0, color1, color2, color3, color4] = colors;
-
-  const palette: Palette = {
-    id: "",
-    name: `${styleCaptionFor("monochromatic")} – ${colorName(color0.color)}`,
-    style: "monochromatic",
-    color0,
-    color1,
-    color2,
-    color3,
-    color4
-  };
-  palette.id = paletteIdFromPalette(palette);
-
-  return palette;
+  return paletteFrom(pColors, "monochromatic");
 }

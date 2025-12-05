@@ -1,10 +1,8 @@
-import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
+import {Palette, PaletteColors} from "@palettes/models/palette.model";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import chroma from "chroma-js";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
-import {colorName} from "@common/helpers/color-name.helper";
-import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {randomBetween} from "@common/helpers/random.helper";
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 /**
@@ -28,26 +26,13 @@ export function generateRandom(paletteColors: Partial<PaletteColors> = {},
     randomBetween(0, 1)
   ];
 
-  const [color0, color1, color2, color3, color4] = PALETTE_SLOTS
-    .map(slot => {
-      if (slot === "color0") {
-        return paletteColorFrom(chroma.hsl(h, s, l), slot);
-      }
-
-      return paletteColors[slot] ?? paletteColorFrom(chroma.random(), slot);
-    });
-
-  const palette: Palette = {
-    id: "",
-    name: `${styleCaptionFor("random")} – ${colorName(color0.color)}`,
-    style: "random",
-    color0,
-    color1,
-    color2,
-    color3,
-    color4
+  const pColors: PaletteColors = {
+    color0: paletteColors.color0 ?? paletteColorFrom(chroma.hsl(h, s, l), "color0"),
+    color1: paletteColors.color1 ?? paletteColorFrom(chroma.random(), "color1"),
+    color2: paletteColors.color2 ?? paletteColorFrom(chroma.random(), "color2"),
+    color3: paletteColors.color3 ?? paletteColorFrom(chroma.random(), "color3"),
+    color4: paletteColors.color4 ?? paletteColorFrom(chroma.random(), "color4"),
   };
-  palette.id = paletteIdFromPalette(palette);
 
-  return palette;
+  return paletteFrom(pColors, "random");
 }

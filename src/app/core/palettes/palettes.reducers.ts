@@ -1,8 +1,8 @@
 import {EventInstance} from "@ngrx/signals/events";
-import {generatePalette} from "@palettes/helper/palette.helper";
+import {generatePalette, paletteFrom} from "@palettes/helper/palette.helper";
 import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {PaletteStyle, randomStyle} from "@palettes/models/palette-style.model";
-import {paletteFromId, paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
+import {paletteFromId} from "@palettes/helper/palette-id.helper";
 import {PaletteColor} from "@palettes/models/palette-color.model";
 import {AppState} from "@core/models/app-state.model";
 
@@ -52,13 +52,17 @@ export function updatePaletteColorReducer(
   state: AppState
 ) {
   const color = event.payload;
-  const palette = {
-    ...state.currentPalette,
-    [color.slot]: color
-  };
-  palette.id = paletteIdFromPalette(palette);
+  const {currentPalette} = state;
 
-  return {currentPalette: palette};
+  const updatedPalette = paletteFrom(
+    {
+      ...currentPalette,
+      [color.slot]: color
+    },
+    currentPalette.style
+  );
+
+  return {currentPalette: updatedPalette};
 }
 
 

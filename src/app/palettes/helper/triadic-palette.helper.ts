@@ -1,12 +1,10 @@
 import {Palette, PaletteColors} from "@palettes/models/palette.model";
 import {fromHsl} from "@common/helpers/color-from-hsl.helper";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
-import {colorName} from "@common/helpers/color-name.helper";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
-import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
 import {triad} from "@common/helpers/hue.helper";
 import {clamp01} from "@common/helpers/hsl.helper";
-import {vary} from "@palettes/helper/number.helper";
+import {vary} from "@palettes/helper/variation.helper";
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 /**
@@ -36,43 +34,42 @@ export function generateTriadic(paletteColors: Partial<PaletteColors> = {},
   const baseSat = s ?? 0.70;
   const baseLight = l ?? 0.50;
 
-  const firstThree = triad(hue)
-    .map((h, index) => {
-      const slot = `color${index}` as keyof PaletteColors;
+  const triadHues = triad(hue);
 
-      return paletteColors[slot] ?? paletteColorFrom(fromHsl({h, s: baseSat, l: baseLight}), slot);
-    });
+  const pColors: PaletteColors = {
+    color0: paletteColors.color0 ?? paletteColorFrom(
+      fromHsl({h: triadHues[0], s: baseSat, l: baseLight}),
+      "color0"
+    ),
 
-  const [color0, color1, color2] = firstThree;
+    color1: paletteColors.color1 ?? paletteColorFrom(
+      fromHsl({h: triadHues[1], s: baseSat, l: baseLight}),
+      "color1"
+    ),
 
-  const color3 = paletteColors.color3 ?? paletteColorFrom(
-    fromHsl({
-      h: (triad(hue))[0],
-      s: clamp01(vary(baseSat - 0.65, 0.03)),
-      l: clamp01(vary(baseLight + 0.05, 0.05))
-    }),
-    "color3"
-  );
-  const color4 = paletteColors.color4 ?? paletteColorFrom(
-    fromHsl({
-      h: (triad(hue))[1],
-      s: clamp01(vary(baseSat - 0.65, 0.03)),
-      l: clamp01(vary(baseLight + 0.05, 0.05))
-    }),
-    "color4"
-  );
+    color2: paletteColors.color2 ?? paletteColorFrom(
+      fromHsl({h: triadHues[2], s: baseSat, l: baseLight}),
+      "color2"
+    ),
 
-  const palette: Palette = {
-    id: "",
-    name: `${styleCaptionFor("triadic")} – ${colorName(color0.color)}`,
-    style: "triadic",
-    color0,
-    color1,
-    color2,
-    color3,
-    color4
+    color3: paletteColors.color3 ?? paletteColorFrom(
+      fromHsl({
+        h: triadHues[0],
+        s: clamp01(vary(baseSat - 0.65, 0.03)),
+        l: clamp01(vary(baseLight + 0.05, 0.05))
+      }),
+      "color3"
+    ),
+
+    color4: paletteColors.color4 ?? paletteColorFrom(
+      fromHsl({
+        h: triadHues[1],
+        s: clamp01(vary(baseSat - 0.65, 0.03)),
+        l: clamp01(vary(baseLight + 0.05, 0.05))
+      }),
+      "color4"
+    )
   };
-  palette.id = paletteIdFromPalette(palette);
 
-  return palette;
+  return paletteFrom(pColors, "triadic");
 }

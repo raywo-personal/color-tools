@@ -1,13 +1,11 @@
 import {triad} from '@common/helpers/hue.helper';
 import {fromHsl} from '@common/helpers/color-from-hsl.helper';
-import {vary} from '@palettes/helper/number.helper';
+import {vary} from '@palettes/helper/variation.helper';
 import {clamp01} from '@common/helpers/hsl.helper';
 import {paletteColorFrom} from '@palettes/models/palette-color.model';
-import {Palette, PaletteColors, PaletteSlot} from "@palettes/models/palette.model";
-import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
-import {colorName} from "@common/helpers/color-name.helper";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
+import {Palette, PaletteColors} from "@palettes/models/palette.model";
 import {randomBetween} from "@common/helpers/random.helper";
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 /**
@@ -42,46 +40,31 @@ export function generateVibrantBalanced(paletteColors: Partial<PaletteColors> = 
     l: clamp01(vary(l0, 0.08))
   })
 
-  const accents = triad(h0)
-    .map((h, index) => {
-        const slot = `color${index}` as PaletteSlot;
-
-        return paletteColors[slot] ?? paletteColorFrom(createAccent(h), slot);
-      }
-    );
-
-  const [color0, color1, color2] = accents;
-
-  // Helle, gedämpfte Ergänzungstöne
-  const color3 = paletteColors.color3 ?? paletteColorFrom(
-    fromHsl({
-      h: vary(h0 + 60, 8),
-      s: clamp01(vary(s0 - 0.40, 0.10)),
-      l: clamp01(vary(l0 + 0.26, 0.06))
-    }),
-    "color3"
-  );
-
-  const color4 = paletteColors.color4 ?? paletteColorFrom(
-    fromHsl({
-      h: vary(h0 - 20, 8),
-      s: clamp01(vary(s0 - 0.45, 0.08)),
-      l: clamp01(vary(l0 + 0.18, 0.06))
-    }),
-    "color4"
-  );
-
-  const palette: Palette = {
-    id: "",
-    name: `${styleCaptionFor("vibrant-balanced")} – ${colorName(color0.color)}`,
-    style: "vibrant-balanced",
-    color0,
-    color1,
-    color2,
-    color3,
-    color4
+  const [_, h1, h2] = triad(h0);
+  const pColors: PaletteColors = {
+    color0: paletteColors.color0 ??
+      paletteColorFrom(createAccent(h0), "color0"),
+    color1: paletteColors.color1 ??
+      paletteColorFrom(createAccent(h1), "color1"),
+    color2: paletteColors.color2 ??
+      paletteColorFrom(createAccent(h2), "color2"),
+    color3: paletteColors.color3 ?? paletteColorFrom(
+      fromHsl({
+        h: vary(h0 + 60, 8),
+        s: clamp01(vary(s0 - 0.40, 0.10)),
+        l: clamp01(vary(l0 + 0.26, 0.06))
+      }),
+      "color3"
+    ),
+    color4: paletteColors.color4 ?? paletteColorFrom(
+      fromHsl({
+        h: vary(h0 - 20, 8),
+        s: clamp01(vary(s0 - 0.45, 0.08)),
+        l: clamp01(vary(l0 + 0.18, 0.06))
+      }),
+      "color4"
+    )
   };
-  palette.id = paletteIdFromPalette(palette);
 
-  return palette;
+  return paletteFrom(pColors, "vibrant-balanced");
 }

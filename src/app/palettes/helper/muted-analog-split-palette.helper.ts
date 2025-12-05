@@ -1,14 +1,12 @@
 import {fromHsl} from '@common/helpers/color-from-hsl.helper';
 import {clamp01} from '@common/helpers/hsl.helper';
-import {vary} from '@palettes/helper/number.helper';
+import {vary} from '@palettes/helper/variation.helper';
 import {analogRange, splitComplement} from '@common/helpers/hue.helper';
 import {paletteColorFrom} from '@palettes/models/palette-color.model';
 import {Palette, PaletteColors} from "@palettes/models/palette.model";
-import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
-import {colorName} from "@common/helpers/color-name.helper";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
 import {Color} from "chroma-js";
 import {randomBetween} from "@common/helpers/random.helper";
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 /**
@@ -39,7 +37,9 @@ export function generateMutedAnalogSplit(paletteColors: Partial<PaletteColors> =
   const s0 = s ?? 0.6;
   const l0 = l ?? 0.34;
 
-  const color0 = existingNeutral ?? paletteColorFrom(
+  const pColors = {} as PaletteColors;
+
+  pColors.color0 = existingNeutral ?? paletteColorFrom(
     fromHsl({
       h: h0,
       s: clamp01(vary(s0, 0.03)),
@@ -60,11 +60,11 @@ export function generateMutedAnalogSplit(paletteColors: Partial<PaletteColors> =
       );
   }
 
-  const color1 = paletteColors.color1 ?? paletteColorFrom(analogs[0], "color1");
-  const color4 = paletteColors.color4 ?? paletteColorFrom(analogs[1], "color4");
+  pColors.color1 = paletteColors.color1 ?? paletteColorFrom(analogs[0], "color1");
+  pColors.color4 = paletteColors.color4 ?? paletteColorFrom(analogs[1], "color4");
 
   // Pastel
-  const color2 = paletteColors.color2 ?? paletteColorFrom(
+  pColors.color2 = paletteColors.color2 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 + 20, 6),
       s: clamp01(vary(s0 - 0.15, 0.10)),
@@ -74,7 +74,7 @@ export function generateMutedAnalogSplit(paletteColors: Partial<PaletteColors> =
   );
 
   // Counter / Split Complement
-  const color3 = paletteColors.color3 ?? paletteColorFrom(
+  pColors.color3 = paletteColors.color3 ?? paletteColorFrom(
     fromHsl({
       h: vary(splitComplement(h0, 28)[0], 6),
       s: clamp01(vary(s0 - 0.42, 0.08)),
@@ -83,17 +83,5 @@ export function generateMutedAnalogSplit(paletteColors: Partial<PaletteColors> =
     "color3"
   );
 
-  const palette: Palette = {
-    id: "",
-    name: `${styleCaptionFor("muted-analog-split")} – ${colorName(color0.color)}`,
-    style: "muted-analog-split",
-    color0,
-    color1,
-    color2,
-    color3,
-    color4,
-  };
-  palette.id = paletteIdFromPalette(palette);
-
-  return palette;
+  return paletteFrom(pColors, "muted-analog-split");
 }

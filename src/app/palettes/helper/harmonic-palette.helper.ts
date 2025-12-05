@@ -3,10 +3,8 @@ import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import {fromHsl} from "@common/helpers/color-from-hsl.helper";
 import {randomBetween} from "@common/helpers/random.helper";
 import {clamp01, hueWrap} from "@common/helpers/hsl.helper";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
-import {colorName} from "@common/helpers/color-name.helper";
-import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
-import {vary} from "@palettes/helper/number.helper";
+import {vary} from "@palettes/helper/variation.helper";
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 /**
@@ -34,13 +32,15 @@ export function generateHarmonic(paletteColors: Partial<PaletteColors> = {},
 
   const variation = 0.05;
 
-  const color0 = existingNeutral ?? paletteColorFrom(
+  const pColors = {} as PaletteColors;
+
+  pColors.color0 = existingNeutral ?? paletteColorFrom(
     fromHsl({h, s, l}),
     "color0"
   );
 
   // Analogous
-  const color1 = paletteColors.color1 ?? paletteColorFrom(
+  pColors.color1 = paletteColors.color1 ?? paletteColorFrom(
     fromHsl({
       h: hueWrap(h + 30),
       s: clamp01(vary(s * 0.9, variation)),
@@ -50,7 +50,7 @@ export function generateHarmonic(paletteColors: Partial<PaletteColors> = {},
   );
 
   // Analogous
-  const color2 = paletteColors.color2 ?? paletteColorFrom(
+  pColors.color2 = paletteColors.color2 ?? paletteColorFrom(
     fromHsl({
       h: hueWrap(h + 60),
       s: clamp01(vary(s * 0.8, variation)),
@@ -60,7 +60,7 @@ export function generateHarmonic(paletteColors: Partial<PaletteColors> = {},
   );
 
   // Complementary
-  const color3 = paletteColors.color3 ?? paletteColorFrom(
+  pColors.color3 = paletteColors.color3 ?? paletteColorFrom(
     fromHsl({
       h: hueWrap(h + 180),
       s: clamp01(vary(s, variation)),
@@ -70,7 +70,7 @@ export function generateHarmonic(paletteColors: Partial<PaletteColors> = {},
   );
 
   // Triadic
-  const color4 = paletteColors.color4 ?? paletteColorFrom(
+  pColors.color4 = paletteColors.color4 ?? paletteColorFrom(
     fromHsl({
       h: hueWrap(h + 150),
       s: clamp01(vary(s * 0.7, variation)),
@@ -79,17 +79,5 @@ export function generateHarmonic(paletteColors: Partial<PaletteColors> = {},
     "color4"
   );
 
-  const palette: Palette = {
-    id: "",
-    name: `${styleCaptionFor("harmonic")} – ${colorName(color0.color)}`,
-    style: "harmonic",
-    color0,
-    color1,
-    color2,
-    color3,
-    color4,
-  };
-  palette.id = paletteIdFromPalette(palette);
-
-  return palette;
+  return paletteFrom(pColors, "harmonic");
 }

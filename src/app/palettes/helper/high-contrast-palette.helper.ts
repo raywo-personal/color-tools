@@ -1,13 +1,11 @@
 import {fromHsl} from '@common/helpers/color-from-hsl.helper';
-import {vary} from '@palettes/helper/number.helper';
+import {vary} from '@palettes/helper/variation.helper';
 import {clamp01} from '@common/helpers/hsl.helper';
 import {complement} from '@common/helpers/hue.helper';
 import {Palette, PaletteColors} from "@palettes/models/palette.model";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
-import {paletteIdFromPalette} from "@palettes/helper/palette-id.helper";
-import {colorName} from "@common/helpers/color-name.helper";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
 import {randomBetween} from "@common/helpers/random.helper";
+import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 /**
@@ -39,8 +37,10 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   const s0 = s ?? 1.0;
   const l0 = l ?? 0.50;
 
+  const pColors = {} as PaletteColors;
+
   // accent 1
-  const color0 = paletteColors.color0 ?? paletteColorFrom(
+  pColors.color0 = paletteColors.color0 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0, 5),
       s: clamp01(vary(s0, 0.0)), // maximal
@@ -50,7 +50,7 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   );
 
   // accent 2
-  const color1 = paletteColors.color1 ?? paletteColorFrom(
+  pColors.color1 = paletteColors.color1 ?? paletteColorFrom(
     fromHsl({
       h: vary(complement(h0), 6),
       s: clamp01(vary(s0, 0.0)),
@@ -60,7 +60,7 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   );
 
   // deep tone
-  const color2 = paletteColors.color2 ?? paletteColorFrom(
+  pColors.color2 = paletteColors.color2 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 + 20, 10),
       s: clamp01(vary(s0 - 0.92, 0.05)),
@@ -70,7 +70,7 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   );
 
   // dark accent
-  const color3 = paletteColors.color3 ?? paletteColorFrom(
+  pColors.color3 = paletteColors.color3 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 + 220, 10),
       s: clamp01(vary(s0 - 0.55, 0.10)),
@@ -80,7 +80,7 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   );
 
   // near white
-  const color4 = paletteColors.color4 ?? paletteColorFrom(
+  pColors.color4 = paletteColors.color4 ?? paletteColorFrom(
     fromHsl({
       h: vary(h0 + 200, 8),
       s: clamp01(vary(s0, 0.0)),
@@ -89,17 +89,5 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
     "color4"
   );
 
-  const palette: Palette = {
-    id: "",
-    name: `${styleCaptionFor("high-contrast")} – ${colorName(color0.color)}`,
-    style: "high-contrast",
-    color0,
-    color1,
-    color2,
-    color3,
-    color4
-  };
-  palette.id = paletteIdFromPalette(palette);
-
-  return palette;
+  return paletteFrom(pColors, "high-contrast");
 }
