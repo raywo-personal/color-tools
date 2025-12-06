@@ -21,13 +21,13 @@
       <span class="visually-hidden">Move color</span>
     </div>
 
-    <button type="button"
-            class="btn"
-            ngbTooltip="New random color"
+    <button app-toggle-button
+            onClass="bi bi-pin-fill"
+            offClass="bi bi-pin-angle"
+            [initialState]="isPinned()"
             [openDelay]="300"
-            (click)="copyToClipboard()">
-      <i class="bi bi-shuffle"></i>
-      <span class="visually-hidden">New random color</span>
+            (currentState)="onToggleClick($event)">
+      Pin color
     </button>
 
     <button type="button"
@@ -41,20 +41,11 @@
 
     <button type="button"
             class="btn"
-            ngbTooltip="Copy to clipboard"
+            ngbTooltip="New random color"
             [openDelay]="300"
-            (click)="copyToClipboard()">
-      <i class="bi bi-copy"></i>
-      <span class="visually-hidden">Copy to clipboard</span>
-    </button>
-
-    <button app-toggle-button
-            onClass="bi bi-pin-fill"
-            offClass="bi bi-pin-angle"
-            [initialState]="isPinned()"
-            [openDelay]="300"
-            (currentState)="onToggleClick($event)">
-      Pin color
+            (click)="newRandomColor()">
+      <i class="bi bi-shuffle"></i>
+      <span class="visually-hidden">New random color</span>
     </button>
 
     <button type="button"
@@ -73,6 +64,15 @@
             (click)="resetColor()">
       <i class="bi bi-arrow-counterclockwise"></i>
       <span class="visually-hidden">Reset color</span>
+    </button>
+
+    <button type="button"
+            class="btn"
+            ngbTooltip="Copy to clipboard"
+            [openDelay]="300"
+            (click)="copyToClipboard()">
+      <i class="bi bi-copy"></i>
+      <span class="visually-hidden">Copy to clipboard</span>
     </button>
   </div>
 
