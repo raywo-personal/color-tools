@@ -1,0 +1,63 @@
+.contrast-checker {
+  --ct-cc-bg: gray;
+  --ct-cc-text: black;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding: 4rem;
+
+  .colors-container,
+  .quote-container {
+    padding: 1.5rem;
+    aspect-ratio: 1;
+
+    border-radius: var(--bs-border-radius);
+  }
+
+  .colors-container {
+    background: hsl(0 0% 90%);
+  }
+
+  .quote-container {
+    text-align: center;
+    align-content: center;
+
+    background: var(--ct-cc-bg);
+    color: var(--ct-cc-text);
+
+    h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .blockquote-container {
+      width: 100%;
+      padding-inline: 3rem;
+    }
+
+    blockquote {
+      position: relative;
+      //font-size: 1.2rem;
+      text-align: start;
+
+      footer {
+        text-align: end;
+        margin-block-start: 1rem;
+      }
+    }
+
+    .blockquote:before {
+      position: absolute;
+      font-family: "bootstrap-icons";
+      top: -2rem;
+      left: -3rem;
+
+      content: "\f6b0";
+      font-size: 6rem;
+      line-height: 1;
+      color: hsla(0, 0%, 0%, 0.2);
+    }
+  }
+}

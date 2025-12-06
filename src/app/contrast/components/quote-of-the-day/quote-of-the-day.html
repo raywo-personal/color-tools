@@ -1,0 +1,14 @@
+<h2>Quote of the day</h2>
+
+<div class="blockquote-container">
+  @if (qod().isLoading()) {
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  } @else {
+    <blockquote class="blockquote">
+      {{ qod().value()?.q }}
+      <footer>&mdash; {{ qod().value()?.a }}</footer>
+    </blockquote>
+  }
+</div>
