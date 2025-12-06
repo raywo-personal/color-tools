@@ -56,9 +56,9 @@ export function generatePalette(style: PaletteStyle,
 export function paletteFrom(paletteColors: PaletteColors,
                             style: PaletteStyle): Palette {
   return {
+    ...paletteColors,
     id: paletteIdFrom(paletteColors, style),
     name: paletteName(style, paletteColors.color0.color),
-    style,
-    ...paletteColors
+    style
   };
 }

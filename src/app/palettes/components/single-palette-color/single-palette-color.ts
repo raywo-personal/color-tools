@@ -4,7 +4,7 @@ import {ToggleButton} from '@common/components/toggle-button/toggle-button';
 import {PaletteColor} from "@palettes/models/palette-color.model";
 import {PaletteSlot} from "@palettes/models/palette.model";
 import {SingleColorShades} from "@palettes/components/single-color-shades/single-color-shades";
-import {Color} from "chroma-js";
+import chroma, {Color} from "chroma-js";
 import {colorName} from "@common/helpers/color-name.helper";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
@@ -73,11 +73,15 @@ export class SinglePaletteColor {
 
 
   protected copyToClipboard() {
+    this.isEditing.set(false);
+
     void navigator.clipboard.writeText(this.colorHex());
   }
 
 
   protected onToggleClick(current: boolean) {
+    this.isEditing.set(false);
+
     this.#dispatch.updatePaletteColor({
       ...this.color(),
       isPinned: current
@@ -86,11 +90,13 @@ export class SinglePaletteColor {
 
 
   protected showTintsAndShades() {
+    this.isEditing.set(false);
     this.showShades.set(true);
   }
 
 
   protected updateColor(color: Color) {
+    this.isEditing.set(false);
     this.showShades.set(false);
 
     this.#dispatch.updatePaletteColor({
@@ -106,9 +112,26 @@ export class SinglePaletteColor {
 
 
   protected resetColor() {
-    this.color().color = this.color().startingColor;
+    this.isEditing.set(false);
 
-    this.#dispatch.updatePaletteColor(this.color());
+    const color = {
+      ...this.color(),
+      color: this.color().startingColor
+    }
+
+    this.#dispatch.updatePaletteColor(color);
+  }
+
+
+  protected newRandomColor() {
+    this.isEditing.set(false);
+
+    const color = {
+      ...this.color(),
+      color: chroma.random()
+    }
+
+    this.#dispatch.updatePaletteColor(color);
   }
 
 }
