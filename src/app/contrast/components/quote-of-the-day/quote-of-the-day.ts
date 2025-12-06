@@ -1,10 +1,10 @@
-import {Component, inject, input} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Quotes} from "../../services/quotes";
-import {Color} from "chroma-js";
+import {AppStateStore} from "@core/app-state.store";
 
 
 @Component({
-  selector: 'ct-quote-of-the-day',
+  selector: 'div[ct-quote-of-the-day]',
   imports: [],
   templateUrl: './quote-of-the-day.html',
   styles: ``,
@@ -17,10 +17,11 @@ import {Color} from "chroma-js";
 export class QuoteOfTheDay {
 
   readonly #quotes = inject(Quotes);
+  readonly #stateStore = inject(AppStateStore);
 
   protected readonly qod = this.#quotes.quoteOfTheDay;
 
-  public readonly textColor = input.required<Color>();
-  public readonly backgroundColor = input.required<Color>();
+  protected readonly textColor = this.#stateStore.contrastTextColor;
+  protected readonly backgroundColor = this.#stateStore.contrastBackgroundColor;
 
 }

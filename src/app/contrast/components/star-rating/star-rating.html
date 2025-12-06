@@ -1,0 +1,16 @@
+<div class="star-rating"
+     [class.small]="small()">
+  @if (showCaption()) {
+    {{ ratingCaption() }}
+  }
+
+  <div class="d-flex gap-1">
+    @for (star of stars(); track star) {
+      <i class="bi bi-star-fill"></i>
+    }
+
+    @for (star of remainingStars(); track star) {
+      <i class="bi bi-star"></i>
+    }
+  </div>
+</div>

@@ -24,6 +24,11 @@ export type AppState = {
   useRandomStyle: boolean;
   currentPalette: Palette;
 
+  // Contrast related
+  contrastTextColor: Color;
+  contrastBackgroundColor: Color;
+  contrastRatio: number;
+
   // Common
   colorTheme: ColorTheme;
 };
@@ -44,6 +49,10 @@ export const initialState: AppState = {
   paletteStyle: "random",
   useRandomStyle: false,
   currentPalette: generatePalette("random"),
+
+  contrastTextColor: textColor,
+  contrastBackgroundColor: initialColor,
+  contrastRatio: 1,
 
   colorTheme: "system"
 };

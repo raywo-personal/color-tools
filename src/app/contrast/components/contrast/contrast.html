@@ -1,8 +1,11 @@
 <div class="container-fluid">
-  <div class="contrast-checker">
-    <div class="colors-container">contrast works!</div>
+  <div class="row gx-5 contrast-checker px-5 mt-5">
+    <div class="col-6">
+      <div ct-contrast-colors></div>
+    </div>
 
-    <ct-quote-of-the-day [textColor]="textColor()"
-                         [backgroundColor]="backgroundColor()"/>
+    <div class="col-6">
+      <div ct-quote-of-the-day></div>
+    </div>
   </div>
 </div>
