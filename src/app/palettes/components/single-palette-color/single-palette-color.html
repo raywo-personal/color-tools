@@ -30,6 +30,29 @@
       Pin color
     </button>
 
+    <div ngbDropdown>
+      <button id="sendToContrast"
+        type="button"
+              class="btn"
+              ngbTooltip="Show tints & shades"
+              [openDelay]="300"
+              ngbDropdownToggle>
+        <i class="bi bi-circle-half"></i>
+        <span class="visually-hidden">Tints & Shades</span>
+      </button>
+
+      <div ngbDropdownMenu aria-labelledby="sendToContrast">
+        <button ngbDropdownItem (click)="sendTextColor()">
+          <i class="bi bi-send"></i>&nbsp;
+          As text color to contrast
+        </button>
+        <button ngbDropdownItem (click)="sendBgColor()">
+          <i class="bi bi-send"></i>&nbsp;
+          As background color to contrast
+        </button>
+      </div>
+    </div>
+
     <button type="button"
             class="btn"
             ngbTooltip="Show tints & shades"

@@ -1,6 +1,6 @@
-import {Component, computed, input, linkedSignal, signal} from '@angular/core';
-import {contrastingColor, contrastingMutedColor} from '@common/helpers/contrasting-color.helper';
-import {ToggleButton} from '@common/components/toggle-button/toggle-button';
+import {Component, computed, input, linkedSignal, signal} from "@angular/core";
+import {contrastingColor, contrastingMutedColor} from "@common/helpers/contrasting-color.helper";
+import {ToggleButton} from "@common/components/toggle-button/toggle-button";
 import {PaletteColor} from "@palettes/models/palette-color.model";
 import {PaletteSlot} from "@palettes/models/palette.model";
 import {SingleColorShades} from "@palettes/components/single-color-shades/single-color-shades";
@@ -8,21 +8,27 @@ import chroma, {Color} from "chroma-js";
 import {colorName} from "@common/helpers/color-name.helper";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
+import {NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {HslColorEdit} from "@common/components/hsl-color-edit/hsl-color-edit";
 import {CdkDragHandle} from "@angular/cdk/drag-drop";
+import {ContrastColor} from "@contrast/models/contrast-color.model";
+import {transferEvents} from "@core/common/transfer.events";
 
 
 @Component({
-  selector: 'div[ct-single-palette-color]',
+  selector: "div[ct-single-palette-color]",
   imports: [
     ToggleButton,
     SingleColorShades,
     NgbTooltip,
     HslColorEdit,
-    CdkDragHandle
+    CdkDragHandle,
+    NgbDropdown,
+    NgbDropdownToggle,
+    NgbDropdownMenu,
+    NgbDropdownItem
   ],
-  templateUrl: './single-palette-color.html',
+  templateUrl: "./single-palette-color.html",
   styles: ``,
   host: {
     "class": "palette-color",
@@ -35,6 +41,7 @@ import {CdkDragHandle} from "@angular/cdk/drag-drop";
 export class SinglePaletteColor {
 
   readonly #dispatch = injectDispatch(palettesEvents);
+  readonly #transferDispatch = injectDispatch(transferEvents);
 
   protected readonly colorName = computed(() => {
     return colorName(this.color().color);
@@ -117,7 +124,7 @@ export class SinglePaletteColor {
     const color = {
       ...this.color(),
       color: this.color().startingColor
-    }
+    };
 
     this.#dispatch.updatePaletteColor(color);
   }
@@ -129,9 +136,29 @@ export class SinglePaletteColor {
     const color = {
       ...this.color(),
       color: chroma.random()
-    }
+    };
 
     this.#dispatch.updatePaletteColor(color);
+  }
+
+
+  protected sendTextColor() {
+    const contrastColor: ContrastColor = {
+      color: this.color().color,
+      role: "text"
+    };
+
+    this.#transferDispatch.sendColorToContrast(contrastColor);
+  }
+
+
+  protected sendBgColor() {
+    const contrastColor: ContrastColor = {
+      color: this.color().color,
+      role: "background"
+    };
+
+    this.#transferDispatch.sendColorToContrast(contrastColor);
   }
 
 }
