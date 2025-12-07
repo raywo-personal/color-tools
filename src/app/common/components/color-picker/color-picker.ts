@@ -1,4 +1,4 @@
-import {Component, computed, DestroyRef, effect, ElementRef, inject, input, linkedSignal, model, OnInit, signal} from "@angular/core";
+import {Component, computed, DestroyRef, effect, ElementRef, inject, input, linkedSignal, model, OnInit, signal, untracked} from "@angular/core";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {FormsModule} from "@angular/forms";
 import {fromEvent} from "rxjs";
@@ -82,7 +82,7 @@ export class ColorPickerComponent implements OnInit {
     effect(() => {
       const internalColor = this.currentColor();
       // Only update if significantly different to avoid loops
-      const external = this.color();
+      const external = untracked(() => this.color());
 
       if (external && chroma.deltaE(internalColor, external) > 0.5) {
         this.color.set(internalColor);

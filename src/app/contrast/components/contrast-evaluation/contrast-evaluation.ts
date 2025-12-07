@@ -2,7 +2,7 @@ import {Component, computed, inject} from "@angular/core";
 import {StarRating} from "@contrast/components/star-rating/star-rating";
 import {AppStateStore} from "@core/app-state.store";
 import {DecimalPipe} from "@angular/common";
-import {getAPCARating} from "@contrast/helper/apca-rating.helper";
+import {getAPCARating, NEGATIVE_MAX_APCA_CONTRAST, POSITIVE_MAX_APCA_CONTRAST} from "@contrast/helper/apca-rating.helper";
 import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
 
 
@@ -26,13 +26,11 @@ export class ContrastEvaluation {
   protected readonly ratio = this.#stateStore.contrastRatio;
 
   protected readonly rating = computed(() => {
-    const positiveMax = 106;
-    const negativeMax = 108;
     const ratio = this.ratio();
 
     let normalized = ratio < 0
-      ? Math.abs(ratio) / negativeMax
-      : ratio / positiveMax;
+      ? Math.abs(ratio) / NEGATIVE_MAX_APCA_CONTRAST
+      : ratio / POSITIVE_MAX_APCA_CONTRAST;
 
     normalized = Math.max(0, Math.min(1, normalized));
 

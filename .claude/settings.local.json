@@ -3,7 +3,8 @@
     "allow": [
       "Bash(pnpm test:*)",
       "Bash(npx ng test:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(gh pr:*)"
     ],
     "deny": [],
     "ask": []

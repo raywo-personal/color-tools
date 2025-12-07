@@ -3,6 +3,8 @@ import {APCALookupTable, FONT_SIZES, FontSize, FontWeight} from "@contrast/model
 
 export type APCARating = 0 | 1 | 2 | 3;
 
+export const POSITIVE_MAX_APCA_CONTRAST = 106;
+export const NEGATIVE_MAX_APCA_CONTRAST = 108;
 
 /**
  * Calculates the APCA contrast rating based on font size, font weight, and
