@@ -32,6 +32,8 @@
       .value {
         font-size: 3rem;
         font-weight: bold;
+        margin-block: 0;
+        line-height: 1;
       }
 
       .star-rating {
@@ -43,6 +45,18 @@
 
       .star-rating.small {
         font-size: 0.65rem;
+      }
+
+      .text-sample {
+        background: var(--ct-cc-bg);
+        color: var(--ct-cc-text);
+
+        border-radius: var(--bs-border-radius);
+        padding: 0.75rem;
+      }
+
+      small.text-sample {
+        font-size: 0.75rem;
       }
     }
   }

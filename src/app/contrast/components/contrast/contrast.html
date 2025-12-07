@@ -1,5 +1,7 @@
 <div class="container-fluid">
-  <div class="row gx-5 contrast-checker px-5 mt-5">
+  <div class="row gx-5 contrast-checker px-5 mt-5"
+       [style.--ct-cc-bg]="backgroundColor().hex()"
+       [style.--ct-cc-text]="textColor().hex()">
     <div class="col-6">
       <div ct-contrast-colors></div>
     </div>

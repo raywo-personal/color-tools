@@ -1,21 +1,23 @@
-import {Component, signal} from '@angular/core';
+import {Component, inject} from "@angular/core";
 import {QuoteOfTheDay} from "../quote-of-the-day/quote-of-the-day";
-import chroma from "chroma-js";
 import {ContrastColors} from "@contrast/components/contrast-colors/contrast-colors";
+import {AppStateStore} from "@core/app-state.store";
 
 
 @Component({
-  selector: 'ct-contrast',
+  selector: "ct-contrast",
   imports: [
     QuoteOfTheDay,
     ContrastColors
   ],
-  templateUrl: './contrast.html',
+  templateUrl: "./contrast.html",
   styles: ``,
 })
 export class Contrast {
 
-  protected readonly textColor = signal(chroma.random());
-  protected readonly backgroundColor = signal(chroma.random());
+  readonly #stateStore = inject(AppStateStore);
+
+  protected readonly textColor = this.#stateStore.contrastTextColor;
+  protected readonly backgroundColor = this.#stateStore.contrastBgColor;
 
 }

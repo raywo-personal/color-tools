@@ -26,7 +26,7 @@ export type AppState = {
 
   // Contrast related
   contrastTextColor: Color;
-  contrastBackgroundColor: Color;
+  contrastBgColor: Color;
   contrastRatio: number;
 
   // Common
@@ -51,8 +51,8 @@ export const initialState: AppState = {
   currentPalette: generatePalette("random"),
 
   contrastTextColor: textColor,
-  contrastBackgroundColor: initialColor,
-  contrastRatio: 1,
+  contrastBgColor: initialColor,
+  contrastRatio: chroma.contrastAPCA(textColor, initialColor),
 
   colorTheme: "system"
 };

@@ -3,15 +3,28 @@
 
   <ul class="list-group list-group-item-success">
     <li class="list-group-item p-4 d-flex justify-content-between align-items-center">
-      <div class="value">{{ ratio() }}</div>
-      <ct-star-rating [rating]="rating()" [showCaption]="true"/>
+      <div>
+        <span class="mb-0">APCA L<sup>c</sup></span>
+        <div class="value">
+          {{ ratio() | number: '1.2-2' }}
+        </div>
+      </div>
+      <ct-star-rating [rating]="rating()" [maxRating]="maxStars" [showCaption]="true"/>
     </li>
+
     <li class="list-group-item p-3 d-flex justify-content-between align-items-center">
       <strong>Small text</strong>
+
+      <small class="text-sample">Lorem ipsum dolor</small>
+
       <ct-star-rating [rating]="1" [maxRating]="3" [small]="true"/>
     </li>
+
     <li class="list-group-item p-3 d-flex justify-content-between align-items-center">
       <strong>Large text</strong>
+
+      <div class="text-sample">Lorem ipsum dolor</div>
+
       <ct-star-rating [rating]="1" [maxRating]="3" [small]="true"/>
     </li>
   </ul>

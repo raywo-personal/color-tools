@@ -1,6 +1,6 @@
 import {EventInstance} from "@ngrx/signals/events";
 import {AppState} from "@core/models/app-state.model";
-import {Color} from "chroma-js";
+import chroma, {Color} from "chroma-js";
 
 
 export function textColorChangedReducer(
@@ -9,11 +9,12 @@ export function textColorChangedReducer(
   state: AppState
 ) {
   const textColor = event.payload;
-
-  // TODO: Update contrast ratio
+  const bgColor = state.contrastBgColor;
+  const ratio = chroma.contrastAPCA(textColor, bgColor);
 
   return {
     contrastTextColor: textColor,
+    contrastRatio: ratio
   };
 }
 
@@ -23,11 +24,12 @@ export function backgroundColorChangedReducer(
   event: EventInstance<"[Contrast] backgroundColorChanged", Color>,
   state: AppState
 ) {
-  const backgroundColor = event.payload;
-
-  // TODO: Update contrast ratio
+  const bgColor = event.payload;
+  const textColor = state.contrastTextColor;
+  const ratio = chroma.contrastAPCA(textColor, bgColor);
 
   return {
-    contrastBackgroundColor: backgroundColor
+    contrastBgColor: bgColor,
+    contrastRatio: ratio
   };
 }
