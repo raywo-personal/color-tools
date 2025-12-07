@@ -11,7 +11,7 @@ import {colorThemeChangeEffect} from "@core/common/common.effects";
 import {colorChangedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
-import {navigateToPaletteIdEffect} from "@core/common/navigation.effects";
+import {navigateToContrast, navigateToPaletteIdEffect} from "@core/common/navigation.effects";
 
 
 export function allEffects(
@@ -31,6 +31,8 @@ export function allEffects(
 
     navigateToPalette$: navigateToPaletteIdEffect(events, router, store),
 
+    navigateToContrast$: navigateToContrast(events, router, store),
+
     colorChanged$: colorChangedEffect(events, themeService, store),
 
     anyPersistableEvents$: events
@@ -45,5 +47,5 @@ export function allEffects(
       ),
 
     persist$: saveStateEffect(events, localStorageService, store),
-  }
+  };
 }

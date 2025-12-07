@@ -1,19 +1,21 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject} from "@angular/core";
 import {injectDispatch} from "@ngrx/signals/events";
-import {converterEvents} from "@core/converter/converter.events";
 import {AppStateStore} from "@core/app-state.store";
+import {transferEvents} from "@core/common/transfer.events";
+import {converterEvents} from "@core/converter/converter.events";
 
 
 @Component({
-  selector: 'ct-function-buttons',
+  selector: "ct-function-buttons",
   imports: [],
-  templateUrl: './function-buttons.html',
+  templateUrl: "./function-buttons.html",
   styles: ``
 })
 export class FunctionButtons {
 
   readonly #stateStore = inject(AppStateStore);
   readonly #dispatch = injectDispatch(converterEvents);
+  readonly #transferDispatch = injectDispatch(transferEvents);
 
 
   protected readonly useBackground = this.#stateStore.useAsBackground;
@@ -32,7 +34,7 @@ export class FunctionButtons {
   protected useAsPaletteStarter() {
     const currentColor = this.#stateStore.currentColor();
 
-    this.#dispatch.useColorAsPaletteStarter(currentColor);
+    this.#transferDispatch.useColorAsPaletteStarter(currentColor);
   }
 
 }

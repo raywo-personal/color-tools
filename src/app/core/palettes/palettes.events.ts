@@ -30,4 +30,4 @@ export const palettesEvents = eventGroup({
     styleChanged: type<PaletteStyle>(),
     seedHueChanged: type<number>()
   }
-})
+});

@@ -60,6 +60,10 @@
     border: var(--bs-border-width) solid hsl(0deg 0% 100% / 0.4);
     border-radius: var(--bs-border-radius);
   }
+
+  .dropdown-toggle::after {
+    display: none;
+  }
 }
 
 .color-palette-header-container {

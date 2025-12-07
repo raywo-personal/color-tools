@@ -1,15 +1,7 @@
 import {signalStore, withState} from "@ngrx/signals";
 import {converterEvents} from "./converter/converter.events";
 import {on, withEffects, withReducer} from "@ngrx/signals/events";
-import {
-  colorChangedReducer,
-  correctLightnessReducer,
-  displayColorSpaceReducer,
-  newRandomColorReducer,
-  useAsBackgroundReducer,
-  useBezierReducer,
-  useColorAsPaletteStarterReducer
-} from "./converter/converter.reducers";
+import {colorChangedReducer, correctLightnessReducer, displayColorSpaceReducer, newRandomColorReducer, useAsBackgroundReducer, useBezierReducer,} from "./converter/converter.reducers";
 import {persistenceEvents} from "./common/persistence.events";
 import {palettesEvents} from "./palettes/palettes.events";
 import {loadAppStateReducer} from "./common/persistence.reducers";
@@ -29,6 +21,8 @@ import {initialState} from "@core/models/app-state.model";
 import {allEffects} from "@core/all-effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {backgroundColorChangedReducer, newRandomContrastColorsReducer, textColorChangedReducer} from "@core/contrast/contrast.reducers";
+import {transferEvents} from "@core/common/transfer.events";
+import {sendColorToContrastReducer, useColorAsPaletteStarterReducer} from "@core/common/transfer.reducers";
 
 
 export const AppStateStore = signalStore(
@@ -37,10 +31,11 @@ export const AppStateStore = signalStore(
   withReducer(
     on(persistenceEvents.loadAppState, loadAppStateReducer),
     on(commonEvents.colorThemeChanged, colorThemeChangedReducer),
+    on(transferEvents.useColorAsPaletteStarter, useColorAsPaletteStarterReducer),
+    on(transferEvents.sendColorToContrast, sendColorToContrastReducer),
     on(converterEvents.newRandomColor, newRandomColorReducer),
     on(converterEvents.colorChanged, colorChangedReducer),
     on(converterEvents.useAsBackgroundChanged, useAsBackgroundReducer),
-    on(converterEvents.useColorAsPaletteStarter, useColorAsPaletteStarterReducer),
     on(converterEvents.correctLightnessChanged, correctLightnessReducer),
     on(converterEvents.useBezierChanged, useBezierReducer),
     on(converterEvents.displayColorSpaceChanged, displayColorSpaceReducer),

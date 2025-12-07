@@ -10,7 +10,6 @@ export const converterEvents = eventGroup({
     newRandomColor: type<void>(),
     colorChanged: type<Color>(),
     useAsBackgroundChanged: type<boolean>(),
-    useColorAsPaletteStarter: type<Color>(),
     correctLightnessChanged: type<boolean>(),
     useBezierChanged: type<boolean>(),
     displayColorSpaceChanged: type<ColorSpace>()
