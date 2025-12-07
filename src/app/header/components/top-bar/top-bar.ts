@@ -52,6 +52,11 @@ export class TopBar implements OnInit, OnDestroy {
           return;
         }
 
+        if (this.#newClickSource === "contrast") {
+          this.triggerNewCaption.set("New contrast colors");
+          return;
+        }
+
         this.triggerNewCaption.set("New color");
       });
   }
