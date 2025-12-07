@@ -1,5 +1,5 @@
-import {Component, computed, inject} from '@angular/core';
-import {FunctionButtons} from "@converter/components/background-buttons/function-buttons";
+import {Component, computed, inject} from "@angular/core";
+import {FunctionButtons} from "@converter/components/function-buttons/function-buttons";
 import {ColorPreview} from "@converter/components/color-preview/color-preview/color-preview";
 import {ColorSwatches} from "@converter/components/color-swatches/color-swatches";
 import {HexInput} from "@converter/components/hex-input/hex-input";
