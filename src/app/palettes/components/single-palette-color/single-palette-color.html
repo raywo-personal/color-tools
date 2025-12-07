@@ -31,17 +31,17 @@
     </button>
 
     <div ngbDropdown>
-      <button id="sendToContrast"
+      <button [id]="`sendToContrast-${color().color.hex()}`"
         type="button"
               class="btn"
-              ngbTooltip="Show tints & shades"
+              ngbTooltip="Send to contrast checker"
               [openDelay]="300"
               ngbDropdownToggle>
         <i class="bi bi-circle-half"></i>
-        <span class="visually-hidden">Tints & Shades</span>
+        <span class="visually-hidden">Send to contrast checker</span>
       </button>
 
-      <div ngbDropdownMenu aria-labelledby="sendToContrast">
+      <div ngbDropdownMenu aria-labelledby="`sendToContrast-${color().color.hex()}`">
         <button ngbDropdownItem (click)="sendTextColor()">
           <i class="bi bi-send"></i>&nbsp;
           As text color to contrast
