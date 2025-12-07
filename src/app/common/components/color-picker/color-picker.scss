@@ -1,0 +1,93 @@
+:host {
+  position: relative;
+}
+
+.color-picker {
+  position: relative;
+
+  &.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+.color-picker-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.375rem 0.375rem 0.75rem;
+  width: 100%;
+  background-color: var(--bs-body-bg);
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  cursor: pointer;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  &:hover:not(:disabled) {
+    border-color: var(--bs-primary);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+}
+
+.color-preview-swatch {
+  --ct-cp-swatch-size: 2rem;
+
+  width: var(--ct-cp-swatch-size);
+  height: var(--ct-cp-swatch-size);
+  border-radius: var(--bs-border-radius-sm);
+  background-color: var(--ct-picker-color);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.color-preview-value {
+}
+
+.color-picker-popup {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 1000;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  width: 300px;
+  padding: 1rem;
+
+  background: var(--bs-body-bg);
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.color-picker-input-row {
+  display: flex;
+  gap: 0.5rem;
+
+  .form-control {
+    flex: 1;
+  }
+
+  .btn {
+    flex-shrink: 0;
+    min-width: 3.5rem;
+  }
+}
+
+// Override hue slider container padding within color picker
+:host ::ng-deep .slider-container {
+  padding: 0.5rem 0;
+}

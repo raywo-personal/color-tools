@@ -1,18 +1,13 @@
 <div class="col-6">
-  <label for="textColorInput">Text color</label>
-  <input id="textColorInput"
-         type="text"
-         class="form-control"
-         placeholder="Color"
-         name="textColor"
-         [ngModel]="textColor()">
+  <label>Text color</label>
+  <ct-color-picker
+    [color]="textColor()"
+    (colorChange)="onTextColorChanged($event)"/>
 </div>
 
 <div class="col-6">
-  <label for="backgroundColorInput">Background color</label>
-  <input id="backgroundColorInput" type="text"
-         class="form-control"
-         placeholder="Color"
-         name="bgColor"
-         [ngModel]="bgColor()">
+  <label>Background color</label>
+  <ct-color-picker
+    [color]="bgColor()"
+    (colorChange)="onBgColorChanged($event)"/>
 </div>

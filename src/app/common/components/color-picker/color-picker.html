@@ -1,0 +1,49 @@
+<input type="text"
+       class="form-control">
+
+<div class="color-picker" [class.disabled]="disabled()">
+  <!-- Trigger Button -->
+  <button type="button"
+          class="color-picker-trigger"
+          [style.--ct-picker-color]="previewColor()"
+          [disabled]="disabled()"
+          (click)="togglePopup()">
+    <span class="color-preview-value">{{ colorString() }}</span>
+    <span class="color-preview-swatch"></span>
+  </button>
+
+  <!-- Popup Panel -->
+  @if (isOpen()) {
+    <div class="color-picker-popup">
+      <ct-color-area [hue]="hue()"
+                     [(saturation)]="hsvSaturation"
+                     [(value)]="hsvValue"
+                     (saturationChange)="onHsvSaturationChanged($event)"
+                     (valueChange)="onHsvValueChanged($event)"/>
+
+      <ct-hue-slider [(hue)]="hue"
+                     (hueChanged)="onHueChanged($event)"/>
+
+      <div class="color-picker-input-row">
+        <input type="text"
+               class="form-control form-control-sm"
+               [(ngModel)]="inputValue"
+               (ngModelChange)="onInputChange()"/>
+
+        <button type="button"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="copyToClipboard()"
+                title="Copy to clipboard">
+          <i class="bi bi-copy"></i>
+        </button>
+
+        <button type="button"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="cycleFormat()"
+                title="Toggle format">
+          {{ currentFormat().toUpperCase() }}
+        </button>
+      </div>
+    </div>
+  }
+</div>
