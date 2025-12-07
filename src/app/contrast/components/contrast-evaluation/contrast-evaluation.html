@@ -1,7 +1,10 @@
 <div class="col">
   <h2>Contrast</h2>
 
-  <ul class="list-group list-group-item-success">
+  <ul class="list-group"
+      [class.list-group-item-success]="isVeryGoodRating()"
+      [class.list-group-item-warning]="isGoodRating()"
+      [class.list-group-item-danger]="isPoorRating()">
     <li class="list-group-item p-4 d-flex justify-content-between align-items-center">
       <div>
         <span class="mb-0">APCA L<sup>c</sup></span>

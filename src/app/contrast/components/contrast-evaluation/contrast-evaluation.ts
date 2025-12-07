@@ -47,6 +47,13 @@ export class ContrastEvaluation {
     const ratio = this.ratio();
 
     return getAPCARating(ratio, 24, "400", apcaLookup);
-  })
+  });
+
+  protected readonly isVeryGoodRating = computed(() =>
+    this.rating() >= 4);
+  protected readonly isGoodRating = computed(() =>
+    this.rating() >= 3 && this.rating() < 4);
+  protected readonly isPoorRating = computed(() =>
+    this.rating() < 3);
 
 }
