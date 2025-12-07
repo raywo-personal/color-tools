@@ -30,6 +30,12 @@
       ],
       "@core/*": [
         "src/app/core/*"
+      ],
+      "@contrast/*": [
+        "src/app/contrast/*"
+      ],
+      "@environments/*": [
+        "src/environments/*"
       ]
     }
   },

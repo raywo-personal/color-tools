@@ -1,0 +1,39 @@
+@for (fWeight of fontWeights; track fWeight) {
+  @for (size of fontSizes; track size) {
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between">
+          <div>
+            @let makeBold = isCommonBodyText(size, fWeight) || isCommonHeading(size, fWeight);
+
+            <p [class.fw-bold]="makeBold">
+              {{ fWeight }} &#64; {{ size }}px
+            </p>
+
+            @if (isCommonBodyText(size, fWeight)) {
+              <span>(common for body text)</span>
+            } @else {
+              <span>&nbsp;</span>
+            }
+
+            @if (isCommonHeading(size, fWeight)) {
+              <span>(common for headings)</span>
+            } @else {
+              <span>&nbsp;</span>
+            }
+          </div>
+
+          <ct-star-rating [rating]="ratingFor(size, fWeight)"
+                          [maxRating]="3"
+                          [small]="true"/>
+        </div>
+
+        <div class="card-body {{fwClass(fWeight)}}"
+             [style.--ct-cc-font-size]="`${size}px`">
+          <p>{{ sampleTextParagraph1() }}</p>
+          <p>{{ sampleTextParagraph2() }}</p>
+        </div>
+      </div>
+    </div>
+  }
+}

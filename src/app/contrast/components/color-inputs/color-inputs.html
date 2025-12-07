@@ -1,0 +1,13 @@
+<div class="col-6">
+  <label>Text color</label>
+  <ct-color-picker
+    [color]="textColor()"
+    (colorChange)="onTextColorChanged($event)"/>
+</div>
+
+<div class="col-6">
+  <label>Background color</label>
+  <ct-color-picker
+    [color]="bgColor()"
+    (colorChange)="onBgColorChanged($event)"/>
+</div>

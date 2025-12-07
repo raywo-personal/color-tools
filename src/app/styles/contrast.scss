@@ -1,0 +1,111 @@
+.contrast-checker {
+  --ct-cc-bg: gray;
+  --ct-cc-text: black;
+
+  .colors-container,
+  .quote-container {
+    padding: 1.5rem;
+    height: 100%;
+
+    border-radius: var(--bs-border-radius);
+  }
+
+  .colors-container {
+    background: hsl(0 0% 95%);
+
+    label {
+      font-weight: 500;
+      padding-block-end: 0.25rem;
+    }
+
+    .contrast-evaluation {
+      h2 {
+        font-size: 1rem;
+      }
+
+      .value {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-block: 0;
+        line-height: 1;
+      }
+
+      .star-rating {
+        display: flex;
+        flex-direction: column;
+        align-content: center;
+        text-align: center;
+      }
+
+      .star-rating.small {
+        font-size: 0.65rem;
+      }
+    }
+  }
+
+  .quote-container {
+    text-align: center;
+    align-content: center;
+
+    background: var(--ct-cc-bg);
+    color: var(--ct-cc-text);
+
+    h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .blockquote-container {
+      width: 100%;
+      padding-inline: 3rem;
+    }
+
+    blockquote {
+      position: relative;
+      //font-size: 1.2rem;
+      text-align: start;
+
+      footer {
+        text-align: end;
+        margin-block-start: 1rem;
+      }
+    }
+
+    .blockquote:before {
+      position: absolute;
+      font-family: "bootstrap-icons";
+      top: -2rem;
+      left: -3rem;
+
+      content: "\f6b0";
+      font-size: 6rem;
+      line-height: 1;
+      color: hsla(0, 0%, 0%, 0.2);
+    }
+  }
+}
+
+
+.text-samples {
+  --ct-cc-font-size: 1rem;
+
+  .card-header {
+    p {
+      margin: 0;
+    }
+  }
+
+  .card-body {
+    background: var(--ct-cc-bg);
+    color: var(--ct-cc-text);
+
+    font-size: var(--ct-cc-font-size);
+  }
+
+  @for $i from 1 through 9 {
+    .fw-#{$i}00 {
+      font-weight: $i * 100;
+    }
+  }
+
+}

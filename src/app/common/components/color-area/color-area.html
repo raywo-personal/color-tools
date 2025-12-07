@@ -1,0 +1,13 @@
+<div #area
+     class="color-area"
+     [style.background-color]="baseColor()"
+     (pointerdown)="onPointerDown($event)"
+     (pointermove)="onPointerMove($event)"
+     (pointerup)="onPointerUp($event)"
+     (pointercancel)="onPointerUp($event)">
+  <div class="color-area-gradient saturation-gradient"></div>
+  <div class="color-area-gradient value-gradient"></div>
+  <div class="color-area-handle"
+       [style.left]="handleX()"
+       [style.top]="handleY()"></div>
+</div>

@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(pnpm test:*)",
-      "Bash(npx ng test:*)"
+      "Bash(npx ng test:*)",
+      "Bash(pnpm build:*)",
+      "Bash(gh pr:*)"
     ],
     "deny": [],
     "ask": []

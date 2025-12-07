@@ -1,4 +1,4 @@
-export type NewClickSource = "palettes" | "convert";
+export type NewClickSource = "palettes" | "convert" | "contrast";
 
 export function routePathToSource(routePath: string): NewClickSource {
   const splitRoute = routePath.split("/");

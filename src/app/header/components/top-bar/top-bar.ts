@@ -1,22 +1,23 @@
-import {Component, inject, OnDestroy, OnInit, signal} from '@angular/core';
-import {ColorThemeSwitcher} from '@header/components/color-theme-switcher/color-theme-switcher';
-import {EventType, Router, RouterLink, RouterLinkActive} from '@angular/router';
+import {Component, inject, OnDestroy, OnInit, signal} from "@angular/core";
+import {ColorThemeSwitcher} from "@header/components/color-theme-switcher/color-theme-switcher";
+import {EventType, Router, RouterLink, RouterLinkActive} from "@angular/router";
 import {filter, map, Subscription} from "rxjs";
 import {NewClickSource, routePathToSource} from "@common/models/new-click-source.model";
 import {injectDispatch} from "@ngrx/signals/events";
 import {converterEvents} from "@core/converter/converter.events";
 import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
+import {contrastEvents} from "@core/contrast/contrast.events";
 
 
 @Component({
-  selector: 'nav[app-top-bar]',
+  selector: "nav[app-top-bar]",
   imports: [
     ColorThemeSwitcher,
     RouterLinkActive,
     RouterLink
   ],
-  templateUrl: './top-bar.html',
+  templateUrl: "./top-bar.html",
   styles: ``,
   host: {
     "class": "navbar navbar-expand"
@@ -27,6 +28,7 @@ export class TopBar implements OnInit, OnDestroy {
   readonly #router = inject(Router);
   readonly #converterDispatch = injectDispatch(converterEvents);
   readonly #palettesDispatch = injectDispatch(palettesEvents);
+  readonly #contrastDispatch = injectDispatch(contrastEvents);
   readonly #store = inject(AppStateStore);
 
   #subscription?: Subscription;
@@ -50,6 +52,11 @@ export class TopBar implements OnInit, OnDestroy {
           return;
         }
 
+        if (this.#newClickSource === "contrast") {
+          this.triggerNewCaption.set("New contrast colors");
+          return;
+        }
+
         this.triggerNewCaption.set("New color");
       });
   }
@@ -67,6 +74,9 @@ export class TopBar implements OnInit, OnDestroy {
         return;
       case "convert":
         this.#converterDispatch.newRandomColor();
+        return;
+      case "contrast":
+        this.#contrastDispatch.newRandomColors();
         return;
     }
   }

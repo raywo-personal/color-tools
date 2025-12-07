@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.color-area {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--bs-border-radius);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.color-area-gradient {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.saturation-gradient {
+  background: linear-gradient(to right, white, transparent);
+}
+
+.value-gradient {
+  background: linear-gradient(to top, black, transparent);
+}
+
+.color-area-handle {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
