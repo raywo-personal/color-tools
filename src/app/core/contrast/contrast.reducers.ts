@@ -1,6 +1,7 @@
 import {EventInstance} from "@ngrx/signals/events";
 import {AppState} from "@core/models/app-state.model";
 import chroma, {Color} from "chroma-js";
+import {findHarmonicTextColor} from "@contrast/helper/optimal-text-color.helper";
 
 
 export function textColorChangedReducer(
@@ -29,6 +30,23 @@ export function backgroundColorChangedReducer(
   const ratio = chroma.contrastAPCA(textColor, bgColor);
 
   return {
+    contrastBgColor: bgColor,
+    contrastRatio: ratio
+  };
+}
+
+
+export function newRandomContrastColorsReducer(
+  this: void,
+  event: EventInstance<"[Contrast] newRandomColors", void>,
+  state: AppState
+) {
+  const bgColor = chroma.random();
+  const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
+  const ratio = chroma.contrastAPCA(textColor, bgColor);
+
+  return {
+    contrastTextColor: textColor,
     contrastBgColor: bgColor,
     contrastRatio: ratio
   };
