@@ -1,4 +1,5 @@
-import {hueWrap} from './hsl.helper';
+import {hueWrap} from "./hsl.helper";
+import {rangeToArray} from "@common/helpers/iterables.helper";
 
 
 /**
@@ -39,16 +40,29 @@ export function splitComplement(h: number, splitDeg: number = 30): number[] {
 
 
 /**
- * Generates an array of hues distributed evenly within a specified range.
+ * Generates an array of hues starting from a specified central hue and
+ * spanning across a given range of degrees.
  *
- * @param {number} h - The central hue value around which the range is calculated.
- * @param {number} [rangeDeg=30] - The width of the range in degrees.
+ * @param {number} h - The central hue in degrees.
+ * @param {number} [rangeDeg=30] - The total range in degrees to span. Default
+ *                                 is 30 degrees.
  * @param {number} [count=3] - The number of hues to generate within the range.
- * @return {number[]} An array of hue values evenly distributed within the specified range.
+ *                             Must be greater than 1.
+ * @return {number[]} An array of hues in degrees, evenly spaced across the
+ *                    specified range.
+ * @throws {Error} Throws an error if count is less than or equal to 1.
  */
-export function analogRange(h: number, rangeDeg: number = 30, count: number = 3): number[] {
-  const start = h - rangeDeg / 2;
-  const step = rangeDeg / Math.max(1, count - 1);
+export function analogRange(h: number,
+                            rangeDeg: number = 30,
+                            count: number = 3): number[] {
+  if (count <= 1) {
+    throw new Error("analogRange: count must be > 1");
+  }
 
-  return Array.from({length: count}, (_, i) => hueWrap(start + i * step));
+  const halfRange = rangeDeg / 2;
+  const start = h - halfRange;
+  const end = h + halfRange;
+  const step = rangeDeg / (count - 1);
+
+  return rangeToArray(start, end, step).map(hueWrap);
 }

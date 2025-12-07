@@ -1,8 +1,4 @@
 /**
- * Iterable/Generator-Helfer
- */
-
-/**
  * Generates a range of numbers from `start` to `end`, incrementing or
  * decrementing by `step`.
  *
@@ -39,6 +35,7 @@ export function* generateRange(
   }
 }
 
+
 /**
  * Generates an array of numbers within a specified range.
  *
@@ -55,6 +52,7 @@ export function rangeToArray(
 ): number[] {
   return Array.from(generateRange(start, end, step));
 }
+
 
 /**
  * Rounds a given number to two decimal places.
