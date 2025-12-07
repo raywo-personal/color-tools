@@ -2,16 +2,10 @@
   --ct-cc-bg: gray;
   --ct-cc-text: black;
 
-  //display: grid;
-  //grid-template-columns: 1fr 1fr;
-  //gap: 2rem;
-  //flex-wrap: wrap;
-  //padding: 4rem;
-
   .colors-container,
   .quote-container {
     padding: 1.5rem;
-    aspect-ratio: 1;
+    height: 100%;
 
     border-radius: var(--bs-border-radius);
   }
@@ -45,18 +39,6 @@
 
       .star-rating.small {
         font-size: 0.65rem;
-      }
-
-      .text-sample {
-        background: var(--ct-cc-bg);
-        color: var(--ct-cc-text);
-
-        border-radius: var(--bs-border-radius);
-        padding: 0.75rem;
-      }
-
-      small.text-sample {
-        font-size: 0.75rem;
       }
     }
   }
@@ -101,4 +83,29 @@
       color: hsla(0, 0%, 0%, 0.2);
     }
   }
+}
+
+
+.text-samples {
+  --ct-cc-font-size: 1rem;
+
+  .card-header {
+    p {
+      margin: 0;
+    }
+  }
+
+  .card-body {
+    background: var(--ct-cc-bg);
+    color: var(--ct-cc-text);
+
+    font-size: var(--ct-cc-font-size);
+  }
+
+  @for $i from 1 through 9 {
+    .fw-#{$i}00 {
+      font-weight: $i * 100;
+    }
+  }
+
 }

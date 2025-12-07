@@ -1,7 +1,7 @@
 import {APCALookupTable} from "@contrast/models/apca-lookup-table.model";
 
 
-const apcaLookup: APCALookupTable = {
+export const apcaLookup: APCALookupTable = {
   "12px": {
     "100": {contrast: null},
     "200": {contrast: null},

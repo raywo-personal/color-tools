@@ -13,19 +13,15 @@
     </li>
 
     <li class="list-group-item p-3 d-flex justify-content-between align-items-center">
-      <strong>Small text</strong>
+      <div><strong>Small text</strong>&nbsp;<small>(<= 14px)</small></div>
 
-      <small class="text-sample">Lorem ipsum dolor</small>
-
-      <ct-star-rating [rating]="1" [maxRating]="3" [small]="true"/>
+      <ct-star-rating [rating]="smallFontRating()" [maxRating]="3" [small]="true"/>
     </li>
 
     <li class="list-group-item p-3 d-flex justify-content-between align-items-center">
-      <strong>Large text</strong>
+      <div><strong>Large text</strong>&nbsp;<small>(>= 24px)</small></div>
 
-      <div class="text-sample">Lorem ipsum dolor</div>
-
-      <ct-star-rating [rating]="1" [maxRating]="3" [small]="true"/>
+      <ct-star-rating [rating]="largeFontRating()" [maxRating]="3" [small]="true"/>
     </li>
   </ul>
 </div>

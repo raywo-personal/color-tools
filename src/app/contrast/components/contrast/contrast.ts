@@ -2,13 +2,15 @@ import {Component, inject} from "@angular/core";
 import {QuoteOfTheDay} from "../quote-of-the-day/quote-of-the-day";
 import {ContrastColors} from "@contrast/components/contrast-colors/contrast-colors";
 import {AppStateStore} from "@core/app-state.store";
+import {TextSamples} from "@contrast/components/text-samples/text-samples";
 
 
 @Component({
   selector: "ct-contrast",
   imports: [
     QuoteOfTheDay,
-    ContrastColors
+    ContrastColors,
+    TextSamples
   ],
   templateUrl: "./contrast.html",
   styles: ``,

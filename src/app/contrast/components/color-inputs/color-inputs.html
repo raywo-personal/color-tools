@@ -3,12 +3,16 @@
   <input id="textColorInput"
          type="text"
          class="form-control"
-         placeholder="Color">
+         placeholder="Color"
+         name="textColor"
+         [ngModel]="textColor()">
 </div>
 
 <div class="col-6">
   <label for="backgroundColorInput">Background color</label>
   <input id="backgroundColorInput" type="text"
          class="form-control"
-         placeholder="Color">
+         placeholder="Color"
+         name="bgColor"
+         [ngModel]="bgColor()">
 </div>
