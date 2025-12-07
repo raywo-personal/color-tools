@@ -1,4 +1,4 @@
-import {Component, computed, DestroyRef, effect, ElementRef, inject, input, model, OnInit, signal} from "@angular/core";
+import {Component, computed, DestroyRef, effect, ElementRef, inject, input, linkedSignal, model, OnInit, signal} from "@angular/core";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {FormsModule} from "@angular/forms";
 import {fromEvent} from "rxjs";
@@ -25,21 +25,10 @@ export class ColorPickerComponent implements OnInit {
   private readonly elementRef = inject(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
 
-  // Two-way binding for the color
-  public readonly color = model.required<Color>();
-
-  // Optional inputs
-  public readonly format = input<ColorSpace>("hex");
-  public readonly disabled = input<boolean>(false);
-
-  // Internal HSL state
+  // Internal HSV state
   protected readonly hue = signal<number>(0);
   protected readonly saturation = signal<number>(100);
-  protected readonly lightness = signal<number>(50);
-
-  // HSV values for ColorArea (computed from HSL)
-  protected readonly hsvSaturation = signal<number>(100);
-  protected readonly hsvValue = signal<number>(100);
+  protected readonly value = signal<number>(100);
 
   // Popup state
   protected readonly isOpen = signal<boolean>(false);
@@ -48,48 +37,44 @@ export class ColorPickerComponent implements OnInit {
   protected readonly inputValue = signal<string>("");
 
   // Current format for display
-  protected readonly currentFormat = signal<ColorSpace>("hex");
+  protected readonly currentFormat = linkedSignal<ColorSpace>(() => {
+    return this.format();
+  });
 
-  // Computed current color from HSL
+  // Computed current color from HSV
   protected readonly currentColor = computed(() => {
-    return chroma.hsl(this.hue(), this.saturation() / 100, this.lightness() / 100);
+    return chroma.hsv(this.hue(), this.saturation() / 100, this.value() / 100);
   });
 
   // Formatted color string for display
   protected readonly colorString = computed(() => {
     const color = this.currentColor();
-    switch (this.currentFormat()) {
-      case "rgb":
-        const [r, g, b] = color.rgb();
-        return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
-      case "hsl":
-        const [h, s, l] = color.hsl();
-        return `hsl(${Math.round(h || 0)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
-      case "hex":
-      default:
-        return color.hex();
-    }
+
+    return this.formatColor(color);
   });
 
   // Preview color CSS
   protected readonly previewColor = computed(() => this.currentColor().css());
 
 
+  // Two-way binding for the color
+  public readonly color = model.required<Color>();
+  // Optional inputs
+  public readonly format = input<ColorSpace>("hex");
+  public readonly disabled = input<boolean>(false);
+
+
   constructor() {
-    // Sync external color to internal HSL state and HSV for ColorArea
+    // Sync external color to internal HSV state
     effect(() => {
       const externalColor = this.color();
+
       if (externalColor) {
-        const [h, s, l] = externalColor.hsl();
+        const [h, s, v] = externalColor.hsv();
         this.hue.set(h || 0);
         this.saturation.set(Math.round(s * 100));
-        this.lightness.set(Math.round(l * 100));
+        this.value.set(Math.round(v * 100));
         this.inputValue.set(this.formatColor(externalColor));
-
-        // Also update HSV values for ColorArea
-        const [, hsvS, hsvV] = externalColor.hsv();
-        this.hsvSaturation.set(Math.round(hsvS * 100));
-        this.hsvValue.set(Math.round(hsvV * 100));
       }
     });
 
@@ -98,14 +83,10 @@ export class ColorPickerComponent implements OnInit {
       const internalColor = this.currentColor();
       // Only update if significantly different to avoid loops
       const external = this.color();
+
       if (external && chroma.deltaE(internalColor, external) > 0.5) {
         this.color.set(internalColor);
       }
-    });
-
-    // Initialize format from input
-    effect(() => {
-      this.currentFormat.set(this.format());
     });
   }
 
@@ -138,53 +119,38 @@ export class ColorPickerComponent implements OnInit {
 
   protected togglePopup(): void {
     if (this.disabled()) return;
+
     this.isOpen.update(open => !open);
   }
 
 
   protected onHueChanged(hue: number): void {
     this.hue.set(hue);
-    // Recalculate HSL from new hue + existing HSV saturation/value
-    this.syncHsvToHsl();
+    this.syncToModel();
   }
 
 
-  // Called when ColorArea changes saturation (HSV)
-  protected onHsvSaturationChanged(hsvSaturation: number): void {
-    this.hsvSaturation.set(hsvSaturation);
-    this.syncHsvToHsl();
+  protected onSaturationChanged(saturation: number): void {
+    this.saturation.set(saturation);
+    this.syncToModel();
   }
 
-  // Called when ColorArea changes value (HSV)
-  protected onHsvValueChanged(hsvValue: number): void {
-    this.hsvValue.set(hsvValue);
-    this.syncHsvToHsl();
-  }
 
-  // Convert HSV from ColorArea to internal HSL
-  private syncHsvToHsl(): void {
-    const color = chroma.hsv(this.hue(), this.hsvSaturation() / 100, this.hsvValue() / 100);
-    const [, s, l] = color.hsl();
-    this.saturation.set(Math.round(s * 100));
-    this.lightness.set(Math.round(l * 100));
+  protected onValueChanged(value: number): void {
+    this.value.set(value);
     this.syncToModel();
   }
 
 
   protected onInputChange(): void {
     const inputVal = this.inputValue();
+
     if (chroma.valid(inputVal)) {
       const newColor = chroma(inputVal);
-      const [h, s, l] = newColor.hsl();
+      const [h, s, v] = newColor.hsv();
       this.hue.set(h || 0);
       this.saturation.set(Math.round(s * 100));
-      this.lightness.set(Math.round(l * 100));
-
-      // Also update HSV values for ColorArea
-      const [, hsvS, hsvV] = newColor.hsv();
-      this.hsvSaturation.set(Math.round(hsvS * 100));
-      this.hsvValue.set(Math.round(hsvV * 100));
-
+      this.value.set(Math.round(v * 100));
       this.syncToModel();
     }
   }
