@@ -1,0 +1,21 @@
+<div class="font-selector">
+  <label [for]="fontSelectInput" class="form-label">{{ label() }}</label>
+  <input
+    [id]="fontSelectInput"
+    type="text"
+    class="form-control"
+    [(ngModel)]="selectedFontName"
+    [ngbTypeahead]="search"
+    [resultFormatter]="formatter"
+    [inputFormatter]="formatter"
+    (selectItem)="onFontSelected($event)"
+    [placeholder]="placeholder()"
+    [editable]="false"
+  />
+  @if (fontsResource.isLoading()) {
+    <small class="text-muted">Loading fonts...</small>
+  }
+  @if (fontsResource.error()) {
+    <small class="text-danger">Error loading fonts: {{ fontsResource.error() }}</small>
+  }
+</div>

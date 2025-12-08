@@ -6,6 +6,7 @@ import {ColorTheme} from "@common/models/color-theme.model";
 import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
 import {generatePalette} from "@palettes/helper/palette.helper";
 import {contrastingColor} from "@common/helpers/contrasting-color.helper";
+import {SelectedFont} from "@common/models/google-font.model";
 
 
 export type AppState = {
@@ -31,6 +32,7 @@ export type AppState = {
 
   // Common
   colorTheme: ColorTheme;
+  selectedFont: SelectedFont | null;
 };
 
 const initialColor = chroma.random();
@@ -54,5 +56,6 @@ export const initialState: AppState = {
   contrastBgColor: initialColor,
   contrastRatio: chroma.contrastAPCA(textColor, initialColor),
 
-  colorTheme: "system"
+  colorTheme: "system",
+  selectedFont: null
 };
