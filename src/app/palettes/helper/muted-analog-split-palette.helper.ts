@@ -2,6 +2,14 @@ import {Palette, PaletteColors} from "@palettes/models/palette.model";
 import {generateAnalogousBasedPalette} from "@palettes/helper/analogous-based-palette.helper";
 
 
+const MUTED_ANALOG_SPLIT_CONFIG = {
+  analogsSaturationBase: -0.40,
+  pastelSaturationOffset: -0.15,
+  complementSaturationOffset: -0.42,
+  complementLightnessOffset: 0.08
+};
+
+
 /**
  * Generates a muted analog split color palette based on a given seed hue or
  * a random hue if no seed is provided.
@@ -26,12 +34,7 @@ export function generateMutedAnalogSplit(paletteColors: Partial<PaletteColors> =
   return generateAnalogousBasedPalette(
     paletteColors,
     seedHue,
-    {
-      analogsSaturationBase: -0.40,
-      pastelSaturationOffset: -0.15,
-      complementSaturationOffset: -0.42,
-      complementLightnessOffset: 0.08
-    },
+    MUTED_ANALOG_SPLIT_CONFIG,
     "muted-analog-split"
   );
 }

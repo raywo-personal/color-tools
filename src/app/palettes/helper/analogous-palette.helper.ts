@@ -2,6 +2,13 @@ import {Palette, PaletteColors} from "@palettes/models/palette.model";
 import {generateAnalogousBasedPalette} from "@palettes/helper/analogous-based-palette.helper";
 
 
+const ANALOGOUS_CONFIG = {
+  analogsSaturationBase: 0,
+  pastelSaturationOffset: -0.05,
+  complementSaturationOffset: -0.32,
+  complementLightnessOffset: -0.02
+};
+
 /**
  * Generates an analogous color palette based on the provided paletteColors and
  * an optional seed hue.
@@ -21,12 +28,7 @@ export function generateAnalogous(paletteColors: Partial<PaletteColors> = {},
   return generateAnalogousBasedPalette(
     paletteColors,
     seedHue,
-    {
-      analogsSaturationBase: 0,
-      pastelSaturationOffset: -0.05,
-      complementSaturationOffset: -0.32,
-      complementLightnessOffset: -0.02
-    },
+    ANALOGOUS_CONFIG,
     "analogous"
   );
 }
