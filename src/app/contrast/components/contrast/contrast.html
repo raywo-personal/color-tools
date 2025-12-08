@@ -11,6 +11,10 @@
     </div>
   </div>
 
-  <h2 class="mt-5">Samples <small class="fs-6 text-muted">(Font weight @ font size)</small></h2>
+  <div class="d-flex justify-content-between">
+    <h2 class="mt-5">Samples <small class="fs-6 text-muted">(Font weight @ font size)</small></h2>
+
+    <ct-font-selector (fontSelected)="onFontSelected($event)"/>
+  </div>
   <div ct-text-samples></div>
 </div>

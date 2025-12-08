@@ -1,35 +1,30 @@
-import {Component, computed, effect, inject, input, output, signal} from '@angular/core';
-import {FormsModule} from '@angular/forms';
-import {NgbTypeahead, NgbTypeaheadSelectItemEvent} from '@ng-bootstrap/ng-bootstrap';
-import {GoogleFontsService} from '@common/services/google-fonts.service';
-import {GoogleFont, SelectedFont} from '@common/models/google-font.model';
-import {Observable, OperatorFunction} from 'rxjs';
-import {debounceTime, distinctUntilChanged, map} from 'rxjs/operators';
+import {Component, inject, input, linkedSignal, output} from "@angular/core";
+import {FormsModule} from "@angular/forms";
+import {NgbTypeahead, NgbTypeaheadSelectItemEvent} from "@ng-bootstrap/ng-bootstrap";
+import {GoogleFontsService} from "@common/services/google-fonts.service";
+import {GoogleFont, SelectedFont} from "@common/models/google-font.model";
+import {Observable, OperatorFunction} from "rxjs";
+import {debounceTime, distinctUntilChanged, map} from "rxjs/operators";
+
 
 /**
  * Font selector component using Google Fonts API
  * Provides a typeahead search interface for selecting fonts
  */
 @Component({
-  selector: 'app-font-selector',
+  selector: "ct-font-selector",
   imports: [FormsModule, NgbTypeahead],
-  templateUrl: './font-selector.html',
-  styles: `
-    .font-selector {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-  `
+  templateUrl: "./font-selector.html",
+  styles: ``
 })
 export class FontSelectorComponent {
   private readonly googleFontsService = inject(GoogleFontsService);
 
   /** Input: Label for the font selector */
-  public readonly label = input<string>('Select Font');
+  public readonly label = input<string>("Select Font");
 
   /** Input: Placeholder text for the input field */
-  public readonly placeholder = input<string>('Search for a font...');
+  public readonly placeholder = input<string>("Search for a font...");
 
   /** Input: Initial selected font family name */
   public readonly initialFont = input<string | null>(null);
@@ -41,20 +36,13 @@ export class FontSelectorComponent {
   protected readonly fontsResource = this.googleFontsService.fontsResource;
 
   /** Currently selected font name for the input field */
-  protected selectedFontName = signal<string>('');
+  protected selectedFontName = linkedSignal<string>(() => {
+    return this.initialFont() ?? "";
+  });
 
   /** Unique ID for the input element */
-  protected readonly inputId = `font-selector-${Math.random().toString(36).substring(7)}`;
+  protected readonly fontSelectInput = `font-selector-${Math.random().toString(36).substring(7)}`;
 
-  constructor() {
-    // Set initial font if provided
-    effect(() => {
-      const initial = this.initialFont();
-      if (initial) {
-        this.selectedFontName.set(initial);
-      }
-    });
-  }
 
   /**
    * Typeahead search function
@@ -69,13 +57,13 @@ export class FontSelectorComponent {
           return [];
         }
 
-        const fonts = this.fontsResource.value();
-        if (!fonts) {
+        const data = this.fontsResource.value();
+        if (!data?.items) {
           return [];
         }
 
         const lowerTerm = term.toLowerCase();
-        return fonts
+        return data.items
           .filter(font => font.family.toLowerCase().includes(lowerTerm))
           .slice(0, 20); // Limit to 20 results for performance
       })
@@ -88,6 +76,7 @@ export class FontSelectorComponent {
     return font.family;
   };
 
+
   /**
    * Handler for when a font is selected from the typeahead
    */
@@ -99,8 +88,8 @@ export class FontSelectorComponent {
     const selectedFont: SelectedFont = {
       family: font.family,
       category: font.category,
-      variant: 'regular',
-      fileUrl: font.files['regular'] || font.files[font.variants[0]] || ''
+      variant: "regular",
+      fileUrl: font.files["regular"] || font.files[font.variants[0]] || ""
     };
 
     this.fontSelected.emit(selectedFont);
