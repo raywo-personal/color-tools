@@ -43,8 +43,7 @@ export class FontSelectorComponent {
       distinctUntilChanged(),
       map(term => {
         return this.#googleFontsService
-          .searchFonts(term)
-          .slice(0, 20);
+          .searchFonts(term, 20);
       })
     );
 

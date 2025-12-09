@@ -27,6 +27,16 @@ export class GoogleFontsService {
    * Searches for fonts matching the given query and returns a list of fonts
    * sorted by relevance.
    *
+   * Fonts are scored based on the following criteria:
+   * - Exact match: The font name exactly matches the query.
+   * - Starts with: The font name starts with the query.
+   * - Contains: The query is a substring of the font name.
+   * - Category: The font category is "sans-serif" (e.g., Roboto, Open Sans).
+   * - Popularity: The font is popular among users (e.g., Google Fonts).
+   *
+   * We assume that most people will be searching for sans-serif fonts, so we
+   * give a bonus score to fonts in this category.
+   *
    * @param {string} query - The search term used to match font names.
    * @param {number} [limit=20] - The maximum number of fonts to return.
    *                              Defaults to 20.

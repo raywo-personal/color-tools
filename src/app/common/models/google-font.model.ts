@@ -40,8 +40,6 @@ export interface SelectedFont {
   category: string;
   /** Selected variant (defaults to 'regular') */
   variant: string;
-  /** URL to the font file */
-  fileUrl: string;
 }
 
 
@@ -62,7 +60,6 @@ export function getRegularFont(font: GoogleFont): SelectedFont {
   return {
     family: font.family,
     category: font.category,
-    variant,
-    fileUrl: font.files[variant]
+    variant
   };
 }
