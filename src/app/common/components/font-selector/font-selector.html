@@ -1,21 +1,40 @@
 <div class="font-selector">
   <label [for]="fontSelectInput" class="form-label">{{ label() }}</label>
-  <input
-    [id]="fontSelectInput"
-    type="text"
-    class="form-control"
-    [(ngModel)]="selectedFontName"
-    [ngbTypeahead]="search"
-    [resultFormatter]="formatter"
-    [inputFormatter]="formatter"
-    (selectItem)="onFontSelected($event)"
-    [placeholder]="placeholder()"
-    [editable]="false"
-  />
-  @if (fontsResource.isLoading()) {
-    <small class="text-muted">Loading fonts...</small>
-  }
+
+  <div class="input-group">
+    @if (fontsResource.isLoading()) {
+      <div class="input-group-text">
+        <div class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">Loading fonts...</span>
+        </div>
+      </div>
+    }
+
+    <input
+      [id]="fontSelectInput"
+      type="text"
+      class="form-control"
+      [(ngModel)]="selectedFontName"
+      [ngbTypeahead]="search"
+      [resultFormatter]="formatter"
+      [inputFormatter]="formatter"
+      (selectItem)="onFontSelected($event)"
+      [placeholder]="placeholder()"
+      [editable]="false"
+    />
+
+    <button class="btn btn-secondary"
+            type="button"
+            (click)="onResetClick()"
+            title="Reset samples font to default font">
+      <i class="bi bi-arrow-counterclockwise me-2" aria-hidden="true"></i>
+      Reset Font
+    </button>
+  </div>
+
+  <div class="form-text">{{ descriptiveText() }}</div>
+
   @if (fontsResource.error()) {
-    <small class="text-danger">Error loading fonts: {{ fontsResource.error() }}</small>
+    <small class="form-text text-danger">Error loading fonts: {{ fontsResource.error() }}</small>
   }
 </div>

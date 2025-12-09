@@ -5,7 +5,8 @@ import {environment} from "@environments/environment";
 
 
 /**
- * Service for fetching and managing Google Fonts data
+ * Service for interacting with the Google Fonts API.
+ * Provides methods for fetching and searching Google Fonts data.
  */
 @Injectable({
   providedIn: "root"
@@ -13,10 +14,9 @@ import {environment} from "@environments/environment";
 export class GoogleFontsService {
 
   /**
-   * Resource for fetching Google Fonts
-   * Uses Angular's httpResource for efficient data loading
+   * Resource for fetching Google Fonts sorted by popularity.
    */
-  public readonly fontsResource: HttpResourceRef<GoogleFontsApiResponse | undefined> = httpResource(
+  public readonly googleFonts: HttpResourceRef<GoogleFontsApiResponse | undefined> = httpResource(
     () => {
       return `${(environment.webFontsApiUrl)}?sort=popularity`;
     }
@@ -24,37 +24,79 @@ export class GoogleFontsService {
 
 
   /**
-   * Get a specific font by family name
-   * @param family - Font family name
-   * @returns The font if found, undefined otherwise
+   * Searches for fonts matching the given query and returns a list of fonts
+   * sorted by relevance.
+   *
+   * Fonts are scored based on the following criteria:
+   * - Exact match: The font name exactly matches the query.
+   * - Starts with: The font name starts with the query.
+   * - Contains: The query is a substring of the font name.
+   * - Category: The font category is "sans-serif" (e.g., Roboto, Open Sans).
+   * - Popularity: The font is popular among users (e.g., Google Fonts).
+   *
+   * We assume that most people will be searching for sans-serif fonts, so we
+   * give a bonus score to fonts in this category.
+   *
+   * @param {string} query - The search term used to match font names.
+   * @param {number} [limit=20] - The maximum number of fonts to return.
+   *                              Defaults to 20.
+   * @return {GoogleFont[]} A list of Google fonts that match the query,
+   *                        sorted by relevance.
    */
-  public getFontByFamily(family: string): GoogleFont | undefined {
-    const data = this.fontsResource.value();
-    return data?.items?.find(font => font.family === family);
+  public searchFonts(query: string, limit: number = 20): GoogleFont[] {
+    const data = this.googleFonts.value();
+
+    if (!data?.items || !query.trim()) return [];
+
+    const normalizedQuery = this.normalize(query.trim());
+
+    type ScoredFont = { font: GoogleFont, score: number };
+    type Matcher = (query: string) => boolean;
+
+    const matchers: Matcher[] = [
+      queryTerm => queryTerm === normalizedQuery,
+      queryTerm => queryTerm.startsWith(normalizedQuery),
+      queryTerm =>
+        queryTerm.split(/\s+/).some(w => w.startsWith(normalizedQuery)),
+      queryTerm => queryTerm.includes(normalizedQuery)
+    ];
+
+    const scored: ScoredFont[] = data.items
+      .map(font => {
+        const normalizedFamily = this.normalize(font.family);
+
+        const index = matchers.findIndex(matcher => matcher(normalizedFamily));
+        const baseScore = index === -1 ? 0 : matchers.length - index;
+
+        if (baseScore === 0) return { font, score: 0 };
+
+        const isSansSerif = font.category === "sans-serif";
+        const categoryBonus = isSansSerif ? 0.25 : 0;
+        const score = baseScore + categoryBonus;
+
+        return {font, score};
+      })
+      .filter((entry: ScoredFont) => entry.score > 0)
+      .sort((a: ScoredFont, b: ScoredFont) => b.score - a.score);
+
+    return scored
+      .slice(0, limit)
+      .map((entry: ScoredFont) => entry.font);
   }
 
 
   /**
-   * Filter fonts by category
-   * @param category - Font category (e.g., 'serif', 'sans-serif')
-   * @returns Filtered list of fonts
+   * Normalizes a given string by converting it to lowercase, removing
+   * diacritical marks, and ensuring a consistent character representation.
+   *
+   * @param {string} str - The input string to be normalized.
+   * @return {string} The normalized string.
    */
-  public filterByCategory(category: string): GoogleFont[] {
-    const data = this.fontsResource.value();
-    return data?.items?.filter(font => font.category === category) || [];
+  private normalize(str: string): string {
+    return str
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
   }
 
-
-  /**
-   * Search fonts by family name (case-insensitive)
-   * @param query - Search query
-   * @returns Filtered list of fonts matching the query
-   */
-  public searchFonts(query: string): GoogleFont[] {
-    const data = this.fontsResource.value();
-    const lowerQuery = query.toLowerCase();
-    return data?.items?.filter(font =>
-      font.family.toLowerCase().includes(lowerQuery)
-    ) || [];
-  }
 }

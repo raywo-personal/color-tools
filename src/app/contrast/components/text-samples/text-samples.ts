@@ -16,7 +16,8 @@ import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
   host: {
     class: "row row-cols-3 g-4 text-samples",
     "[style.--ct-cc-text]": "textColor().hex()",
-    "[style.--ct-cc-bg]": "bgColor().hex()"
+    "[style.--ct-cc-bg]": "bgColor().hex()",
+    "[style.--ct-cc-font-family]": "selectedFont() ? 'var(--ct-selected-font)' : 'inherit'"
   }
 })
 export class TextSamples {
@@ -26,6 +27,7 @@ export class TextSamples {
   protected readonly textColor = this.#stateStore.contrastTextColor;
   protected readonly bgColor = this.#stateStore.contrastBgColor;
   protected readonly ratio = this.#stateStore.contrastRatio;
+  protected readonly selectedFont = this.#stateStore.selectedFont;
 
   protected readonly fontSizes = [14, 16, 32];
   protected readonly fontWeights = FONT_WEIGHTS;

@@ -100,6 +100,7 @@
     color: var(--ct-cc-text);
 
     font-size: var(--ct-cc-font-size);
+    font-family: var(--ct-cc-font-family, inherit);
   }
 
   @for $i from 1 through 9 {

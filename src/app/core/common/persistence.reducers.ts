@@ -31,6 +31,7 @@ export function loadAppStateReducer(
     currentColor,
     tintColors,
     shadeColors,
-    currentPalette: restorableId ? paletteFromId(paletteId) : generatePalette(style)
+    currentPalette: restorableId ? paletteFromId(paletteId) : generatePalette(style),
+    selectedFont: persistence.getOrDefault("selectedFont", null)
   }
 }

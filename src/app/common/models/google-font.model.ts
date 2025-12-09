@@ -40,6 +40,26 @@ export interface SelectedFont {
   category: string;
   /** Selected variant (defaults to 'regular') */
   variant: string;
-  /** URL to the font file */
-  fileUrl: string;
+}
+
+
+/**
+ * Retrieves the regular font variant from the given GoogleFont object.
+ *
+ * @param {GoogleFont} font - An object representing a Google Font, including
+ *                            its family, category, variants, and file URLs.
+ * @return {SelectedFont} An object containing the selected font's family,
+ *                        category, variant, and file URL. If a "regular"
+ *                        variant is not found, it defaults to the first
+ *                        available variant.
+ */
+export function getRegularFont(font: GoogleFont): SelectedFont {
+  const variant = font.variants
+    .find(v => v === "regular") ?? font.variants[0];
+
+  return {
+    family: font.family,
+    category: font.category,
+    variant
+  };
 }
