@@ -5,6 +5,8 @@ import {AppStateStore} from "@core/app-state.store";
 import {TextSamples} from "@contrast/components/text-samples/text-samples";
 import {FontSelectorComponent} from "@common/components/font-selector/font-selector";
 import {SelectedFont} from "@common/models/google-font.model";
+import {commonEvents} from "@core/common/common.events";
+import {injectDispatch} from "@ngrx/signals/events";
 
 
 @Component({
@@ -21,12 +23,14 @@ import {SelectedFont} from "@common/models/google-font.model";
 export class Contrast {
 
   readonly #stateStore = inject(AppStateStore);
+  readonly #dispatch = injectDispatch(commonEvents);
 
   protected readonly textColor = this.#stateStore.contrastTextColor;
   protected readonly backgroundColor = this.#stateStore.contrastBgColor;
 
 
-  protected onFontSelected(font: SelectedFont) {
-    console.log("font selected: ", font, "");
+  protected onFontSelected(font: SelectedFont | null) {
+    this.#dispatch.fontSelected(font);
   }
+
 }

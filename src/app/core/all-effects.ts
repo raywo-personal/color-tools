@@ -6,8 +6,9 @@ import {palettesEvents} from "@core/palettes/palettes.events";
 import {inject} from "@angular/core";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {ColorThemeService} from "@common/services/color-theme.service";
+import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
 import {Router} from "@angular/router";
-import {colorThemeChangeEffect} from "@core/common/common.effects";
+import {colorThemeChangeEffect, fontSelectedEffect} from "@core/common/common.effects";
 import {colorChangedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
@@ -22,10 +23,13 @@ export function allEffects(
   events = inject(Events),
   localStorageService = inject(LocalStorage),
   themeService = inject(ColorThemeService),
+  fontLoaderService = inject(GoogleFontLoaderService),
   router = inject(Router)
 ) {
   return {
     setColorTheme$: colorThemeChangeEffect(events, themeService),
+
+    loadFont$: fontSelectedEffect(events, fontLoaderService),
 
     setBackgroundColor$: useAsBackgroundChangedEffect(events, themeService, store),
 
@@ -38,6 +42,7 @@ export function allEffects(
     anyPersistableEvents$: events
       .on(
         commonEvents.colorThemeChanged,
+        commonEvents.fontSelected,
         converterEvents.newRandomColor,
         converterEvents.colorChanged,
         palettesEvents.paletteChanged
