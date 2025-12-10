@@ -20,7 +20,7 @@ import {
 import {initialState} from "@core/models/app-state.model";
 import {allEffects} from "@core/all-effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
-import {backgroundColorChangedReducer, newRandomContrastColorsReducer, textColorChangedReducer} from "@core/contrast/contrast.reducers";
+import {backgroundColorChangedReducer, newRandomContrastColorsReducer, switchColorsReducer, textColorChangedReducer} from "@core/contrast/contrast.reducers";
 import {transferEvents} from "@core/common/transfer.events";
 import {sendColorToContrastReducer, useColorAsPaletteStarterReducer} from "@core/common/transfer.reducers";
 
@@ -50,7 +50,8 @@ export const AppStateStore = signalStore(
     on(palettesEvents.seedHueChanged, seedHueChangedReducer),
     on(contrastEvents.textColorChanged, textColorChangedReducer),
     on(contrastEvents.backgroundColorChanged, backgroundColorChangedReducer),
-    on(contrastEvents.newRandomColors, newRandomContrastColorsReducer)
+    on(contrastEvents.newRandomColors, newRandomContrastColorsReducer),
+    on(contrastEvents.switchColors, switchColorsReducer)
   ),
   withEffects(allEffects)
 );

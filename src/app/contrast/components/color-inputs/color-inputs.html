@@ -1,13 +1,22 @@
-<div class="col-6">
-  <label>Text color</label>
-  <ct-color-picker
-    [color]="textColor()"
-    (colorChange)="onTextColorChanged($event)"/>
-</div>
+<div class="col d-flex gap-2 align-items-end">
+  <div class="flex-fill">
+    <label>Text color</label>
+    <ct-color-picker
+      [color]="textColor()"
+      (colorChange)="onTextColorChanged($event)"/>
+  </div>
 
-<div class="col-6">
-  <label>Background color</label>
-  <ct-color-picker
-    [color]="bgColor()"
-    (colorChange)="onBgColorChanged($event)"/>
+  <button type="button"
+          class="btn btn-secondary"
+          (click)="switchColors()">
+    <div class="bi bi-arrow-left-right color-switcher"></div>
+    <span class="visually-hidden">Switch colors</span>
+  </button>
+
+  <div class="flex-fill">
+    <label>Background color</label>
+    <ct-color-picker
+      [color]="bgColor()"
+      (colorChange)="onBgColorChanged($event)"/>
+  </div>
 </div>
