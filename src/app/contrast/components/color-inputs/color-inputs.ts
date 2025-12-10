@@ -36,4 +36,9 @@ export class ColorInputs {
     this.#dispatch.backgroundColorChanged(color);
   }
 
+
+  protected switchColors() {
+    this.#dispatch.switchColors();
+  }
+
 }

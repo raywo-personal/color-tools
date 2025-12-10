@@ -8,6 +8,7 @@ export const contrastEvents = eventGroup({
   events: {
     textColorChanged: type<Color>(),
     backgroundColorChanged: type<Color>(),
+    switchColors: type<void>(),
     newRandomColors: type<void>()
   }
-})
+});

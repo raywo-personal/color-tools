@@ -51,3 +51,20 @@ export function newRandomContrastColorsReducer(
     contrastRatio: ratio
   };
 }
+
+
+export function switchColorsReducer(
+  this: void,
+  event: EventInstance<"[Contrast] switchColors", void>,
+  state: AppState
+) {
+  const newTextColor = state.contrastBgColor;
+  const newBgColor = state.contrastTextColor;
+  const ratio = chroma.contrastAPCA(newTextColor, newBgColor);
+
+  return {
+    contrastTextColor: newTextColor,
+    contrastBgColor: newBgColor,
+    contrastRatio: ratio
+  };
+}
