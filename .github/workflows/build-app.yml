@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages via angular-cli-ghpages
+name: Build the app
 
 on:
   push:
@@ -10,11 +10,9 @@ on:
       - "main"
 
 jobs:
-  deploy:
-    name: Deploy to GitHub Pages
+  build:
+    name: Build the app
     runs-on: ubuntu-latest
-
-    if: github.event_name != 'pull_request'
 
     steps:
       - name: Checkout
@@ -32,10 +30,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Deploy to GitHub Pages
-        env:
-          CI: true
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Install dependencies and build the app
         run: |
           pnpm install
-          pnpm run -- deploy --name="${{vars.NAME}}" --email=${{vars.EMAIL}}
+          pnpm run build
