@@ -16,9 +16,10 @@ export function validateId(id: string, expectedLength: number): void {
 /**
  * Determines if the data represented by the given ID can be restored.
  *
- * @param {string} id - The unique identifier of the palette.
+ * @param {string} id - The unique identifier, representing some data.
  * @param expectedLength - The expected length of the ID.
- * @return {boolean} True if the palette is restorable, otherwise false.
+ * @return {boolean} True if the data represented by the ID is restorable,
+ *                   otherwise false.
  */
 export function isRestorable(id: string, expectedLength: number): boolean {
   try {

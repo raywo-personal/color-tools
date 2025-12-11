@@ -14,16 +14,15 @@ import {ContrastColors} from "@contrast/models/contrast-colors.model";
 export const CONTRAST_ID_LENGTH = 9;
 
 
+
 /**
- * Generates a contrast ID as a string based on the RGB values of two colors.
+ * Generates a contrast ID based on the RGB values of the provided text and
+ * background colors.
  *
- * @param {Color[]} colors - An array containing exactly two Color objects,
- *                           each providing an `rgb` method that returns an
- *                           array of RGB values.
- * @return {string} A base62-encoded string that uniquely represents the
- *                  contrast between the provided colors.
- * @throws {Error} If the `colors` array does not contain exactly two
- *                 Color objects.
+ * @param {ContrastColors} colors - An object containing the text and
+ *                                  background color information.
+ * @return {string} The base-62 encoded contrast ID derived from the
+ *                  colors' RGB values.
  */
 export function contrastIdFromColors(colors: ContrastColors): string {
   const bytes: number[] = [];
