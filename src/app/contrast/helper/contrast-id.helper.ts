@@ -97,7 +97,7 @@ function getBytesFromContrastId(id: string, expectedLength: number): number[] {
 
   while (remaining > 0n) {
     bytes.unshift(Number(remaining % 256n));
-    remaining = remaining / 256n;
+    remaining = remaining >> 8n;
   }
 
   // We expect exactly 6 bytes (2 colors × 3 RGB channels).

@@ -212,7 +212,7 @@ function getBytesFromPaletteId(id: string, expectedLength: number): number[] {
   // Extract all bytes
   while (remaining > 0n) {
     bytes.unshift(Number(remaining % 256n));
-    remaining = remaining / 256n;
+    remaining = remaining >> 8n;
   }
 
   // Ensure we have exactly 31 bytes (30 for RGB values + 1 for pinned mask)

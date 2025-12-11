@@ -1,9 +1,9 @@
 /**
  * Validates the given ID to ensure it has the correct length.
  *
- * @param {string} id - The palette ID to be validated.
+ * @param {string} id - The ID to be validated.
  * @param expectedLength - The expected length of the ID.
- * @return {void} Throws an error if the palette ID does not meet the required
+ * @return {void} Throws an error if the ID does not meet the required
  *                length criteria.
  */
 export function validateId(id: string, expectedLength: number): void {
@@ -14,7 +14,7 @@ export function validateId(id: string, expectedLength: number): void {
 
 
 /**
- * Determines if a palette with the given ID can be restored.
+ * Determines if the data represented by the given ID can be restored.
  *
  * @param {string} id - The unique identifier of the palette.
  * @param expectedLength - The expected length of the ID.

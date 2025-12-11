@@ -39,10 +39,15 @@ export function restorePaletteReducer(
   this: void,
   event: EventInstance<"[Palettes] restorePalette", string>
 ) {
-  const paletteId = event.payload;
-  const palette = paletteFromId(paletteId);
+  try {
+    const paletteId = event.payload;
+    const palette = paletteFromId(paletteId);
 
-  return {currentPalette: palette};
+    return {currentPalette: palette};
+  } catch (e) {
+    console.error("Failed to restore palette ", e);
+    return {};
+  }
 }
 
 

@@ -85,8 +85,13 @@ export function restoreContrastColorsReducer(
   event: EventInstance<"[Contrast] restoreContrastColors", string>,
   state: AppState
 ) {
-  const contrastId = event.payload;
-  const contrastColors = contrastColorsFromId(contrastId);
+  try {
+    const contrastId = event.payload;
+    const contrastColors = contrastColorsFromId(contrastId);
 
-  return {contrastColors};
+    return {contrastColors};
+  } catch (e) {
+    console.error("Failed to restore contrast colors ", e);
+    return {};
+  }
 }
