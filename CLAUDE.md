@@ -37,12 +37,14 @@ The app uses a centralized state management system built on @ngrx/signals:
 - **Events** - Domain-specific event emitters located in `src/app/core/*/events.ts`:
   - `converterEvents` - Color conversion and manipulation
   - `palettesEvents` - Palette generation and updates
+  - `contrastEvents` - Contrast color management (text/background color changes, color switching, random generation, restoration)
   - `commonEvents` - Theme changes and common actions
+  - `transferEvents` - Cross-domain color transfers (palette starters, contrast colors)
   - `persistenceEvents` - State persistence to localStorage
 
-- **Reducers** - Pure functions in `src/app/core/*/reducers.ts` that update state based on events
+- **Reducers** – Pure functions in `src/app/core/*/reducers.ts` that update state based on events
 
-- **Effects** - Side effect handlers in `src/app/core/*/effects.ts` registered in `all-effects.ts`:
+- **Effects** – Side effect handlers in `src/app/core/*/effects.ts` registered in `all-effects.ts`:
   - State persistence to localStorage
   - Navigation to palette URLs
   - Theme application via ColorThemeService
@@ -50,12 +52,12 @@ The app uses a centralized state management system built on @ngrx/signals:
 
 ### Application Structure
 
-State is divided into three domains:
+State is divided into four domains:
 
 1. **Converter** (`src/app/converter/`) - Color conversion and tint/shade generation
    - Manages current color, display format (RGB/HSL/HEX), and color space settings
    - Generates tints and shades using Bezier interpolation when enabled
-   - State: `currentColor`, `textColor`, `useAsBackground`, `correctLightness`, `useBezier`, `displayColorSpace`
+   - State: `currentColor`, `textColor`, `useAsBackground`, `correctLightness`, `useBezier`, `displayColorSpace`, `tintColors`, `shadeColors`
 
 2. **Palettes** (`src/app/palettes/`) - Color palette generation
    - Eight palette styles: analogous, muted-analog-split, monochromatic, vibrant-balanced, high-contrast, triadic, complementary, split-complementary
@@ -63,8 +65,14 @@ State is divided into three domains:
    - Palettes support pinned colors that remain fixed during regeneration
    - State: `paletteStyle`, `useRandomStyle`, `currentPalette`
 
-3. **Common** (`src/app/common/`) - Shared utilities and theme management
-   - State: `colorTheme` (light/dark/system)
+3. **Contrast** (`src/app/contrast/`) - Color contrast analysis and accessibility
+   - Analyzes text and background color combinations for readability
+   - Uses APCA (Accessible Perceptual Contrast Algorithm) for contrast calculation
+   - Supports color switching, random generation, and restoration from IDs
+   - State: `contrastColors` (text color, background color, contrast value)
+
+4. **Common** (`src/app/common/`) - Shared utilities and theme management
+   - State: `colorTheme` (light/dark/system), `selectedFont`
 
 ### Palette ID System
 
@@ -81,6 +89,27 @@ Palettes can be encoded into shareable URLs via a compact ID system:
 
 This allows palettes to be shared via URL: `/palettes/{paletteId}`
 
+### Contrast ID System
+
+Contrast color pairs can be encoded into shareable URLs via a compact ID system:
+
+- **Encoding** (`contrastIdFromColors`) - Converts two colors to base62-encoded string:
+  - 6 bytes (2 colors × 3 RGB channels) encoded in base62
+  - Fixed length: 9 characters
+  - Encodes text color RGB + background color RGB
+
+- **Decoding** (`contrastColorsFromId`) - Restores colors from ID:
+  - Extracts RGB values for both text and background colors
+  - Calculates APCA contrast value between the colors
+  - Returns ContrastColors object with text, background, and contrast value
+
+- **Random Generation** (`generateRandomContrastColors`) - Creates random color pairs:
+  - Generates random background color
+  - Finds harmonizing text color for optimal readability
+  - Calculates APCA contrast
+
+This allows contrast color pairs to be shared via URL: `/contrast/{contrastId}`
+
 ### Color Libraries
 
 The app uses two main color libraries:
@@ -94,7 +123,9 @@ TypeScript path aliases are configured in `tsconfig.json`:
 - `@converter/*` → `src/app/converter/*`
 - `@header/*` → `src/app/header/*`
 - `@palettes/*` → `src/app/palettes/*`
+- `@contrast/*` → `src/app/contrast/*`
 - `@core/*` → `src/app/core/*`
+- `@environments/*` → `src/environments/*`
 
 Always use these aliases for imports within the codebase.
 
@@ -114,7 +145,7 @@ Always use these aliases for imports within the codebase.
 ### Services
 - Use `providedIn: 'root'` for singleton services
 - Use the `inject()` function instead of constructor injection
-- Design services around single responsibility
+- Design services around a single responsibility
 
 ### TypeScript
 - Use strict type checking (enabled in tsconfig)
@@ -138,5 +169,5 @@ Components use inline SCSS styles configured in `angular.json`:
 ## Testing
 
 - Test framework: Jasmine + Karma
-- Run all tests: `pnpm test`
+- Run all tests: `ng test`
 - Component generation skips test files by default (configured in angular.json schematics)

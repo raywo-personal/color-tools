@@ -2,7 +2,7 @@ import {EventInstance} from "@ngrx/signals/events";
 import {AppState} from "@core/models/app-state.model";
 import chroma, {Color} from "chroma-js";
 import {findHarmonicTextColor} from "@contrast/helper/optimal-text-color.helper";
-import {ContrastColors} from "@contrast/models/contrast-colors.model";
+import {createContrastColors} from "@contrast/models/contrast-colors.model";
 import {contrastColorsFromId} from "@contrast/helper/contrast-id.helper";
 
 
@@ -13,12 +13,7 @@ export function textColorChangedReducer(
 ) {
   const textColor = event.payload;
   const bgColor = state.contrastColors.background;
-  const contrast = chroma.contrastAPCA(textColor, bgColor);
-  const contrastColors: ContrastColors = {
-    text: textColor,
-    background: bgColor,
-    contrast
-  };
+  const contrastColors = createContrastColors(textColor, bgColor);
 
   return {contrastColors};
 }
@@ -31,12 +26,7 @@ export function backgroundColorChangedReducer(
 ) {
   const bgColor = event.payload;
   const textColor = state.contrastColors.text;
-  const contrast = chroma.contrastAPCA(textColor, bgColor);
-  const contrastColors: ContrastColors = {
-    text: textColor,
-    background: bgColor,
-    contrast
-  };
+  const contrastColors = createContrastColors(textColor, bgColor);
 
   return {contrastColors};
 }
@@ -49,12 +39,7 @@ export function newRandomContrastColorsReducer(
 ) {
   const bgColor = chroma.random();
   const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
-  const contrast = chroma.contrastAPCA(textColor, bgColor);
-  const contrastColors: ContrastColors = {
-    text: textColor,
-    background: bgColor,
-    contrast
-  };
+  const contrastColors = createContrastColors(textColor, bgColor);
 
   return {
     contrastColors
@@ -69,12 +54,7 @@ export function switchColorsReducer(
 ) {
   const newTextColor = state.contrastColors.background;
   const newBgColor = state.contrastColors.text;
-  const contrast = chroma.contrastAPCA(newTextColor, newBgColor);
-  const contrastColors: ContrastColors = {
-    text: newTextColor,
-    background: newBgColor,
-    contrast
-  };
+  const contrastColors = createContrastColors(newTextColor, newBgColor);
 
   return {contrastColors};
 }
