@@ -1,4 +1,4 @@
-import {Component, effect, inject, input, linkedSignal} from "@angular/core";
+import {Component, effect, inject, input} from "@angular/core";
 import {QuoteOfTheDay} from "../quote-of-the-day/quote-of-the-day";
 import {ContrastColors} from "@contrast/components/contrast-colors/contrast-colors";
 import {AppStateStore} from "@core/app-state.store";
@@ -29,12 +29,8 @@ export class Contrast {
   readonly #dispatch = injectDispatch(commonEvents);
   readonly #contrastDispatch = injectDispatch(contrastEvents);
 
-  protected readonly textColor = linkedSignal(() => {
-    return this.#stateStore.contrastColors.text();
-  });
-  protected readonly backgroundColor = linkedSignal(() => {
-    return this.#stateStore.contrastColors.background();
-  });
+  protected readonly textColor = this.#stateStore.contrastColors.text;
+  protected readonly backgroundColor = this.#stateStore.contrastColors.background;
 
 
   protected onFontSelected(font: SelectedFont | null) {

@@ -1,4 +1,4 @@
-import {Component, inject, linkedSignal} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {Color} from "chroma-js";
 
 import {AppStateStore} from "@core/app-state.store";
@@ -23,13 +23,8 @@ export class ColorInputs {
   readonly #stateStore = inject(AppStateStore);
   readonly #dispatch = injectDispatch(contrastEvents);
 
-  protected readonly textColor = linkedSignal(() => {
-    return this.#stateStore.contrastColors.text();
-  });
-
-  protected readonly bgColor = linkedSignal(() => {
-    return this.#stateStore.contrastColors.background();
-  });
+  protected readonly textColor = this.#stateStore.contrastColors.text;
+  protected readonly bgColor = this.#stateStore.contrastColors.background;
 
 
   protected onTextColorChanged(color: Color): void {
