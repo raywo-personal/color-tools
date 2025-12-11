@@ -1,4 +1,4 @@
-import {Component, computed, inject} from "@angular/core";
+import {Component, computed, inject, linkedSignal} from "@angular/core";
 import {StarRating} from "@contrast/components/star-rating/star-rating";
 import {AppStateStore} from "@core/app-state.store";
 import {DecimalPipe} from "@angular/common";
@@ -23,7 +23,9 @@ export class ContrastEvaluation {
   readonly #stateStore = inject(AppStateStore);
 
   protected readonly maxStars = 5;
-  protected readonly ratio = this.#stateStore.contrastRatio;
+  protected readonly ratio = linkedSignal(() => {
+    return this.#stateStore.contrastColors.contrast();
+  });
 
   protected readonly rating = computed(() => {
     const ratio = this.ratio();

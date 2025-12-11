@@ -7,6 +7,8 @@ import {createShades, createTints} from "@common/helpers/tints-and-shades.helper
 import {generatePalette} from "@palettes/helper/palette.helper";
 import {contrastingColor} from "@common/helpers/contrasting-color.helper";
 import {SelectedFont} from "@common/models/google-font.model";
+import {ContrastColors} from "@contrast/models/contrast-colors.model";
+import {generateRandomContrastColors} from "@contrast/helper/contrast-id.helper";
 
 
 export type AppState = {
@@ -26,9 +28,7 @@ export type AppState = {
   currentPalette: Palette;
 
   // Contrast related
-  contrastTextColor: Color;
-  contrastBgColor: Color;
-  contrastRatio: number;
+  contrastColors: ContrastColors;
 
   // Common
   colorTheme: ColorTheme;
@@ -52,9 +52,7 @@ export const initialState: AppState = {
   useRandomStyle: false,
   currentPalette: generatePalette("random"),
 
-  contrastTextColor: textColor,
-  contrastBgColor: initialColor,
-  contrastRatio: chroma.contrastAPCA(textColor, initialColor),
+  contrastColors: generateRandomContrastColors(),
 
   colorTheme: "system",
   selectedFont: null

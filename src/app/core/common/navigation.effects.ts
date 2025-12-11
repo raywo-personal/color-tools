@@ -51,10 +51,10 @@ export function navigateToContrast(
     )
     .pipe(
       tap(() => {
-        const contrastId = contrastIdFromColors([
-          typedStore.contrastTextColor(),
-          typedStore.contrastBgColor()
-        ]);
+        const contrastId = contrastIdFromColors(typedStore.contrastColors());
+        console.log("navigateToContrast:",
+          typedStore.contrastColors().text.hex(), typedStore.contrastColors().background.hex(),
+          contrastId);
         void router.navigate(["/contrast", contrastId]);
       })
     );

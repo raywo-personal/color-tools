@@ -14,6 +14,7 @@ import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
 import {navigateToContrast, navigateToPaletteIdEffect} from "@core/common/navigation.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
+import {transferEvents} from "@core/common/transfer.events";
 
 
 export function allEffects(
@@ -50,7 +51,8 @@ export function allEffects(
         contrastEvents.switchColors,
         contrastEvents.textColorChanged,
         contrastEvents.backgroundColorChanged,
-        contrastEvents.newRandomColors
+        contrastEvents.newRandomColors,
+        transferEvents.sendColorToContrast
       )
       .pipe(
         map(() => persistenceEvents.saveAppState())

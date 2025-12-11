@@ -1,7 +1,6 @@
 import chroma, {Color} from "chroma-js";
-import {bigIntToBase62} from "@common/helpers/base62.helper";
-import {isRestorable} from "@common/helpers/validate-string-id.helper";
-import {getBytesFromId} from "@common/helpers/get-bytes-from-string.helper";
+import {base62ToBigInt, bigIntToBase62} from "@common/helpers/base62.helper";
+import {isRestorable, validateId} from "@common/helpers/validate-string-id.helper";
 import {findHarmonicTextColor} from "@contrast/helper/optimal-text-color.helper";
 import {ContrastColors} from "@contrast/models/contrast-colors.model";
 
@@ -24,13 +23,10 @@ export const CONTRAST_ID_LENGTH = 6;
  * @throws {Error} If the `colors` array does not contain exactly two
  *                 Color objects.
  */
-export function contrastIdFromColors(colors: Color[]): string {
-  if (colors.length !== 2) {
-    throw new Error("Contrast ID can only be generated from two colors");
-  }
-
+export function contrastIdFromColors(colors: ContrastColors): string {
   const bytes: number[] = [];
-  colors.forEach(color => bytes.push(...color.rgb()));
+  bytes.push(...colors.text.rgb());
+  bytes.push(...colors.background.rgb());
 
   let bigNumber = 0n;
   for (const byte of bytes) bigNumber = (bigNumber << 8n) + BigInt(byte);
@@ -51,22 +47,16 @@ export function contrastIdFromColors(colors: Color[]): string {
  *                 the required colors.
  */
 export function contrastColorsFromId(id: string): ContrastColors {
-  const colorCount = 2;
   if (!isRestorable(id, CONTRAST_ID_LENGTH)) {
     throw new Error("Invalid contrast ID");
   }
 
-  const bytes = getBytesFromId(id, CONTRAST_ID_LENGTH);
-  const colors: Color[] = [];
+  const bytes = getBytesFromContrastId(id, CONTRAST_ID_LENGTH);
+  const text = chroma.rgb(bytes[0], bytes[1], bytes[2]);
+  const background = chroma.rgb(bytes[3], bytes[4], bytes[5]);
+  const contrast = chroma.contrastAPCA(text, background);
 
-  for (let i = 0; i < colorCount; i++) {
-    colors.push(chroma.rgb(bytes[0], bytes[1], bytes[2]));
-  }
-
-  return {
-    text: colors[0],
-    background: colors[1]
-  };
+  return {text, background, contrast};
 }
 
 
@@ -80,9 +70,38 @@ export function contrastColorsFromId(id: string): ContrastColors {
 export function generateRandomContrastColors(): ContrastColors {
   const bgColor = chroma.random();
   const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
+  const contrast = chroma.contrastAPCA(textColor, bgColor);
 
   return {
     text: textColor,
-    background: bgColor
+    background: bgColor,
+    contrast
   };
+}
+
+
+/**
+ * Decode a contrast ID into exactly 6 bytes (2 RGB colors).
+ *
+ * @param id - The contrast ID string (base62).
+ * @param expectedLength - Expected string length of the ID.
+ */
+function getBytesFromContrastId(id: string, expectedLength: number): number[] {
+  validateId(id, expectedLength);
+
+  const bigNumber = base62ToBigInt(id);
+  const bytes: number[] = [];
+  let remaining = bigNumber;
+
+  while (remaining > 0n) {
+    bytes.unshift(Number(remaining % 256n));
+    remaining = remaining / 256n;
+  }
+
+  // We expect exactly 6 bytes (2 colors × 3 RGB channels).
+  while (bytes.length < expectedLength) {
+    bytes.unshift(0);
+  }
+
+  return bytes;
 }

@@ -1,10 +1,9 @@
 import chroma, {Color} from "chroma-js";
-import {bigIntToBase62} from "@common/helpers/base62.helper";
+import {base62ToBigInt, bigIntToBase62} from "@common/helpers/base62.helper";
 import {PaletteStyle, PaletteStyles, randomStyle} from "@palettes/models/palette-style.model";
 import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {paletteName} from "@palettes/helper/palette-name.helper";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
-import {getBytesFromId} from "@common/helpers/get-bytes-from-string.helper";
 import {isRestorable, validateId} from "@common/helpers/validate-string-id.helper";
 
 
@@ -137,7 +136,7 @@ function paletteIdFromColors(colors: Color[],
  * Extracts the colors from a palette ID.
  */
 function colorsFromId(id: string): Color[] {
-  const bytes = getBytesFromId(id, PALETTE_ID_BASE62_LENGTH);
+  const bytes = getBytesFromPaletteId(id, PALETTE_ID_BASE62_LENGTH);
   const colors: Color[] = [];
 
   // We expect exactly 30 bytes for colors (10 colors * 3 RGB channels)
@@ -154,7 +153,7 @@ function colorsFromId(id: string): Color[] {
  * Extracts the pinned mask from a palette ID.
  */
 function pinnedMaskFromId(id: string): number {
-  const bytes = getBytesFromId(id, PALETTE_ID_BASE62_LENGTH);
+  const bytes = getBytesFromPaletteId(id, PALETTE_ID_BASE62_LENGTH);
 
   // If we have 31 bytes, the last one is the pinned mask
   if (bytes.length === 31) {
@@ -187,4 +186,40 @@ function styleFromPaletteId(id: string): PaletteStyle {
   }
 
   return PaletteStyles[styleIndex];
+}
+
+/**
+ * Decodes a palette ID into a raw byte array.
+ *
+ * Expects a palette ID in the format:
+ *   <styleIndex><base62-encoded 31 bytes>
+ *
+ * @param id - The palette ID string to decode.
+ * @param expectedLength - The expected string length of the palette ID.
+ * @return number[] - An array of exactly 31 bytes
+ *                    (30 for RGB values + 1 for pinned mask).
+ */
+function getBytesFromPaletteId(id: string, expectedLength: number): number[] {
+  validateId(id, expectedLength);
+
+  // Omit style index
+  const colorData = id.substring(1);
+  const bigNumber = base62ToBigInt(colorData);
+
+  const bytes: number[] = [];
+  let remaining = bigNumber;
+
+  // Extract all bytes
+  while (remaining > 0n) {
+    bytes.unshift(Number(remaining % 256n));
+    remaining = remaining / 256n;
+  }
+
+  // Ensure we have exactly 31 bytes (30 for RGB values + 1 for pinned mask)
+  // Pad with leading zeros if necessary
+  while (bytes.length < 31) {
+    bytes.unshift(0);
+  }
+
+  return bytes;
 }

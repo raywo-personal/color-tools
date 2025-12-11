@@ -20,10 +20,7 @@ export function saveStateEffect(events: Events,
         // a circular referencing. So we cast it to the correct type.
         const typedStore = store as AppStateStore;
 
-        const contrastId = contrastIdFromColors([
-          typedStore.contrastTextColor(),
-          typedStore.contrastBgColor()
-        ])
+        const contrastId = contrastIdFromColors(typedStore.contrastColors());
 
         const state: SettingsMap = {
           currentColor: typedStore.currentColor().hex(),

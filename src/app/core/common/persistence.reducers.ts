@@ -33,8 +33,6 @@ export function loadAppStateReducer(
   const contrastColors = contrastRestorableId
     ? contrastColorsFromId(contrastId)
     : generateRandomContrastColors();
-  const contrastRatio =
-    chroma.contrastAPCA(contrastColors.text, contrastColors.background);
 
   return {
     colorTheme: persistence.getOrDefault("colorTheme", "dark"),
@@ -43,8 +41,6 @@ export function loadAppStateReducer(
     shadeColors,
     currentPalette: restorableId ? paletteFromId(paletteId) : generatePalette(style),
     selectedFont: persistence.getOrDefault("selectedFont", null),
-    contrastTextColor: contrastColors.text,
-    contrastBgColor: contrastColors.background,
-    contrastRatio
+    contrastColors
   };
 }

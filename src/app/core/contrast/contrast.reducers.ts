@@ -2,6 +2,8 @@ import {EventInstance} from "@ngrx/signals/events";
 import {AppState} from "@core/models/app-state.model";
 import chroma, {Color} from "chroma-js";
 import {findHarmonicTextColor} from "@contrast/helper/optimal-text-color.helper";
+import {ContrastColors} from "@contrast/models/contrast-colors.model";
+import {contrastColorsFromId} from "@contrast/helper/contrast-id.helper";
 
 
 export function textColorChangedReducer(
@@ -10,13 +12,15 @@ export function textColorChangedReducer(
   state: AppState
 ) {
   const textColor = event.payload;
-  const bgColor = state.contrastBgColor;
-  const ratio = chroma.contrastAPCA(textColor, bgColor);
-
-  return {
-    contrastTextColor: textColor,
-    contrastRatio: ratio
+  const bgColor = state.contrastColors.background;
+  const contrast = chroma.contrastAPCA(textColor, bgColor);
+  const contrastColors: ContrastColors = {
+    text: textColor,
+    background: bgColor,
+    contrast
   };
+
+  return {contrastColors};
 }
 
 
@@ -26,13 +30,15 @@ export function backgroundColorChangedReducer(
   state: AppState
 ) {
   const bgColor = event.payload;
-  const textColor = state.contrastTextColor;
-  const ratio = chroma.contrastAPCA(textColor, bgColor);
-
-  return {
-    contrastBgColor: bgColor,
-    contrastRatio: ratio
+  const textColor = state.contrastColors.text;
+  const contrast = chroma.contrastAPCA(textColor, bgColor);
+  const contrastColors: ContrastColors = {
+    text: textColor,
+    background: bgColor,
+    contrast
   };
+
+  return {contrastColors};
 }
 
 
@@ -43,12 +49,15 @@ export function newRandomContrastColorsReducer(
 ) {
   const bgColor = chroma.random();
   const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
-  const ratio = chroma.contrastAPCA(textColor, bgColor);
+  const contrast = chroma.contrastAPCA(textColor, bgColor);
+  const contrastColors: ContrastColors = {
+    text: textColor,
+    background: bgColor,
+    contrast
+  };
 
   return {
-    contrastTextColor: textColor,
-    contrastBgColor: bgColor,
-    contrastRatio: ratio
+    contrastColors
   };
 }
 
@@ -58,13 +67,29 @@ export function switchColorsReducer(
   event: EventInstance<"[Contrast] switchColors", void>,
   state: AppState
 ) {
-  const newTextColor = state.contrastBgColor;
-  const newBgColor = state.contrastTextColor;
-  const ratio = chroma.contrastAPCA(newTextColor, newBgColor);
-
-  return {
-    contrastTextColor: newTextColor,
-    contrastBgColor: newBgColor,
-    contrastRatio: ratio
+  const newTextColor = state.contrastColors.background;
+  const newBgColor = state.contrastColors.text;
+  const contrast = chroma.contrastAPCA(newTextColor, newBgColor);
+  const contrastColors: ContrastColors = {
+    text: newTextColor,
+    background: newBgColor,
+    contrast
   };
+
+  return {contrastColors};
+}
+
+
+export function restoreContrastColorsReducer(
+  this: void,
+  event: EventInstance<"[Contrast] restoreContrastColors", string>,
+  state: AppState
+) {
+  const contrastId = event.payload;
+  const contrastColors = contrastColorsFromId(contrastId);
+
+  console.log("restoreContrastColorsReducer: from ID: ", contrastId,
+    contrastColors.text.hex(), contrastColors.background.hex());
+
+  return {contrastColors};
 }
