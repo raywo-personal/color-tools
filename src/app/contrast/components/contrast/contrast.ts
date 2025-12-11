@@ -9,7 +9,7 @@ import {commonEvents} from "@core/common/common.events";
 import {injectDispatch} from "@ngrx/signals/events";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {isRestorable} from "@common/helpers/validate-string-id.helper";
-import {CONTRAST_ID_LENGTH, contrastColorsFromId} from "@contrast/helper/contrast-id.helper";
+import {CONTRAST_ID_LENGTH} from "@contrast/helper/contrast-id.helper";
 
 
 @Component({
@@ -49,10 +49,6 @@ export class Contrast {
     effect(() => {
       const contrastId = this.contrastId();
       const restorable = isRestorable(contrastId, CONTRAST_ID_LENGTH);
-
-      console.log("contrast component", contrastId, restorable);
-      const contrastColors = contrastColorsFromId(contrastId);
-      console.log("contrast component", contrastColors.text.hex(), contrastColors.background.hex());
 
       if (!contrastId || !restorable) {
         this.#contrastDispatch.newRandomColors();

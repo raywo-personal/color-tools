@@ -88,8 +88,5 @@ export function restoreContrastColorsReducer(
   const contrastId = event.payload;
   const contrastColors = contrastColorsFromId(contrastId);
 
-  console.log("restoreContrastColorsReducer: from ID: ", contrastId,
-    contrastColors.text.hex(), contrastColors.background.hex());
-
   return {contrastColors};
 }

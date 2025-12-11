@@ -7,9 +7,11 @@ import {ContrastColors} from "@contrast/models/contrast-colors.model";
 
 /**
  * Represents the fixed length for a contrast identifier.
- * This value is calculated as 3 bytes per the two colors.
+ * 6 bytes (2 colors × 3 RGB channels) encoded in base62.
+ * Maximum value: 256^6 - 1 requires 9 characters in base62.
+ * Calculation: log(256^6) / log(62) ≈ 8.06, so we need 9 characters.
  */
-export const CONTRAST_ID_LENGTH = 6;
+export const CONTRAST_ID_LENGTH = 9;
 
 
 /**
@@ -99,7 +101,9 @@ function getBytesFromContrastId(id: string, expectedLength: number): number[] {
   }
 
   // We expect exactly 6 bytes (2 colors × 3 RGB channels).
-  while (bytes.length < expectedLength) {
+  // Pad with leading zeros if needed.
+  const expectedByteCount = 6;
+  while (bytes.length < expectedByteCount) {
     bytes.unshift(0);
   }
 

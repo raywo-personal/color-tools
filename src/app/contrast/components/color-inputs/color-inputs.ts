@@ -24,12 +24,10 @@ export class ColorInputs {
   readonly #dispatch = injectDispatch(contrastEvents);
 
   protected readonly textColor = linkedSignal(() => {
-    console.log("textColor:", this.#stateStore.contrastColors.text().hex());
     return this.#stateStore.contrastColors.text();
   });
 
   protected readonly bgColor = linkedSignal(() => {
-    console.log("bgColor:", this.#stateStore.contrastColors.background().hex());
     return this.#stateStore.contrastColors.background();
   });
 

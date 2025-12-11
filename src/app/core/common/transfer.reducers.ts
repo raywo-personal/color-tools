@@ -42,10 +42,6 @@ export function sendColorToContrastReducer(
         contrast
       };
 
-      console.log("sendColorToContrastReducer: ", color.hex(), role,
-        "currentTextColor: ", currentTextColor.hex(),
-        "contrastColors", contrastColors.text.hex(), contrastColors.background.hex());
-
       return {contrastColors};
     case "background":
       contrast = chroma.contrastAPCA(currentTextColor, color);
