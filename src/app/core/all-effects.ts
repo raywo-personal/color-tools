@@ -13,6 +13,7 @@ import {colorChangedEffect, useAsBackgroundChangedEffect} from "@core/converter/
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
 import {navigateToContrast, navigateToPaletteIdEffect} from "@core/common/navigation.effects";
+import {contrastEvents} from "@core/contrast/contrast.events";
 
 
 export function allEffects(
@@ -45,7 +46,11 @@ export function allEffects(
         commonEvents.fontSelected,
         converterEvents.newRandomColor,
         converterEvents.colorChanged,
-        palettesEvents.paletteChanged
+        palettesEvents.paletteChanged,
+        contrastEvents.switchColors,
+        contrastEvents.textColorChanged,
+        contrastEvents.backgroundColorChanged,
+        contrastEvents.newRandomColors
       )
       .pipe(
         map(() => persistenceEvents.saveAppState())

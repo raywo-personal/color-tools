@@ -1,8 +1,9 @@
-import {Routes} from '@angular/router';
-import {Converter} from '@converter/components/converter/converter';
-import {ColorPalette} from '@palettes/components/color-palette/color-palette';
+import {Routes} from "@angular/router";
+import {Converter} from "@converter/components/converter/converter";
+import {ColorPalette} from "@palettes/components/color-palette/color-palette";
 import {EmptyPalette} from "@palettes/components/empty-palette/empty-palette";
-import {Contrast} from "./contrast/components/contrast/contrast";
+import {Contrast} from "@contrast/components/contrast/contrast";
+import {EmptyContrast} from "@contrast/components/empty-contrast/empty-contrast";
 
 
 export const routes: Routes = [
@@ -30,7 +31,11 @@ export const routes: Routes = [
 
   {
     path: "contrast",
+    component: EmptyContrast
+  },
+  {
+    path: "contrast/:contrastId",
     component: Contrast,
-    pathMatch: "full"
+    title: "ColorTools – Contrast Checker"
   }
 ];

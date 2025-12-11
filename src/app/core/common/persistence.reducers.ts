@@ -2,10 +2,12 @@ import {EventInstance} from "@ngrx/signals/events";
 import {inject} from "@angular/core";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {generatePalette} from "@palettes/helper/palette.helper";
-import {isRestorable, paletteFromId} from "@palettes/helper/palette-id.helper";
+import {PALETTE_ID_BASE62_LENGTH, paletteFromId} from "@palettes/helper/palette-id.helper";
 import chroma from "chroma-js";
 import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
 import {AppState} from "@core/models/app-state.model";
+import {isRestorable} from "@common/helpers/validate-string-id.helper";
+import {CONTRAST_ID_LENGTH, contrastColorsFromId, generateRandomContrastColors} from "@contrast/helper/contrast-id.helper";
 
 
 export function loadAppStateReducer(
@@ -23,8 +25,16 @@ export function loadAppStateReducer(
   const shadeColors = createShades(currentColor, state.useBezier, state.correctLightness);
 
   const paletteId = persistence.get("currentPaletteId") ?? "";
-  const restorableId = isRestorable(paletteId);
+  const restorableId = isRestorable(paletteId, PALETTE_ID_BASE62_LENGTH);
   const style = state.paletteStyle;
+
+  const contrastId = persistence.get("contrastId") ?? "";
+  const contrastRestorableId = isRestorable(contrastId, CONTRAST_ID_LENGTH);
+  const contrastColors = contrastRestorableId
+    ? contrastColorsFromId(contrastId)
+    : generateRandomContrastColors();
+  const contrastRatio =
+    chroma.contrastAPCA(contrastColors.text, contrastColors.background);
 
   return {
     colorTheme: persistence.getOrDefault("colorTheme", "dark"),
@@ -32,6 +42,9 @@ export function loadAppStateReducer(
     tintColors,
     shadeColors,
     currentPalette: restorableId ? paletteFromId(paletteId) : generatePalette(style),
-    selectedFont: persistence.getOrDefault("selectedFont", null)
-  }
+    selectedFont: persistence.getOrDefault("selectedFont", null),
+    contrastTextColor: contrastColors.text,
+    contrastBgColor: contrastColors.background,
+    contrastRatio
+  };
 }

@@ -1,14 +1,15 @@
-import {Component, computed, effect, inject, input} from '@angular/core';
-import {SinglePaletteColor} from '@palettes/components/single-palette-color/single-palette-color';
-import {GeneratorStyleSwitcher} from '@palettes/components/generator-style-switcher/generator-style-switcher';
+import {Component, computed, effect, inject, input} from "@angular/core";
+import {SinglePaletteColor} from "@palettes/components/single-palette-color/single-palette-color";
+import {GeneratorStyleSwitcher} from "@palettes/components/generator-style-switcher/generator-style-switcher";
 import {PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {AppStateStore} from "@core/app-state.store";
-import {isRestorable} from "@palettes/helper/palette-id.helper";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {styleCaptionFor, styleDescriptionFor} from "@palettes/models/palette-style.model";
 import {CdkDrag, CdkDragDrop, CdkDropList} from "@angular/cdk/drag-drop";
 import {paletteFrom} from "@palettes/helper/palette.helper";
+import {isRestorable} from "@common/helpers/validate-string-id.helper";
+import {PALETTE_ID_BASE62_LENGTH} from "@palettes/helper/palette-id.helper";
 
 
 @Component({
@@ -45,7 +46,7 @@ export class ColorPalette {
   constructor() {
     effect(() => {
       const paletteId = this.paletteId();
-      const restorable = isRestorable(paletteId);
+      const restorable = isRestorable(paletteId, PALETTE_ID_BASE62_LENGTH);
 
       if (!paletteId || !restorable) {
         console.info("No palette to restore. Creating new one. ID:", paletteId, "Restorable:", restorable);

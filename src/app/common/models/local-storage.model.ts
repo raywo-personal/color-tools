@@ -9,6 +9,7 @@ export interface SettingsMap {
   colorTheme: ColorTheme;
   currentPaletteId: string;
   selectedFont: SelectedFont | null;
+  contrastId: string;
 }
 
 export type SettingKey = keyof SettingsMap;
@@ -17,5 +18,6 @@ export const EMPTY_SETTINGS: SettingsMap = {
   currentColor: "#787878",
   colorTheme: "dark",
   currentPaletteId: "",
-  selectedFont: null
+  selectedFont: null,
+  contrastId: ""
 };
