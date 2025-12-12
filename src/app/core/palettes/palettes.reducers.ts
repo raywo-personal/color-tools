@@ -20,6 +20,19 @@ export function newRandomPaletteReducer(
 }
 
 
+export function newRandomPaletteWithNavReducer(
+  this: void,
+  event: EventInstance<"[Palettes] newRandomPaletteWithNav", void>,
+) {
+  const style: PaletteStyle = "random";
+
+  return {
+    currentPalette: generatePalette(style),
+    paletteStyle: style
+  };
+}
+
+
 export function newPaletteReducer(
   this: void,
   event: EventInstance<"[Palettes] newPalette", void>,

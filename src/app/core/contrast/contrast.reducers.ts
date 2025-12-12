@@ -47,6 +47,21 @@ export function newRandomContrastColorsReducer(
 }
 
 
+export function newRandomContrastColorsWithNavReducer(
+  this: void,
+  event: EventInstance<"[Contrast] newRandomColorsWithNav", void>,
+  state: AppState
+) {
+  const bgColor = chroma.random();
+  const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
+  const contrastColors = createContrastColors(textColor, bgColor);
+
+  return {
+    contrastColors
+  };
+}
+
+
 export function switchColorsReducer(
   this: void,
   event: EventInstance<"[Contrast] switchColors", void>,

@@ -1,32 +1,40 @@
 import {injectDispatch} from "@ngrx/signals/events";
-import {ActivatedRouteSnapshot, CanActivateFn} from "@angular/router";
+import {ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree} from "@angular/router";
 import {palettesEvents} from "@core/palettes/palettes.events";
+import {isRestorable} from "@common/helpers/validate-string-id.helper";
+import {PALETTE_ID_BASE62_LENGTH} from "@palettes/helper/palette-id.helper";
+import {inject} from "@angular/core";
+import {AppStateStore} from "@core/app-state.store";
 
 
 /**
  * A route guard function that ensures the necessary palette data is prepared
  * before activation.
  *
- * Checks whether a `paletteId` is present in the route parameters. If not, it
- * dispatches an event to generate a new random palette. This function is
- * typically used to guard routes that depend on palette-related data to ensure
- * proper initialization.
- * Regardless of the presence or absence of "paletteId", the function allows
- * route activation to proceed by returning `true`.
- *
+ * - If a valid paletteId is present: restores the palette and allows
+ *   navigation (returns true)
+ * - If no or invalid paletteId: generates new palette and redirects to
+ *   the new ID (returns UrlTree)
  * @param {ActivatedRouteSnapshot} route - The current activated route snapshot
  *                                         containing route parameters.
  * @returns {boolean} Returns `true` to allow route activation.
  */
-export const paletteGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boolean => {
+export const paletteGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boolean | UrlTree => {
   const dispatch = injectDispatch(palettesEvents);
+  const stateStore = inject(AppStateStore);
+  const router = inject(Router);
 
-  const paletteId =
-    route.params["paletteId"] ?? route.firstChild?.params["paletteId"];
+  const routePaletteId = route.params["paletteId"]
+    ?? route.firstChild?.params["paletteId"];
+  const restorable = !!routePaletteId && isRestorable(routePaletteId, PALETTE_ID_BASE62_LENGTH);
 
-  if (!paletteId) {
-    dispatch.newRandomPalette();
+  if (restorable) {
+    dispatch.restorePalette(routePaletteId);
     return true;
   }
-  return true;
+
+  dispatch.newRandomPalette();
+  const newPaletteId = stateStore.currentPalette().id;
+
+  return router.createUrlTree(["/palettes", newPaletteId]);
 };

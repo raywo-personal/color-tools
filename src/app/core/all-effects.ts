@@ -52,6 +52,7 @@ export function allEffects(
         contrastEvents.textColorChanged,
         contrastEvents.backgroundColorChanged,
         contrastEvents.newRandomColors,
+        contrastEvents.newRandomColorsWithNav,
         transferEvents.sendColorToContrast
       )
       .pipe(

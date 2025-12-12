@@ -18,7 +18,7 @@ export function navigateToPaletteIdEffect(
 
   return events
     .on(
-      palettesEvents.newRandomPalette,
+      palettesEvents.newRandomPaletteWithNav,
       palettesEvents.newPalette,
       palettesEvents.updatePaletteColor,
       palettesEvents.paletteChanged,
@@ -47,7 +47,7 @@ export function navigateToContrast(
       contrastEvents.switchColors,
       contrastEvents.textColorChanged,
       contrastEvents.backgroundColorChanged,
-      contrastEvents.newRandomColors
+      contrastEvents.newRandomColorsWithNav
     )
     .pipe(
       tap(() => {

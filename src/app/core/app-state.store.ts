@@ -10,6 +10,7 @@ import {colorThemeChangedReducer, fontSelectedReducer} from "./common/common.red
 import {
   newPaletteReducer,
   newRandomPaletteReducer,
+  newRandomPaletteWithNavReducer,
   paletteChangedReducer,
   restorePaletteReducer,
   seedHueChangedReducer,
@@ -20,7 +21,14 @@ import {
 import {initialState} from "@core/models/app-state.model";
 import {allEffects} from "@core/all-effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
-import {backgroundColorChangedReducer, newRandomContrastColorsReducer, restoreContrastColorsReducer, switchColorsReducer, textColorChangedReducer} from "@core/contrast/contrast.reducers";
+import {
+  backgroundColorChangedReducer,
+  newRandomContrastColorsReducer,
+  newRandomContrastColorsWithNavReducer,
+  restoreContrastColorsReducer,
+  switchColorsReducer,
+  textColorChangedReducer
+} from "@core/contrast/contrast.reducers";
 import {transferEvents} from "@core/common/transfer.events";
 import {sendColorToContrastReducer, useColorAsPaletteStarterReducer} from "@core/common/transfer.reducers";
 
@@ -41,6 +49,7 @@ export const AppStateStore = signalStore(
     on(converterEvents.useBezierChanged, useBezierReducer),
     on(converterEvents.displayColorSpaceChanged, displayColorSpaceReducer),
     on(palettesEvents.newRandomPalette, newRandomPaletteReducer),
+    on(palettesEvents.newRandomPaletteWithNav, newRandomPaletteWithNavReducer),
     on(palettesEvents.newPalette, newPaletteReducer),
     on(palettesEvents.restorePalette, restorePaletteReducer),
     on(palettesEvents.updatePaletteColor, updatePaletteColorReducer),
@@ -51,6 +60,7 @@ export const AppStateStore = signalStore(
     on(contrastEvents.textColorChanged, textColorChangedReducer),
     on(contrastEvents.backgroundColorChanged, backgroundColorChangedReducer),
     on(contrastEvents.newRandomColors, newRandomContrastColorsReducer),
+    on(contrastEvents.newRandomColorsWithNav, newRandomContrastColorsWithNavReducer),
     on(contrastEvents.switchColors, switchColorsReducer),
     on(contrastEvents.restoreContrastColors, restoreContrastColorsReducer)
   ),

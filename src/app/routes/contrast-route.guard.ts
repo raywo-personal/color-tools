@@ -1,31 +1,42 @@
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {injectDispatch} from "@ngrx/signals/events";
-import {ActivatedRouteSnapshot, CanActivateFn} from "@angular/router";
+import {ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree} from "@angular/router";
+import {inject} from "@angular/core";
+import {AppStateStore} from "@core/app-state.store";
+import {CONTRAST_ID_LENGTH, contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {isRestorable} from "@common/helpers/validate-string-id.helper";
 
 
 /**
- * Guard function to handle contrast-related logic during route activation.
+ * Guard function that ensures valid contrast IDs in the route.
  *
- * This function checks for the presence of a "contrastId" parameter in the
- * given route. If the "contrastId" is not found, it triggers the generation of
- * new random colors.
- * Regardless of the presence or absence of "contrastId", the function allows
- * route activation to proceed by returning `true`.
+ * - If a valid contrastId is present: restores the colors and allows
+ *   navigation (returns true)
+ * - If no or invalid contrastId: generates new random colors and redirects to
+ *   the new ID (returns UrlTree)
  *
- * @type {CanActivateFn}
- * @param {ActivatedRouteSnapshot} route - The active route snapshot containing
- *                                         route parameters and child routes.
- * @returns {boolean} - Returns `true` to allow route activation.
+ * @param route - The active route snapshot
+ * @returns true to allow navigation, or UrlTree to redirect to a new contrast ID
  */
-export const contrastGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boolean => {
+
+export const contrastGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boolean | UrlTree => {
   const dispatch = injectDispatch(contrastEvents);
+  const stateStore = inject(AppStateStore);
+  const router = inject(Router);
 
-  const contrastId =
-    route.params["contrastId"] ?? route.firstChild?.params["contrastId"];
+  const routeContrastId = route.params["contrastId"]
+    ?? route.firstChild?.params["contrastId"];
 
-  if (!contrastId) {
-    dispatch.newRandomColors();
+  const restorable = !!routeContrastId && isRestorable(routeContrastId, CONTRAST_ID_LENGTH);
+
+  if (restorable) {
+    dispatch.restoreContrastColors(routeContrastId);
     return true;
   }
-  return true;
+
+  dispatch.newRandomColors();
+  const newContrastColors = stateStore.contrastColors();
+  const newContrastId = contrastIdFromColors(newContrastColors);
+
+  return router.createUrlTree(["/contrast", newContrastId]);
 };

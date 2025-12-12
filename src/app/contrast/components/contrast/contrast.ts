@@ -1,4 +1,4 @@
-import {Component, effect, inject, input} from "@angular/core";
+import {Component, inject, input} from "@angular/core";
 import {QuoteOfTheDay} from "../quote-of-the-day/quote-of-the-day";
 import {ContrastColors} from "@contrast/components/contrast-colors/contrast-colors";
 import {AppStateStore} from "@core/app-state.store";
@@ -7,9 +7,6 @@ import {FontSelectorComponent} from "@common/components/font-selector/font-selec
 import {SelectedFont} from "@common/models/google-font.model";
 import {commonEvents} from "@core/common/common.events";
 import {injectDispatch} from "@ngrx/signals/events";
-import {contrastEvents} from "@core/contrast/contrast.events";
-import {isRestorable} from "@common/helpers/validate-string-id.helper";
-import {CONTRAST_ID_LENGTH} from "@contrast/helper/contrast-id.helper";
 
 
 @Component({
@@ -27,32 +24,15 @@ export class Contrast {
 
   readonly #stateStore = inject(AppStateStore);
   readonly #dispatch = injectDispatch(commonEvents);
-  readonly #contrastDispatch = injectDispatch(contrastEvents);
 
   protected readonly textColor = this.#stateStore.contrastColors.text;
   protected readonly backgroundColor = this.#stateStore.contrastColors.background;
 
-
-  protected onFontSelected(font: SelectedFont | null) {
-    this.#dispatch.fontSelected(font);
-  }
-
-
   public readonly contrastId = input.required<string>();
 
 
-  constructor() {
-    effect(() => {
-      const contrastId = this.contrastId();
-      const restorable = isRestorable(contrastId, CONTRAST_ID_LENGTH);
-
-      if (!contrastId || !restorable) {
-        this.#contrastDispatch.newRandomColors();
-        return;
-      }
-
-      this.#contrastDispatch.restoreContrastColors(contrastId);
-    });
+  protected onFontSelected(font: SelectedFont | null) {
+    this.#dispatch.fontSelected(font);
   }
 
 }
