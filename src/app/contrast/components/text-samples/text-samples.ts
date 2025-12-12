@@ -24,9 +24,9 @@ export class TextSamples {
 
   readonly #stateStore = inject(AppStateStore);
 
-  protected readonly textColor = this.#stateStore.contrastTextColor;
-  protected readonly bgColor = this.#stateStore.contrastBgColor;
-  protected readonly ratio = this.#stateStore.contrastRatio;
+  protected readonly textColor = this.#stateStore.contrastColors.text;
+  protected readonly bgColor = this.#stateStore.contrastColors.background;
+  protected readonly contrast = this.#stateStore.contrastColors.contrast;
   protected readonly selectedFont = this.#stateStore.selectedFont;
 
   protected readonly fontSizes = [14, 16, 32];
@@ -53,12 +53,14 @@ export class TextSamples {
     return fontSize === 16 && fontWeight === "400";
   }
 
+
   protected isCommonHeading(fontSize: number, fontWeight: string): boolean {
     return fontSize === 32 && fontWeight === "700";
   }
 
+
   protected ratingFor(fontSize: number, fontWeight: FontWeight): number {
-    return getAPCARating(this.ratio(), fontSize, fontWeight, apcaLookup);
+    return getAPCARating(this.contrast(), fontSize, fontWeight, apcaLookup);
   }
 
 }

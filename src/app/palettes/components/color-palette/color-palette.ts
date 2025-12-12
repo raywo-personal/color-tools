@@ -1,9 +1,8 @@
-import {Component, computed, effect, inject, input} from '@angular/core';
-import {SinglePaletteColor} from '@palettes/components/single-palette-color/single-palette-color';
-import {GeneratorStyleSwitcher} from '@palettes/components/generator-style-switcher/generator-style-switcher';
+import {Component, computed, inject, input} from "@angular/core";
+import {SinglePaletteColor} from "@palettes/components/single-palette-color/single-palette-color";
+import {GeneratorStyleSwitcher} from "@palettes/components/generator-style-switcher/generator-style-switcher";
 import {PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {AppStateStore} from "@core/app-state.store";
-import {isRestorable} from "@palettes/helper/palette-id.helper";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {styleCaptionFor, styleDescriptionFor} from "@palettes/models/palette-style.model";
@@ -12,14 +11,14 @@ import {paletteFrom} from "@palettes/helper/palette.helper";
 
 
 @Component({
-  selector: 'ct-color-palette',
+  selector: "ct-color-palette",
   imports: [
     SinglePaletteColor,
     GeneratorStyleSwitcher,
     CdkDropList,
     CdkDrag
   ],
-  templateUrl: './color-palette.html',
+  templateUrl: "./color-palette.html",
   styles: ``,
 })
 export class ColorPalette {
@@ -40,22 +39,6 @@ export class ColorPalette {
   });
 
   public readonly paletteId = input.required<string>();
-
-
-  constructor() {
-    effect(() => {
-      const paletteId = this.paletteId();
-      const restorable = isRestorable(paletteId);
-
-      if (!paletteId || !restorable) {
-        console.info("No palette to restore. Creating new one. ID:", paletteId, "Restorable:", restorable);
-        this.#dispatch.newRandomPalette();
-        return;
-      }
-
-      this.#dispatch.restorePalette(paletteId);
-    });
-  }
 
 
   protected drop(event: CdkDragDrop<unknown>): void {

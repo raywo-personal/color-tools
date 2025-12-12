@@ -1,6 +1,7 @@
 import {eventGroup} from "@ngrx/signals/events";
 import {type} from "@ngrx/signals";
 import {Color} from "chroma-js";
+import {ContrastColors} from "@contrast/models/contrast-colors.model";
 
 
 export const contrastEvents = eventGroup({
@@ -8,7 +9,9 @@ export const contrastEvents = eventGroup({
   events: {
     textColorChanged: type<Color>(),
     backgroundColorChanged: type<Color>(),
+    contrastColorsChangedWithoutNav: type<ContrastColors>(),
     switchColors: type<void>(),
-    newRandomColors: type<void>()
+    newRandomColorsWithNav: type<void>(),
+    restoreContrastColors: type<string>()
   }
 });

@@ -1,4 +1,4 @@
-import {Component, inject} from "@angular/core";
+import {Component, inject, input} from "@angular/core";
 import {QuoteOfTheDay} from "../quote-of-the-day/quote-of-the-day";
 import {ContrastColors} from "@contrast/components/contrast-colors/contrast-colors";
 import {AppStateStore} from "@core/app-state.store";
@@ -25,8 +25,10 @@ export class Contrast {
   readonly #stateStore = inject(AppStateStore);
   readonly #dispatch = injectDispatch(commonEvents);
 
-  protected readonly textColor = this.#stateStore.contrastTextColor;
-  protected readonly backgroundColor = this.#stateStore.contrastBgColor;
+  protected readonly textColor = this.#stateStore.contrastColors.text;
+  protected readonly backgroundColor = this.#stateStore.contrastColors.background;
+
+  public readonly contrastId = input.required<string>();
 
 
   protected onFontSelected(font: SelectedFont | null) {

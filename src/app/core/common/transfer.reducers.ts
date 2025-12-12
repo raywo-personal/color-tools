@@ -4,6 +4,8 @@ import {AppState} from "@core/models/app-state.model";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import {generatePalette} from "@palettes/helper/palette.helper";
 import {ContrastColor} from "@contrast/models/contrast-color.model";
+import {ContrastColors} from "@contrast/models/contrast-colors.model";
+import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
 
 
 export function useColorAsPaletteStarterReducer(
@@ -27,18 +29,32 @@ export function sendColorToContrastReducer(
 ) {
   const color = event.payload.color;
   const role = event.payload.role;
-  const currentTextColor = state.contrastTextColor;
-  const currentBgColor = state.contrastBgColor;
-  let contrastRatio: number;
+  const currentTextColor = state.contrastColors.text;
+  const currentBgColor = state.contrastColors.background;
+  let contrast: number;
+  let contrastColors: ContrastColors;
 
   switch (role) {
     case "text":
-      contrastRatio = chroma.contrastAPCA(color, currentBgColor);
+      contrast = chroma.contrastAPCA(color, currentBgColor);
+      contrastColors = {
+        id: contrastIdFromColors({text: color, background: currentBgColor}),
+        text: color,
+        background: currentBgColor,
+        contrast
+      };
 
-      return {contrastTextColor: color, contrastRatio};
+      return {contrastColors};
     case "background":
-      contrastRatio = chroma.contrastAPCA(currentTextColor, color);
-      return {contrastBgColor: color, contrastRatio};
+      contrast = chroma.contrastAPCA(currentTextColor, color);
+      contrastColors = {
+        id: contrastIdFromColors({text: currentTextColor, background: color}),
+        text: currentTextColor,
+        background: color,
+        contrast
+      };
+
+      return {contrastColors};
   }
 }
 

@@ -23,8 +23,8 @@ export class ColorInputs {
   readonly #stateStore = inject(AppStateStore);
   readonly #dispatch = injectDispatch(contrastEvents);
 
-  protected readonly textColor = this.#stateStore.contrastTextColor;
-  protected readonly bgColor = this.#stateStore.contrastBgColor;
+  protected readonly textColor = this.#stateStore.contrastColors.text;
+  protected readonly bgColor = this.#stateStore.contrastColors.background;
 
 
   protected onTextColorChanged(color: Color): void {

@@ -9,8 +9,9 @@ import {commonEvents} from "./common/common.events";
 import {colorThemeChangedReducer, fontSelectedReducer} from "./common/common.reducers";
 import {
   newPaletteReducer,
-  newRandomPaletteReducer,
+  newRandomPaletteWithNavReducer,
   paletteChangedReducer,
+  paletteChangedWithoutNavReducer,
   restorePaletteReducer,
   seedHueChangedReducer,
   styleChangedReducer,
@@ -20,7 +21,14 @@ import {
 import {initialState} from "@core/models/app-state.model";
 import {allEffects} from "@core/all-effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
-import {backgroundColorChangedReducer, newRandomContrastColorsReducer, switchColorsReducer, textColorChangedReducer} from "@core/contrast/contrast.reducers";
+import {
+  backgroundColorChangedReducer,
+  contrastColorsChangedWithoutNavReducer,
+  newRandomContrastColorsWithNavReducer,
+  restoreContrastColorsReducer,
+  switchColorsReducer,
+  textColorChangedReducer
+} from "@core/contrast/contrast.reducers";
 import {transferEvents} from "@core/common/transfer.events";
 import {sendColorToContrastReducer, useColorAsPaletteStarterReducer} from "@core/common/transfer.reducers";
 
@@ -40,7 +48,8 @@ export const AppStateStore = signalStore(
     on(converterEvents.correctLightnessChanged, correctLightnessReducer),
     on(converterEvents.useBezierChanged, useBezierReducer),
     on(converterEvents.displayColorSpaceChanged, displayColorSpaceReducer),
-    on(palettesEvents.newRandomPalette, newRandomPaletteReducer),
+    on(palettesEvents.paletteChangedWithoutNav, paletteChangedWithoutNavReducer),
+    on(palettesEvents.newRandomPaletteWithNav, newRandomPaletteWithNavReducer),
     on(palettesEvents.newPalette, newPaletteReducer),
     on(palettesEvents.restorePalette, restorePaletteReducer),
     on(palettesEvents.updatePaletteColor, updatePaletteColorReducer),
@@ -50,8 +59,10 @@ export const AppStateStore = signalStore(
     on(palettesEvents.seedHueChanged, seedHueChangedReducer),
     on(contrastEvents.textColorChanged, textColorChangedReducer),
     on(contrastEvents.backgroundColorChanged, backgroundColorChangedReducer),
-    on(contrastEvents.newRandomColors, newRandomContrastColorsReducer),
-    on(contrastEvents.switchColors, switchColorsReducer)
+    on(contrastEvents.contrastColorsChangedWithoutNav, contrastColorsChangedWithoutNavReducer),
+    on(contrastEvents.newRandomColorsWithNav, newRandomContrastColorsWithNavReducer),
+    on(contrastEvents.switchColors, switchColorsReducer),
+    on(contrastEvents.restoreContrastColors, restoreContrastColorsReducer)
   ),
   withEffects(allEffects)
 );

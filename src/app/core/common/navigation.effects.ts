@@ -4,6 +4,8 @@ import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {tap} from "rxjs";
 import {transferEvents} from "@core/common/transfer.events";
+import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {contrastEvents} from "@core/contrast/contrast.events";
 
 
 export function navigateToPaletteIdEffect(
@@ -16,7 +18,7 @@ export function navigateToPaletteIdEffect(
 
   return events
     .on(
-      palettesEvents.newRandomPalette,
+      palettesEvents.newRandomPaletteWithNav,
       palettesEvents.newPalette,
       palettesEvents.updatePaletteColor,
       palettesEvents.paletteChanged,
@@ -40,10 +42,17 @@ export function navigateToContrast(
   const typedStore = store as AppStateStore;
 
   return events
-    .on(transferEvents.sendColorToContrast)
+    .on(
+      transferEvents.sendColorToContrast,
+      contrastEvents.switchColors,
+      contrastEvents.textColorChanged,
+      contrastEvents.backgroundColorChanged,
+      contrastEvents.newRandomColorsWithNav
+    )
     .pipe(
       tap(() => {
-        void router.navigate(["/contrast"]);
+        const contrastId = contrastIdFromColors(typedStore.contrastColors());
+        void router.navigate(["/contrast", contrastId]);
       })
     );
 }

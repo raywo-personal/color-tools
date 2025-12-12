@@ -20,6 +20,19 @@ export function newRandomPaletteReducer(
 }
 
 
+export function newRandomPaletteWithNavReducer(
+  this: void,
+  event: EventInstance<"[Palettes] newRandomPaletteWithNav", void>,
+) {
+  const style: PaletteStyle = "random";
+
+  return {
+    currentPalette: generatePalette(style),
+    paletteStyle: style
+  };
+}
+
+
 export function newPaletteReducer(
   this: void,
   event: EventInstance<"[Palettes] newPalette", void>,
@@ -39,10 +52,15 @@ export function restorePaletteReducer(
   this: void,
   event: EventInstance<"[Palettes] restorePalette", string>
 ) {
-  const paletteId = event.payload;
-  const palette = paletteFromId(paletteId);
+  try {
+    const paletteId = event.payload;
+    const palette = paletteFromId(paletteId);
 
-  return {currentPalette: palette};
+    return {currentPalette: palette};
+  } catch (e) {
+    console.error("Failed to restore palette ", e);
+    return {};
+  }
 }
 
 
@@ -70,7 +88,15 @@ export function paletteChangedReducer(
   this: void,
   event: EventInstance<"[Palettes] paletteChanged", Palette>
 ) {
-  return {currentPalette: event.payload};
+  return {currentPalette: event.payload, paletteStyle: event.payload.style};
+}
+
+
+export function paletteChangedWithoutNavReducer(
+  this: void,
+  event: EventInstance<"[Palettes] paletteChangedWithoutNav", Palette>
+) {
+  return {currentPalette: event.payload, paletteStyle: event.payload.style};
 }
 
 

@@ -4,6 +4,7 @@ import {PaletteStyle, PaletteStyles, randomStyle} from "@palettes/models/palette
 import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {paletteName} from "@palettes/helper/palette-name.helper";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
+import {isRestorable, validateId} from "@common/helpers/validate-string-id.helper";
 
 
 /**
@@ -11,7 +12,7 @@ import {paletteColorFrom} from "@palettes/models/palette-color.model";
  * This represents 31 bytes (30 for RGB values + 1 for pinned mask) encoded in base62.
  * Maximum value: 256^31 - 1 requires 42 characters in base62.
  */
-const PALETTE_ID_BASE62_LENGTH = 42;
+export const PALETTE_ID_BASE62_LENGTH = 42 + 1;
 
 
 /**
@@ -55,7 +56,7 @@ export function paletteIdFrom(paletteColors: PaletteColors,
  * @throws {Error} If the provided palette ID is not restorable.
  */
 export function paletteFromId(id: string): Palette {
-  if (!isRestorable(id)) {
+  if (!isRestorable(id, PALETTE_ID_BASE62_LENGTH)) {
     throw new Error("Palette ID is not restorable");
   }
 
@@ -78,22 +79,6 @@ export function paletteFromId(id: string): Palette {
     style,
     ...paletteColors
   } as Palette;
-}
-
-
-/**
- * Determines if a palette with the given ID can be restored.
- *
- * @param {string} id - The unique identifier of the palette.
- * @return {boolean} True if the palette is restorable, otherwise false.
- */
-export function isRestorable(id: string): boolean {
-  try {
-    validatePaletteId(id);
-    return true;
-  } catch (err) {
-    return false;
-  }
 }
 
 
@@ -121,7 +106,7 @@ function paletteIdFromColors(colors: Color[],
                              style: PaletteStyle,
                              pinnedMask: number = 0): string {
   if (colors.length !== 10) {
-    throw new Error('Exactly 10 colors required');
+    throw new Error("Exactly 10 colors required");
   }
 
   const styleIndex = PaletteStyles.indexOf(style);
@@ -131,10 +116,7 @@ function paletteIdFromColors(colors: Color[],
 
   // Collect all RGB values of all colors. Each rgb value is a byte.
   const bytes: number[] = [];
-  colors.forEach(color => {
-    const [r, g, b] = color.rgb();
-    bytes.push(Math.round(r), Math.round(g), Math.round(b));
-  });
+  colors.forEach(color => bytes.push(...color.rgb()));
 
   // Append the pinned mask as the last byte
   bytes.push(pinnedMask);
@@ -146,7 +128,7 @@ function paletteIdFromColors(colors: Color[],
   });
 
   // Use fixed length to ensure a consistent I D length regardless of color values
-  return `${styleIndex}${bigIntToBase62(bigNumber, PALETTE_ID_BASE62_LENGTH)}`;
+  return `${styleIndex}${bigIntToBase62(bigNumber, PALETTE_ID_BASE62_LENGTH - 1)}`;
 }
 
 
@@ -154,7 +136,7 @@ function paletteIdFromColors(colors: Color[],
  * Extracts the colors from a palette ID.
  */
 function colorsFromId(id: string): Color[] {
-  const bytes = getBytesFromId(id);
+  const bytes = getBytesFromPaletteId(id, PALETTE_ID_BASE62_LENGTH);
   const colors: Color[] = [];
 
   // We expect exactly 30 bytes for colors (10 colors * 3 RGB channels)
@@ -171,7 +153,7 @@ function colorsFromId(id: string): Color[] {
  * Extracts the pinned mask from a palette ID.
  */
 function pinnedMaskFromId(id: string): number {
-  const bytes = getBytesFromId(id);
+  const bytes = getBytesFromPaletteId(id, PALETTE_ID_BASE62_LENGTH);
 
   // If we have 31 bytes, the last one is the pinned mask
   if (bytes.length === 31) {
@@ -179,51 +161,6 @@ function pinnedMaskFromId(id: string): number {
   }
 
   return 0;
-}
-
-/**
- * Decodes the ID into a raw byte array.
- */
-function getBytesFromId(id: string): number[] {
-  validatePaletteId(id);
-
-  // Omit style index
-  const colorData = id.substring(1);
-  const bigNumber = base62ToBigInt(colorData);
-
-  const bytes: number[] = [];
-  let remaining = bigNumber;
-
-  // Extract all bytes
-  while (remaining > 0n) {
-    bytes.unshift(Number(remaining % 256n));
-    remaining = remaining / 256n;
-  }
-
-  // Ensure we have exactly 31 bytes (30 for RGB values + 1 for pinned mask)
-  // Pad with leading zeros if necessary
-  while (bytes.length < 31) {
-    bytes.unshift(0);
-  }
-
-  return bytes;
-}
-
-
-/**
- * Validates the given palette ID to ensure it has the correct length.
- *
- * @param {string} id - The palette ID to be validated.
- * @return {void} Throws an error if the palette ID does not meet the required
- *                length criteria.
- */
-function validatePaletteId(id: string): void {
-  // Expected length: 1 (style index) + 42 (base62-encoded 31 bytes) = 43 characters
-  const expectedLength = 1 + PALETTE_ID_BASE62_LENGTH;
-
-  if (id.length !== expectedLength) {
-    throw new Error(`Palette ID has invalid length! Expected: ${expectedLength}, Actual: ${id.length}`);
-  }
 }
 
 
@@ -238,7 +175,7 @@ function validatePaletteId(id: string): void {
  *                        palette ID or a random style if the ID is invalid.
  */
 function styleFromPaletteId(id: string): PaletteStyle {
-  validatePaletteId(id);
+  validateId(id, PALETTE_ID_BASE62_LENGTH);
 
   // Erste Stelle ist der Style-Index
   const styleIndex = parseInt(id[0], 10);
@@ -249,4 +186,40 @@ function styleFromPaletteId(id: string): PaletteStyle {
   }
 
   return PaletteStyles[styleIndex];
+}
+
+/**
+ * Decodes a palette ID into a raw byte array.
+ *
+ * Expects a palette ID in the format:
+ *   <styleIndex><base62-encoded 31 bytes>
+ *
+ * @param id - The palette ID string to decode.
+ * @param expectedLength - The expected string length of the palette ID.
+ * @return number[] - An array of exactly 31 bytes
+ *                    (30 for RGB values + 1 for pinned mask).
+ */
+function getBytesFromPaletteId(id: string, expectedLength: number): number[] {
+  validateId(id, expectedLength);
+
+  // Omit style index
+  const colorData = id.substring(1);
+  const bigNumber = base62ToBigInt(colorData);
+
+  const bytes: number[] = [];
+  let remaining = bigNumber;
+
+  // Extract all bytes
+  while (remaining > 0n) {
+    bytes.unshift(Number(remaining % 256n));
+    remaining = remaining >> 8n;
+  }
+
+  // Ensure we have exactly 31 bytes (30 for RGB values + 1 for pinned mask)
+  // Pad with leading zeros if necessary
+  while (bytes.length < 31) {
+    bytes.unshift(0);
+  }
+
+  return bytes;
 }

@@ -23,10 +23,10 @@ export class ContrastEvaluation {
   readonly #stateStore = inject(AppStateStore);
 
   protected readonly maxStars = 5;
-  protected readonly ratio = this.#stateStore.contrastRatio;
+  protected readonly contrast = this.#stateStore.contrastColors.contrast;
 
   protected readonly rating = computed(() => {
-    const ratio = this.ratio();
+    const ratio = this.contrast();
 
     let normalized = ratio < 0
       ? Math.abs(ratio) / NEGATIVE_MAX_APCA_CONTRAST
@@ -38,13 +38,13 @@ export class ContrastEvaluation {
   });
 
   protected readonly smallFontRating = computed(() => {
-    const ratio = this.ratio();
+    const ratio = this.contrast();
 
     return getAPCARating(ratio, 14, "400", apcaLookup);
   });
 
   protected readonly largeFontRating = computed(() => {
-    const ratio = this.ratio();
+    const ratio = this.contrast();
 
     return getAPCARating(ratio, 24, "400", apcaLookup);
   });

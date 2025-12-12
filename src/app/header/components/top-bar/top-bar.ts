@@ -1,4 +1,4 @@
-import {Component, inject, OnDestroy, OnInit, signal} from "@angular/core";
+import {Component, computed, inject, OnDestroy, OnInit, signal} from "@angular/core";
 import {ColorThemeSwitcher} from "@header/components/color-theme-switcher/color-theme-switcher";
 import {EventType, Router, RouterLink, RouterLinkActive} from "@angular/router";
 import {filter, map, Subscription} from "rxjs";
@@ -8,6 +8,7 @@ import {converterEvents} from "@core/converter/converter.events";
 import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
+import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
 
 
 @Component({
@@ -36,6 +37,12 @@ export class TopBar implements OnInit, OnDestroy {
 
   protected readonly triggerNewCaption = signal("New random color");
   protected readonly currentPalette = this.#store.currentPalette;
+
+  protected readonly currentContrastColorsId = computed(() => {
+    const contrastColors = this.#store.contrastColors();
+
+    return contrastIdFromColors(contrastColors);
+  });
 
 
   public ngOnInit() {
@@ -70,13 +77,13 @@ export class TopBar implements OnInit, OnDestroy {
   protected triggerNew() {
     switch (this.#newClickSource) {
       case "palettes":
-        this.#palettesDispatch.newPalette();
+        this.#palettesDispatch.newRandomPaletteWithNav();
         return;
       case "convert":
         this.#converterDispatch.newRandomColor();
         return;
       case "contrast":
-        this.#contrastDispatch.newRandomColors();
+        this.#contrastDispatch.newRandomColorsWithNav();
         return;
     }
   }

@@ -9,10 +9,10 @@ export const palettesEvents = eventGroup({
   source: "Palettes",
   events: {
     /**
-     * Fired when a completely new palette is created.
-     * Mainly when no restorable ID is provided.
+     * Fired when a completely new palette is created AND a following
+     * navigation to the new palette is needed.
      */
-    newRandomPalette: type<void>(),
+    newRandomPaletteWithNav: type<void>(),
     /**
      * Fired when a new palette should be created preserving the pinned colors.
      */
@@ -26,6 +26,7 @@ export const palettesEvents = eventGroup({
      */
     updatePaletteColor: type<PaletteColor>(),
     paletteChanged: type<Palette>(),
+    paletteChangedWithoutNav: type<Palette>(),
     useRandomChanged: type<boolean>(),
     styleChanged: type<PaletteStyle>(),
     seedHueChanged: type<number>()
