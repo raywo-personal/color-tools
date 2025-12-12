@@ -5,6 +5,7 @@ import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import {generatePalette} from "@palettes/helper/palette.helper";
 import {ContrastColor} from "@contrast/models/contrast-color.model";
 import {ContrastColors} from "@contrast/models/contrast-colors.model";
+import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
 
 
 export function useColorAsPaletteStarterReducer(
@@ -37,6 +38,7 @@ export function sendColorToContrastReducer(
     case "text":
       contrast = chroma.contrastAPCA(color, currentBgColor);
       contrastColors = {
+        id: contrastIdFromColors({text: color, background: currentBgColor}),
         text: color,
         background: currentBgColor,
         contrast
@@ -46,6 +48,7 @@ export function sendColorToContrastReducer(
     case "background":
       contrast = chroma.contrastAPCA(currentTextColor, color);
       contrastColors = {
+        id: contrastIdFromColors({text: currentTextColor, background: color}),
         text: currentTextColor,
         background: color,
         contrast

@@ -14,7 +14,6 @@ import {ContrastColors} from "@contrast/models/contrast-colors.model";
 export const CONTRAST_ID_LENGTH = 9;
 
 
-
 /**
  * Generates a contrast ID based on the RGB values of the provided text and
  * background colors.
@@ -24,7 +23,9 @@ export const CONTRAST_ID_LENGTH = 9;
  * @return {string} The base-62 encoded contrast ID derived from the
  *                  colors' RGB values.
  */
-export function contrastIdFromColors(colors: ContrastColors): string {
+export function contrastIdFromColors(
+  colors: Pick<ContrastColors, "text" | "background">
+): string {
   const bytes: number[] = [];
   bytes.push(...colors.text.rgb());
   bytes.push(...colors.background.rgb());
@@ -57,7 +58,7 @@ export function contrastColorsFromId(id: string): ContrastColors {
   const background = chroma.rgb(bytes[3], bytes[4], bytes[5]);
   const contrast = chroma.contrastAPCA(text, background);
 
-  return {text, background, contrast};
+  return {id, text, background, contrast};
 }
 
 
@@ -72,8 +73,10 @@ export function generateRandomContrastColors(): ContrastColors {
   const bgColor = chroma.random();
   const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
   const contrast = chroma.contrastAPCA(textColor, bgColor);
+  const id = contrastIdFromColors({text: textColor, background: bgColor});
 
   return {
+    id,
     text: textColor,
     background: bgColor,
     contrast

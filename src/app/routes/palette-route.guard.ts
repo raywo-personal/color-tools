@@ -5,6 +5,7 @@ import {isRestorable} from "@common/helpers/validate-string-id.helper";
 import {PALETTE_ID_BASE62_LENGTH} from "@palettes/helper/palette-id.helper";
 import {inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
+import {generatePalette} from "@palettes/helper/palette.helper";
 
 
 /**
@@ -33,8 +34,8 @@ export const paletteGuard: CanActivateFn = (route: ActivatedRouteSnapshot): bool
     return true;
   }
 
-  dispatch.newRandomPalette();
-  const newPaletteId = stateStore.currentPalette().id;
+  const palette = generatePalette(stateStore.paletteStyle());
+  dispatch.paletteChangedWithoutNav(palette);
 
-  return router.createUrlTree(["/palettes", newPaletteId]);
+  return router.createUrlTree(["/palettes", palette.id]);
 };

@@ -2,8 +2,7 @@ import {contrastEvents} from "@core/contrast/contrast.events";
 import {injectDispatch} from "@ngrx/signals/events";
 import {ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree} from "@angular/router";
 import {inject} from "@angular/core";
-import {AppStateStore} from "@core/app-state.store";
-import {CONTRAST_ID_LENGTH, contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {CONTRAST_ID_LENGTH, generateRandomContrastColors} from "@contrast/helper/contrast-id.helper";
 import {isRestorable} from "@common/helpers/validate-string-id.helper";
 
 
@@ -21,7 +20,6 @@ import {isRestorable} from "@common/helpers/validate-string-id.helper";
 
 export const contrastGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boolean | UrlTree => {
   const dispatch = injectDispatch(contrastEvents);
-  const stateStore = inject(AppStateStore);
   const router = inject(Router);
 
   const routeContrastId = route.params["contrastId"]
@@ -34,9 +32,8 @@ export const contrastGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boo
     return true;
   }
 
-  dispatch.newRandomColors();
-  const newContrastColors = stateStore.contrastColors();
-  const newContrastId = contrastIdFromColors(newContrastColors);
+  const contrastColors = generateRandomContrastColors();
+  dispatch.contrastColorsChangedWithoutNav(contrastColors);
 
-  return router.createUrlTree(["/contrast", newContrastId]);
+  return router.createUrlTree(["/contrast", contrastColors.id]);
 };

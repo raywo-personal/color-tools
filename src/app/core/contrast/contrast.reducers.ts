@@ -2,7 +2,7 @@ import {EventInstance} from "@ngrx/signals/events";
 import {AppState} from "@core/models/app-state.model";
 import chroma, {Color} from "chroma-js";
 import {findHarmonicTextColor} from "@contrast/helper/optimal-text-color.helper";
-import {createContrastColors} from "@contrast/models/contrast-colors.model";
+import {ContrastColors, createContrastColors} from "@contrast/models/contrast-colors.model";
 import {contrastColorsFromId} from "@contrast/helper/contrast-id.helper";
 
 
@@ -32,17 +32,13 @@ export function backgroundColorChangedReducer(
 }
 
 
-export function newRandomContrastColorsReducer(
+export function contrastColorsChangedWithoutNavReducer(
   this: void,
-  event: EventInstance<"[Contrast] newRandomColors", void>,
+  event: EventInstance<"[Contrast] contrastColorsChangedWithoutNav", ContrastColors>,
   state: AppState
 ) {
-  const bgColor = chroma.random();
-  const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
-  const contrastColors = createContrastColors(textColor, bgColor);
-
   return {
-    contrastColors
+    contrastColors: event.payload
   };
 }
 

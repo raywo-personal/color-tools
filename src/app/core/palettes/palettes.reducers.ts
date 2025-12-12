@@ -88,7 +88,15 @@ export function paletteChangedReducer(
   this: void,
   event: EventInstance<"[Palettes] paletteChanged", Palette>
 ) {
-  return {currentPalette: event.payload};
+  return {currentPalette: event.payload, paletteStyle: event.payload.style};
+}
+
+
+export function paletteChangedWithoutNavReducer(
+  this: void,
+  event: EventInstance<"[Palettes] paletteChangedWithoutNav", Palette>
+) {
+  return {currentPalette: event.payload, paletteStyle: event.payload.style};
 }
 
 

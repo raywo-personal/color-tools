@@ -48,10 +48,11 @@ export function allEffects(
         converterEvents.newRandomColor,
         converterEvents.colorChanged,
         palettesEvents.paletteChanged,
+        palettesEvents.paletteChangedWithoutNav,
         contrastEvents.switchColors,
         contrastEvents.textColorChanged,
         contrastEvents.backgroundColorChanged,
-        contrastEvents.newRandomColors,
+        contrastEvents.contrastColorsChangedWithoutNav,
         contrastEvents.newRandomColorsWithNav,
         transferEvents.sendColorToContrast
       )
