@@ -26,7 +26,7 @@ export class ContrastColors {
 
   protected createPaletteFromContrast() {
     const contrastColors = this.#appStore.contrastColors();
-    this.#dispatch.startPaletteFromContrast(contrastColors);
+    this.#dispatch.generatePaletteFromContrast(contrastColors);
   }
 
 }

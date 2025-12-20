@@ -22,9 +22,9 @@ export function useColorAsPaletteStarterReducer(
 }
 
 
-export function startPaletteFromContrastReducer(
+export function generatePaletteFromContrastReducer(
   this: void,
-  event: EventInstance<"[Transfer] startPaletteFromContrast", ContrastColors>,
+  event: EventInstance<"[Transfer] generatePaletteFromContrast", ContrastColors>,
   state: AppState
 ) {
   const contrastColors = event.payload;

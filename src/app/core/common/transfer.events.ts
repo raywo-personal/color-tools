@@ -10,6 +10,6 @@ export const transferEvents = eventGroup({
   events: {
     useColorAsPaletteStarter: type<Color>(),
     sendColorToContrast: type<ContrastColor>(),
-    startPaletteFromContrast: type<ContrastColors>()
+    generatePaletteFromContrast: type<ContrastColors>()
   }
 });
