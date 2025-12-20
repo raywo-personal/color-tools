@@ -41,7 +41,5 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
-
-# other files and folders
 /public/palette2.svg
-/.claude/
+/.claude/settings.local.json

@@ -22,7 +22,8 @@ export function navigateToPaletteIdEffect(
       palettesEvents.newPalette,
       palettesEvents.updatePaletteColor,
       palettesEvents.paletteChanged,
-      transferEvents.useColorAsPaletteStarter
+      transferEvents.useColorAsPaletteStarter,
+      transferEvents.startPaletteFromContrast
     )
     .pipe(
       tap(() => {

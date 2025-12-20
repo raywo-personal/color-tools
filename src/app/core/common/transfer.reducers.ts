@@ -22,6 +22,26 @@ export function useColorAsPaletteStarterReducer(
 }
 
 
+export function startPaletteFromContrastReducer(
+  this: void,
+  event: EventInstance<"[Transfer] startPaletteFromContrast", ContrastColors>,
+  state: AppState
+) {
+  const contrastColors = event.payload;
+  const color0 = paletteColorFrom(contrastColors.background,
+    "color0",
+    contrastColors.background,
+    true);
+  const color1 = paletteColorFrom(contrastColors.text,
+    "color1",
+    contrastColors.text,
+    true);
+  const palette = generatePalette(state.paletteStyle, {color0, color1});
+
+  return {currentPalette: palette};
+}
+
+
 export function sendColorToContrastReducer(
   this: void,
   event: EventInstance<"[Transfer] sendColorToContrast", ContrastColor>,

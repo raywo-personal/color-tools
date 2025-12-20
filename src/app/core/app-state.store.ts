@@ -1,7 +1,7 @@
 import {signalStore, withState} from "@ngrx/signals";
 import {converterEvents} from "./converter/converter.events";
 import {on, withEffects, withReducer} from "@ngrx/signals/events";
-import {colorChangedReducer, correctLightnessReducer, displayColorSpaceReducer, newRandomColorReducer, useAsBackgroundReducer, useBezierReducer,} from "./converter/converter.reducers";
+import {colorChangedReducer, correctLightnessReducer, displayColorSpaceReducer, newRandomColorReducer, useAsBackgroundReducer, useBezierReducer} from "./converter/converter.reducers";
 import {persistenceEvents} from "./common/persistence.events";
 import {palettesEvents} from "./palettes/palettes.events";
 import {loadAppStateReducer} from "./common/persistence.reducers";
@@ -30,7 +30,7 @@ import {
   textColorChangedReducer
 } from "@core/contrast/contrast.reducers";
 import {transferEvents} from "@core/common/transfer.events";
-import {sendColorToContrastReducer, useColorAsPaletteStarterReducer} from "@core/common/transfer.reducers";
+import {sendColorToContrastReducer, startPaletteFromContrastReducer, useColorAsPaletteStarterReducer} from "@core/common/transfer.reducers";
 
 
 export const AppStateStore = signalStore(
@@ -42,6 +42,7 @@ export const AppStateStore = signalStore(
     on(commonEvents.fontSelected, fontSelectedReducer),
     on(transferEvents.useColorAsPaletteStarter, useColorAsPaletteStarterReducer),
     on(transferEvents.sendColorToContrast, sendColorToContrastReducer),
+    on(transferEvents.startPaletteFromContrast, startPaletteFromContrastReducer),
     on(converterEvents.newRandomColor, newRandomColorReducer),
     on(converterEvents.colorChanged, colorChangedReducer),
     on(converterEvents.useAsBackgroundChanged, useAsBackgroundReducer),
