@@ -33,9 +33,9 @@ export function newRandomPaletteWithNavReducer(
 }
 
 
-export function newPaletteReducer(
+export function newPaletteWithNavReducer(
   this: void,
-  event: EventInstance<"[Palettes] newPalette", void>,
+  event: EventInstance<"[Palettes] newPaletteWithNav", void>,
   state: AppState
 ) {
   const paletteColors = getPinnedPaletteColors(state);

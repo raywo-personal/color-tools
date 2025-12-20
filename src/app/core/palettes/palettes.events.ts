@@ -14,9 +14,10 @@ export const palettesEvents = eventGroup({
      */
     newRandomPaletteWithNav: type<void>(),
     /**
-     * Fired when a new palette should be created preserving the pinned colors.
+     * Fired when a new palette should be created preserving the pinned colors
+     * AND a following navigation to the new palette is needed.
      */
-    newPalette: type<void>(),
+    newPaletteWithNav: type<void>(),
     /**
      * Fired when a palette should be restored from a n ID.
      */

@@ -33,7 +33,7 @@ Try it out here: https://color-tools.skillbird.de/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/ColorTools.git
+   git clone --recurse-submodules https://github.com/raywo-personal/color-tools.git
    ```
 
 2. Install dependencies:
@@ -49,6 +49,25 @@ Try it out here: https://color-tools.skillbird.de/
 4. Build for production:
    ```bash
    pnpm build
+   ```
+   
+### Update Claude Code agents and skills
+
+1. Update the submodule:
+   ```bash
+   cd .claude
+   git fetch           # get new commits from remote
+   git checkout main   # or your default branch
+   git pull            # get latest changes
+   ```
+
+2. Update the project
+   ```Bash
+   cd ..
+   git status          # shows: .claude has uncommitted changes
+   git add .claude
+   git commit -m "Update Claude knowledge submodule"
+   git push
    ```
 
 ### Deployment

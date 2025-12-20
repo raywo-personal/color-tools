@@ -77,7 +77,7 @@ export class TopBar implements OnInit, OnDestroy {
   protected triggerNew() {
     switch (this.#newClickSource) {
       case "palettes":
-        this.#palettesDispatch.newRandomPaletteWithNav();
+        this.#palettesDispatch.newPaletteWithNav();
         return;
       case "convert":
         this.#converterDispatch.newRandomColor();
