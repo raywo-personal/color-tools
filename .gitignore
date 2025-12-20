@@ -28,6 +28,10 @@ yarn-error.log
 !.vscode/extensions.json
 .history/*
 
+# System files
+.DS_Store
+Thumbs.db
+
 # Miscellaneous
 /.angular/cache
 .sass-cache/
@@ -37,11 +41,5 @@ yarn-error.log
 testem.log
 /typings
 __screenshots__/
-
-# System files
-.DS_Store
-Thumbs.db
-
-# other files and folders
 /public/palette2.svg
-/.claude/
+/.claude/settings.local.json
