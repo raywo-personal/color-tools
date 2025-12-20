@@ -19,7 +19,7 @@ export function navigateToPaletteIdEffect(
   return events
     .on(
       palettesEvents.newRandomPaletteWithNav,
-      palettesEvents.newPalette,
+      palettesEvents.newPaletteWithNav,
       palettesEvents.updatePaletteColor,
       palettesEvents.paletteChanged,
       transferEvents.useColorAsPaletteStarter,

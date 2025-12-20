@@ -8,7 +8,7 @@ import {loadAppStateReducer} from "./common/persistence.reducers";
 import {commonEvents} from "./common/common.events";
 import {colorThemeChangedReducer, fontSelectedReducer} from "./common/common.reducers";
 import {
-  newPaletteReducer,
+  newPaletteWithNavReducer,
   newRandomPaletteWithNavReducer,
   paletteChangedReducer,
   paletteChangedWithoutNavReducer,
@@ -51,7 +51,7 @@ export const AppStateStore = signalStore(
     on(converterEvents.displayColorSpaceChanged, displayColorSpaceReducer),
     on(palettesEvents.paletteChangedWithoutNav, paletteChangedWithoutNavReducer),
     on(palettesEvents.newRandomPaletteWithNav, newRandomPaletteWithNavReducer),
-    on(palettesEvents.newPalette, newPaletteReducer),
+    on(palettesEvents.newPaletteWithNav, newPaletteWithNavReducer),
     on(palettesEvents.restorePalette, restorePaletteReducer),
     on(palettesEvents.updatePaletteColor, updatePaletteColorReducer),
     on(palettesEvents.paletteChanged, paletteChangedReducer),
