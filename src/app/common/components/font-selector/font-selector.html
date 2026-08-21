@@ -35,6 +35,6 @@
   <div class="form-text">{{ descriptiveText() }}</div>
 
   @if (fontsResource.error()) {
-    <small class="form-text text-danger">Error loading fonts: {{ fontsResource.error() }}</small>
+    <small class="form-text text-danger">Error loading fonts: {{ fontsResource.error()?.message }}</small>
   }
 </div>
