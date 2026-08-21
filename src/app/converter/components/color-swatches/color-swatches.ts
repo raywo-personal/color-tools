@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, inject} from "@angular/core";
+import {Component, computed, inject} from "@angular/core";
 import {ColorSwatch} from "@converter/components/color-swatch/color-swatch";
 import {DecimalPipe} from "@angular/common";
 import {ColorSpace} from "@common/models/color-space.model";
@@ -17,7 +17,6 @@ import {rangeToArray} from "@common/helpers/iterables.helper";
     FormsModule
   ],
   templateUrl: "./color-swatches.html",
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class ColorSwatches {

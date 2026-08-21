@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle} from "@ng-bootstrap/ng-bootstrap";
 import {ColorTheme} from "@common/models/color-theme.model";
 import {injectDispatch} from "@ngrx/signals/events";
@@ -15,7 +15,6 @@ import {AppStateStore} from "@core/app-state.store";
     NgbDropdownItem
   ],
   templateUrl: './color-theme-switcher.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class ColorThemeSwitcher {

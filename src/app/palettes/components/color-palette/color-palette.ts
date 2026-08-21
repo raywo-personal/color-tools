@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, inject, input} from "@angular/core";
+import {Component, computed, inject, input} from "@angular/core";
 import {SinglePaletteColor} from "@palettes/components/single-palette-color/single-palette-color";
 import {GeneratorStyleSwitcher} from "@palettes/components/generator-style-switcher/generator-style-switcher";
 import {PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
@@ -19,7 +19,6 @@ import {paletteFrom} from "@palettes/helper/palette.helper";
     CdkDrag
   ],
   templateUrl: "./color-palette.html",
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``,
 })
 export class ColorPalette {

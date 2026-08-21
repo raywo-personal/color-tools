@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, input} from "@angular/core";
+import {Component, computed, input} from "@angular/core";
 import {Color} from "chroma-js";
 import {ColorSpace} from "@common/models/color-space.model";
 import {NgTemplateOutlet} from "@angular/common";
@@ -16,7 +16,6 @@ import {converterEvents} from "@core/converter/converter.events";
     NgbTooltip
   ],
   templateUrl: './color-swatch.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class ColorSwatch {

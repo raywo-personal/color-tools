@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, input, linkedSignal, model, OnInit, signal, untracked} from "@angular/core";
+import {Component, computed, DestroyRef, effect, ElementRef, inject, input, linkedSignal, model, OnInit, signal, untracked} from "@angular/core";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {FormsModule} from "@angular/forms";
 import {fromEvent} from "rxjs";
@@ -18,7 +18,6 @@ import {ColorSpace} from "@common/models/color-space.model";
     HueSliderComponent
   ],
   templateUrl: "./color-picker.html",
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: "./color-picker.scss"
 })
 export class ColorPickerComponent implements OnInit {

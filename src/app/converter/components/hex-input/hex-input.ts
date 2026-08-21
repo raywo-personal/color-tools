@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal} from "@angular/core";
+import {Component, computed, inject, linkedSignal, signal} from "@angular/core";
 import {FormsModule} from "@angular/forms";
 import chroma, {Color} from "chroma-js";
 import {CopyCss} from "@converter/components/copy-css/copy-css";
@@ -14,7 +14,6 @@ import {converterEvents} from "@core/converter/converter.events";
     CopyCss
   ],
   templateUrl: './hex-input.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class HexInput {

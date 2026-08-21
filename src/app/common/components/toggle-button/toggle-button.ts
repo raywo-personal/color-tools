@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, OnInit, output, signal, viewChild} from "@angular/core";
+import {Component, computed, effect, ElementRef, inject, input, OnInit, output, signal, viewChild} from "@angular/core";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 
 
@@ -11,7 +11,6 @@ import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
     "class": "btn",
     "(click)": "onClick()"
   },
-  changeDetection: ChangeDetectionStrategy.Eager,
   hostDirectives: [
     {
       directive: NgbTooltip,

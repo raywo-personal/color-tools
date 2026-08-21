@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, input, linkedSignal, signal} from "@angular/core";
+import {Component, computed, input, linkedSignal, signal} from "@angular/core";
 import {contrastingColor, contrastingMutedColor} from "@common/helpers/contrasting-color.helper";
 import {ToggleButton} from "@common/components/toggle-button/toggle-button";
 import {PaletteColor} from "@palettes/models/palette-color.model";
@@ -30,7 +30,6 @@ import {transferEvents} from "@core/common/transfer.events";
   ],
   templateUrl: "./single-palette-color.html",
   styles: ``,
-  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     "class": "palette-color",
     "[class.showing-shades]": "showShades()",

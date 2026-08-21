@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, input, linkedSignal, output} from "@angular/core";
+import {Component, inject, input, linkedSignal, output} from "@angular/core";
 import {FormsModule} from "@angular/forms";
 import {NgbTypeahead, NgbTypeaheadSelectItemEvent} from "@ng-bootstrap/ng-bootstrap";
 import {GoogleFontsService} from "@common/services/google-fonts.service";
@@ -15,7 +15,6 @@ import {debounceTime, distinctUntilChanged, map} from "rxjs/operators";
   selector: "ct-font-selector",
   imports: [FormsModule, NgbTypeahead],
   templateUrl: "./font-selector.html",
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class FontSelectorComponent {

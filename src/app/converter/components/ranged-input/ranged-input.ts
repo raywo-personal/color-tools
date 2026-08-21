@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, input, model, viewChild} from "@angular/core";
+import {Component, computed, input, model, viewChild} from "@angular/core";
 import {FormsModule, NgModel, ReactiveFormsModule} from "@angular/forms";
 
 
@@ -10,7 +10,6 @@ import {FormsModule, NgModel, ReactiveFormsModule} from "@angular/forms";
   ],
   templateUrl: './ranged-input.html',
   styles: ``,
-  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     "[class.was-validated]": "valueField().touched || valueField().dirty"
   }

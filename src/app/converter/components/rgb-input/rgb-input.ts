@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, inject, linkedSignal} from "@angular/core";
+import {Component, computed, inject, linkedSignal} from "@angular/core";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import chroma from "chroma-js";
 import {inRgbRange} from "@common/helpers/rgb.helper";
@@ -18,7 +18,6 @@ import {AppStateStore} from "@core/app-state.store";
     RangedInput
   ],
   templateUrl: './rgb-input.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class RgbInput {

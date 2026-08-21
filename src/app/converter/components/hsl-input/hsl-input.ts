@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, inject, linkedSignal} from "@angular/core";
+import {Component, computed, inject, linkedSignal} from "@angular/core";
 import chroma from "chroma-js";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {inHslAngleRange, inHslPercentRange} from "@common/helpers/hsl.helper";
@@ -18,7 +18,6 @@ import {converterEvents} from "@core/converter/converter.events";
     RangedInput
   ],
   templateUrl: './hsl-input.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class HslInput {

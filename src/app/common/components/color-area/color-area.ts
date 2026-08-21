@@ -1,11 +1,10 @@
-import {ChangeDetectionStrategy, Component, computed, ElementRef, input, model, signal, viewChild} from "@angular/core";
+import {Component, computed, ElementRef, input, model, signal, viewChild} from "@angular/core";
 import chroma from "chroma-js";
 
 
 @Component({
   selector: "ct-color-area",
   templateUrl: "./color-area.html",
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: "./color-area.scss"
 })
 export class ColorAreaComponent {

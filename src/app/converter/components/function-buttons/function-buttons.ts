@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {transferEvents} from "@core/common/transfer.events";
@@ -9,7 +9,6 @@ import {converterEvents} from "@core/converter/converter.events";
   selector: "ct-function-buttons",
   imports: [],
   templateUrl: "./function-buttons.html",
-  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class FunctionButtons {

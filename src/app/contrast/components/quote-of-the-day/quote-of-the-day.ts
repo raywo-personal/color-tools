@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {Quotes} from "../../services/quotes";
 
 
@@ -7,7 +7,6 @@ import {Quotes} from "../../services/quotes";
   imports: [],
   templateUrl: './quote-of-the-day.html',
   styles: ``,
-  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     class: "quote-container"
   }
