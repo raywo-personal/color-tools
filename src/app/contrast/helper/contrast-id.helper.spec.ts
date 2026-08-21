@@ -3,6 +3,10 @@ import {CONTRAST_ID_LENGTH, contrastColorsFromId, contrastIdFromColors, generate
 import {ContrastColors} from "@contrast/models/contrast-colors.model";
 
 
+/** Only the fields `contrastIdFromColors` actually needs. */
+type ContrastColorPair = Pick<ContrastColors, "text" | "background">;
+
+
 describe("Contrast ID Helper", () => {
 
   describe("CONTRAST_ID_LENGTH", () => {
@@ -16,10 +20,9 @@ describe("Contrast ID Helper", () => {
   describe("contrastIdFromColors", () => {
 
     it("should generate a 9-character ID from two colors", () => {
-      const colors: ContrastColors = {
+      const colors: ContrastColorPair = {
         text: chroma.rgb(255, 0, 0),
-        background: chroma.rgb(0, 255, 0),
-        contrast: 50
+        background: chroma.rgb(0, 255, 0)
       };
 
       const id = contrastIdFromColors(colors);
@@ -29,10 +32,9 @@ describe("Contrast ID Helper", () => {
     });
 
     it("should generate consistent IDs for the same color pair", () => {
-      const colors: ContrastColors = {
+      const colors: ContrastColorPair = {
         text: chroma.rgb(123, 45, 67),
-        background: chroma.rgb(200, 150, 100),
-        contrast: 50
+        background: chroma.rgb(200, 150, 100)
       };
 
       const id1 = contrastIdFromColors(colors);
@@ -42,16 +44,14 @@ describe("Contrast ID Helper", () => {
     });
 
     it("should generate different IDs for different color pairs", () => {
-      const colors1: ContrastColors = {
+      const colors1: ContrastColorPair = {
         text: chroma.rgb(255, 0, 0),
-        background: chroma.rgb(0, 255, 0),
-        contrast: 50
+        background: chroma.rgb(0, 255, 0)
       };
 
-      const colors2: ContrastColors = {
+      const colors2: ContrastColorPair = {
         text: chroma.rgb(0, 255, 0),
-        background: chroma.rgb(255, 0, 0),
-        contrast: 50
+        background: chroma.rgb(255, 0, 0)
       };
 
       const id1 = contrastIdFromColors(colors1);
@@ -63,10 +63,9 @@ describe("Contrast ID Helper", () => {
     describe("edge cases with dark colors", () => {
 
       it("should handle black text on white background", () => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma.rgb(0, 0, 0),
-          background: chroma.rgb(255, 255, 255),
-          contrast: 106
+          background: chroma.rgb(255, 255, 255)
         };
 
         const id = contrastIdFromColors(colors);
@@ -76,10 +75,9 @@ describe("Contrast ID Helper", () => {
       });
 
       it("should handle white text on black background", () => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma.rgb(255, 255, 255),
-          background: chroma.rgb(0, 0, 0),
-          contrast: -106
+          background: chroma.rgb(0, 0, 0)
         };
 
         const id = contrastIdFromColors(colors);
@@ -89,10 +87,9 @@ describe("Contrast ID Helper", () => {
       });
 
       it("should handle both colors being black", () => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma.rgb(0, 0, 0),
-          background: chroma.rgb(0, 0, 0),
-          contrast: 0
+          background: chroma.rgb(0, 0, 0)
         };
 
         const id = contrastIdFromColors(colors);
@@ -102,10 +99,9 @@ describe("Contrast ID Helper", () => {
       });
 
       it("should handle very dark colors (RGB < 10)", () => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma.rgb(5, 2, 1),
-          background: chroma.rgb(3, 7, 4),
-          contrast: 10
+          background: chroma.rgb(3, 7, 4)
         };
 
         const id = contrastIdFromColors(colors);
@@ -119,10 +115,9 @@ describe("Contrast ID Helper", () => {
     describe("edge cases with bright colors", () => {
 
       it("should handle both colors being white", () => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma.rgb(255, 255, 255),
-          background: chroma.rgb(255, 255, 255),
-          contrast: 0
+          background: chroma.rgb(255, 255, 255)
         };
 
         const id = contrastIdFromColors(colors);
@@ -132,10 +127,9 @@ describe("Contrast ID Helper", () => {
       });
 
       it("should handle very bright colors (RGB > 245)", () => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma.rgb(250, 252, 254),
-          background: chroma.rgb(248, 251, 253),
-          contrast: 5
+          background: chroma.rgb(248, 251, 253)
         };
 
         const id = contrastIdFromColors(colors);
@@ -149,10 +143,9 @@ describe("Contrast ID Helper", () => {
     describe("mixed color scenarios", () => {
 
       it("should handle one channel at 0 and others at 255", () => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma.rgb(255, 0, 255),
-          background: chroma.rgb(0, 255, 0),
-          contrast: 50
+          background: chroma.rgb(0, 255, 0)
         };
 
         const id = contrastIdFromColors(colors);
@@ -162,10 +155,9 @@ describe("Contrast ID Helper", () => {
       });
 
       it("should handle gradual color values", () => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma.rgb(1, 2, 3),
-          background: chroma.rgb(4, 5, 6),
-          contrast: 10
+          background: chroma.rgb(4, 5, 6)
         };
 
         const id = contrastIdFromColors(colors);
@@ -181,10 +173,9 @@ describe("Contrast ID Helper", () => {
   describe("contrastColorsFromId", () => {
 
     it("should restore colors from a valid ID", () => {
-      const originalColors: ContrastColors = {
+      const originalColors: ContrastColorPair = {
         text: chroma.rgb(123, 45, 67),
-        background: chroma.rgb(200, 150, 100),
-        contrast: 50
+        background: chroma.rgb(200, 150, 100)
       };
 
       const id = contrastIdFromColors(originalColors);
@@ -213,10 +204,9 @@ describe("Contrast ID Helper", () => {
     describe("restored color accuracy", () => {
 
       it("should restore exact RGB values for typical colors", () => {
-        const originalColors: ContrastColors = {
+        const originalColors: ContrastColorPair = {
           text: chroma.rgb(123, 45, 67),
-          background: chroma.rgb(200, 150, 100),
-          contrast: 50
+          background: chroma.rgb(200, 150, 100)
         };
 
         const id = contrastIdFromColors(originalColors);
@@ -234,10 +224,9 @@ describe("Contrast ID Helper", () => {
       });
 
       it("should restore black color correctly", () => {
-        const originalColors: ContrastColors = {
+        const originalColors: ContrastColorPair = {
           text: chroma.rgb(0, 0, 0),
-          background: chroma.rgb(128, 128, 128),
-          contrast: 50
+          background: chroma.rgb(128, 128, 128)
         };
 
         const id = contrastIdFromColors(originalColors);
@@ -251,10 +240,9 @@ describe("Contrast ID Helper", () => {
       });
 
       it("should restore white color correctly", () => {
-        const originalColors: ContrastColors = {
+        const originalColors: ContrastColorPair = {
           text: chroma.rgb(255, 255, 255),
-          background: chroma.rgb(128, 128, 128),
-          contrast: 50
+          background: chroma.rgb(128, 128, 128)
         };
 
         const id = contrastIdFromColors(originalColors);
@@ -268,10 +256,9 @@ describe("Contrast ID Helper", () => {
       });
 
       it("should restore very dark colors correctly", () => {
-        const originalColors: ContrastColors = {
+        const originalColors: ContrastColorPair = {
           text: chroma.rgb(5, 2, 1),
-          background: chroma.rgb(3, 7, 4),
-          contrast: 10
+          background: chroma.rgb(3, 7, 4)
         };
 
         const id = contrastIdFromColors(originalColors);
@@ -291,10 +278,9 @@ describe("Contrast ID Helper", () => {
     });
 
     it("should calculate contrast value correctly", () => {
-      const originalColors: ContrastColors = {
+      const originalColors: ContrastColorPair = {
         text: chroma.rgb(0, 0, 0),
-        background: chroma.rgb(255, 255, 255),
-        contrast: 106
+        background: chroma.rgb(255, 255, 255)
       };
 
       const id = contrastIdFromColors(originalColors);
@@ -322,10 +308,9 @@ describe("Contrast ID Helper", () => {
       ];
 
       testCases.forEach(testCase => {
-        const originalColors: ContrastColors = {
+        const originalColors: ContrastColorPair = {
           text: chroma.rgb(testCase.text[0], testCase.text[1], testCase.text[2]),
-          background: chroma.rgb(testCase.background[0], testCase.background[1], testCase.background[2]),
-          contrast: 50
+          background: chroma.rgb(testCase.background[0], testCase.background[1], testCase.background[2])
         };
 
         const id = contrastIdFromColors(originalColors);
@@ -348,10 +333,9 @@ describe("Contrast ID Helper", () => {
       const sampleValues = [0, 1, 2, 5, 10, 50, 100, 127, 128, 200, 250, 253, 254, 255];
 
       sampleValues.forEach(value => {
-        const originalColors: ContrastColors = {
+        const originalColors: ContrastColorPair = {
           text: chroma.rgb(value, 128, 200),
-          background: chroma.rgb(100, value, 50),
-          contrast: 50
+          background: chroma.rgb(100, value, 50)
         };
 
         const id = contrastIdFromColors(originalColors);
@@ -370,10 +354,9 @@ describe("Contrast ID Helper", () => {
     });
 
     it("should produce the same ID when encoded twice", () => {
-      const colors: ContrastColors = {
+      const colors: ContrastColorPair = {
         text: chroma.rgb(123, 45, 67),
-        background: chroma.rgb(200, 150, 100),
-        contrast: 50
+        background: chroma.rgb(200, 150, 100)
       };
 
       const id1 = contrastIdFromColors(colors);
@@ -485,10 +468,9 @@ describe("Contrast ID Helper", () => {
       ];
 
       testCases.forEach(testCase => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma(testCase.text),
-          background: chroma(testCase.background),
-          contrast: chroma.contrastAPCA(chroma(testCase.text), chroma(testCase.background))
+          background: chroma(testCase.background)
         };
 
         const id = contrastIdFromColors(colors);
@@ -514,10 +496,9 @@ describe("Contrast ID Helper", () => {
       ];
 
       bootstrapColors.forEach(color => {
-        const colors: ContrastColors = {
+        const colors: ContrastColorPair = {
           text: chroma(color),
-          background: chroma("#FFFFFF"),
-          contrast: 50
+          background: chroma("#FFFFFF")
         };
 
         const id = contrastIdFromColors(colors);

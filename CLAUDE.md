@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Questions Are Not Work Orders
+
+- A question asks for an answer, not for a change. Diagnose the cause, explain the reasoning, name the options, recommend one - then stop.
+- Editing files, adding or removing dependencies, running migrations and committing require an explicit instruction to do it, however obvious or small the change looks.
+- Reading files, searching the codebase and running read-only commands is always fine.
+
 ## Project Overview
 
 ColorTools is an Angular 21 web application for color manipulation and analysis, featuring a color converter and palette generator. The app uses signals-based state management with @ngrx/signals and deploys to GitHub Pages.
@@ -11,6 +17,7 @@ Live site: https://color-tools.skillbird.de/
 ## Development Commands
 
 ### Basic Commands
+
 - `pnpm install` - Install dependencies
 - `pnpm start` - Start dev server (defaults to development configuration)
 - `pnpm build` - Build for production
@@ -18,7 +25,9 @@ Live site: https://color-tools.skillbird.de/
 - `pnpm deploy` - Deploy to GitHub Pages (runs gh-pages build and deploys)
 
 ### Build Configurations
+
 The project has three build configurations:
+
 - `production` - Production build with optimization and output hashing
 - `gh-pages` - GitHub Pages deployment (same as production but without localization)
 - `development` - Dev build with source maps, no optimization
@@ -55,24 +64,28 @@ The app uses a centralized state management system built on @ngrx/signals:
 State is divided into four domains:
 
 1. **Converter** (`src/app/converter/`) - Color conversion and tint/shade generation
-   - Manages current color, display format (RGB/HSL/HEX), and color space settings
-   - Generates tints and shades using Bezier interpolation when enabled
-   - State: `currentColor`, `textColor`, `useAsBackground`, `correctLightness`, `useBezier`, `displayColorSpace`, `tintColors`, `shadeColors`
+
+- Manages current color, display format (RGB/HSL/HEX), and color space settings
+- Generates tints and shades using Bezier interpolation when enabled
+- State: `currentColor`, `textColor`, `useAsBackground`, `correctLightness`, `useBezier`, `displayColorSpace`, `tintColors`, `shadeColors`
 
 2. **Palettes** (`src/app/palettes/`) - Color palette generation
-   - Eight palette styles: analogous, muted-analog-split, monochromatic, vibrant-balanced, high-contrast, triadic, complementary, split-complementary
-   - Each style has a dedicated generator in `src/app/palettes/helper/*-palette.helper.ts`
-   - Palettes support pinned colors that remain fixed during regeneration
-   - State: `paletteStyle`, `useRandomStyle`, `currentPalette`
+
+- Eight palette styles: analogous, muted-analog-split, monochromatic, vibrant-balanced, high-contrast, triadic, complementary, split-complementary
+- Each style has a dedicated generator in `src/app/palettes/helper/*-palette.helper.ts`
+- Palettes support pinned colors that remain fixed during regeneration
+- State: `paletteStyle`, `useRandomStyle`, `currentPalette`
 
 3. **Contrast** (`src/app/contrast/`) - Color contrast analysis and accessibility
-   - Analyzes text and background color combinations for readability
-   - Uses APCA (Accessible Perceptual Contrast Algorithm) for contrast calculation
-   - Supports color switching, random generation, and restoration from IDs
-   - State: `contrastColors` (text color, background color, contrast value)
+
+- Analyzes text and background color combinations for readability
+- Uses APCA (Accessible Perceptual Contrast Algorithm) for contrast calculation
+- Supports color switching, random generation, and restoration from IDs
+- State: `contrastColors` (text color, background color, contrast value)
 
 4. **Common** (`src/app/common/`) - Shared utilities and theme management
-   - State: `colorTheme` (light/dark/system), `selectedFont`
+
+- State: `colorTheme` (light/dark/system), `selectedFont`
 
 ### Palette ID System
 
@@ -113,12 +126,14 @@ This allows contrast color pairs to be shared via URL: `/contrast/{contrastId}`
 ### Color Libraries
 
 The app uses two main color libraries:
+
 - **chroma-js** - Primary color manipulation (conversions, interpolation, color math)
 - **color-namer** - Color name identification
 
 ### Path Aliases
 
 TypeScript path aliases are configured in `tsconfig.json`:
+
 - `@common/*` → `src/app/common/*`
 - `@converter/*` → `src/app/converter/*`
 - `@header/*` → `src/app/header/*`
@@ -132,6 +147,7 @@ Always use these aliases for imports within the codebase.
 ## Angular Best Practices (from .github/copilot-instructions.md)
 
 ### Component Standards
+
 - Use standalone components (default, do NOT set `standalone: true`)
 - Use signals for state management via `signal()`, `computed()`, and `effect()`
 - Use `input()` and `output()` functions instead of decorators
@@ -143,16 +159,19 @@ Always use these aliases for imports within the codebase.
 - Use `NgOptimizedImage` for static images (not inline base64)
 
 ### Services
+
 - Use `providedIn: 'root'` for singleton services
 - Use the `inject()` function instead of constructor injection
 - Design services around a single responsibility
 
 ### TypeScript
+
 - Use strict type checking (enabled in tsconfig)
 - Prefer type inference when obvious
 - Avoid `any` - use `unknown` when type is uncertain
 
 ### State Management
+
 - Use signals for local component state
 - Use `computed()` for derived state
 - Do NOT use `mutate()` on signals - use `update()` or `set()`
@@ -161,6 +180,7 @@ Always use these aliases for imports within the codebase.
 ## Component Style Guidelines
 
 Components use inline SCSS styles configured in `angular.json`:
+
 - Schematics set `inlineStyle: true` by default
 - Budget limits: 4kB warning, 8kB error per component
 - Global styles in `src/styles.scss`

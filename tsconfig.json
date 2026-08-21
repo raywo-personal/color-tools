@@ -14,28 +14,27 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "preserve",
-    "baseUrl": "./",
     "paths": {
       "@common/*": [
-        "src/app/common/*"
+        "./src/app/common/*"
       ],
       "@converter/*": [
-        "src/app/converter/*"
+        "./src/app/converter/*"
       ],
       "@header/*": [
-        "src/app/header/*"
+        "./src/app/header/*"
       ],
       "@palettes/*": [
-        "src/app/palettes/*"
+        "./src/app/palettes/*"
       ],
       "@core/*": [
-        "src/app/core/*"
+        "./src/app/core/*"
       ],
       "@contrast/*": [
-        "src/app/contrast/*"
+        "./src/app/contrast/*"
       ],
       "@environments/*": [
-        "src/environments/*"
+        "./src/environments/*"
       ]
     }
   },
