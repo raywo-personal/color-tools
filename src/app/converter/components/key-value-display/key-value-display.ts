@@ -1,5 +1,5 @@
-import {Component, computed, input} from '@angular/core';
-import {DecimalPipe} from '@angular/common';
+import {ChangeDetectionStrategy, Component, computed, input} from "@angular/core";
+import {DecimalPipe} from "@angular/common";
 
 
 @Component({
@@ -8,6 +8,7 @@ import {DecimalPipe} from '@angular/common';
     DecimalPipe
   ],
   templateUrl: './key-value-display.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class KeyValueDisplay {

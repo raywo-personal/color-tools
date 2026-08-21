@@ -1,4 +1,4 @@
-import {Component, computed, input, model, output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, input, model, output} from "@angular/core";
 import {FormsModule} from "@angular/forms";
 import {randomBetween} from "@common/helpers/random.helper";
 import chroma from "chroma-js";
@@ -10,6 +10,7 @@ import chroma from "chroma-js";
     FormsModule
   ],
   templateUrl: "./saturation-slider.html",
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class SaturationSlider {

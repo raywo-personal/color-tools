@@ -1,4 +1,4 @@
-import {Component, computed, inject, OnDestroy, OnInit, signal} from "@angular/core";
+import {ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal} from "@angular/core";
 import {ColorThemeSwitcher} from "@header/components/color-theme-switcher/color-theme-switcher";
 import {EventType, Router, RouterLink, RouterLinkActive} from "@angular/router";
 import {filter, map, Subscription} from "rxjs";
@@ -20,6 +20,7 @@ import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
   ],
   templateUrl: "./top-bar.html",
   styles: ``,
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     "class": "navbar navbar-expand"
   }

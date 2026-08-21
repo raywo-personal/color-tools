@@ -1,7 +1,7 @@
-import {Component, inject, OnDestroy, OnInit, signal} from '@angular/core';
-import {FormsModule} from '@angular/forms';
-import {colorFrom} from '@common/helpers/color-format-parser.helper';
-import {Subscription} from 'rxjs';
+import {ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal} from "@angular/core";
+import {FormsModule} from "@angular/forms";
+import {colorFrom} from "@common/helpers/color-format-parser.helper";
+import {Subscription} from "rxjs";
 import {Events, injectDispatch} from "@ngrx/signals/events";
 import {converterEvents} from "@core/converter/converter.events";
 
@@ -12,6 +12,7 @@ import {converterEvents} from "@core/converter/converter.events";
     FormsModule
   ],
   templateUrl: './paste-target.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``,
 })
 export class PasteTarget implements OnInit, OnDestroy {

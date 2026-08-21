@@ -1,4 +1,4 @@
-import {Component, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {Color} from "chroma-js";
 
 import {AppStateStore} from "@core/app-state.store";
@@ -14,6 +14,7 @@ import {ColorPickerComponent} from "@common/components/color-picker/color-picker
   ],
   templateUrl: "./color-inputs.html",
   styles: ``,
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     class: "color-inputs"
   }

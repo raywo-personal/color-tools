@@ -1,4 +1,4 @@
-import {Component, computed, inject, input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, input} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
@@ -10,6 +10,7 @@ import {PaletteStyle, styleCaptionFor} from "@palettes/models/palette-style.mode
   imports: [],
   templateUrl: './style-button.html',
   styles: ``,
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     "class": "btn btn-outline-secondary",
     "[class.active]": "isSelected()",

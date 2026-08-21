@@ -1,4 +1,4 @@
-import {Component, inject, signal} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject, signal} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 import {FONT_WEIGHTS, FontWeight} from "@contrast/models/apca-lookup-table.model";
 import {StarRating} from "@contrast/components/star-rating/star-rating";
@@ -13,6 +13,7 @@ import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
   ],
   templateUrl: "./text-samples.html",
   styles: ``,
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     class: "row row-cols-3 g-4 text-samples",
     "[style.--ct-cc-text]": "textColor().hex()",

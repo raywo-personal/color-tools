@@ -1,4 +1,4 @@
-import {Component, inject, input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject, input} from "@angular/core";
 import {QuoteOfTheDay} from "../quote-of-the-day/quote-of-the-day";
 import {ContrastColors} from "@contrast/components/contrast-colors/contrast-colors";
 import {AppStateStore} from "@core/app-state.store";
@@ -18,6 +18,7 @@ import {injectDispatch} from "@ngrx/signals/events";
     FontSelectorComponent
   ],
   templateUrl: "./contrast.html",
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``,
 })
 export class Contrast {

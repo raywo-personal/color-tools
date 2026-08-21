@@ -1,4 +1,4 @@
-import {Component, computed, input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, computed, input} from "@angular/core";
 import {rangeToArray} from "@common/helpers/iterables.helper";
 
 
@@ -6,6 +6,7 @@ import {rangeToArray} from "@common/helpers/iterables.helper";
   selector: "ct-star-rating",
   imports: [],
   templateUrl: "./star-rating.html",
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``,
 })
 export class StarRating {

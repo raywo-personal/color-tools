@@ -1,4 +1,4 @@
-import {Component, model, output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, model, output} from "@angular/core";
 import {FormsModule} from "@angular/forms";
 import {randomBetween} from "@common/helpers/random.helper";
 
@@ -9,6 +9,7 @@ import {randomBetween} from "@common/helpers/random.helper";
     FormsModule
   ],
   templateUrl: './luminance-slider.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``,
 })
 export class LuminanceSlider {

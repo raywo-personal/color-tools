@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 
 
@@ -6,6 +6,7 @@ import {AppStateStore} from "@core/app-state.store";
   selector: 'ct-color-preview',
   imports: [],
   templateUrl: './color-preview.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class ColorPreview {

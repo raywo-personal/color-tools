@@ -1,4 +1,4 @@
-import {Component, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {ColorInputs} from "@contrast/components/color-inputs/color-inputs";
 import {ContrastEvaluation} from "@contrast/components/contrast-evaluation/contrast-evaluation";
 import {injectDispatch} from "@ngrx/signals/events";
@@ -14,6 +14,7 @@ import {AppStateStore} from "@core/app-state.store";
   ],
   templateUrl: "./contrast-colors.html",
   styles: ``,
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     class: "colors-container"
   }

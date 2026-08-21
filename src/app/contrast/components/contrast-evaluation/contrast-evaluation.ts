@@ -1,4 +1,4 @@
-import {Component, computed, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, computed, inject} from "@angular/core";
 import {StarRating} from "@contrast/components/star-rating/star-rating";
 import {AppStateStore} from "@core/app-state.store";
 import {DecimalPipe} from "@angular/common";
@@ -14,6 +14,7 @@ import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
   ],
   templateUrl: "./contrast-evaluation.html",
   styles: ``,
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     class: "contrast-evaluation"
   }

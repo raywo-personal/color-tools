@@ -1,5 +1,5 @@
-import {Component, model, output} from '@angular/core';
-import {FormsModule} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, model, output} from "@angular/core";
+import {FormsModule} from "@angular/forms";
 
 import {randomBetween} from "@common/helpers/random.helper";
 
@@ -9,6 +9,7 @@ import {randomBetween} from "@common/helpers/random.helper";
   standalone: true,
   imports: [FormsModule],
   templateUrl: "./hue-slider.html",
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``,
 })
 export class HueSliderComponent {

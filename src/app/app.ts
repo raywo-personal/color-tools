@@ -1,12 +1,13 @@
-import {Component, DOCUMENT, inject} from '@angular/core';
-import {TopBar} from '@header/components/top-bar/top-bar';
-import {RouterOutlet} from '@angular/router';
+import {ChangeDetectionStrategy, Component, DOCUMENT, inject} from "@angular/core";
+import {TopBar} from "@header/components/top-bar/top-bar";
+import {RouterOutlet} from "@angular/router";
 
 
 @Component({
   selector: 'ct-root',
   imports: [TopBar, RouterOutlet],
   templateUrl: './app.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: ``
 })
 export class App {

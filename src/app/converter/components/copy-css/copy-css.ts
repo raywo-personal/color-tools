@@ -1,5 +1,5 @@
-import {Component, computed, inject, input} from '@angular/core';
-import {ColorSpace} from '@common/models/color-space.model';
+import {ChangeDetectionStrategy, Component, computed, inject, input} from "@angular/core";
+import {ColorSpace} from "@common/models/color-space.model";
 import {AppStateStore} from "@core/app-state.store";
 
 
@@ -8,6 +8,7 @@ import {AppStateStore} from "@core/app-state.store";
   imports: [],
   templateUrl: './copy-css.html',
   styles: ``,
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     "class": "input-css-copy"
   }
