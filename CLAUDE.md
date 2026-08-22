@@ -178,7 +178,31 @@ This allows contrast color pairs to be shared via URL: `/contrast/{contrastId}`
 The app uses two main color libraries:
 
 - **chroma-js** - Primary color manipulation (conversions, interpolation, color math)
-- **color-namer** - Color name identification
+- **color-namer** - Color name identification, used for its color lists only
+
+`src/app/common/helpers/color-name.helper.ts` deliberately does **not** call
+`color-namer`'s own entry point. It imports the six color lists
+(`color-namer/lib/colors/*`) and does the nearest-color search with the app's
+own chroma-js. Importing the package proper pulls in a second, much older
+chroma-js (1.4.1) plus `es6-weak-map` and its `es5-ext` tail - 59 kB of raw
+bundle for a `WeakMap` cache that never hits, because `color-namer` keys it on a
+freshly allocated object on every call.
+
+Both variants produce identical names. The deep imports are declared in
+`src/types/color-namer-lists.d.ts` and listed in `allowedCommonJsDependencies`
+in `angular.json`, because the lists are CommonJS.
+
+**The distance must be measured from `color.hex()`, not from the `Color`
+object.** `color-namer` was always handed a hex string, so it compared the
+rounded 8-bit color; a chroma `Color` carries unrounded channels, and
+`chroma.hsl()` plus the Bezier interpolation used for tints, shades and palettes
+produce fractional ones. Passing the object through renames roughly 5 % of those
+colors and makes a palette disagree with its own shared-URL round trip, which
+goes through 8-bit RGB. A sweep over the integer RGB cube cannot detect this -
+there the two agree exactly. `color-name.helper.spec.ts` pins the behaviour.
+
+Note that `colorName()` must stay synchronous: `generatePalette()` and
+`paletteFromId()` call it from reducer and route-guard code paths.
 
 ### Path Aliases
 
@@ -326,5 +350,6 @@ through `@use "./bootstrap-subset" with (...)` in `_bootstrap-custom.scss`.
   explicit environment setting and no `vitest.config.*` in the repo
 - Run all tests: `ng test` (or `pnpm test`); `ng test --watch=false` for a single run
 - Component generation skips test files by default (configured in angular.json schematics)
-- The suite currently consists of 138 tests in 4 helper specs (palette ID,
-  contrast ID, APCA rating, optimal text color). No component or store is tested
+- The suite currently consists of 149 tests in 5 helper specs (palette ID,
+  contrast ID, APCA rating, optimal text color, color name). No component or
+  store is tested

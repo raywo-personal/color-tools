@@ -39,6 +39,14 @@
                 ]
               }
             },
+            "allowedCommonJsDependencies": [
+              "color-namer/lib/colors/basic",
+              "color-namer/lib/colors/html",
+              "color-namer/lib/colors/ntc",
+              "color-namer/lib/colors/pantone",
+              "color-namer/lib/colors/roygbiv",
+              "color-namer/lib/colors/x11"
+            ],
             "polyfills": [
               "@angular/localize/init"
             ]
