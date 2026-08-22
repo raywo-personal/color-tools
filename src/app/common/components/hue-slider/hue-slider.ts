@@ -1,4 +1,4 @@
-import {Component, model, output} from "@angular/core";
+import {Component, model} from "@angular/core";
 import {FormsModule} from "@angular/forms";
 
 import {randomBetween} from "@common/helpers/random.helper";
@@ -13,11 +13,5 @@ import {randomBetween} from "@common/helpers/random.helper";
 export class HueSliderComponent {
 
   public readonly hue = model<number>(randomBetween(0, 360));
-  public readonly hueChanged = output<number>();
-
-
-  protected onHueChanged(value: number) {
-    this.hueChanged.emit(value);
-  }
 
 }

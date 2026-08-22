@@ -1,4 +1,4 @@
-import {computed, Injectable} from '@angular/core';
+import {computed, Service} from '@angular/core';
 import {httpResource} from "@angular/common/http";
 import {environment} from "@environments/environment";
 
@@ -9,9 +9,7 @@ interface ZenQuote {
   h: string
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class Quotes {
 
   readonly #quoteOfTheDay = httpResource<ZenQuote>(() => {

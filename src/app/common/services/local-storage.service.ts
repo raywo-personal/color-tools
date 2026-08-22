@@ -1,11 +1,9 @@
-import {Injectable} from '@angular/core';
+import {Service} from '@angular/core';
 import {EMPTY_SETTINGS, LOCAL_STORAGE_KEY, SettingKey, SettingsMap} from '@common/models/local-storage.model';
 import {BehaviorSubject} from "rxjs";
 
 
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class LocalStorage {
 
   private readonly settings = new Map<SettingKey, BehaviorSubject<SettingsMap[SettingKey]>>();

@@ -32,6 +32,21 @@
             "styles": [
               "src/styles.scss"
             ],
+            "stylePreprocessorOptions": {
+              "sass": {
+                "silenceDeprecations": [
+                  "import"
+                ]
+              }
+            },
+            "allowedCommonJsDependencies": [
+              "color-namer/lib/colors/basic",
+              "color-namer/lib/colors/html",
+              "color-namer/lib/colors/ntc",
+              "color-namer/lib/colors/pantone",
+              "color-namer/lib/colors/roygbiv",
+              "color-namer/lib/colors/x11"
+            ],
             "polyfills": [
               "@angular/localize/init"
             ]
@@ -41,8 +56,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1.5MB"
+                  "maximumWarning": "1MB",
+                  "maximumError": "1.2MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -56,8 +71,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1.5MB"
+                  "maximumWarning": "1MB",
+                  "maximumError": "1.2MB"
                 },
                 {
                   "type": "anyComponentStyle",

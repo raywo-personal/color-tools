@@ -178,7 +178,37 @@ This allows contrast color pairs to be shared via URL: `/contrast/{contrastId}`
 The app uses two main color libraries:
 
 - **chroma-js** - Primary color manipulation (conversions, interpolation, color math)
-- **color-namer** - Color name identification
+- **color-namer** - Color name identification, used for its color lists only
+
+`src/app/common/helpers/color-name.helper.ts` deliberately does **not** call
+`color-namer`'s own entry point. It imports the six color lists
+(`color-namer/lib/colors/*`) and does the nearest-color search with the app's
+own chroma-js. Importing the package proper pulls in a second, much older
+chroma-js (1.4.1) plus `es6-weak-map` and its `es5-ext` tail - 59 kB of raw
+bundle for a `WeakMap` cache that never hits, because `color-namer` keys it on a
+freshly allocated object on every call.
+
+Both variants produce identical names. The deep imports are declared in
+`src/types/color-namer-lists.d.ts` and listed in `allowedCommonJsDependencies`
+in `angular.json`, because the lists are CommonJS.
+
+**The distance must be measured from `color.hex()`, not from the `Color`
+object.** `color-namer` was always handed a hex string, so it compared the
+rounded 8-bit color; a chroma `Color` carries unrounded channels, and
+`chroma.hsl()` plus the Bezier interpolation used for tints, shades and palettes
+produce fractional ones. Passing the object through renames roughly 5 % of those
+colors and makes a palette disagree with its own shared-URL round trip, which
+goes through 8-bit RGB. A sweep over the integer RGB cube cannot detect this -
+there the two agree exactly. `color-name.helper.spec.ts` pins the behaviour.
+
+Note that `colorName()` must stay synchronous: `generatePalette()` and
+`paletteFromId()` call it from reducer and route-guard code paths.
+
+### Bundle Budget
+
+The initial budget is 1 MB warning / 1.2 MB error against a current 936 kB. It
+is meant to catch regressions, so keep it close to the actual size rather than
+raising it to make a warning go away.
 
 ### Path Aliases
 
@@ -209,6 +239,10 @@ codebase actually does.
   `ChangeDetectionStrategy.Eager` opts out of it and needs a written reason
 - Use signals for state management via `signal()`, `computed()`, and `effect()`
 - Use `input()` and `output()` functions instead of decorators
+- `model()` already provides an `xChange` output. Do NOT add a second manual
+  `output()` next to it - consumers bind `(xChange)`, and a component that
+  writes to its own model signal emits it automatically (see the sliders in
+  `src/app/common/components/`)
 - Prefer signal queries (`viewChild()`, `contentChild()`) over the decorators
 - Prefer inline templates for tiny components
 - Use native control flow (`@if`, `@for`, `@switch`) instead of structural directives
@@ -228,12 +262,13 @@ codebase actually does.
 
 ### Forms
 
-Both form styles are in use, and that is deliberate:
+Only template-driven forms are in use:
 
-- `FormsModule` with `ngModel` for the small numeric and text value inputs
-  (RGB, HSL, hex, sliders) - this is the dominant pattern
-- `ReactiveFormsModule` where a control needs validation or programmatic
-  wiring (e.g. the font selector typeahead)
+- `FormsModule` with `ngModel` for every value input - the numeric and text
+  fields (RGB, HSL, hex), the sliders and the font selector typeahead
+- `ReactiveFormsModule` is deliberately absent. There is no `FormControl`,
+  `FormGroup` or `formControl` binding anywhere in `src`. Do not add the import
+  "just in case" - add it only together with an actual reactive control
 - Do NOT wrap inputs in a `<form>` element for layout only. An implicit
   `NgForm` breaks `ngModel` registration across component boundaries and
   Angular 22 reports it as NG01354 (see commit `d03d83f`)
@@ -249,7 +284,11 @@ Both form styles are in use, and that is deliberate:
 
 ### Services
 
-- Use `providedIn: 'root'` for singleton services
+- Use the Angular 22 `@Service()` decorator for singleton services. It is
+  auto-provided in the root injector, so `@Injectable({providedIn: 'root'})` is
+  no longer needed - there is no `@Injectable` left in `src`
+- Use `@Injectable()` only where a class genuinely must not be root-provided
+  (or `@Service({autoProvided: false})` and an explicit `providers` entry)
 - Use the `inject()` function instead of constructor injection
 - Design services around a single responsibility
 
@@ -285,9 +324,29 @@ Components use inline SCSS styles configured in `angular.json`:
 - Global entry point is `src/styles.scss`
 - Cross-cutting styles live in `src/app/styles/` as topic-separated partials
   (`_variables.scss`, `_dark-mode.scss`, `_bootstrap-custom.scss`,
-  `converter.scss`, `contrast.scss`, `color-palette.scss`, `sliders.scss`,
-  `drag-n-drop.scss`)
+  `_bootstrap-subset.scss`, `converter.scss`, `contrast.scss`,
+  `color-palette.scss`, `sliders.scss`, `drag-n-drop.scss`)
 - Uses Bootstrap 5.3 and Bootstrap Icons
+
+### Bootstrap Is Imported As A Subset
+
+`src/app/styles/_bootstrap-subset.scss` replaces `bootstrap/scss/bootstrap`. It
+mirrors Bootstrap's own import stack but leaves out the fourteen components
+nothing in `src` renders, which saves ~51 kB of raw CSS.
+
+**Adding a Bootstrap component means adding its partial to that file.** A
+missing partial does not fail the build - the component renders unstyled, which
+only shows up visually. The same applies to anything ng-bootstrap draws at
+runtime: `NgbDropdown`, `NgbTooltip` and `NgbTypeahead` need `dropdown`,
+`tooltip` and `transitions`, none of which appear in any template.
+
+The file uses `@import` rather than `@use`, because Bootstrap 5.3's partials
+read variables and mixins from the global scope and are not `@use`-able in
+isolation. That is why `angular.json` sets
+`stylePreprocessorOptions.sass.silenceDeprecations: ["import"]` - without it the
+build emits 21 deprecation warnings for our own file, while Bootstrap's
+identical `@import`s stay quiet as a dependency. Configuration still flows
+through `@use "./bootstrap-subset" with (...)` in `_bootstrap-custom.scss`.
 
 ## Testing
 
@@ -297,5 +356,6 @@ Components use inline SCSS styles configured in `angular.json`:
   explicit environment setting and no `vitest.config.*` in the repo
 - Run all tests: `ng test` (or `pnpm test`); `ng test --watch=false` for a single run
 - Component generation skips test files by default (configured in angular.json schematics)
-- The suite currently consists of 138 tests in 4 helper specs (palette ID,
-  contrast ID, APCA rating, optimal text color). No component or store is tested
+- The suite currently consists of 149 tests in 5 helper specs (palette ID,
+  contrast ID, APCA rating, optimal text color, color name). No component or
+  store is tested

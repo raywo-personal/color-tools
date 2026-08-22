@@ -1,11 +1,9 @@
-import {DOCUMENT, inject, Injectable} from '@angular/core';
+import {DOCUMENT, inject, Service} from '@angular/core';
 import {ColorTheme} from '@common/models/color-theme.model';
 import {Color} from "chroma-js";
 
 
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class ColorThemeService {
 
   readonly #document = inject(DOCUMENT);

@@ -1,6 +1,7 @@
+
 @use "./variables" as vars;
 
-@use "bootstrap/scss/bootstrap" with (
+@use "./bootstrap-subset" with (
   // Fonts
   $font-family-sans-serif: vars.$fonts,
   $font-family-monospace: vars.$monospacedFonts,
