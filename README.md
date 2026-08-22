@@ -26,7 +26,7 @@ Try it out here: https://color-tools.skillbird.de/
 
 ### Prerequisites
 
-- Node.js 22 or higher
+- Node.js 24 (the Angular 22 CLI requires `^22.22.3 || ^24.15.0 || >=26.0.0`)
 - pnpm package manager
 
 ### Installation
@@ -72,4 +72,12 @@ Try it out here: https://color-tools.skillbird.de/
 
 ### Deployment
 
-The application automatically deploys to GitHub Pages when changes are pushed to the main branch.
+The application automatically deploys to Cloudflare Pages when changes are pushed to the main
+branch. The workflow `.github/workflows/deploy-to-cloudflare-pages.yml` runs the tests, builds with
+the `cloudflare` configuration and uploads `dist/ColorTools/browser` via `wrangler pages deploy`.
+
+It needs two repository secrets: `CLOUDFLARE_API_TOKEN` (permission *Cloudflare Pages: Edit*) and
+`CLOUDFLARE_ACCOUNT_ID`. The Cloudflare Pages project must be named `color-tools` and use `main` as
+its production branch – both are hardcoded in the workflow's `wrangler pages deploy` call, and a
+mismatching production branch would silently create a preview deployment instead. SPA routing is
+handled by `public/_redirects`, which rewrites every path to `index.html`.

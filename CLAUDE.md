@@ -13,7 +13,7 @@ content.
 
 ## Project Overview
 
-ColorTools is an Angular 22 web application for color manipulation and analysis, featuring a color converter, a palette generator and a contrast checker. The app uses signals-based state management with @ngrx/signals and deploys to GitHub Pages.
+ColorTools is an Angular 22 web application for color manipulation and analysis, featuring a color converter, a palette generator and a contrast checker. The app uses signals-based state management with @ngrx/signals and deploys to Cloudflare Pages.
 
 The app is zoneless (`provideZonelessChangeDetection()` in `src/app/app.config.ts`) and fully signal-based. There is no zone.js and no `ChangeDetectionStrategy` annotation anywhere in `src/` - Angular 22 makes OnPush the default.
 
@@ -27,14 +27,15 @@ Live site: https://color-tools.skillbird.de/
 - `pnpm start` - Start dev server (defaults to development configuration)
 - `pnpm build` - Build for production
 - `pnpm test` - Run tests with Vitest
-- `pnpm deploy` - Deploy to GitHub Pages (runs gh-pages build and deploys)
+- `pnpm run build:cloudflare` - Build for the Cloudflare Pages deployment
+- `pnpm run test:ci` - Single test run (no watch), as used in CI
 
 ### Build Configurations
 
 The project has four build configurations:
 
 - `production` - Production build with optimization and output hashing
-- `gh-pages` - GitHub Pages deployment (same as production but without localization)
+- `cloudflare` - Cloudflare Pages deployment (same as production but without localization)
 - `development` - Dev build with source maps, no optimization
 - `testing` - Build target consumed by the `test` target; not meant to be built directly
 
