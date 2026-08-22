@@ -1,4 +1,4 @@
-import {Component, computed, input, model, output} from "@angular/core";
+import {Component, computed, input, model} from "@angular/core";
 import {FormsModule} from "@angular/forms";
 import {randomBetween} from "@common/helpers/random.helper";
 import chroma from "chroma-js";
@@ -26,11 +26,5 @@ export class SaturationSlider {
 
   public readonly baseColor = input(chroma.random());
   public readonly sat = model<number>(randomBetween(0, 100));
-  public readonly satChanged = output<number>();
-
-
-  protected onSatChanged(value: number) {
-    this.satChanged.emit(value);
-  }
 
 }

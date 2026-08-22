@@ -209,6 +209,10 @@ codebase actually does.
   `ChangeDetectionStrategy.Eager` opts out of it and needs a written reason
 - Use signals for state management via `signal()`, `computed()`, and `effect()`
 - Use `input()` and `output()` functions instead of decorators
+- `model()` already provides an `xChange` output. Do NOT add a second manual
+  `output()` next to it - consumers bind `(xChange)`, and a component that
+  writes to its own model signal emits it automatically (see the sliders in
+  `src/app/common/components/`)
 - Prefer signal queries (`viewChild()`, `contentChild()`) over the decorators
 - Prefer inline templates for tiny components
 - Use native control flow (`@if`, `@for`, `@switch`) instead of structural directives
