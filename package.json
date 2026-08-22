@@ -9,7 +9,8 @@
     "build:cloudflare": "ng build --configuration cloudflare",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:ci": "ng test --watch=false"
+    "test:ci": "ng test --watch=false",
+    "cf": "set -a && . ./.cloudflare.env && set +a && wrangler"
   },
   "private": true,
   "dependencies": {
@@ -40,6 +41,7 @@
     "happy-dom": "^20.11.6",
     "istanbul-lib-instrument": "^6.0.3",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "wrangler": "^4.125.0"
   }
 }

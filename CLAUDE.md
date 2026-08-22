@@ -29,6 +29,7 @@ Live site: https://color-tools.skillbird.de/
 - `pnpm test` - Run tests with Vitest
 - `pnpm run build:cloudflare` - Build for the Cloudflare Pages deployment
 - `pnpm run test:ci` - Single test run (no watch), as used in CI
+- `pnpm run cf <args>` - Run wrangler against this project's Cloudflare account; sources the untracked `.cloudflare.env` (see README)
 
 ### Build Configurations
 
