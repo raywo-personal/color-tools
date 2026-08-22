@@ -1,4 +1,4 @@
-import {Injectable} from "@angular/core";
+import {Service} from "@angular/core";
 import {GoogleFont, GoogleFontsApiResponse} from "@common/models/google-font.model";
 import {httpResource, HttpResourceRef} from "@angular/common/http";
 import {environment} from "@environments/environment";
@@ -8,9 +8,7 @@ import {environment} from "@environments/environment";
  * Service for interacting with the Google Fonts API.
  * Provides methods for fetching and searching Google Fonts data.
  */
-@Injectable({
-  providedIn: "root"
-})
+@Service()
 export class GoogleFontsService {
 
   /**

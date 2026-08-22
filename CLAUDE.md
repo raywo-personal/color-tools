@@ -250,7 +250,11 @@ Only template-driven forms are in use:
 
 ### Services
 
-- Use `providedIn: 'root'` for singleton services
+- Use the Angular 22 `@Service()` decorator for singleton services. It is
+  auto-provided in the root injector, so `@Injectable({providedIn: 'root'})` is
+  no longer needed - there is no `@Injectable` left in `src`
+- Use `@Injectable()` only where a class genuinely must not be root-provided
+  (or `@Service({autoProvided: false})` and an explicit `providers` entry)
 - Use the `inject()` function instead of constructor injection
 - Design services around a single responsibility
 

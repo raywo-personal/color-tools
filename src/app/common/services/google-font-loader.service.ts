@@ -1,5 +1,5 @@
 import {DOCUMENT} from "@angular/common";
-import {inject, Injectable} from "@angular/core";
+import {inject, Service} from "@angular/core";
 import {SelectedFont} from "@common/models/google-font.model";
 
 
@@ -7,9 +7,7 @@ import {SelectedFont} from "@common/models/google-font.model";
  * Service for dynamically loading Google Fonts and managing font-family CSS
  * custom properties. Similar pattern to ColorThemeService for consistency.
  */
-@Injectable({
-  providedIn: "root"
-})
+@Service()
 export class GoogleFontLoaderService {
 
   readonly #document = inject(DOCUMENT);
