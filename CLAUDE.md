@@ -294,9 +294,29 @@ Components use inline SCSS styles configured in `angular.json`:
 - Global entry point is `src/styles.scss`
 - Cross-cutting styles live in `src/app/styles/` as topic-separated partials
   (`_variables.scss`, `_dark-mode.scss`, `_bootstrap-custom.scss`,
-  `converter.scss`, `contrast.scss`, `color-palette.scss`, `sliders.scss`,
-  `drag-n-drop.scss`)
+  `_bootstrap-subset.scss`, `converter.scss`, `contrast.scss`,
+  `color-palette.scss`, `sliders.scss`, `drag-n-drop.scss`)
 - Uses Bootstrap 5.3 and Bootstrap Icons
+
+### Bootstrap Is Imported As A Subset
+
+`src/app/styles/_bootstrap-subset.scss` replaces `bootstrap/scss/bootstrap`. It
+mirrors Bootstrap's own import stack but leaves out the fourteen components
+nothing in `src` renders, which saves ~51 kB of raw CSS.
+
+**Adding a Bootstrap component means adding its partial to that file.** A
+missing partial does not fail the build - the component renders unstyled, which
+only shows up visually. The same applies to anything ng-bootstrap draws at
+runtime: `NgbDropdown`, `NgbTooltip` and `NgbTypeahead` need `dropdown`,
+`tooltip` and `transitions`, none of which appear in any template.
+
+The file uses `@import` rather than `@use`, because Bootstrap 5.3's partials
+read variables and mixins from the global scope and are not `@use`-able in
+isolation. That is why `angular.json` sets
+`stylePreprocessorOptions.sass.silenceDeprecations: ["import"]` - without it the
+build emits 21 deprecation warnings for our own file, while Bootstrap's
+identical `@import`s stay quiet as a dependency. Configuration still flows
+through `@use "./bootstrap-subset" with (...)` in `_bootstrap-custom.scss`.
 
 ## Testing
 
