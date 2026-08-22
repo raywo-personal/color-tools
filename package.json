@@ -1,13 +1,16 @@
 {
   "name": "color-tools",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.21.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:cloudflare": "ng build --configuration cloudflare",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "deploy": "ng deploy"
+    "test:ci": "ng test --watch=false",
+    "cf": "set -a && . ./.cloudflare.env && set +a && wrangler"
   },
   "private": true,
   "dependencies": {
@@ -35,10 +38,10 @@
     "@angular/localize": "^22.1.3",
     "@types/chroma-js": "^3.1.2",
     "@types/color-namer": "^1.3.3",
-    "angular-cli-ghpages": "2.0.3",
     "happy-dom": "^20.11.6",
     "istanbul-lib-instrument": "^6.0.3",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "wrangler": "^4.125.0"
   }
 }
