@@ -228,12 +228,13 @@ codebase actually does.
 
 ### Forms
 
-Both form styles are in use, and that is deliberate:
+Only template-driven forms are in use:
 
-- `FormsModule` with `ngModel` for the small numeric and text value inputs
-  (RGB, HSL, hex, sliders) - this is the dominant pattern
-- `ReactiveFormsModule` where a control needs validation or programmatic
-  wiring (e.g. the font selector typeahead)
+- `FormsModule` with `ngModel` for every value input - the numeric and text
+  fields (RGB, HSL, hex), the sliders and the font selector typeahead
+- `ReactiveFormsModule` is deliberately absent. There is no `FormControl`,
+  `FormGroup` or `formControl` binding anywhere in `src`. Do not add the import
+  "just in case" - add it only together with an actual reactive control
 - Do NOT wrap inputs in a `<form>` element for layout only. An implicit
   `NgForm` breaks `ngModel` registration across component boundaries and
   Angular 22 reports it as NG01354 (see commit `d03d83f`)

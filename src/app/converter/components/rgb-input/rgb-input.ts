@@ -1,5 +1,5 @@
 import {Component, computed, inject, linkedSignal} from "@angular/core";
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {FormsModule} from "@angular/forms";
 import chroma from "chroma-js";
 import {inRgbRange} from "@common/helpers/rgb.helper";
 import {CopyCss} from "@converter/components/copy-css/copy-css";
@@ -12,7 +12,6 @@ import {AppStateStore} from "@core/app-state.store";
 @Component({
   selector: 'ct-rgb-input',
   imports: [
-    ReactiveFormsModule,
     FormsModule,
     CopyCss,
     RangedInput
