@@ -38,6 +38,38 @@ The project has four build configurations:
 - `development` - Dev build with source maps, no optimization
 - `testing` - Build target consumed by the `test` target; not meant to be built directly
 
+## Git and the `.claude` Submodule
+
+`.claude` is a git submodule pointing at
+`raywo-personal/claude-agents-and-skills`. That repository is **shared across
+projects**, so a change to a skill affects every project embedding it.
+
+This has two consequences worth knowing before touching anything under
+`.claude/`:
+
+**Project-specific rules do not belong there.** If a convention only holds for
+ColorTools, it goes in this file. The skills describe general practice; this
+file describes what this codebase actually does, and it wins where the two
+differ.
+
+**Committing a skill change takes two repositories.** The parent records a
+commit hash, not a branch, so the order matters:
+
+1. In `.claude`: branch off `main`, commit, push, open a PR
+2. After the PR is merged: `git -C .claude switch main` and
+   `git -C .claude merge --ff-only origin/main`
+3. Only then stage `.claude` in the parent and commit the pointer bump
+
+Do not bump the pointer to a commit that exists only on a feature branch — a
+fresh clone running `git submodule update` would not be able to check it out.
+Until step 3, `git status` showing `M .claude` is the correct intermediate
+state, not something to fix.
+
+**Check for drift before starting.** The submodule can sit far behind its
+remote while its working tree looks current, because files copied in by hand
+are untracked. `git -C .claude fetch` and compare with
+`git -C .claude rev-list --left-right --count origin/main...HEAD` first.
+
 ## Architecture
 
 ### State Management
