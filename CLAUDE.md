@@ -242,7 +242,11 @@ Both form styles are in use, and that is deliberate:
 
 Components use inline SCSS styles configured in `angular.json`:
 
-- Schematics set `inlineStyle: true` by default
+- Schematics set `inlineStyle: true` by default. This stays the project
+  standard - do not migrate components to separate `.scss` files. The
+  `angular-development` skill asks for centralized topic files plus
+  component-specific overrides in the component's own style file; here that
+  override file *is* the inline `styles` block, so the two agree
 - Budget limits: 4kB warning, 8kB error per component (`anyComponentStyle`)
 - Global entry point is `src/styles.scss`
 - Cross-cutting styles live in `src/app/styles/` as topic-separated partials
