@@ -204,6 +204,12 @@ there the two agree exactly. `color-name.helper.spec.ts` pins the behaviour.
 Note that `colorName()` must stay synchronous: `generatePalette()` and
 `paletteFromId()` call it from reducer and route-guard code paths.
 
+### Bundle Budget
+
+The initial budget is 1 MB warning / 1.2 MB error against a current 936 kB. It
+is meant to catch regressions, so keep it close to the actual size rather than
+raising it to make a warning go away.
+
 ### Path Aliases
 
 TypeScript path aliases are configured in `tsconfig.json`:
