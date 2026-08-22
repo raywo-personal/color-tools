@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 
 

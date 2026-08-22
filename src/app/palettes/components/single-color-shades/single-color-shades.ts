@@ -1,4 +1,4 @@
-import {Component, computed, input, output} from '@angular/core';
+import {Component, computed, input, output} from "@angular/core";
 import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
 import {PaletteColor} from "@palettes/models/palette-color.model";
 import {Color} from "chroma-js";

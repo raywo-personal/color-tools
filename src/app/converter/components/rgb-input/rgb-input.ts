@@ -1,9 +1,9 @@
-import {Component, computed, inject, linkedSignal} from '@angular/core';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import chroma from 'chroma-js';
-import {inRgbRange} from '@common/helpers/rgb.helper';
-import {CopyCss} from '@converter/components/copy-css/copy-css';
-import {RangedInput} from '@converter/components/ranged-input/ranged-input';
+import {Component, computed, inject, linkedSignal} from "@angular/core";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import chroma from "chroma-js";
+import {inRgbRange} from "@common/helpers/rgb.helper";
+import {CopyCss} from "@converter/components/copy-css/copy-css";
+import {RangedInput} from "@converter/components/ranged-input/ranged-input";
 import {injectDispatch} from "@ngrx/signals/events";
 import {converterEvents} from "@core/converter/converter.events";
 import {AppStateStore} from "@core/app-state.store";

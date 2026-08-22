@@ -1,6 +1,6 @@
-import {Component, DOCUMENT, inject} from '@angular/core';
-import {TopBar} from '@header/components/top-bar/top-bar';
-import {RouterOutlet} from '@angular/router';
+import {Component, DOCUMENT, inject} from "@angular/core";
+import {TopBar} from "@header/components/top-bar/top-bar";
+import {RouterOutlet} from "@angular/router";
 
 
 @Component({

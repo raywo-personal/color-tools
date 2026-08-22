@@ -1,5 +1,5 @@
-import {Component, computed, inject, input} from '@angular/core';
-import {ColorSpace} from '@common/models/color-space.model';
+import {Component, computed, inject, input} from "@angular/core";
+import {ColorSpace} from "@common/models/color-space.model";
 import {AppStateStore} from "@core/app-state.store";
 
 

@@ -1,4 +1,4 @@
-import {Component, computed, input, model, output} from '@angular/core';
+import {Component, computed, input, model, output} from "@angular/core";
 import {FormsModule} from "@angular/forms";
 import {randomBetween} from "@common/helpers/random.helper";
 import chroma from "chroma-js";

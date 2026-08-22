@@ -1,5 +1,5 @@
-import {Component, computed, effect, ElementRef, inject, input, OnInit, output, signal, viewChild} from '@angular/core';
-import {NgbTooltip} from '@ng-bootstrap/ng-bootstrap';
+import {Component, computed, effect, ElementRef, inject, input, OnInit, output, signal, viewChild} from "@angular/core";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 
 
 @Component({

@@ -1,5 +1,5 @@
-import {Component, computed, input} from '@angular/core';
-import {DecimalPipe} from '@angular/common';
+import {Component, computed, input} from "@angular/core";
+import {DecimalPipe} from "@angular/common";
 
 
 @Component({

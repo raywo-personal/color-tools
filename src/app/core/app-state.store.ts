@@ -1,6 +1,6 @@
 import {signalStore, withState} from "@ngrx/signals";
 import {converterEvents} from "./converter/converter.events";
-import {on, withEffects, withReducer} from "@ngrx/signals/events";
+import {on, withEventHandlers, withReducer} from "@ngrx/signals/events";
 import {colorChangedReducer, correctLightnessReducer, displayColorSpaceReducer, newRandomColorReducer, useAsBackgroundReducer, useBezierReducer} from "./converter/converter.reducers";
 import {persistenceEvents} from "./common/persistence.events";
 import {palettesEvents} from "./palettes/palettes.events";
@@ -65,7 +65,7 @@ export const AppStateStore = signalStore(
     on(contrastEvents.switchColors, switchColorsReducer),
     on(contrastEvents.restoreContrastColors, restoreContrastColorsReducer)
   ),
-  withEffects(allEffects)
+  withEventHandlers(allEffects)
 );
 
 export type AppStateStore = InstanceType<typeof AppStateStore>;

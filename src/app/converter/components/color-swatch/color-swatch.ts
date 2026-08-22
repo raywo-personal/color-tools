@@ -1,9 +1,9 @@
-import {Component, computed, input} from '@angular/core';
-import {Color} from 'chroma-js';
-import {ColorSpace} from '@common/models/color-space.model';
-import {NgTemplateOutlet} from '@angular/common';
-import {KeyValueDisplay} from '@converter/components/key-value-display/key-value-display';
-import {NgbTooltip} from '@ng-bootstrap/ng-bootstrap';
+import {Component, computed, input} from "@angular/core";
+import {Color} from "chroma-js";
+import {ColorSpace} from "@common/models/color-space.model";
+import {NgTemplateOutlet} from "@angular/common";
+import {KeyValueDisplay} from "@converter/components/key-value-display/key-value-display";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {injectDispatch} from "@ngrx/signals/events";
 import {converterEvents} from "@core/converter/converter.events";
 

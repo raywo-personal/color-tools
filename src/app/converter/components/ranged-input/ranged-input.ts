@@ -1,5 +1,5 @@
-import {Component, computed, input, model, viewChild} from '@angular/core';
-import {FormsModule, NgModel, ReactiveFormsModule} from '@angular/forms';
+import {Component, computed, input, model, viewChild} from "@angular/core";
+import {FormsModule, NgModel, ReactiveFormsModule} from "@angular/forms";
 
 
 @Component({

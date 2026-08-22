@@ -1,4 +1,4 @@
-import {Component, computed, model} from '@angular/core';
+import {Component, computed, model} from "@angular/core";
 import {HueSliderComponent} from "@common/components/hue-slider/hue-slider";
 import {LuminanceSlider} from "@common/components/luminance-slider/luminance-slider";
 import {SaturationSlider} from "@common/components/saturation-slider/saturation-slider";
