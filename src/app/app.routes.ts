@@ -4,6 +4,7 @@ import {ColorPalette} from "@palettes/components/color-palette/color-palette";
 import {Contrast} from "@contrast/components/contrast/contrast";
 import {paletteGuard} from "./routes/palette-route.guard";
 import {contrastGuard} from "./routes/contrast-route.guard";
+import {NotFound} from "@common/components/not-found/not-found";
 
 
 export const routes: Routes = [
@@ -16,7 +17,8 @@ export const routes: Routes = [
   {
     path: "convert",
     component: Converter,
-    pathMatch: "full"
+    pathMatch: "full",
+    title: "ColorTools – Convert colors & Generate color palettes"
   },
 
   {
@@ -41,5 +43,11 @@ export const routes: Routes = [
         title: "ColorTools – Contrast Checker",
       }
     ]
+  },
+
+  {
+    path: "**",
+    component: NotFound,
+    title: "ColorTools – Page not found"
   }
 ];
