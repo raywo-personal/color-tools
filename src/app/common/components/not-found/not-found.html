@@ -1,0 +1,54 @@
+<div class="not-found">
+
+  <div class="headline">
+    <p class="numeral" aria-hidden="true">4<span>0</span>4</p>
+
+    <div class="statement">
+      <p class="eyebrow">Page not found</p>
+      <h2>This shade of the site doesn’t exist.</h2>
+      <p class="intro">
+        The link is broken or the page has moved. Pick up a tool below and keep
+        going.
+      </p>
+    </div>
+  </div>
+
+  <div class="swatches" aria-hidden="true">
+    @for (swatch of swatches; track $index) {
+      <div class="swatch">
+        <div class="chip" [style.background-color]="swatch"></div>
+        <p class="label">{{ swatch }}</p>
+      </div>
+    }
+
+    @for (slot of missingSlots; track slot) {
+      <div class="swatch">
+        <div class="chip empty"></div>
+        <p class="label">—</p>
+      </div>
+    }
+  </div>
+
+  <nav class="actions" aria-label="ColorTools tools">
+    <a class="btn primary-action"
+       [routerLink]="['/convert']">
+      Open the Converter
+    </a>
+
+    <a class="btn"
+       [routerLink]="['/palettes', paletteId()]">
+      Build a Color Palette
+    </a>
+
+    <a class="btn"
+       [routerLink]="['/contrast', contrastId()]">
+      Check Contrast
+    </a>
+  </nav>
+
+  <p class="requested">
+    <span>Requested address</span>
+    <code>{{ requestedPath() }}</code>
+  </p>
+
+</div>

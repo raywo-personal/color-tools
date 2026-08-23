@@ -51,3 +51,11 @@ testem.log
 __screenshots__/
 /public/palette2.svg
 /.claude/settings.local.json
+
+# Claude Design canvas exports - only the .dc.html draft is worth keeping.
+# The archive, the canvas runtime and the reference screenshots are
+# regenerated on every export and cost megabytes.
+resources/*.zip
+resources/**/uploads/
+resources/**/support.js
+resources/**/.thumbnail

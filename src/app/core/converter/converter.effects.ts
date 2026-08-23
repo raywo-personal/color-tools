@@ -14,7 +14,7 @@ export function colorChangedEffect(
   const typedStore = store as AppStateStore;
 
   return events
-    .on(converterEvents.colorChanged, converterEvents.newRandomColor)
+    .on(converterEvents.colorChanged, converterEvents.newRandomColorWithNav)
     .pipe(
       tap(() => {
         const color = typedStore.currentColor();

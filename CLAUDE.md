@@ -72,6 +72,24 @@ remote while its working tree looks current, because files copied in by hand
 are untracked. `git -C .claude fetch` and compare with
 `git -C .claude rev-list --left-right --count origin/main...HEAD` first.
 
+## Writing Text For GitHub
+
+Anything GitHub renders as HTML is **not** hard-wrapped - its UI does the
+wrapping, and a hard wrap produces ragged paragraphs and breaks quoting in
+comments. This covers issue bodies and comments, PR descriptions, PR and review
+comments, replies to review comments, and release notes.
+
+One paragraph is one line. Break only where the break carries meaning: between
+paragraphs, per list item, per table row, and around code blocks.
+
+Hard-wrapping stays for anything read in monospace without reflow: commit
+messages (subject at most 50 characters, body wrapped at 72), files in this
+repository including this one, and code comments.
+
+This is the convention from the `.claude` submodule's README, adopted here
+because that README asks each project to adopt it explicitly - the rule applies
+whenever GitHub text is written, including when no skill is running.
+
 ## Architecture
 
 ### State Management
@@ -206,9 +224,9 @@ Note that `colorName()` must stay synchronous: `generatePalette()` and
 
 ### Bundle Budget
 
-The initial budget is 1 MB warning / 1.2 MB error against a current 936 kB. It
-is meant to catch regressions, so keep it close to the actual size rather than
-raising it to make a warning go away.
+The initial budget is 1 MB warning / 1.2 MB error. It is meant to catch
+regressions, so keep it close to the actual size rather than raising it to make
+a warning go away - `pnpm build` prints the current initial total.
 
 ### Path Aliases
 
@@ -281,6 +299,24 @@ Only template-driven forms are in use:
   `:contrastId`) arrive as component `input()`s
 - Route guards live in `src/app/routes/` (`palette-route.guard.ts`,
   `contrast-route.guard.ts`)
+- A trailing `**` route renders `NotFound`
+  (`src/app/common/components/not-found/`). The SPA rewrite in
+  `public/_redirects` answers every path with `index.html` and HTTP 200, so an
+  unknown path cannot produce a real 404 status. The page makes the miss
+  visible to the visitor instead of leaving the viewport blank
+- Every route carries a `title`. Angular's `DefaultTitleStrategy` leaves the
+  previous title standing when a route has none, so a route without one shows
+  the tab title of wherever the visitor came from
+
+**An invalid id and an unknown path answer differently, on purpose.**
+`/palettes/garbage` matches `:paletteId`, so `paletteGuard` runs, finds the id
+unrestorable and redirects to a freshly generated palette - the visitor lands on
+a working tool. `/palettes/garbage/more` matches no route at all, falls through
+to `**` and gets the not-found page. The asymmetry is the intended reading of
+the two cases: an unrestorable id is recoverable input, because the route itself
+exists and the tool works without it; a path that names nothing is not. Do not
+"harmonize" the two by sending invalid ids to the not-found page - that would
+trade a working palette for a dead end. `app.routes.spec.ts` pins both halves.
 
 ### Services
 
@@ -313,14 +349,20 @@ Only template-driven forms are in use:
 
 ## Component Style Guidelines
 
-Components use inline SCSS styles configured in `angular.json`:
-
-- Schematics set `inlineStyle: true` by default. This stays the project
-  standard - do not migrate components to separate `.scss` files. The
-  `angular-development` skill asks for centralized topic files plus
-  component-specific overrides in the component's own style file; here that
-  override file *is* the inline `styles` block, so the two agree
-- Budget limits: 4kB warning, 8kB error per component (`anyComponentStyle`)
+- Schematics set `inlineStyle: true` by default, so a new component starts with
+  an inline `styles` block. Keep it there only for very short passages - a
+  handful of declarations that stay readable inside the decorator. Everything
+  beyond that belongs in the component's own `.scss` file next to it,
+  referenced through `styleUrl` (see `not-found.scss`, `color-area.scss`,
+  `color-picker.scss`)
+- The `angular-development` skill asks for centralized topic files plus
+  component-specific overrides in the component's own style file. That override
+  file is either the inline `styles` block or the sibling `.scss` - whichever
+  the length calls for; the split is about size, not about which mechanism is
+  the standard
+- Budget limits: 4kB warning, 8kB error per component (`anyComponentStyle`).
+  The budget counts either form, so moving a block out of the decorator does
+  not buy room
 - Global entry point is `src/styles.scss`
 - Cross-cutting styles live in `src/app/styles/` as topic-separated partials
   (`_variables.scss`, `_dark-mode.scss`, `_bootstrap-custom.scss`,
@@ -356,6 +398,3 @@ through `@use "./bootstrap-subset" with (...)` in `_bootstrap-custom.scss`.
   explicit environment setting and no `vitest.config.*` in the repo
 - Run all tests: `ng test` (or `pnpm test`); `ng test --watch=false` for a single run
 - Component generation skips test files by default (configured in angular.json schematics)
-- The suite currently consists of 149 tests in 5 helper specs (palette ID,
-  contrast ID, APCA rating, optimal text color, color name). No component or
-  store is tested

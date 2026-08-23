@@ -7,7 +7,7 @@ import {ColorSpace} from "@common/models/color-space.model";
 export const converterEvents = eventGroup({
   source: "Converter",
   events: {
-    newRandomColor: type<void>(),
+    newRandomColorWithNav: type<void>(),
     colorChanged: type<Color>(),
     useAsBackgroundChanged: type<boolean>(),
     correctLightnessChanged: type<boolean>(),

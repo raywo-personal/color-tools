@@ -6,6 +6,7 @@ import {tap} from "rxjs";
 import {transferEvents} from "@core/common/transfer.events";
 import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
 import {contrastEvents} from "@core/contrast/contrast.events";
+import {converterEvents} from "@core/converter/converter.events";
 
 
 export function navigateToPaletteIdEffect(
@@ -54,6 +55,27 @@ export function navigateToContrast(
       tap(() => {
         const contrastId = contrastIdFromColors(typedStore.contrastColors());
         void router.navigate(["/contrast", contrastId]);
+      })
+    );
+}
+
+
+/**
+ * The converter lives at a fixed path, so unlike the palette and contrast
+ * effects this one needs no id from the store. Navigating while already on
+ * /convert is a no-op; the effect exists for the top bar's "New color" button
+ * on every other route, the not-found page above all.
+ */
+export function navigateToConvert(
+  this: void,
+  events: Events,
+  router: Router
+) {
+  return events
+    .on(converterEvents.newRandomColorWithNav)
+    .pipe(
+      tap(() => {
+        void router.navigate(["/convert"]);
       })
     );
 }
