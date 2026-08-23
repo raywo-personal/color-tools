@@ -72,6 +72,24 @@ remote while its working tree looks current, because files copied in by hand
 are untracked. `git -C .claude fetch` and compare with
 `git -C .claude rev-list --left-right --count origin/main...HEAD` first.
 
+## Writing Text For GitHub
+
+Anything GitHub renders as HTML is **not** hard-wrapped - its UI does the
+wrapping, and a hard wrap produces ragged paragraphs and breaks quoting in
+comments. This covers issue bodies and comments, PR descriptions, PR and review
+comments, replies to review comments, and release notes.
+
+One paragraph is one line. Break only where the break carries meaning: between
+paragraphs, per list item, per table row, and around code blocks.
+
+Hard-wrapping stays for anything read in monospace without reflow: commit
+messages (subject at most 50 characters, body wrapped at 72), files in this
+repository including this one, and code comments.
+
+This is the convention from the `.claude` submodule's README, adopted here
+because that README asks each project to adopt it explicitly - the rule applies
+whenever GitHub text is written, including when no skill is running.
+
 ## Architecture
 
 ### State Management
