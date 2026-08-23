@@ -27,13 +27,15 @@ export function hueWrap(h: number): number {
 /**
  * Clamps a given number to the range [0, 1].
  *
+ * Every caller passes a fraction that chroma-js produced or a generator
+ * offset it, so a value above 1 is an overshoot to be capped - not a
+ * percentage to be rescaled.
+ *
  * @param {number} x - The number to clamp.
  * @return {number} The clamped value, guaranteed to be between 0 and 1 (inclusive).
  */
 export function clamp01(x: number): number {
-  const max = x > 1 ? x / 100 : x;
-
-  return Math.max(0, Math.min(1, max));
+  return Math.max(0, Math.min(1, x));
 }
 
 export function inHslAngleRange(this: void, value: number | null): value is number {
