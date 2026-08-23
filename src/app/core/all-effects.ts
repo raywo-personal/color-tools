@@ -12,7 +12,7 @@ import {colorThemeChangeEffect, fontSelectedEffect} from "@core/common/common.ef
 import {colorChangedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
-import {navigateToContrast, navigateToPaletteIdEffect} from "@core/common/navigation.effects";
+import {navigateToContrast, navigateToConvert, navigateToPaletteIdEffect} from "@core/common/navigation.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {transferEvents} from "@core/common/transfer.events";
 
@@ -39,13 +39,15 @@ export function allEffects(
 
     navigateToContrast$: navigateToContrast(events, router, store),
 
+    navigateToConvert$: navigateToConvert(events, router),
+
     colorChanged$: colorChangedEffect(events, themeService, store),
 
     anyPersistableEvents$: events
       .on(
         commonEvents.colorThemeChanged,
         commonEvents.fontSelected,
-        converterEvents.newRandomColor,
+        converterEvents.newRandomColorWithNav,
         converterEvents.colorChanged,
         palettesEvents.paletteChanged,
         palettesEvents.paletteChangedWithoutNav,

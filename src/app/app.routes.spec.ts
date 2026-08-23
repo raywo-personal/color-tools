@@ -10,6 +10,8 @@ import {Contrast} from "@contrast/components/contrast/contrast";
 import {NotFound} from "@common/components/not-found/not-found";
 import {PALETTE_SLOTS} from "@palettes/models/palette.model";
 import chroma from "chroma-js";
+import {injectDispatch} from "@ngrx/signals/events";
+import {converterEvents} from "@core/converter/converter.events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
 
@@ -197,6 +199,21 @@ describe("app routes", () => {
     });
 
 
+    it("sends the top bar's New color button to the converter", async () => {
+      const router = TestBed.inject(Router);
+      // Instantiating the store registers allEffects(), navigateToConvert$
+      // among them.
+      TestBed.inject(AppStateStore);
+      const dispatch = TestBed.runInInjectionContext(() => injectDispatch(converterEvents));
+
+      await router.navigateByUrl("/does-not-exist");
+      dispatch.newRandomColorWithNav();
+      await waitForUrl(router, "/convert");
+
+      expect(router.url).toBe("/convert");
+    });
+
+
     it("leaves the swatches beyond the palette empty", async () => {
       const harness = await RouterTestingHarness.create();
       await harness.navigateByUrl("/does-not-exist");
@@ -211,3 +228,9 @@ describe("app routes", () => {
   });
 
 });
+
+async function waitForUrl(router: Router, url: string): Promise<void> {
+  for (let attempt = 0; attempt < 50 && router.url !== url; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 5));
+  }
+}

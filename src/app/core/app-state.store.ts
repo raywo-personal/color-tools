@@ -43,7 +43,7 @@ export const AppStateStore = signalStore(
     on(transferEvents.useColorAsPaletteStarter, useColorAsPaletteStarterReducer),
     on(transferEvents.sendColorToContrast, sendColorToContrastReducer),
     on(transferEvents.generatePaletteFromContrast, generatePaletteFromContrastReducer),
-    on(converterEvents.newRandomColor, newRandomColorReducer),
+    on(converterEvents.newRandomColorWithNav, newRandomColorReducer),
     on(converterEvents.colorChanged, colorChangedReducer),
     on(converterEvents.useAsBackgroundChanged, useAsBackgroundReducer),
     on(converterEvents.correctLightnessChanged, correctLightnessReducer),

@@ -8,7 +8,7 @@ import {contrastingColor} from "@common/helpers/contrasting-color.helper";
 
 export function newRandomColorReducer(
   this: void,
-  event: EventInstance<"[Converter] newRandomColor", void>,
+  event: EventInstance<"[Converter] newRandomColorWithNav", void>,
   state: AppState
 ) {
   const currentColor = chroma.random();

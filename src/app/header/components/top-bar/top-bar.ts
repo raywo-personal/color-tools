@@ -80,7 +80,7 @@ export class TopBar implements OnInit, OnDestroy {
         this.#palettesDispatch.newPaletteWithNav();
         return;
       case "convert":
-        this.#converterDispatch.newRandomColor();
+        this.#converterDispatch.newRandomColorWithNav();
         return;
       case "contrast":
         this.#contrastDispatch.newRandomColorsWithNav();
