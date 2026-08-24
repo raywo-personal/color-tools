@@ -40,37 +40,19 @@ The project has four build configurations:
 - `development` - Dev build with source maps, no optimization
 - `testing` - Build target consumed by the `test` target; not meant to be built directly
 
-## Git and the `.claude` Submodule
+## Claude Code Agents And Skills
 
-`.claude` is a git submodule pointing at
-`raywo-personal/claude-agents-and-skills`. That repository is **shared across
-projects**, so a change to a skill affects every project embedding it.
+The skills and agents this project relies on come from the `rw` plugin
+(marketplace `raywo-personal`, repository
+`raywo-personal/claude-agents-and-skills`). The plugin is installed per user,
+not vendored into this repository - there is nothing under `.claude/` to
+commit, and `.claude/settings.local.json` stays untracked.
 
-This has two consequences worth knowing before touching anything under
-`.claude/`:
-
-**Project-specific rules do not belong there.** If a convention only holds for
-ColorTools, it goes in this file. The skills describe general practice; this
-file describes what this codebase actually does, and it wins where the two
-differ.
-
-**Committing a skill change takes two repositories.** The parent records a
-commit hash, not a branch, so the order matters:
-
-1. In `.claude`: branch off `main`, commit, push, open a PR
-2. After the PR is merged: `git -C .claude switch main` and
-   `git -C .claude merge --ff-only origin/main`
-3. Only then stage `.claude` in the parent and commit the pointer bump
-
-Do not bump the pointer to a commit that exists only on a feature branch — a
-fresh clone running `git submodule update` would not be able to check it out.
-Until step 3, `git status` showing `M .claude` is the correct intermediate
-state, not something to fix.
-
-**Check for drift before starting.** The submodule can sit far behind its
-remote while its working tree looks current, because files copied in by hand
-are untracked. `git -C .claude fetch` and compare with
-`git -C .claude rev-list --left-right --count origin/main...HEAD` first.
+That plugin is **shared across projects**, so a change to a skill affects every
+project using it. Project-specific rules therefore do not belong there: if a
+convention only holds for ColorTools, it goes in this file. The skills describe
+general practice; this file describes what this codebase actually does, and it
+wins where the two differ.
 
 ## Writing Text For GitHub
 
@@ -86,8 +68,8 @@ Hard-wrapping stays for anything read in monospace without reflow: commit
 messages (subject at most 50 characters, body wrapped at 72), files in this
 repository including this one, and code comments.
 
-This is the convention from the `.claude` submodule's README, adopted here
-because that README asks each project to adopt it explicitly - the rule applies
+This is the convention from the `rw` plugin's README, adopted here because
+that README asks each project to adopt it explicitly - the rule applies
 whenever GitHub text is written, including when no skill is running.
 
 ## Architecture
@@ -245,7 +227,7 @@ Always use these aliases for imports within the codebase.
 ## Angular and TypeScript Conventions
 
 These are the binding conventions for this repository. The
-`angular-development` skill in `.claude/skills/` carries the general Angular
+`angular-development` skill from the `rw` plugin carries the general Angular
 guidance; where the two differ, this file wins because it describes what this
 codebase actually does.
 
