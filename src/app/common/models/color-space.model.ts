@@ -1,1 +1,1 @@
-export type ColorSpace = "rgb" | "hsl" | "hex";
+export type ColorSpace = "rgb" | "hsl" | "oklch" | "hex";

@@ -26,6 +26,8 @@ export class CopyCss {
         return color.css("rgb");
       case "hsl":
         return color.css("hsl");
+      case "oklch":
+        return color.css("oklch");
       default:
         return color.hex();
     }

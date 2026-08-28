@@ -1,0 +1,39 @@
+<h2>OKLch</h2>
+
+<div class="input">
+  <div class="input-form">
+    <div class="input-a"
+         app-ranged-input
+         [value]="hue()"
+         (valueChange)="hueChanged($event)"
+         [precision]="2"
+         [min]="0"
+         [max]="360"
+         unit="°"
+         label="Hue">
+    </div>
+
+    <div class="input-b"
+         app-ranged-input
+         [value]="chroma()"
+         (valueChange)="chromaChanged($event)"
+         [precision]="3"
+         [min]="0"
+         [max]="maxChroma()"
+         label="Chroma">
+    </div>
+
+    <div class="input-c"
+         app-ranged-input
+         [value]="lightness()"
+         (valueChange)="lightnessChanged($event)"
+         [precision]="2"
+         [min]="0"
+         [max]="100"
+         unit="%"
+         label="Lightness">
+    </div>
+  </div>
+
+  <div app-copy-css colorMode="oklch"></div>
+</div>

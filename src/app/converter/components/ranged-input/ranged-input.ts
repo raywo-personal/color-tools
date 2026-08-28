@@ -3,11 +3,11 @@ import {FormsModule, NgModel} from "@angular/forms";
 
 
 @Component({
-  selector: 'div[app-ranged-input]',
+  selector: "div[app-ranged-input]",
   imports: [
     FormsModule
   ],
-  templateUrl: './ranged-input.html',
+  templateUrl: "./ranged-input.html",
   styles: ``,
   host: {
     "[class.was-validated]": "valueField().touched || valueField().dirty"
@@ -22,7 +22,10 @@ export class RangedInput {
   });
 
   protected readonly placeholder = computed(() => {
-    return `${this.min()}–${this.max()}`;
+    const min = Number.isInteger(this.min()) ? this.min() : this.min().toFixed(this.precision());
+    const max = Number.isInteger(this.max()) ? this.max() : this.max().toFixed(this.precision());
+
+    return `${min}–${max}`;
   });
 
   protected readonly step = computed(() => {
