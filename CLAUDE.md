@@ -109,7 +109,8 @@ State is divided into four domains:
 
 1. **Converter** (`src/app/converter/`) - Color conversion and tint/shade generation
 
-- Manages current color, display format (RGB/HSL/HEX), and color space settings
+- Manages current color, display format (RGB/HSL/HEX/OKLCH), and color space
+  settings
 - Generates tints and shades using Bezier interpolation when enabled
 - State: `currentColor`, `textColor`, `useAsBackground`, `correctLightness`, `useBezier`, `displayColorSpace`, `tintColors`, `shadeColors`
 
@@ -265,7 +266,7 @@ codebase actually does.
 Only template-driven forms are in use:
 
 - `FormsModule` with `ngModel` for every value input - the numeric and text
-  fields (RGB, HSL, hex), the sliders and the font selector typeahead
+  fields (RGB, HSL, hex, OKLCH), the sliders and the font selector typeahead
 - `ReactiveFormsModule` is deliberately absent. There is no `FormControl`,
   `FormGroup` or `formControl` binding anywhere in `src`. Do not add the import
   "just in case" - add it only together with an actual reactive control

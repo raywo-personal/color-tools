@@ -4,7 +4,7 @@ A powerful web application for color manipulation and analysis. This tool helps 
 
 ## Features
 
-- Color picker with various input formats (HEX, RGB, HSL)
+- Color picker with various input formats (HEX, RGB, HSL, OKLCH)
 - Color name identification
 - Color palette generation
 - Color contrast checker
@@ -50,7 +50,7 @@ Try it out here: https://color-tools.skillbird.de/
    ```bash
    pnpm build
    ```
-   
+
 ### Claude Code agents and skills
 
 Agents and skills come from the `rw` plugin (marketplace `raywo-personal`).
