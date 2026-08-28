@@ -45,7 +45,6 @@ export function maxChroma(lightness: number, hue: number): number {
  * Determines whether the given hue, lightness, and chromacity values are
  * within the acceptable chromacity range.
  *
- *                              applicable. [0, 360]
  * @param {number} lightness - The lightness value to check. [0, 100]
  * @param {number} chromacity - The chroma value to check.
  * @param {number | null} hue - The hue value to check, or null if not
