@@ -1,10 +1,11 @@
 import chroma, {Color} from "chroma-js";
 import {inRgbRange} from "./rgb.helper";
+import {inOklchHueRange, inOklchLightnessRange, maxChroma} from "./oklch.helper";
 
 
 const RGB_PATTERN = /^rgb\((\d{1,3})[,\s+]\s*(\d{1,3})[,\s+]\s*(\d{1,3})\)$/;
 const HSL_PATTERN = /^hsl\(\s*(\d+(?:\.\d+)?)(?:\s*deg)?\s*(?:,|\s)\s*(?:(\d+(?:\.\d+)?%)|(\d+(?:\.\d+)?))\s*(?:,|\s)\s*(?:(\d+(?:\.\d+)?%)|(\d+(?:\.\d+)?))\s*\)$/;
-const OKLCH_PATTERN = /^oklch\(\s*(\d+(?:\.\d+)?)%\s*(?:,|\s)\s*(\d+(?:\.\d+)?)\s*(?:,|\s)\s*(\d+(?:\.\d+)?)deg\s*\)$/;
+const OKLCH_PATTERN = /^oklch\(\s*(?:(\d+(?:\.\d+)?|\.\d+)%|(\d+(?:\.\d+)?|\.\d+))\s+(\d+(?:\.\d+)?|\.\d+)\s+(\d+(?:\.\d+)?|\.\d+)(?:\s*deg)?\s*\)$/;
 
 
 export function isHex(this: void, value: string): boolean {
@@ -100,11 +101,21 @@ function handleOklch(value: string): Color | null {
 
   if (!matches) return null;
 
-  const [_, lightnessDec, chromaRaw, hueDec] = matches;
+  const [_, lightnessPercent, lightnessDec, chromaRaw, angle] = matches;
 
-  const lightness = Number(lightnessDec) / 100;
-  const chromaValue = Number(chromaRaw);
-  const hue = Number(hueDec);
+  // A bare number carries lightness in [0, 1], a percentage in [0, 100].
+  const lightness = lightnessPercent
+    ? Number(lightnessPercent)
+    : Number(lightnessDec) * 100;
+  const hue = Number(angle);
 
-  return chroma.oklch(lightness, chromaValue, hue);
+  if (!inOklchLightnessRange(lightness)) return null;
+  if (!inOklchHueRange(hue)) return null;
+
+  // Chroma is unbounded in OKLch, so a pasted value may sit outside sRGB.
+  // Pulling it back to the gamut boundary keeps lightness and hue, while
+  // chroma-js' per-channel clipping would shift both.
+  const chromaValue = Math.min(Number(chromaRaw), maxChroma(lightness / 100, hue));
+
+  return chroma.oklch(lightness / 100, chromaValue, hue);
 }
