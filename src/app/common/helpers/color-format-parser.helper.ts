@@ -1,9 +1,10 @@
-import chroma, {Color} from 'chroma-js';
-import {inRgbRange} from './rgb.helper';
+import chroma, {Color} from "chroma-js";
+import {inRgbRange} from "./rgb.helper";
 
 
 const RGB_PATTERN = /^rgb\((\d{1,3})[,\s+]\s*(\d{1,3})[,\s+]\s*(\d{1,3})\)$/;
 const HSL_PATTERN = /^hsl\(\s*(\d+(?:\.\d+)?)(?:\s*deg)?\s*(?:,|\s)\s*(?:(\d+(?:\.\d+)?%)|(\d+(?:\.\d+)?))\s*(?:,|\s)\s*(?:(\d+(?:\.\d+)?%)|(\d+(?:\.\d+)?))\s*\)$/;
+const OKLCH_PATTERN = /^oklch\(\s*(\d+(?:\.\d+)?)%\s*(?:,|\s)\s*(\d+(?:\.\d+)?)\s*(?:,|\s)\s*(\d+(?:\.\d+)?)deg\s*\)$/;
 
 
 export function isHex(this: void, value: string): boolean {
@@ -23,6 +24,10 @@ export function isHsl(this: void, value: string): boolean {
   return HSL_PATTERN.test(value);
 }
 
+export function isOklch(this: void, value: string): boolean {
+  return OKLCH_PATTERN.test(value);
+}
+
 
 export function colorFrom(this: void, value: string | null): Color | null {
   if (!value) return null;
@@ -37,6 +42,10 @@ export function colorFrom(this: void, value: string | null): Color | null {
 
   if (isHsl(value)) {
     return handleHsl(value);
+  }
+
+  if (isOklch(value)) {
+    return handleOklch(value);
   }
 
   return null;
@@ -83,4 +92,19 @@ function handleHsl(value: string): Color | null {
   }
 
   return chroma.hsl(hue, saturation, luminance);
+}
+
+
+function handleOklch(value: string): Color | null {
+  const matches = value.match(OKLCH_PATTERN);
+
+  if (!matches) return null;
+
+  const [_, lightnessDec, chromaRaw, hueDec] = matches;
+
+  const lightness = Number(lightnessDec) / 100;
+  const chromaValue = Number(chromaRaw);
+  const hue = Number(hueDec);
+
+  return chroma.oklch(lightness, chromaValue, hue);
 }
