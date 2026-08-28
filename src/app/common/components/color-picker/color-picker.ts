@@ -157,7 +157,7 @@ export class ColorPickerComponent implements OnInit {
 
 
   protected cycleFormat(): void {
-    const formats: ColorSpace[] = ["hex", "rgb", "hsl"];
+    const formats: ColorSpace[] = ["hex", "rgb", "hsl", "oklch"];
     const currentIndex = formats.indexOf(this.currentFormat());
     const nextIndex = (currentIndex + 1) % formats.length;
     this.currentFormat.set(formats[nextIndex]);
@@ -177,6 +177,8 @@ export class ColorPickerComponent implements OnInit {
         return color.css("rgb");
       case "hsl":
         return color.css("hsl");
+      case "oklch":
+        return color.css("oklch");
       case "hex":
       default:
         return color.hex();
