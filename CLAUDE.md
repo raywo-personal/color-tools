@@ -205,6 +205,26 @@ there the two agree exactly. `color-name.helper.spec.ts` pins the behaviour.
 Note that `colorName()` must stay synchronous: `generatePalette()` and
 `paletteFromId()` call it from reducer and route-guard code paths.
 
+### Palette Generators Build Colors In OKLch
+
+A generator that holds lightness and rotates hue must build its colors with
+`fromOklch()` (`src/app/common/helpers/color-from-oklch.helper.ts`), not with
+`fromHsl()`. Equal HSL lightness is not equal perceived lightness: at the
+default saturation a triad's members land up to 0.34 OKLch lightness apart, so
+one member glows and another sinks.
+
+**Chroma is clamped per hue, never levelled to a common floor.** sRGB does not
+offer the same chroma everywhere - at `L = 0.60` the boundary sits at 0.104 for
+cyan and 0.273 for magenta. `fromOklch()` therefore keeps lightness and hue
+exact and lowers only the chroma the hue cannot hold. Do not instead pull every
+member down to the lowest chroma its hues share: that ties a palette's vibrancy
+to its unluckiest hue and makes one style look different from one seed to the
+next.
+
+HSL constants do not port. Offsets such as `baseSat - 0.65` were tuned by eye
+against HSL's distortion; applied in OKLch they correct twice and have to be
+re-tuned against the result.
+
 ### Bundle Budget
 
 The initial budget is 1 MB warning / 1.2 MB error. It is meant to catch
