@@ -7,6 +7,7 @@ import {HslInput} from "@converter/components/hsl-input/hsl-input";
 import {PasteTarget} from "@converter/components/paste-target/paste-target";
 import {RgbInput} from "@converter/components/rgb-input/rgb-input";
 import {AppStateStore} from "@core/app-state.store";
+import {OklchInput} from "@converter/components/oklch-input/oklch-input";
 
 
 @Component({
@@ -18,7 +19,8 @@ import {AppStateStore} from "@core/app-state.store";
     HexInput,
     HslInput,
     PasteTarget,
-    RgbInput
+    RgbInput,
+    OklchInput
   ],
   templateUrl: './converter.html',
   styles: ``,
