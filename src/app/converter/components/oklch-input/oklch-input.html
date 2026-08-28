@@ -4,13 +4,13 @@
   <div class="input-form">
     <div class="input-a"
          app-ranged-input
-         [value]="hue()"
-         (valueChange)="hueChanged($event)"
+         [value]="lightness()"
+         (valueChange)="lightnessChanged($event)"
          [precision]="2"
          [min]="0"
-         [max]="360"
-         unit="°"
-         label="Hue">
+         [max]="100"
+         unit="%"
+         label="Lightness">
     </div>
 
     <div class="input-b"
@@ -25,13 +25,13 @@
 
     <div class="input-c"
          app-ranged-input
-         [value]="lightness()"
-         (valueChange)="lightnessChanged($event)"
+         [value]="hue()"
+         (valueChange)="hueChanged($event)"
          [precision]="2"
          [min]="0"
-         [max]="100"
-         unit="%"
-         label="Lightness">
+         [max]="360"
+         unit="°"
+         label="Hue">
     </div>
   </div>
 

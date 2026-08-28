@@ -47,6 +47,12 @@
               (click)="useColorSpace('hsl')">
         HSL
       </button>
+      <button type="button"
+              class="btn btn-outline-secondary"
+              [class.active]="colorSpace() === 'oklch'"
+              (click)="useColorSpace('oklch')">
+        OKLch
+      </button>
     </div>
   </div>
 </div>

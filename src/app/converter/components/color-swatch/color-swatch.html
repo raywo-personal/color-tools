@@ -35,6 +35,9 @@
       @case ('hsl') {
         <ng-container [ngTemplateOutlet]="hslTemplate"/>
       }
+      @case ('oklch') {
+        <ng-container [ngTemplateOutlet]="oklchTemplate"/>
+      }
       @default {
         <ng-container [ngTemplateOutlet]="hexTemplate"/>
       }
@@ -58,6 +61,18 @@
                         [precision]="2"/>
   <ct-key-value-display key="lum"
                         [value]="color().hsl()[2]"
+                        [precision]="2"/>
+</ng-template>
+
+<ng-template #oklchTemplate>
+  <ct-key-value-display key="lightness"
+                        [value]="color().oklch()[0]"
+                        [precision]="2"/>
+  <ct-key-value-display key="chroma"
+                        [value]="color().oklch()[1]"
+                        [precision]="3"/>
+  <ct-key-value-display key="hue"
+                        [value]="color().oklch()[2]"
                         [precision]="2"/>
 </ng-template>
 
