@@ -9,13 +9,13 @@ import {converterEvents} from "@core/converter/converter.events";
 
 
 @Component({
-  selector: 'ct-color-swatch',
+  selector: "ct-color-swatch",
   imports: [
     NgTemplateOutlet,
     KeyValueDisplay,
     NgbTooltip
   ],
-  templateUrl: './color-swatch.html',
+  templateUrl: "./color-swatch.html",
   styles: ``
 })
 export class ColorSwatch {
@@ -27,12 +27,13 @@ export class ColorSwatch {
 
   protected cssToCopy = computed(() => {
     switch (this.colorMode()) {
-      case "hex":
-        return this.color().hex();
       case "rgb":
         return this.color().css("rgb");
       case "hsl":
         return this.color().css("hsl");
+      case "oklch":
+        return this.color().css("oklch");
+      case "hex":
       default:
         return this.color().hex();
     }
