@@ -18,6 +18,17 @@ const TOLERANCE = 1e-3;
 /** Any chroma below this reads as a neutral rather than as a color. */
 const NEAR_NEUTRAL_CHROMA = 0.05;
 
+/**
+ * A gray seed cannot travel through OKLch bit-exact: `chroma("gray")` reports
+ * a chroma of 2.3e-5 rather than 0, and chroma-js rounds one channel
+ * differently at some lightnesses even at chroma 0 exactly. Both shift a
+ * single channel by one step, which is invisible. Neutrality is therefore
+ * asserted as a negligible chroma and a channel spread of at most one - not
+ * as equal RGB bytes, which fails for about 5 % of the random jitter.
+ */
+const NEUTRAL_CHROMA = 1e-3;
+const NEUTRAL_CHANNEL_SPREAD = 1;
+
 
 function eachSeedHue(assertion: (palette: Palette, seedHue: number) => void) {
   for (let seedHue = 0; seedHue < 360; seedHue += 15) {
@@ -157,9 +168,10 @@ describe("generateTriadic", () => {
 
     PALETTE_SLOTS.forEach(slot => {
       const [red, green, blue] = palette[slot].color.rgb();
+      const spread = Math.max(red, green, blue) - Math.min(red, green, blue);
 
-      expect(red, slot).toBe(green);
-      expect(green, slot).toBe(blue);
+      expect(spread, slot).toBeLessThanOrEqual(NEUTRAL_CHANNEL_SPREAD);
+      expect(palette[slot].color.oklch()[1], slot).toBeLessThan(NEUTRAL_CHROMA);
     });
   });
 
