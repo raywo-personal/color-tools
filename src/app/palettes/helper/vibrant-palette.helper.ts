@@ -5,6 +5,7 @@ import {Palette, PaletteColors} from "@palettes/models/palette.model";
 import {randomBetween} from "@common/helpers/random.helper";
 import {paletteFrom} from "@palettes/helper/palette.helper";
 import {fromOklch} from "@common/helpers/color-from-oklch.helper";
+import {usableLightness} from "@common/helpers/oklch.helper";
 
 
 /** OKLch lightness of the three accents when no base color sets one. */
@@ -95,7 +96,9 @@ export function generateVibrantBalanced(paletteColors: Partial<PaletteColors> = 
   const h0 = h !== undefined && !Number.isNaN(h)
     ? h
     : seedHue ?? randomBetween(0, 360);
-  const baseLight = l ?? DEFAULT_LIGHTNESS;
+  // Clamped: at a lightness of 0 or 1 no hue holds any chroma, so all three
+  // accents would come out the same black or white - see `usableLightness()`.
+  const baseLight = usableLightness(l ?? DEFAULT_LIGHTNESS);
   const baseChroma = c ?? DEFAULT_CHROMA;
 
   const accent = (accentHue: number) => fromOklch({

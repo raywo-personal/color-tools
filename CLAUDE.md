@@ -225,6 +225,20 @@ HSL constants do not port. Offsets such as `baseSat - 0.65` were tuned by eye
 against HSL's distortion; applied in OKLch they correct twice and have to be
 re-tuned against the result.
 
+**A member that sits lighter than the accents is lifted by a share of the room
+above them, not by a fixed offset.** The accents follow a given base color, so
+a light base leaves little room. A fixed offset runs past 1 there, `fromOklch()`
+clamps it, and the member comes back as plain white - neither a color nor
+distinguishable from its sibling. Express the lift as a share of `1 - baseLight`
+and the jitter as a share of the lift.
+
+**A generator passes a base color's lightness through `usableLightness()`
+before it builds anything from it.** `maxChroma()` returns 0 at a lightness of
+0 and 1, so a pure black or white base gives every member the same black or
+white whatever its hue, and a regenerate repeats it unchanged. Both extremes
+are reachable: a converter color and a contrast background each arrive as a
+pinned `color0`.
+
 ### Bundle Budget
 
 The initial budget is 1 MB warning / 1.2 MB error. It is meant to catch

@@ -75,3 +75,31 @@ export function inOklchLightnessRange(this: void, lightness: number | null): lig
 
   return lightness >= 0 && lightness <= 100;
 }
+
+
+/**
+ * Lightness band in which sRGB still offers chroma at every hue.
+ *
+ * `maxChroma()` returns 0 at a lightness of 0 and 1, so a color built there
+ * comes out black or white whatever its hue. A generator that holds lightness
+ * and rotates hue then hands back the same color for every member: a pure
+ * white base color yields five whites, four of them clipped, and regenerating
+ * repeats them unchanged. Both bounds keep the worst hue above the 0.02 chroma
+ * a tint needs to read as tinted, and the upper one leaves the lighter members
+ * room above the accents.
+ */
+const MIN_USABLE_LIGHTNESS = 0.12;
+const MAX_USABLE_LIGHTNESS = 0.92;
+
+
+/**
+ * Clamps an OKLch lightness into the band where sRGB still offers chroma at
+ * every hue.
+ *
+ * @param {number} lightness - OKLch lightness in the range [0, 1].
+ * @return {number} The lightness, moved inward if it sits at either extreme.
+ */
+export function usableLightness(this: void, lightness: number): number {
+  return Math.min(Math.max(lightness, MIN_USABLE_LIGHTNESS),
+    MAX_USABLE_LIGHTNESS);
+}

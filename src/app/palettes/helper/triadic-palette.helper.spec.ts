@@ -158,6 +158,37 @@ describe("generateTriadic", () => {
   });
 
 
+  // A pure black or white base color reaches the generator through the
+  // converter and through a contrast background. At those two lightnesses no
+  // hue holds any chroma, so without the clamp in `usableLightness()` every
+  // slot came out the same black or white - clipped, and unchanged by a
+  // regenerate. Both remain neutral palettes; they just stop being one color.
+  it.each(["#000000", "#ffffff"])(
+    "keeps a spread of lightness for a base color of %s", hex => {
+      const base = chroma(hex);
+
+      for (let seedHue = 0; seedHue < 360; seedHue += 15) {
+        const palette = generateTriadic(
+          {color0: paletteColorFrom(base, "color0", base, true)}, seedHue
+        );
+
+        const generated = PALETTE_SLOTS.filter(slot => slot !== "color0");
+
+        generated.forEach(slot => {
+          expect(palette[slot].color.clipped(),
+            `${slot} at seed hue ${seedHue}`).toBe(false);
+          expect(palette[slot].color.hex(),
+            `${slot} at seed hue ${seedHue}`).not.toBe(hex);
+        });
+
+        const lightness = lightnessOf(palette, generated);
+        const spread = Math.max(...lightness) - Math.min(...lightness);
+
+        expect(spread, `seed hue ${seedHue}`).toBeGreaterThan(0.005);
+      }
+    });
+
+
   it("stays neutral throughout when the base color is a gray", () => {
     const gray = chroma("gray");
     expect(Number.isNaN(gray.oklch()[2]), "a gray has no hue").toBe(true);
