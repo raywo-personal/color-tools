@@ -38,6 +38,14 @@ const SINGLE_HUE_ALLOWANCE = 9;
 const NEUTRAL_CHROMA = 1e-3;
 const NEUTRAL_CHANNEL_SPREAD = 1;
 
+/**
+ * Share of accents that must sit at the sRGB boundary. At the target the
+ * generator aims for, roughly three quarters of the hues clamp; the bound is
+ * set at a bare majority so hue jitter cannot tip it, while a target low
+ * enough for no hue to clamp still fails it outright.
+ */
+const MIN_SHARE_AT_BOUNDARY = 0.5;
+
 
 function eachSeedHue(assertion: (palette: Palette, seedHue: number) => void) {
   for (let seedHue = 0; seedHue < 360; seedHue += 15) {
@@ -99,6 +107,10 @@ describe("generateVibrantBalanced", () => {
 
     // The decision recorded in `fromOklch()`: clamp per hue rather than pull
     // every member down to the lowest chroma the three hues share.
+    //
+    // On its own this says nothing about how high the aim is: the aim is read
+    // back from the palette, so any target satisfies it. The test below pins
+    // the height.
     it("aim for one chroma and drop only where the hue cannot hold it", () => {
       eachSeedHue((palette, seedHue) => {
         const measured = ACCENT_SLOTS.map(slot => palette[slot].color.oklch());
@@ -116,8 +128,29 @@ describe("generateVibrantBalanced", () => {
     });
 
 
-    // What the style is called: the accents give up chroma only to the gamut,
-    // so most of them land on the sRGB boundary rather than below it.
+    // What separates this style from `generateTriadic`, whose accents aim
+    // lower: the target sits above what most hues can deliver, so the
+    // majority of accents end up at the sRGB boundary rather than below it.
+    // Asserted as a count, because the previous test reads the aim back from
+    // the palette and therefore holds at any target - including one so low
+    // that no hue clamps at all and the style stops being vibrant.
+    it("mostly sit at the sRGB boundary rather than below it", () => {
+      let atBoundary = 0;
+      let total = 0;
+
+      eachSeedHue(palette => {
+        ACCENT_SLOTS.forEach(slot => {
+          const [l, c, h] = palette[slot].color.oklch();
+
+          if (c > maxChroma(l, h) - TOLERANCE) atBoundary++;
+          total++;
+        });
+      });
+
+      expect(atBoundary / total).toBeGreaterThan(MIN_SHARE_AT_BOUNDARY);
+    });
+
+
     it("stay more colorful than the light colors", () => {
       eachSeedHue((palette, seedHue) => {
         const leastColorfulAccent = Math.min(...chromaOf(palette, ACCENT_SLOTS));
