@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/* The app knows three theme states; "system" is resolved to light or dark by
+   ColorThemeService before it reaches the DOM, so the stylesheet only ever
+   sees the two concrete ones. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* `static` because these six are the design system, not a candidate pool:
+   without it Tailwind emits only the tokens a utility class happens to use,
+   and a plain `var(--color-panel)` resolves to nothing in the light theme. */
+@theme static {
+  /* Six neutral tokens per theme, no accent among them: the only saturated
+     color on screen is the one the visitor is working on. Light values live
+     here so they are the default; the dark ones override them below. */
+  --color-bg: #FAF8F4;
+  --color-panel: #FFFDFA;
+  --color-text: #1B1917;
+  --color-dim: #7A736A;
+  --color-line: #E4DED4;
+  --color-field: #F2EDE5;
+
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  /* Overriding the tokens rather than annotating every element with `dark:`
+     keeps a component's markup free of theme knowledge. */
+  :root[data-theme="dark"] {
+    --color-bg: #171512;
+    --color-panel: #1F1D19;
+    --color-text: #F1EDE6;
+    --color-dim: #98907F;
+    --color-line: #302C25;
+    --color-field: #232019;
+  }
+
+  /* Native scrollbars and form controls follow the chosen theme, not the OS. */
+  :root {
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  body {
+    /* The converter can paint its current color onto the page; the effect
+       sets --ct-body-bg and removes it again. */
+    background-color: var(--ct-body-bg, var(--color-bg));
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}

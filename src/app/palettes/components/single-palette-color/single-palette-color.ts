@@ -8,7 +8,6 @@ import chroma, {Color} from "chroma-js";
 import {colorName} from "@common/helpers/color-name.helper";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {HslColorEdit} from "@common/components/hsl-color-edit/hsl-color-edit";
 import {CdkDragHandle} from "@angular/cdk/drag-drop";
 import {ContrastColor} from "@contrast/models/contrast-color.model";
@@ -20,13 +19,8 @@ import {transferEvents} from "@core/common/transfer.events";
   imports: [
     ToggleButton,
     SingleColorShades,
-    NgbTooltip,
     HslColorEdit,
-    CdkDragHandle,
-    NgbDropdown,
-    NgbDropdownToggle,
-    NgbDropdownMenu,
-    NgbDropdownItem
+    CdkDragHandle
   ],
   templateUrl: "./single-palette-color.html",
   styles: ``,

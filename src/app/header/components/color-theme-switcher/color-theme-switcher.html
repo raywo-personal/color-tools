@@ -1,26 +1,22 @@
-<div ngbDropdown class="d-inline-block ms-3">
+<div class="d-inline-block ms-3">
   <button type="button"
           class="btn"
-          id="colorModeSwitcher"
-          ngbDropdownToggle>
+          id="colorModeSwitcher">
     <i class="bi bi-sun-fill"></i>
     <span class="visually-hidden">Color mode select</span>
   </button>
-  <div ngbDropdownMenu aria-labelledby="colorModeSwitcher">
-    <button ngbDropdownItem
-            [class.active]="currentTheme() === 'light'"
+  <div aria-labelledby="colorModeSwitcher">
+    <button [class.active]="currentTheme() === 'light'"
             (click)="onThemeSelect('light')">
       <i class="bi bi-sun-fill me-2"></i>
       Light
     </button>
-    <button ngbDropdownItem
-            [class.active]="currentTheme() === 'dark'"
+    <button [class.active]="currentTheme() === 'dark'"
             (click)="onThemeSelect('dark')">
       <i class="bi bi-moon-stars-fill me-2"></i>
       Dark
     </button>
-    <button ngbDropdownItem
-            [class.active]="currentTheme() === 'system'"
+    <button [class.active]="currentTheme() === 'system'"
             (click)="onThemeSelect('system')">
       <i class="bi bi-circle-half me-2"></i>
       System

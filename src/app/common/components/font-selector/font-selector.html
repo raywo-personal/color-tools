@@ -15,12 +15,7 @@
       type="text"
       class="form-control"
       [(ngModel)]="selectedFontName"
-      [ngbTypeahead]="search"
-      [resultFormatter]="formatter"
-      [inputFormatter]="formatter"
-      (selectItem)="onFontSelected($event)"
       [placeholder]="placeholder()"
-      [editable]="false"
     />
 
     <button class="btn btn-secondary"

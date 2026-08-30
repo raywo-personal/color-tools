@@ -1,19 +1,19 @@
 import {Component, inject, input, linkedSignal, output} from "@angular/core";
 import {FormsModule} from "@angular/forms";
-import {NgbTypeahead, NgbTypeaheadSelectItemEvent} from "@ng-bootstrap/ng-bootstrap";
 import {GoogleFontsService} from "@common/services/google-fonts.service";
-import {getRegularFont, GoogleFont, SelectedFont} from "@common/models/google-font.model";
-import {Observable, OperatorFunction} from "rxjs";
-import {debounceTime, distinctUntilChanged, map} from "rxjs/operators";
+import {SelectedFont} from "@common/models/google-font.model";
 
 
 /**
  * Font selector component using Google Fonts API
- * Provides a typeahead search interface for selecting fonts
+ *
+ * The typeahead this component was built around came from ng-bootstrap and
+ * went out with it. What remains is the font resource and the store wiring;
+ * picking a font is rebuilt with the redesigned screens.
  */
 @Component({
   selector: "ct-font-selector",
-  imports: [FormsModule, NgbTypeahead],
+  imports: [FormsModule],
   templateUrl: "./font-selector.html",
   styles: ``
 })
@@ -33,27 +33,6 @@ export class FontSelectorComponent {
   /** Access to the fonts resource from the service */
   protected readonly fontsResource = this.#googleFontsService.googleFonts;
 
-  /**
-   * Typeahead search function
-   * Filters fonts based on user input
-   */
-  protected search: OperatorFunction<string, readonly GoogleFont[]> = (text$: Observable<string>) =>
-    text$.pipe(
-      debounceTime(200),
-      distinctUntilChanged(),
-      map(term => {
-        return this.#googleFontsService
-          .searchFonts(term, 20);
-      })
-    );
-
-  /**
-   * Formatter function for displaying font names
-   */
-  protected formatter = (font: GoogleFont): string => {
-    return font.family;
-  };
-
 
   /** Input: Label for the font selector */
   public readonly label = input<string>("Select Font");
@@ -67,17 +46,6 @@ export class FontSelectorComponent {
 
   /** Output: Emits when a font is selected */
   public readonly fontSelected = output<SelectedFont | null>();
-
-
-  /**
-   * Handler for when a font is selected from the typeahead
-   */
-  protected onFontSelected(event: NgbTypeaheadSelectItemEvent<GoogleFont>): void {
-    const font = event.item;
-    this.selectedFontName.set(font.family);
-
-    this.fontSelected.emit(getRegularFont(font));
-  }
 
 
   protected onResetClick() {
