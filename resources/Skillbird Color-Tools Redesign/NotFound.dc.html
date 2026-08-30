@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+<style>
+html, body { margin: 0; padding: 0; min-height: 100%; }
+* { box-sizing: border-box; }
+body { background: #FAF8F4; color: #1B1917; font-family: 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #1B1917; text-decoration: underline; text-underline-offset: 3px; }
+a:hover { color: #7A736A; }
+button { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; display: flex; flex-direction: column; max-width: 1240px; margin: 0 auto; padding: 34px 34px 40px">
+
+  <header style="display: flex; align-items: center; gap: 28px; padding-bottom: 30px; border-bottom: 1px solid #E4DED4">
+    <a href="ColorTools.dc.html" style="font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 34px; line-height: 1; letter-spacing: -0.01em; text-decoration: none">Color Tools</a>
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: #7A736A; margin-left: auto">ERROR 404</span>
+  </header>
+
+  <main style="flex: 1; display: grid; grid-template-columns: minmax(300px, 1fr) minmax(280px, 420px); gap: 64px; align-items: center; padding: 70px 0">
+    <div>
+      <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: #7A736A; margin-bottom: 20px">OUT OF GAMUT</span>
+      <h1 style="font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 76px; line-height: 0.98; letter-spacing: -0.025em; margin: 0 0 22px">This color doesn't exist</h1>
+      <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #1B1917; max-width: 48ch; text-wrap: pretty">The page you asked for is outside the range we can render. It may have been moved, renamed, or it was never mixed in the first place.</p>
+
+      <div style="display: flex; gap: 12px; align-items: center; margin-top: 34px; flex-wrap: wrap">
+        <a href="ColorTools.dc.html" style="height: 42px; display: inline-flex; align-items: center; padding: 0 20px; background: #1B1917; color: #FAF8F4; border-radius: 2px; font-size: 14px; text-decoration: none">Back to the studio</a>
+        <button onClick="{{ shuffle }}" style="height: 42px; padding: 0 18px; border: 1px solid #E4DED4; background: transparent; color: #7A736A; border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; white-space: nowrap; cursor: pointer" style-hover="color: #1B1917">MIX ANOTHER</button>
+      </div>
+
+      <div style="margin-top: 54px; border-top: 1px solid #E4DED4; padding-top: 18px; display: flex; gap: 40px; flex-wrap: wrap">
+        <div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: #7A736A; margin-bottom: 8px">REQUESTED</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #B4462F">{{ requested }}</div>
+        </div>
+        <div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: #7A736A; margin-bottom: 8px">NEAREST VALID</div>
+          <button onClick="{{ copyNearest }}" style="background: transparent; border: none; padding: 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #1B1917; cursor: pointer; text-decoration: underline; text-underline-offset: 3px">{{ nearest }}</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div style="{{ swatchStyle }}"></div>
+      <div style="display: flex; gap: 2px; margin-top: 4px">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="8">
+          <div style="{{ s.style }}"></div>
+        </sc-for>
+      </div>
+      <p style="margin: 14px 0 0; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #7A736A">{{ caption }}</p>
+    </div>
+  </main>
+
+  <footer style="border-top: 1px solid #E4DED4; padding-top: 18px; display: flex; gap: 24px; flex-wrap: wrap; align-items: baseline">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: #7A736A">TRY INSTEAD</span>
+    <a href="ColorTools.dc.html" style="font-size: 13px">Converter</a>
+    <a href="ColorTools.dc.html" style="font-size: 13px">Palettes</a>
+    <a href="ColorTools.dc.html" style="font-size: 13px">Tints &amp; shades</a>
+    <a href="ColorTools.dc.html" style="font-size: 13px">Contrast &amp; type</a>
+  </footer>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); padding: 10px 17px; background: #1B1917; color: #FAF8F4; border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.04em; z-index: 50">{{ toast }}</div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { seed: 0, toast: null };
+
+  clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+  rgbToHex(r, g, b) {
+    const f = n => this.clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0');
+    return ('#' + f(r) + f(g) + f(b)).toUpperCase();
+  }
+  hexToRgb(hex) {
+    const h = String(hex).replace('#', '');
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+  toSrgb(c) { const v = c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; return v * 255; }
+  oklchToRgbRaw(L, C, H) {
+    const hr = H * Math.PI / 180, A = Math.cos(hr) * C, B = Math.sin(hr) * C;
+    const l_ = L + 0.3963377774 * A + 0.2158037573 * B;
+    const m_ = L - 0.1055613458 * A - 0.0638541728 * B;
+    const s_ = L - 0.0894841775 * A - 1.2914855480 * B;
+    const l = l_ * l_ * l_, m = m_ * m_ * m_, s = s_ * s_ * s_;
+    return [
+      this.toSrgb(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+      this.toSrgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+      this.toSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s)
+    ];
+  }
+  clip(L, C, H) {
+    let c = C;
+    for (let i = 0; i < 40; i++) {
+      const p = this.oklchToRgbRaw(L, c, H);
+      if (p.every(v => v >= -0.6 && v <= 255.6)) break;
+      c *= 0.95;
+    }
+    const p = this.oklchToRgbRaw(L, c, H);
+    return { hex: this.rgbToHex(p[0], p[1], p[2]), chroma: c };
+  }
+  mix(hex, target, t) {
+    const a = this.hexToRgb(hex), b = this.hexToRgb(target);
+    return this.rgbToHex(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t);
+  }
+
+  variants = [
+    { L: 0.62, C: 0.34, H: 268 }, { L: 0.55, C: 0.36, H: 24 },
+    { L: 0.70, C: 0.32, H: 148 }, { L: 0.48, C: 0.33, H: 320 },
+    { L: 0.75, C: 0.30, H: 92 }
+  ];
+
+  renderVals() {
+    const v = this.variants[this.state.seed % this.variants.length];
+    const res = this.clip(v.L, v.C, v.H);
+    const hex = res.hex;
+    const requested = 'oklch(' + (v.L * 100).toFixed(0) + '% ' + v.C.toFixed(3) + ' ' + v.H + ')';
+    const nearest = 'oklch(' + (v.L * 100).toFixed(0) + '% ' + res.chroma.toFixed(3) + ' ' + v.H + ')  ·  ' + hex;
+
+    return {
+      requested, nearest,
+      caption: 'Requested chroma ' + v.C.toFixed(3) + ' clipped to ' + res.chroma.toFixed(3) + ' in sRGB.',
+      swatchStyle: { height: '260px', background: hex, borderRadius: '2px', border: '1px solid rgba(0,0,0,.08)' },
+      steps: Array.from({ length: 8 }, (_, i) => ({
+        style: { flex: 1, height: '30px', background: this.mix(hex, '#FFFFFF', (i + 1) / 9), borderRadius: '1px' }
+      })),
+      toast: this.state.toast,
+      shuffle: () => this.setState({ seed: this.state.seed + 1 }),
+      copyNearest: () => {
+        try { navigator.clipboard.writeText(hex); } catch (e) {}
+        clearTimeout(this._t);
+        this.setState({ toast: 'Copied  ' + hex });
+        this._t = setTimeout(() => this.setState({ toast: null }), 1400);
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>
