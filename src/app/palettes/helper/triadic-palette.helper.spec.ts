@@ -18,6 +18,17 @@ const TOLERANCE = 1e-3;
 /** Any chroma below this reads as a neutral rather than as a color. */
 const NEAR_NEUTRAL_CHROMA = 0.05;
 
+/**
+ * A gray seed cannot travel through OKLch bit-exact: `chroma("gray")` reports
+ * a chroma of 2.3e-5 rather than 0, and chroma-js rounds one channel
+ * differently at some lightnesses even at chroma 0 exactly. Both shift a
+ * single channel by one step, which is invisible. Neutrality is therefore
+ * asserted as a negligible chroma and a channel spread of at most one - not
+ * as equal RGB bytes, which fails for about 5 % of the random jitter.
+ */
+const NEUTRAL_CHROMA = 1e-3;
+const NEUTRAL_CHANNEL_SPREAD = 1;
+
 
 function eachSeedHue(assertion: (palette: Palette, seedHue: number) => void) {
   for (let seedHue = 0; seedHue < 360; seedHue += 15) {
@@ -147,6 +158,37 @@ describe("generateTriadic", () => {
   });
 
 
+  // A pure black or white base color reaches the generator through the
+  // converter and through a contrast background. At those two lightnesses no
+  // hue holds any chroma, so without the clamp in `usableLightness()` every
+  // slot came out the same black or white - clipped, and unchanged by a
+  // regenerate. Both remain neutral palettes; they just stop being one color.
+  it.each(["#000000", "#ffffff"])(
+    "keeps a spread of lightness for a base color of %s", hex => {
+      const base = chroma(hex);
+
+      for (let seedHue = 0; seedHue < 360; seedHue += 15) {
+        const palette = generateTriadic(
+          {color0: paletteColorFrom(base, "color0", base, true)}, seedHue
+        );
+
+        const generated = PALETTE_SLOTS.filter(slot => slot !== "color0");
+
+        generated.forEach(slot => {
+          expect(palette[slot].color.clipped(),
+            `${slot} at seed hue ${seedHue}`).toBe(false);
+          expect(palette[slot].color.hex(),
+            `${slot} at seed hue ${seedHue}`).not.toBe(hex);
+        });
+
+        const lightness = lightnessOf(palette, generated);
+        const spread = Math.max(...lightness) - Math.min(...lightness);
+
+        expect(spread, `seed hue ${seedHue}`).toBeGreaterThan(0.005);
+      }
+    });
+
+
   it("stays neutral throughout when the base color is a gray", () => {
     const gray = chroma("gray");
     expect(Number.isNaN(gray.oklch()[2]), "a gray has no hue").toBe(true);
@@ -157,9 +199,10 @@ describe("generateTriadic", () => {
 
     PALETTE_SLOTS.forEach(slot => {
       const [red, green, blue] = palette[slot].color.rgb();
+      const spread = Math.max(red, green, blue) - Math.min(red, green, blue);
 
-      expect(red, slot).toBe(green);
-      expect(green, slot).toBe(blue);
+      expect(spread, slot).toBeLessThanOrEqual(NEUTRAL_CHANNEL_SPREAD);
+      expect(palette[slot].color.oklch()[1], slot).toBeLessThan(NEUTRAL_CHROMA);
     });
   });
 

@@ -5,6 +5,7 @@ import {vary} from "@palettes/helper/variation.helper";
 import {paletteFrom} from "@palettes/helper/palette.helper";
 import {fromOklch} from "@common/helpers/color-from-oklch.helper";
 import {randomBetween} from "@common/helpers/random.helper";
+import {usableLightness} from "@common/helpers/oklch.helper";
 
 
 /** OKLch lightness of the three accents when no base color sets one. */
@@ -13,8 +14,18 @@ const DEFAULT_LIGHTNESS = 0.62;
 /** Chroma the accents aim for; hues that cannot hold it are clamped down. */
 const DEFAULT_CHROMA = 0.18;
 
-/** How much lighter the two supporting colors sit above the accents. */
-const SUPPORT_LIGHTNESS_OFFSET = 0.06;
+/**
+ * How far the two supporting colors travel from the accents toward white, as
+ * a share of the range still available above the accent lightness.
+ *
+ * A share rather than a fixed offset: the accents follow a given base color,
+ * so a light base leaves little room above them. A fixed offset runs past 1
+ * there and hands back plain white, which is neither a supporting *color* nor
+ * distinguishable from its sibling. The value reproduces the previous fixed
+ * offset of 0.06 at the default accent lightness and only diverges from it
+ * where that offset had no room left.
+ */
+const SUPPORT_LIFT = 0.158;
 
 /** Share of the accent chroma the supporting colors keep - near-neutral. */
 const SUPPORT_CHROMA_FACTOR = 0.12;
@@ -26,8 +37,12 @@ const SUPPORT_CHROMA_FACTOR = 0.12;
  */
 const SUPPORT_CHROMA_JITTER = 0.25;
 
-/** Jitter of the supporting lightness, in OKLch lightness. */
-const SUPPORT_LIGHTNESS_JITTER = 0.04;
+/**
+ * Jitter of the supporting lightness, as a share of the lift. Relative for
+ * the same reason as the lift itself: an absolute amount survives a light
+ * base color that the lift no longer has room for.
+ */
+const SUPPORT_LIFT_JITTER = 0.67;
 
 
 /**
@@ -63,7 +78,9 @@ export function generateTriadic(paletteColors: Partial<PaletteColors> = {},
   const hue = h !== undefined && !Number.isNaN(h)
     ? h
     : seedHue ?? randomBetween(0, 360);
-  const baseLight = l ?? DEFAULT_LIGHTNESS;
+  // Clamped: at a lightness of 0 or 1 no hue holds any chroma, so all three
+  // accents would come out the same black or white - see `usableLightness()`.
+  const baseLight = usableLightness(l ?? DEFAULT_LIGHTNESS);
   const baseChroma = c ?? DEFAULT_CHROMA;
 
   const triadHues = triad(hue);
@@ -73,11 +90,15 @@ export function generateTriadic(paletteColors: Partial<PaletteColors> = {},
 
   const supportChroma = baseChroma * SUPPORT_CHROMA_FACTOR;
 
-  const support = (supportHue: number) => fromOklch({
-    l: vary(baseLight + SUPPORT_LIGHTNESS_OFFSET, SUPPORT_LIGHTNESS_JITTER),
-    c: vary(supportChroma, supportChroma * SUPPORT_CHROMA_JITTER),
-    h: supportHue
-  });
+  const support = (supportHue: number) => {
+    const room = (1 - baseLight) * SUPPORT_LIFT;
+
+    return fromOklch({
+      l: vary(baseLight + room, room * SUPPORT_LIFT_JITTER),
+      c: vary(supportChroma, supportChroma * SUPPORT_CHROMA_JITTER),
+      h: supportHue
+    });
+  };
 
   const pColors: PaletteColors = {
     color0: paletteColors.color0 ??
