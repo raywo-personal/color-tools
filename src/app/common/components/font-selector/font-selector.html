@@ -15,19 +15,14 @@
       type="text"
       class="form-control"
       [(ngModel)]="selectedFontName"
-      [ngbTypeahead]="search"
-      [resultFormatter]="formatter"
-      [inputFormatter]="formatter"
-      (selectItem)="onFontSelected($event)"
       [placeholder]="placeholder()"
-      [editable]="false"
     />
 
     <button class="btn btn-secondary"
             type="button"
             (click)="onResetClick()"
             title="Reset samples font to default font">
-      <i class="bi bi-arrow-counterclockwise me-2" aria-hidden="true"></i>
+      <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
       Reset Font
     </button>
   </div>

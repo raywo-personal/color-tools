@@ -241,7 +241,7 @@ pinned `color0`.
 
 ### Bundle Budget
 
-The initial budget is 1 MB warning / 1.2 MB error. It is meant to catch
+The initial budget is 700 kB warning / 800 kB error. It is meant to catch
 regressions, so keep it close to the actual size rather than raising it to make
 a warning go away - `pnpm build` prints the current initial total.
 
@@ -366,46 +366,64 @@ trade a working palette for a dead end. `app.routes.spec.ts` pins both halves.
 
 ## Component Style Guidelines
 
+Tailwind CSS v4 is the only styling framework. Utilities go in the template,
+where the element they style lives; a component's own style file stays minimal
+or empty.
+
 - Schematics set `inlineStyle: true` by default, so a new component starts with
   an inline `styles` block. Keep it there only for very short passages - a
   handful of declarations that stay readable inside the decorator. Everything
-  beyond that belongs in the component's own `.scss` file next to it,
-  referenced through `styleUrl` (see `not-found.scss`, `color-area.scss`,
-  `color-picker.scss`)
-- The `angular-development` skill asks for centralized topic files plus
-  component-specific overrides in the component's own style file. That override
-  file is either the inline `styles` block or the sibling `.scss` - whichever
-  the length calls for; the split is about size, not about which mechanism is
-  the standard
+  beyond that belongs in the component's own `.css` file next to it, referenced
+  through `styleUrl`
+- Do NOT use `@apply` or `@reference` in component styles. `@apply` does not
+  work in component-scoped CSS under Tailwind v4, and `@reference` makes it
+  work only by triggering a full Tailwind pass per file. Reach the element from
+  the template instead, put the host's utilities in `host: {class: "..."}`, or
+  add an `@layer components` class to the global stylesheet
 - Budget limits: 4kB warning, 8kB error per component (`anyComponentStyle`).
   The budget counts either form, so moving a block out of the decorator does
   not buy room
-- Global entry point is `src/styles.scss`
-- Cross-cutting styles live in `src/app/styles/` as topic-separated partials
-  (`_variables.scss`, `_dark-mode.scss`, `_bootstrap-custom.scss`,
-  `_bootstrap-subset.scss`, `converter.scss`, `contrast.scss`,
-  `color-palette.scss`, `sliders.scss`, `drag-n-drop.scss`)
-- Uses Bootstrap 5.3 and Bootstrap Icons
+- Global entry point is `src/styles.css`
 
-### Bootstrap Is Imported As A Subset
+### The Design Tokens Are The Whole Palette
 
-`src/app/styles/_bootstrap-subset.scss` replaces `bootstrap/scss/bootstrap`. It
-mirrors Bootstrap's own import stack but leaves out the fourteen components
-nothing in `src` renders, which saves ~51 kB of raw CSS.
+`src/styles.css` defines six neutral tokens - `bg`, `panel`, `text`, `dim`,
+`line`, `field` - as `--color-*` in `@theme`, with a dark set overriding them
+under `:root[data-theme="dark"]`. Because the token itself flips, a component
+needs no `dark:` variant to follow the theme; write `bg-panel`, not
+`bg-white dark:bg-neutral-900`.
 
-**Adding a Bootstrap component means adding its partial to that file.** A
-missing partial does not fail the build - the component renders unstyled, which
-only shows up visually. The same applies to anything ng-bootstrap draws at
-runtime: `NgbDropdown`, `NgbTooltip` and `NgbTypeahead` need `dropdown`,
-`tooltip` and `transitions`, none of which appear in any template.
+**There is no themed accent color, and adding one is a design decision, not a
+convenience.** The only saturated color on screen is the one the visitor is
+working on. Tailwind's default palette is still reachable, so nothing stops a
+stray `text-blue-600` - keep it out.
 
-The file uses `@import` rather than `@use`, because Bootstrap 5.3's partials
-read variables and mixins from the global scope and are not `@use`-able in
-isolation. That is why `angular.json` sets
-`stylePreprocessorOptions.sass.silenceDeprecations: ["import"]` - without it the
-build emits 21 deprecation warnings for our own file, while Bootstrap's
-identical `@import`s stay quiet as a dependency. Configuration still flows
-through `@use "./bootstrap-subset" with (...)` in `_bootstrap-custom.scss`.
+**The `@theme` block is `static`.** Without it Tailwind emits only the tokens
+some utility class happens to use, and a plain `var(--color-panel)` in a
+component stylesheet resolves to nothing in the light theme while working in
+the dark one.
+
+**Tailwind scans only `src/app` and `src/index.html`.** `src/styles.css`
+imports Tailwind with `source(none)` and names its sources explicitly. Without
+that, automatic detection takes the whole repository minus `.gitignore`, and
+every Markdown file becomes a content source - the class names this file uses
+as counter-examples were compiled into the shipped stylesheet. Add an
+`@source` line rather than dropping `source(none)`.
+
+### The Theme Attribute Lives On The Root Element
+
+`ColorThemeService` resolves the three stored states to two and writes
+`data-theme="light"` or `"dark"` onto `<html>`. The stylesheet therefore never
+sees `"system"`. The `dark:` variant is bound to that attribute through
+`@custom-variant`, so `prefers-color-scheme` alone changes nothing - a visitor
+who picked a theme keeps it.
+
+### No Sass In New Styles
+
+Tailwind v4 does not run through a preprocessor: the global stylesheet is plain
+CSS, and `angular.json` sets `inlineStyleLanguage` and the component schematic
+to `css`. The `.scss` files still present belong to v1 screens and go with
+them; do not add more.
 
 ## Testing
 

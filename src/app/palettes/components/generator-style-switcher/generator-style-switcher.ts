@@ -5,18 +5,13 @@ import {AppStateStore} from "@core/app-state.store";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {StyleButton} from "@palettes/components/style-button/style-button";
-import {NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle} from "@ng-bootstrap/ng-bootstrap";
 
 
 @Component({
   selector: 'ct-generator-style-switcher',
   imports: [
     FormsModule,
-    StyleButton,
-    NgbDropdown,
-    NgbDropdownToggle,
-    NgbDropdownMenu,
-    NgbDropdownItem
+    StyleButton
   ],
   templateUrl: './generator-style-switcher.html',
   styles: ``,

@@ -1,11 +1,15 @@
 # Font Selector Component
 
-A reusable Angular component for selecting Google Fonts with typeahead search functionality.
+A reusable Angular component for selecting Google Fonts.
+
+> **The typeahead is gone.** It was `NgbTypeahead`, and it went out with
+> ng-bootstrap. What the component still shows is the font resource and the
+> store wiring; the search below documents `GoogleFontsService`, which is
+> untouched, not a control the component currently offers.
 
 ## Features
 
 - **Google Fonts Integration**: Fetches fonts from Google Fonts API sorted by popularity
-- **Typeahead Search**: Fast, debounced search with autocomplete
 - **State Management**: Integrates with @ngrx/signals store
 - **httpResource**: Uses Angular's new `httpResource` feature for efficient data loading
 
@@ -185,6 +189,7 @@ const currentFont = store.selectedFont();
 ## Notes
 
 - The Google Fonts API can work without an API key but may have rate limits
-- Font loading is debounced with a 200ms delay for better performance
-- Search results are limited to 20 fonts to maintain UI responsiveness
+- `GoogleFontsService.searchFonts` limits its results to 20 fonts by
+  default; nothing in the component calls it since the typeahead was
+  removed
 - Fonts are sorted by popularity by default

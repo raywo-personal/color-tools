@@ -6,20 +6,14 @@
       <div class="btn-group-vertical">
         <button type="button"
                 class="btn btn-light"
-                (click)="copyToClipboard()"
-                ngbTooltip="Copy to clipboard"
-                [openDelay]="500"
-                container="body">
+                (click)="copyToClipboard()">
           <i class="bi bi-copy"></i>
           <span class="visually-hidden">Copy to clipboard</span>
         </button>
 
         <button type="button"
                 class="btn btn-light"
-                (click)="setAsCurrentColor()"
-                ngbTooltip="Set as current color"
-                [openDelay]="500"
-                container="body">
+                (click)="setAsCurrentColor()">
           <i class="bi bi-arrow-up"></i>
           <span class="visually-hidden">Set as current color</span>
         </button>

@@ -7,7 +7,7 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss",
+          "style": "css",
           "inlineStyle": true,
           "skipTests": true
         }
@@ -22,7 +22,7 @@
             "outputPath": "dist/ColorTools",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
+            "inlineStyleLanguage": "css",
             "assets": [
               {
                 "glob": "**/*",
@@ -30,15 +30,8 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.css"
             ],
-            "stylePreprocessorOptions": {
-              "sass": {
-                "silenceDeprecations": [
-                  "import"
-                ]
-              }
-            },
             "allowedCommonJsDependencies": [
               "color-namer/lib/colors/basic",
               "color-namer/lib/colors/html",
@@ -56,8 +49,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1MB",
-                  "maximumError": "1.2MB"
+                  "maximumWarning": "700kB",
+                  "maximumError": "800kB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -71,8 +64,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1MB",
-                  "maximumError": "1.2MB"
+                  "maximumWarning": "700kB",
+                  "maximumError": "800kB"
                 },
                 {
                   "type": "anyComponentStyle",

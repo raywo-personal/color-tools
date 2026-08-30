@@ -1,5 +1,4 @@
-import {Component, computed, effect, ElementRef, inject, input, OnInit, output, signal, viewChild} from "@angular/core";
-import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
+import {Component, computed, effect, input, OnInit, output, signal} from "@angular/core";
 
 
 @Component({
@@ -10,22 +9,9 @@ import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
   host: {
     "class": "btn",
     "(click)": "onClick()"
-  },
-  hostDirectives: [
-    {
-      directive: NgbTooltip,
-      inputs: [
-        "ngbTooltip",
-        "placement",
-        "openDelay"
-      ]
-    }
-  ]
+  }
 })
 export class ToggleButton implements OnInit {
-
-  private readonly tooltip = inject(NgbTooltip);
-  private readonly content = viewChild.required<ElementRef>("content");
 
   protected readonly hostClass = computed(() => {
     return this.state() ? this.onClass() : this.offClass();
@@ -48,8 +34,6 @@ export class ToggleButton implements OnInit {
 
 
   public ngOnInit(): void {
-    const content = this.content().nativeElement as HTMLSpanElement;
-    this.tooltip.ngbTooltip = content.textContent;
     this.state.set(this.initialState());
   }
 

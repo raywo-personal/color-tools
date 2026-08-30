@@ -1,4 +1,4 @@
-<div class="hstack gap-2 align-self-end">
+<div class="hstack align-self-end">
   <div class="form-check form-switch form-check-inline">
     <input class="form-check-input"
            type="checkbox"
@@ -15,18 +15,17 @@
   </div>
 
 
-  <div class="d-inline-block" ngbDropdown>
+  <div class="d-inline-block">
     <button type="button"
             class="btn btn-outline-secondary"
             id="styleSwitcher"
-            [disabled]="useRandom()"
-            ngbDropdownToggle>
+            [disabled]="useRandom()">
       {{ styleCaption() }}
     </button>
 
-    <div ngbDropdownMenu aria-labelledby="styleSwitcher">
+    <div aria-labelledby="styleSwitcher">
       @for (style of styles; track $index) {
-        <button ngbDropdownItem app-style-button [forStyle]="style"></button>
+        <button app-style-button [forStyle]="style"></button>
       }
     </div>
   </div>

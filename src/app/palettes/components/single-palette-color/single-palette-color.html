@@ -12,8 +12,6 @@
 
   <div class="tools">
     <div class="draggable"
-         ngbTooltip="Move color"
-         [openDelay]="300"
          cdkDragHandle>
       <i class="bi bi-arrow-left-short"></i>
       <i class="bi bi-grip-vertical"></i>
@@ -25,28 +23,24 @@
             onClass="bi bi-pin-fill"
             offClass="bi bi-pin-angle"
             [initialState]="isPinned()"
-            [openDelay]="300"
             (currentState)="onToggleClick($event)">
       Pin color
     </button>
 
-    <div ngbDropdown>
+    <div>
       <button [id]="`sendToContrast-${color().color.hex()}`"
         type="button"
-              class="btn"
-              ngbTooltip="Send to contrast checker"
-              [openDelay]="300"
-              ngbDropdownToggle>
+              class="btn">
         <i class="bi bi-circle-half"></i>
         <span class="visually-hidden">Send to contrast checker</span>
       </button>
 
-      <div ngbDropdownMenu aria-labelledby="`sendToContrast-${color().color.hex()}`">
-        <button ngbDropdownItem (click)="sendTextColor()">
+      <div aria-labelledby="`sendToContrast-${color().color.hex()}`">
+        <button (click)="sendTextColor()">
           <i class="bi bi-send"></i>&nbsp;
           As text color to contrast
         </button>
-        <button ngbDropdownItem (click)="sendBgColor()">
+        <button (click)="sendBgColor()">
           <i class="bi bi-send"></i>&nbsp;
           As background color to contrast
         </button>
@@ -55,8 +49,6 @@
 
     <button type="button"
             class="btn"
-            ngbTooltip="Show tints & shades"
-            [openDelay]="300"
             (click)="showTintsAndShades()">
       <i class="bi bi-bookshelf"></i>
       <span class="visually-hidden">Tints & Shades</span>
@@ -64,8 +56,6 @@
 
     <button type="button"
             class="btn"
-            ngbTooltip="New random color"
-            [openDelay]="300"
             (click)="newRandomColor()">
       <i class="bi bi-shuffle"></i>
       <span class="visually-hidden">New random color</span>
@@ -73,8 +63,6 @@
 
     <button type="button"
             class="btn"
-            ngbTooltip="Edit color"
-            [openDelay]="300"
             (click)="toggleEditing()">
       <i class="bi bi-pencil"></i>
       <span class="visually-hidden">Edit color</span>
@@ -82,8 +70,6 @@
 
     <button type="button"
             class="btn"
-            ngbTooltip="Reset color"
-            [openDelay]="300"
             (click)="resetColor()">
       <i class="bi bi-arrow-counterclockwise"></i>
       <span class="visually-hidden">Reset color</span>
@@ -91,15 +77,13 @@
 
     <button type="button"
             class="btn"
-            ngbTooltip="Copy to clipboard"
-            [openDelay]="300"
             (click)="copyToClipboard()">
       <i class="bi bi-copy"></i>
       <span class="visually-hidden">Copy to clipboard</span>
     </button>
   </div>
 
-  <div class="color-hex mt-4">
+  <div class="color-hex">
     {{ colorHexCaption() }}
   </div>
   <div class="color-name">{{ colorName() }}</div>
