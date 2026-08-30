@@ -1,4 +1,9 @@
-@import "tailwindcss";
+/* `source(none)` because automatic detection scans the whole repository minus
+   `.gitignore`, which makes every Markdown file a content source: the classes
+   `CLAUDE.md` names as counter-examples were compiled into the stylesheet. */
+@import "tailwindcss" source(none);
+@source "./app";
+@source "./index.html";
 
 /* The app knows three theme states; "system" is resolved to light or dark by
    ColorThemeService before it reaches the DOM, so the stylesheet only ever

@@ -403,6 +403,13 @@ some utility class happens to use, and a plain `var(--color-panel)` in a
 component stylesheet resolves to nothing in the light theme while working in
 the dark one.
 
+**Tailwind scans only `src/app` and `src/index.html`.** `src/styles.css`
+imports Tailwind with `source(none)` and names its sources explicitly. Without
+that, automatic detection takes the whole repository minus `.gitignore`, and
+every Markdown file becomes a content source - the class names this file uses
+as counter-examples were compiled into the shipped stylesheet. Add an
+`@source` line rather than dropping `source(none)`.
+
 ### The Theme Attribute Lives On The Root Element
 
 `ColorThemeService` resolves the three stored states to two and writes

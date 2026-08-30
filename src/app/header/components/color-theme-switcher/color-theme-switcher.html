@@ -1,4 +1,4 @@
-<div class="d-inline-block ms-3">
+<div class="d-inline-block">
   <button type="button"
           class="btn"
           id="colorModeSwitcher">
@@ -8,17 +8,17 @@
   <div aria-labelledby="colorModeSwitcher">
     <button [class.active]="currentTheme() === 'light'"
             (click)="onThemeSelect('light')">
-      <i class="bi bi-sun-fill me-2"></i>
+      <i class="bi bi-sun-fill"></i>
       Light
     </button>
     <button [class.active]="currentTheme() === 'dark'"
             (click)="onThemeSelect('dark')">
-      <i class="bi bi-moon-stars-fill me-2"></i>
+      <i class="bi bi-moon-stars-fill"></i>
       Dark
     </button>
     <button [class.active]="currentTheme() === 'system'"
             (click)="onThemeSelect('system')">
-      <i class="bi bi-circle-half me-2"></i>
+      <i class="bi bi-circle-half"></i>
       System
     </button>
   </div>

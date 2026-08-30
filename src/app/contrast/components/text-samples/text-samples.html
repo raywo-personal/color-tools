@@ -1,7 +1,7 @@
 @for (fWeight of fontWeights; track fWeight) {
   @for (size of fontSizes; track size) {
     <div class="col">
-      <div class="card h-100">
+      <div class="card">
         <div class="card-header d-flex justify-content-between">
           <div>
             @let makeBold = isCommonBodyText(size, fWeight) || isCommonHeading(size, fWeight);
