@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - redesign-v2
   pull_request:
     types: [ opened, synchronize, reopened ]
     branches:
       - "main"
+      - "redesign-v2"
 
 permissions:
   contents: read
@@ -61,9 +63,25 @@ jobs:
           name: dist
           path: dist/ColorTools/browser
 
+      # The Pages project's production branch is main, so every other branch
+      # listed above deploys as a preview under its own branch alias.
       - name: Deploy to Cloudflare Pages
+        id: deploy
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist/ColorTools/browser --project-name=color-tools --branch=main
+          command: pages deploy dist/ColorTools/browser --project-name=color-tools --branch=${{ github.ref_name }}
+
+      - name: Report the deployment URLs
+        env:
+          BRANCH: ${{ github.ref_name }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          ALIAS_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url }}
+        run: |
+          {
+            echo "### Deployed \`$BRANCH\`"
+            echo ""
+            echo "- Deployment: $DEPLOYMENT_URL"
+            echo "- Alias: $ALIAS_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
