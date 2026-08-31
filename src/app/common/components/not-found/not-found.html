@@ -1,54 +1,94 @@
-<div class="not-found">
+<header class="flex items-center gap-7 border-b border-line pb-6 sm:pb-8">
+  <a routerLink="/"
+     class="flex h-11 items-center font-serif text-3xl leading-none font-normal tracking-tight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:text-4xl">Color Tools</a>
 
-  <div class="headline">
-    <p class="numeral" aria-hidden="true">4<span>0</span>4</p>
+  <span class="ml-auto font-mono text-sm tracking-widest text-dim">ERROR 404</span>
+</header>
 
-    <div class="statement">
-      <p class="eyebrow">Page not found</p>
-      <h2>This shade of the site doesn’t exist.</h2>
-      <p class="intro">
-        The link is broken or the page has moved. Pick up a tool below and keep
-        going.
-      </p>
+<!-- Everything a visitor can act on sits in this row, and the palette below
+     it is the only thing a short viewport cuts off. Losing the picture costs
+     nothing; losing the way out costs the visit. -->
+<div class="grid gap-10 py-10 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-16">
+
+  <div>
+    <p class="font-mono text-sm tracking-widest text-dim">OUT OF GAMUT</p>
+
+    <h1 class="mt-5 max-w-[20ch] font-serif text-5xl leading-none font-normal tracking-tight text-pretty sm:text-6xl lg:text-7xl">
+      404 – This shade of the site doesn’t exist.
+    </h1>
+
+    <p class="mt-6 max-w-[48ch] text-base leading-relaxed text-pretty">
+      The link is broken or the page has moved. Pick up a tool below and keep
+      going.
+    </p>
+
+    <div class="mt-8 flex flex-wrap items-center gap-3">
+      <!-- The ring is drawn in `text-bg`, so it is inset rather than offset:
+           outside the button it would sit on `bg` in the same color. -->
+      <a routerLink="/"
+         class="inline-flex h-11 items-center rounded-xs bg-text px-5 text-base text-bg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current">Back to the studio</a>
+
+      <button type="button"
+              class="inline-flex h-11 cursor-pointer items-center rounded-xs border border-line px-5 font-mono text-base tracking-widest text-dim hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+              (click)="mixAnother()">MIX ANOTHER</button>
     </div>
   </div>
 
-  <div class="swatches" aria-hidden="true">
-    @for (swatch of swatches; track $index) {
-      <div class="swatch">
-        <div class="chip" [style.background-color]="swatch"></div>
-        <p class="label">{{ swatch }}</p>
-      </div>
-    }
+  <div class="flex flex-col gap-8">
+    <div class="border-t border-line pt-4">
+      <p class="font-mono text-sm tracking-widest text-dim">REQUESTED ADDRESS</p>
 
-    @for (slot of missingSlots; track slot) {
-      <div class="swatch">
-        <div class="chip empty"></div>
-        <p class="label">—</p>
+      <!-- Arbitrary input: let it break rather than push the page into a
+           horizontal scroll. -->
+      <p class="mt-2 font-mono text-base wrap-anywhere">{{ requestedPath() }}</p>
+    </div>
+
+    <!-- Four entries for the two views v2 renders: the studio answers three
+         of them today and grows sections of its own to anchor into later. -->
+    <nav class="border-t border-line pt-4" aria-labelledby="try-instead">
+      <p id="try-instead" class="font-mono text-sm tracking-widest text-dim">TRY INSTEAD</p>
+
+      <div class="mt-1 flex flex-col items-start">
+        <a routerLink="/"
+           class="inline-flex h-11 items-center text-base underline underline-offset-4 hover:text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">Converter</a>
+
+        <a routerLink="/"
+           class="inline-flex h-11 items-center text-base underline underline-offset-4 hover:text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">Palettes</a>
+
+        <a routerLink="/"
+           class="inline-flex h-11 items-center text-base underline underline-offset-4 hover:text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">Tints &amp; shades</a>
+
+        <a routerLink="/contrast"
+           class="inline-flex h-11 items-center text-base underline underline-offset-4 hover:text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">Contrast &amp; type</a>
       </div>
-    }
+    </nav>
   </div>
 
-  <nav class="actions" aria-label="ColorTools tools">
-    <a class="btn primary-action"
-       [routerLink]="['/convert']">
-      Open the Converter
-    </a>
-
-    <a class="btn"
-       [routerLink]="['/palettes', paletteId()]">
-      Build a Color Palette
-    </a>
-
-    <a class="btn"
-       [routerLink]="['/contrast', contrastId()]">
-      Check Contrast
-    </a>
-  </nav>
-
-  <p class="requested">
-    <span>Requested address</span>
-    <code>{{ requestedPath() }}</code>
-  </p>
-
 </div>
+
+<ul class="grid grid-cols-4 gap-3 sm:grid-cols-8 sm:gap-4" [attr.aria-label]="swatchesLabel">
+  @for (swatch of swatches(); track $index) {
+    <li class="flex flex-col gap-2">
+      <span class="aspect-square rounded-xs border border-line"
+            aria-hidden="true"
+            [style.background-color]="swatch.hex"></span>
+
+      <span class="font-mono text-sm text-dim">{{ swatch.hex }}</span>
+    </li>
+  }
+
+  <!-- The slot the palette never reached, drawn as a question rather than a
+       gap: an empty square reads as a design choice, a `?` reads as an
+       answer nobody has. -->
+  @for (slot of missingSlots; track slot) {
+    <li class="flex flex-col gap-2">
+      <span class="flex aspect-square items-center justify-center rounded-xs border border-dashed border-line font-serif text-4xl text-dim"
+            aria-hidden="true">?</span>
+
+      <span class="font-mono text-sm text-dim">
+        <span aria-hidden="true">#??????</span>
+        <span class="cdk-visually-hidden">Not mixed</span>
+      </span>
+    </li>
+  }
+</ul>

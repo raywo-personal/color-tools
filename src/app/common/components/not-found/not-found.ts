@@ -1,23 +1,52 @@
-import {Component, computed, DOCUMENT, inject} from "@angular/core";
-import {ActivatedRoute, RouterLink} from "@angular/router";
-import {toSignal} from "@angular/core/rxjs-interop";
-import chroma, {Color} from "chroma-js";
-import {AppStateStore} from "@core/app-state.store";
-import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {Component, computed, inject, signal} from "@angular/core";
+import {Router, RouterLink} from "@angular/router";
+import {LiveAnnouncer} from "@angular/cdk/a11y";
+import chroma from "chroma-js";
 import {PALETTE_SLOTS} from "@palettes/models/palette.model";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import {generatePalette} from "@palettes/helper/palette.helper";
+import {colorName} from "@common/helpers/color-name.helper";
 
 
 /** Filled slots plus the empty ones that stand in for the missing page. */
 const SWATCH_COUNT = 8;
 
+const MISSING_SLOT_COUNT = SWATCH_COUNT - PALETTE_SLOTS.length;
+
 /**
- * Mirrors `$primary` in `src/app/styles/_variables.scss` and is only reached
- * when `--bs-primary` cannot be read - outside a browser, or before the
- * stylesheet has landed.
+ * The v1 accent, opening the page on a known color rather than a rolled one.
+ * It is a plain seed now: v2 has no themed accent, so there is no token to
+ * read it from and nothing it could drift out of step with.
  */
-const ACCENT_FALLBACK = "hsl(38.66, 100%, 49.61%)";
+const ACCENT = "hsl(38.66, 100%, 49.61%)";
+
+
+/**
+ * A mixed slot. The hex is what the page prints; the name is what a screen
+ * reader is given, because a hex code is read out one character at a time and
+ * says nothing about the color.
+ */
+interface Swatch {
+  readonly hex: string;
+  readonly name: string;
+}
+
+
+/**
+ * A muted analogous palette. Given a base color it varies the four members
+ * around it; given none it rolls the base as well, which is what makes a
+ * second palette look like a different palette rather than a reshuffle of
+ * the same hue.
+ */
+function mutedPalette(base?: string): Swatch[] {
+  const color0 = base ? paletteColorFrom(chroma(base), "color0") : undefined;
+  const palette = generatePalette("muted-analog-split", color0 ? {color0} : {});
+
+  return PALETTE_SLOTS.map(slot => ({
+    hex: palette[slot].color.hex().toUpperCase(),
+    name: colorName(palette[slot].color)
+  }));
+}
 
 
 /**
@@ -25,38 +54,52 @@ const ACCENT_FALLBACK = "hsl(38.66, 100%, 49.61%)";
  *
  * The SPA rewrite in `public/_redirects` answers every path with `index.html`
  * and HTTP 200, so an unknown path cannot produce a real 404 status. This
- * component makes the miss visible to the visitor instead of leaving the page
- * blank, and links back to the three feature routes - keeping the palette and
- * contrast colors the visitor already has, exactly as the top bar does.
+ * component makes the miss visible to the visitor instead of leaving the
+ * viewport blank.
+ *
+ * It carries a header of its own - the wordmark and the `ERROR 404` marker -
+ * which is what lets the route opt out of the app header. The wordmark is the
+ * way off the page, so it stays a link even though the page has no tabs.
+ *
+ * The picture below the text is a ColorTools palette that stops short: five
+ * colors, then the slots it never reached. A visitor who mistyped a path
+ * needs no color theory to read that, and it says what actually happened -
+ * something in a sequence is missing.
+ *
+ * `OUT OF GAMUT` therefore reads figuratively: the requested page lies
+ * outside the gamut of the pages that exist. It is not a claim about sRGB,
+ * and nothing on the page computes a gamut boundary.
  */
 @Component({
   selector: "ct-not-found",
   imports: [RouterLink],
-  templateUrl: "./not-found.html",
-  styleUrl: "./not-found.scss"
+  templateUrl: "./not-found.html"
 })
 export class NotFound {
 
-  readonly #document = inject(DOCUMENT);
-  readonly #route = inject(ActivatedRoute);
-  readonly #stateStore = inject(AppStateStore);
+  readonly #announcer = inject(LiveAnnouncer);
+  readonly #router = inject(Router);
+
+  readonly #swatches = signal(mutedPalette(ACCENT));
 
   /**
+   * `Router.url`, not `ActivatedRoute.url`: the segments carry the path alone,
+   * so a visitor who followed `/palletes?color=ff0000` would be told they
+   * asked for `/palletes`, and a percent-encoded segment would come back
+   * decoded. The address is the page's one factual claim, and the person
+   * reading it is chasing a broken link.
+   *
    * Two unknown paths share this route config, so the router reuses the
-   * component instance - a snapshot read would keep naming the first path.
+   * component instance. Reading `lastSuccessfulNavigation` is what re-reads
+   * the url for the second path - `Router.url` is a plain getter.
    */
-  readonly #segments = toSignal(this.#route.url, {initialValue: this.#route.snapshot.url});
+  protected readonly requestedPath = computed(() => {
+    this.#router.lastSuccessfulNavigation();
 
-  protected readonly requestedPath = computed(
-    () => "/" + this.#segments().map(segment => segment.path).join("/")
-  );
+    return this.#router.url;
+  });
 
-  /**
-   * A muted analogous palette grown from the accent color. Generated once per
-   * visit rather than read from the store, so the page keeps its designed look
-   * instead of inheriting whatever palette the visitor happens to carry.
-   */
-  protected readonly swatches = this.#accentPalette();
+  protected readonly swatches = this.#swatches.asReadonly();
 
   /**
    * The empty slots trailing the palette. A ColorTools palette holds exactly
@@ -64,32 +107,29 @@ export class NotFound {
    * missing - the visual echo of the route that does not exist.
    */
   protected readonly missingSlots = Array.from(
-    {length: SWATCH_COUNT - PALETTE_SLOTS.length},
+    {length: MISSING_SLOT_COUNT},
     (_, index) => index
   );
 
-  protected readonly paletteId = computed(() => this.#stateStore.currentPalette().id);
-
-  protected readonly contrastId = computed(() => {
-    return contrastIdFromColors(this.#stateStore.contrastColors());
-  });
-
-
-  #accentPalette(): string[] {
-    const accent = paletteColorFrom(this.#accentColor(), "color0");
-    const palette = generatePalette("muted-analog-split", {color0: accent});
-
-    return PALETTE_SLOTS.map(slot => palette[slot].color.hex().toUpperCase());
-  }
+  /**
+   * The chips are decoration and their labels are read out on their own, so
+   * the list says once what the two kinds of entry mean.
+   */
+  protected readonly swatchesLabel =
+    `A ColorTools palette of ${PALETTE_SLOTS.length} colors, `
+    + `with ${MISSING_SLOT_COUNT} slots left unmixed`;
 
 
-  /** Reads the accent straight off the theme so it cannot drift from `$primary`. */
-  #accentColor(): Color {
-    const declared = getComputedStyle(this.#document.documentElement)
-      .getPropertyValue("--bs-primary")
-      .trim();
+  /**
+   * Rolls a whole new palette, base color included. Nothing moves focus, so
+   * the outcome is announced rather than left to be discovered.
+   */
+  protected mixAnother(): void {
+    this.#swatches.set(mutedPalette());
 
-    return chroma(declared || ACCENT_FALLBACK);
+    const names = this.#swatches().map(swatch => swatch.name).join(", ");
+
+    void this.#announcer.announce(`New palette: ${names}`);
   }
 
 }

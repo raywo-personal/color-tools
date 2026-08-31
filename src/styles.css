@@ -2,6 +2,13 @@
    `.gitignore`, which makes every Markdown file a content source: the classes
    `CLAUDE.md` names as counter-examples were compiled into the stylesheet. */
 @import "tailwindcss" source(none);
+
+/* `LiveAnnouncer` appends its live region to the body carrying nothing but
+   `class="cdk-visually-hidden"`. Without the CDK's own stylesheet that class
+   is undefined, so every announcement renders as visible text at the bottom
+   of the page. */
+@import "@angular/cdk/a11y-prebuilt.css";
+
 @source "./app";
 @source "./index.html";
 

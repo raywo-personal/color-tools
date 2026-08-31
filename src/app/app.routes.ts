@@ -20,12 +20,12 @@ export const routes: Routes = [
   },
 
   {
-    // No `data: {appHeader: false}` here: this page has no header of its own,
-    // and its links point at the removed v1 routes, so without the app header
-    // a visitor on an old bookmark has no way off it. The opt-out belongs
-    // here once the page carries its own header.
+    // The only route that opts out. `NotFound` carries a header of its own -
+    // the wordmark links back into the studio - so a visitor who lands here
+    // still has a way off the page without the app header's tabs.
     path: "**",
     component: NotFound,
-    title: "ColorTools – Page not found"
+    title: "ColorTools – Page not found",
+    data: {appHeader: false}
   }
 ];
