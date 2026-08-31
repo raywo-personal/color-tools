@@ -30,8 +30,18 @@ describe("LocalStorage", () => {
   });
 
 
+  it("leaves the theme to the caller's fallback", () => {
+    // The one place the theme default lives is `initialState`, so the reducer's
+    // `getOrDefault("colorTheme", state.colorTheme)` has to be able to reach
+    // it. A value here would make that line unreachable and the two defaults
+    // would have to be kept equal by hand.
+    expect(EMPTY_SETTINGS.colorTheme).toBeUndefined();
+    expect(service.get("colorTheme")).toBeNull();
+  });
+
+
   it("reports the EMPTY_SETTINGS value for a key it does carry", () => {
-    expect(service.get("colorTheme")).toBe("system");
+    expect(service.get("currentPaletteId")).toBe(EMPTY_SETTINGS.currentPaletteId);
   });
 
 
