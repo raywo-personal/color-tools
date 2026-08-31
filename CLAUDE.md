@@ -141,7 +141,7 @@ rather than duplicating it here.
 
 The routed screens do not follow the state domains:
 
-- `src/app/shell/` – `AppHeader` and `ThemeControl`
+- `src/app/shell/` – `AppHeader`, `ThemeControl` and `CopyConfirmation`
 - `src/app/studio/` – the studio view
 - `src/app/contrast-type/` – the contrast and type view
 
@@ -620,6 +620,21 @@ only guaranteed against the six neutral surfaces.
 **Review only.** Regenerating a palette, rolling random colors, and switching
 text against background all replace content without moving focus, so a screen
 reader is told nothing. Announce the outcome through `LiveAnnouncer`.
+
+### Copying A Value Goes Through `CopyService`
+
+**Review only.** A copy target calls `copyColor()` or `copyText()` on
+`CopyService` (`src/app/common/services/copy.service.ts`) and never reaches for
+`navigator.clipboard` itself. The service writes, confirms through the toast the
+shell renders once, and announces through `LiveAnnouncer` - a screen copying on
+its own is an empty catch block and a forgotten announcement.
+
+`copyColor()` takes the color, plus the text to write where that is not the hex:
+the toast shows what landed on the clipboard, while speech always gets
+`colorName()`, because a hex code is read out one character at a time.
+
+The target itself is still a control - `h-11` hit area, an accessible name, and
+the ring offset its own class list has to carry.
 
 ### A Color Surface Carries Its Name
 

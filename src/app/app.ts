@@ -1,11 +1,12 @@
 import {Component, computed, DOCUMENT, inject} from "@angular/core";
 import {ActivatedRouteSnapshot, Router, RouterOutlet} from "@angular/router";
 import {AppHeader} from "@shell/components/app-header/app-header";
+import {CopyConfirmation} from "@shell/components/copy-confirmation/copy-confirmation";
 
 
 @Component({
   selector: "ct-root",
-  imports: [RouterOutlet, AppHeader],
+  imports: [RouterOutlet, AppHeader, CopyConfirmation],
   templateUrl: "./app.html",
   styles: ""
 })
