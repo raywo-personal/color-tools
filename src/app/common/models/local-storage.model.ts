@@ -16,7 +16,7 @@ export type SettingKey = keyof SettingsMap;
 
 export const EMPTY_SETTINGS: SettingsMap = {
   currentColor: "#787878",
-  colorTheme: "dark",
+  colorTheme: "system",
   currentPaletteId: "",
   selectedFont: null,
   contrastId: ""

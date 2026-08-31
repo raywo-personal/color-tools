@@ -6,6 +6,38 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- The stylesheet's `:root` block is the light palette, so a visitor whose
+       theme resolves to dark sees a light flash if `data-theme` is written
+       only once Angular has bootstrapped. This runs before the first paint
+       instead; from then on `ColorThemeService` is the only writer.
+
+       It duplicates the resolve step on purpose: reading it out of the store
+       would mean waiting for the bootstrap this exists to get ahead of. Do
+       not replace it with an effect. Keep the storage key in sync with
+       `LOCAL_STORAGE_KEY` and the fallback with `initialState.colorTheme`;
+       `boot-theme.spec.ts` pins both against this file. -->
+  <script>
+    (function () {
+      try {
+        var stored = JSON.parse(localStorage.getItem("color-tools") || "{}");
+        var theme = stored.colorTheme || "system";
+
+        if (theme === "system") {
+          theme = window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
+
+        if (theme === "dark" || theme === "light") {
+          document.documentElement.setAttribute("data-theme", theme);
+        }
+      } catch (_e) {
+        // A missing attribute falls through to the light palette, which is
+        // the best an unreadable setting can do.
+      }
+    })();
+  </script>
+
   <meta name="description" content="Free online color converter and palette generator. Convert between HEX, RGB, HSL, OKLCH and other color formats. Create harmonious color palettes for your design projects.">
   <meta name="keywords" content="color converter, color conversion, HEX to RGB, RGB to HSL, color palette, color scheme, color picker, color generator, design tools">
   <meta name="author" content="Ray Wojciechowski">

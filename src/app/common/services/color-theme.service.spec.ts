@@ -23,9 +23,15 @@ describe("ColorThemeService", () => {
   });
 
 
+  /**
+   * `matches` answers the dark query alone, so a service asking a different
+   * one gets `false` for both settings. The boot script in `index.html`
+   * resolves "system" with a second copy of that query, and only a pinned
+   * string keeps the two from drifting apart unnoticed.
+   */
   function mockSystemTheme(prefersDark: boolean): void {
     vi.spyOn(window, "matchMedia").mockImplementation(query => ({
-      matches: prefersDark,
+      matches: query === "(prefers-color-scheme: dark)" && prefersDark,
       media: query,
       onchange: null,
       addListener: () => undefined,
