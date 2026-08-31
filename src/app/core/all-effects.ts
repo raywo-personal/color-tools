@@ -7,12 +7,10 @@ import {inject} from "@angular/core";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {ColorThemeService} from "@common/services/color-theme.service";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
-import {Router} from "@angular/router";
 import {colorThemeChangeEffect, fontSelectedEffect} from "@core/common/common.effects";
 import {colorChangedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
-import {navigateToContrast, navigateToConvert, navigateToPaletteIdEffect} from "@core/common/navigation.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {transferEvents} from "@core/common/transfer.events";
 
@@ -25,8 +23,7 @@ export function allEffects(
   events = inject(Events),
   localStorageService = inject(LocalStorage),
   themeService = inject(ColorThemeService),
-  fontLoaderService = inject(GoogleFontLoaderService),
-  router = inject(Router)
+  fontLoaderService = inject(GoogleFontLoaderService)
 ) {
   return {
     setColorTheme$: colorThemeChangeEffect(events, themeService),
@@ -34,12 +31,6 @@ export function allEffects(
     loadFont$: fontSelectedEffect(events, fontLoaderService),
 
     setBackgroundColor$: useAsBackgroundChangedEffect(events, themeService, store),
-
-    navigateToPalette$: navigateToPaletteIdEffect(events, router, store),
-
-    navigateToContrast$: navigateToContrast(events, router, store),
-
-    navigateToConvert$: navigateToConvert(events, router),
 
     colorChanged$: colorChangedEffect(events, themeService, store),
 
