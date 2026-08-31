@@ -5,6 +5,7 @@ import chroma from "chroma-js";
 import {PALETTE_SLOTS} from "@palettes/models/palette.model";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import {generatePalette} from "@palettes/helper/palette.helper";
+import {colorName} from "@common/helpers/color-name.helper";
 
 
 /** Filled slots plus the empty ones that stand in for the missing page. */
@@ -21,16 +22,30 @@ const ACCENT = "hsl(38.66, 100%, 49.61%)";
 
 
 /**
+ * A mixed slot. The hex is what the page prints; the name is what a screen
+ * reader is given, because a hex code is read out one character at a time and
+ * says nothing about the color.
+ */
+interface Swatch {
+  readonly hex: string;
+  readonly name: string;
+}
+
+
+/**
  * A muted analogous palette. Given a base color it varies the four members
  * around it; given none it rolls the base as well, which is what makes a
  * second palette look like a different palette rather than a reshuffle of
  * the same hue.
  */
-function mutedPalette(base?: string): string[] {
+function mutedPalette(base?: string): Swatch[] {
   const color0 = base ? paletteColorFrom(chroma(base), "color0") : undefined;
   const palette = generatePalette("muted-analog-split", color0 ? {color0} : {});
 
-  return PALETTE_SLOTS.map(slot => palette[slot].color.hex().toUpperCase());
+  return PALETTE_SLOTS.map(slot => ({
+    hex: palette[slot].color.hex().toUpperCase(),
+    name: colorName(palette[slot].color)
+  }));
 }
 
 
@@ -112,7 +127,9 @@ export class NotFound {
   protected mixAnother(): void {
     this.#swatches.set(mutedPalette());
 
-    void this.#announcer.announce(`New palette: ${this.#swatches().join(", ")}`);
+    const names = this.#swatches().map(swatch => swatch.name).join(", ");
+
+    void this.#announcer.announce(`New palette: ${names}`);
   }
 
 }

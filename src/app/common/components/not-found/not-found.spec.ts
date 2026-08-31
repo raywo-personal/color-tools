@@ -3,6 +3,8 @@ import {provideRouter, Router, RouterOutlet} from "@angular/router";
 import {Component, provideZonelessChangeDetection} from "@angular/core";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {beforeEach, describe, expect, it, vi} from "vitest";
+import chroma from "chroma-js";
+import {colorName} from "@common/helpers/color-name.helper";
 import {NotFound} from "./not-found";
 
 
@@ -163,8 +165,22 @@ describe("NotFound", () => {
     page().querySelector("button")?.click();
     await fixture.whenStable();
 
-    expect(announce).toHaveBeenCalledWith(
-      `New palette: ${swatchLabels(page()).slice(0, 5).join(", ")}`);
+    const names = swatchLabels(page()).slice(0, 5)
+      .map(hex => colorName(chroma(hex)));
+
+    expect(announce).toHaveBeenCalledWith(`New palette: ${names.join(", ")}`);
+  });
+
+
+  it("announces color names, because a hex code is spelled out one character at a time", async () => {
+    const announce = vi.spyOn(TestBed.inject(LiveAnnouncer), "announce")
+      .mockResolvedValue(undefined);
+    const {fixture, page} = await renderAt("/does-not-exist");
+
+    page().querySelector("button")?.click();
+    await fixture.whenStable();
+
+    expect(announce.mock.calls[0][0]).not.toMatch(/#[0-9A-F]{6}/);
   });
 
 });
