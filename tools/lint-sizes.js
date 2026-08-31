@@ -39,6 +39,10 @@ const SKIPPED_DIRECTORIES = new Set(["node_modules", ".angular", "dist", "tmp"])
 const BREAKPOINTS = "sm|md|lg|xl|2xl";
 const ABSOLUTE_UNITS = "px|pt|pc|in|cm|mm|Q";
 
+// The type floor of the Accessibility section, as a number: text-sm is
+// 0.875rem and nothing goes below it.
+const TYPE_FLOOR = 0.875;
+
 const CHECKS = [
   {
     name: "absolute-length",
@@ -80,6 +84,25 @@ const CHECKS = [
     name: "type-below-text-sm",
     pattern: /(?<![a-zA-Z0-9-])text-xs(?![a-zA-Z0-9-])/g,
     message: "text-xs is below the text-sm floor for readable text",
+  },
+  {
+    name: "arbitrary-type-below-text-sm",
+    // The check above matches one class name, so the relative spelling of the
+    // same size walks past it - and that is the spelling the rule steers into,
+    // because "divide by 16" turns a 12px draft into 0.75rem. Both syntaxes
+    // reach font size: the utility with an arbitrary value (`text-[0.75rem]`,
+    // `text-[length:0.7em]`) and the arbitrary property
+    // (`[font-size:0.75rem]`).
+    //
+    // `em` is compared against the same floor as `rem`. It is relative to the
+    // parent rather than the root, so a value below the floor is not
+    // necessarily below it on screen - but reading the parent chain needs the
+    // rendered document, and a nested `em` is not the reason anyone writes
+    // `text-[0.7em]`.
+    pattern:
+      /(?:(?<![a-zA-Z0-9-])text-\[(?:length:)?|\[font-size:)(\d*\.?\d+)r?em\]/g,
+    accept: (match) => Number.parseFloat(match[1]) < TYPE_FLOOR,
+    message: `below the text-sm floor (${TYPE_FLOOR}rem) for readable text`,
   },
 ];
 
@@ -229,6 +252,10 @@ function findingsIn(file) {
 
       let match;
       while ((match = check.pattern.exec(line)) !== null) {
+        // A check whose rule is about a value rather than a spelling matches
+        // broadly and decides here - a regex cannot compare numbers.
+        if (check.accept && !check.accept(match)) continue;
+
         findings.push({
           file: file.relative,
           line: index + 1,

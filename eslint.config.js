@@ -13,7 +13,16 @@ const V1_SCREENS = require("./tools/v1-screens");
 
 module.exports = tseslint.config(
   {
-    ignores: [".angular/**", "dist/**", "tmp/**", ...V1_SCREENS],
+    // `resources/**` holds the design drafts, not app code: exported .dc.html
+    // pages with their own support.js. They are not ours to lint, and a config
+    // block for plain .js would otherwise pull them in.
+    ignores: [
+      ".angular/**",
+      "dist/**",
+      "tmp/**",
+      "resources/**",
+      ...V1_SCREENS,
+    ],
   },
   {
     files: ["src/**/*.ts"],

@@ -10,8 +10,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false",
-    "lint": "eslint . && node tools/lint-sizes.js",
-    "lint:fix": "eslint . --fix && node tools/lint-sizes.js",
+    "lint": "eslint . ; e=$? ; node tools/lint-sizes.js ; exit $(( e || $? ))",
+    "lint:fix": "eslint . --fix ; e=$? ; node tools/lint-sizes.js ; exit $(( e || $? ))",
     "cf": "set -a && . ./.cloudflare.env && set +a && wrangler"
   },
   "private": true,

@@ -378,6 +378,9 @@ way off the page.
 
 - Use signals for local component state
 - Use `computed()` for derived state
+- Mark a property holding a signal `readonly`. `pnpm lint` rejects
+  `protected count = signal(0)`: the signal is the mutable part, so reassigning
+  the property replaces the reference every consumer already read
 - Do NOT use `mutate()` on signals - use `update()` or `set()`
 - Keep state transformations pure
 - App-wide state goes through the central store, not into component state - see
@@ -420,9 +423,10 @@ divide by 16 and take the nearest scale step. Hairlines are the exception:
 an arbitrary value, so the check below never sees it.
 
 `tools/lint-sizes.js` enforces this, and `pnpm lint` runs it: it rejects an
-arbitrary value carrying an absolute unit, a `max-*:` variant, and `text-xs`.
-It also checks the ring offset, see "A Focus Ring Must Survive An Arbitrary
-Background".
+arbitrary value carrying an absolute unit, a `max-*:` variant, and any font
+size below the type floor - `text-xs` as well as the arbitrary spellings of
+the same size, `text-[0.75rem]` and `[font-size:0.75rem]`. It also checks the
+ring offset, see "A Focus Ring Must Survive An Arbitrary Background".
 A pixel length written as plain CSS is not covered - ESLint parses no
 stylesheet and the script reads Tailwind classes, so `font-size: 10px` in a
 component `.css` still holds by review.
@@ -484,6 +488,10 @@ do not add more.
 ahead of the build, so a finding blocks the deployment the way a failing test
 does.
 
+**Both halves always run, and the script combines their exit codes.** Do not
+join them with `&&`: that hides every sizing finding behind the first ESLint
+one, so the same run has to be repeated to see the rest.
+
 `eslint.config.js` is CommonJS on purpose - package.json declares no `type`, so
 a `.js` config is loaded as CommonJS. It turns on `typescript-eslint`'s
 `recommended`, `angular-eslint`'s `tsRecommended`, `templateRecommended` and
@@ -540,7 +548,8 @@ Only the type floor is checked; the hit area and the label hold by review.
 
 - Text a visitor reads is at least `text-base` (1rem). `text-sm` (0.875rem) is
   for secondary labels, and nothing goes below it. `pnpm lint` rejects
-  `text-xs`
+  `text-xs` and any arbitrary font size below 0.875 - dividing a small draft
+  size by 16 does not make it readable
 - A control that gets clicked or tapped is at least `h-11` (2.75rem) tall and as
   wide, hit area included – an icon-only button pads a small glyph out to that
   size rather than shrinking the target. A height built from padding is
