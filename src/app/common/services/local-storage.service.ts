@@ -6,7 +6,8 @@ import {BehaviorSubject} from "rxjs";
 @Service()
 export class LocalStorage {
 
-  private readonly settings = new Map<SettingKey, BehaviorSubject<SettingsMap[SettingKey]>>();
+  private readonly settings =
+    new Map<SettingKey, BehaviorSubject<SettingsMap[SettingKey] | undefined>>();
 
 
   constructor() {
@@ -16,7 +17,7 @@ export class LocalStorage {
 
   public set<K extends SettingKey>(key: K, value: SettingsMap[K]): void {
     const currentSettings = this.getAllSettings();
-    const newSettings: SettingsMap = {
+    const newSettings: Partial<SettingsMap> = {
       ...currentSettings,
       [key]: value
     };
@@ -44,16 +45,16 @@ export class LocalStorage {
   }
 
 
-  private getAllSettings(): SettingsMap {
+  private getAllSettings(): Partial<SettingsMap> {
     const storedSettings = localStorage.getItem(LOCAL_STORAGE_KEY);
 
     if (!storedSettings) return EMPTY_SETTINGS;
 
-    return JSON.parse(storedSettings) as SettingsMap;
+    return JSON.parse(storedSettings) as Partial<SettingsMap>;
   }
 
 
-  private saveAllSettings(settings: SettingsMap): void {
+  private saveAllSettings(settings: Partial<SettingsMap>): void {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings));
   }
 

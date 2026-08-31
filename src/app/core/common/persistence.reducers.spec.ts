@@ -1,6 +1,7 @@
 import {TestBed} from "@angular/core/testing";
 import {provideZonelessChangeDetection} from "@angular/core";
-import {afterEach, beforeEach, describe, expect, it} from "vitest";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import chroma from "chroma-js";
 import {loadAppStateReducer} from "@core/common/persistence.reducers";
 import {initialState} from "@core/models/app-state.model";
 import {LOCAL_STORAGE_KEY} from "@common/models/local-storage.model";
@@ -22,13 +23,19 @@ describe("loadAppStateReducer", () => {
 
   afterEach(() => {
     localStorage.clear();
+    vi.restoreAllMocks();
   });
 
 
-  function loadedTheme() {
+  function loaded() {
     return TestBed.runInInjectionContext(
-      () => loadAppStateReducer(loadEvent, initialState).colorTheme
+      () => loadAppStateReducer(loadEvent, initialState)
     );
+  }
+
+
+  function loadedTheme() {
+    return loaded().colorTheme;
   }
 
 
@@ -51,6 +58,25 @@ describe("loadAppStateReducer", () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({colorTheme: "light"}));
 
     expect(loadedTheme()).toBe("light");
+  });
+
+
+  it("rolls a color for a visitor who has never had one", () => {
+    // `chroma.random()` is stubbed rather than the test asserting against a
+    // distribution: the property is that the branch runs at all, and a fixed
+    // draw states it exactly. Note it does not read `Math.random`, so stubbing
+    // that pins nothing here. A value in `EMPTY_SETTINGS` made this branch
+    // unreachable, which is what the removal fixed.
+    vi.spyOn(chroma, "random").mockReturnValue(chroma("#abcdef"));
+
+    expect(loaded().currentColor.hex()).toBe("#abcdef");
+  });
+
+
+  it("reports a stored color as it is", () => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({currentColor: "#123456"}));
+
+    expect(loaded().currentColor.hex()).toBe("#123456");
   });
 
 });
