@@ -1,54 +1,86 @@
-<div class="not-found">
+<header class="flex items-center gap-7 border-b border-line pb-6 sm:pb-8">
+  <a routerLink="/"
+     class="flex h-11 items-center font-serif text-3xl leading-none font-normal tracking-tight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:text-4xl">Color Tools</a>
 
-  <div class="headline">
-    <p class="numeral" aria-hidden="true">4<span>0</span>4</p>
+  <span class="ml-auto font-mono text-sm tracking-widest text-dim">ERROR 404</span>
+</header>
 
-    <div class="statement">
-      <p class="eyebrow">Page not found</p>
-      <h2>This shade of the site doesn’t exist.</h2>
-      <p class="intro">
-        The link is broken or the page has moved. Pick up a tool below and keep
-        going.
-      </p>
+<div class="grid gap-12 py-10 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-center lg:gap-16">
+
+  <div>
+    <p class="font-mono text-sm tracking-widest text-dim">OUT OF GAMUT</p>
+
+    <h1 class="mt-5 font-serif text-5xl leading-none font-normal tracking-tight text-pretty sm:text-6xl lg:text-7xl">
+      404 – This shade of the site doesn’t exist.
+    </h1>
+
+    <p class="mt-6 max-w-[48ch] text-base leading-relaxed text-pretty">
+      The link is broken or the page has moved. Pick up a tool below and keep
+      going.
+    </p>
+
+    <div class="mt-8 flex flex-wrap items-center gap-3">
+      <!-- The ring is drawn in `text-bg`, so it is inset rather than offset:
+           outside the button it would sit on `bg` in the same color. -->
+      <a routerLink="/"
+         class="inline-flex h-11 items-center rounded-xs bg-text px-5 text-base text-bg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current">Back to the studio</a>
+
+      <button type="button"
+              class="inline-flex h-11 cursor-pointer items-center rounded-xs border border-line px-5 font-mono text-base tracking-widest text-dim hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+              (click)="mixAnother()">MIX ANOTHER</button>
     </div>
+
+    <!-- Both values name the color, not the requested path: a path has no
+         nearest valid neighbour until the final route set exists to match
+         against. The labels carry the difference, so the two values need no
+         color of their own to be told apart. -->
+    <dl class="mt-14 flex flex-wrap gap-x-10 gap-y-6 border-t border-line pt-4">
+      <div>
+        <dt class="font-mono text-sm tracking-widest text-dim">REQUESTED</dt>
+        <dd class="mt-2 font-mono text-base text-dim">{{ requested() }}</dd>
+      </div>
+
+      <div>
+        <dt class="font-mono text-sm tracking-widest text-dim">NEAREST VALID</dt>
+        <dd class="mt-2 font-mono text-base">{{ nearestValid() }}</dd>
+      </div>
+    </dl>
   </div>
 
-  <div class="swatches" aria-hidden="true">
-    @for (swatch of swatches; track $index) {
-      <div class="swatch">
-        <div class="chip" [style.background-color]="swatch"></div>
-        <p class="label">{{ swatch }}</p>
-      </div>
-    }
+  <!-- A picture, not a control: the visitor asked for a page, not for a
+       value. The swatch and its ramp are hidden rather than named, because the
+       caption below them and the two values beside them already say in text
+       what they show - so the caption itself stays readable. -->
+  <div>
+    <div class="h-64 rounded-xs border border-line"
+         aria-hidden="true"
+         [style.background-color]="colorHex()"></div>
 
-    @for (slot of missingSlots; track slot) {
-      <div class="swatch">
-        <div class="chip empty"></div>
-        <p class="label">—</p>
-      </div>
-    }
+    <div class="mt-1 flex gap-0.5" aria-hidden="true">
+      @for (tint of tints(); track $index) {
+        <div class="h-8 flex-1 rounded-xs" [style.background-color]="tint"></div>
+      }
+    </div>
+
+    <p class="mt-4 font-mono text-sm tracking-wide text-dim">{{ caption() }}</p>
   </div>
-
-  <nav class="actions" aria-label="ColorTools tools">
-    <a class="btn primary-action"
-       [routerLink]="['/convert']">
-      Open the Converter
-    </a>
-
-    <a class="btn"
-       [routerLink]="['/palettes', paletteId()]">
-      Build a Color Palette
-    </a>
-
-    <a class="btn"
-       [routerLink]="['/contrast', contrastId()]">
-      Check Contrast
-    </a>
-  </nav>
-
-  <p class="requested">
-    <span>Requested address</span>
-    <code>{{ requestedPath() }}</code>
-  </p>
 
 </div>
+
+<!-- Four entries for the two views v2 renders: the studio answers three of
+     them today and grows sections of its own to anchor into later. -->
+<footer class="flex flex-wrap items-center gap-x-6 border-t border-line pt-2">
+  <span class="font-mono text-sm tracking-widest text-dim">TRY INSTEAD</span>
+
+  <a routerLink="/"
+     class="inline-flex h-11 items-center text-base underline underline-offset-4 hover:text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">Converter</a>
+
+  <a routerLink="/"
+     class="inline-flex h-11 items-center text-base underline underline-offset-4 hover:text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">Palettes</a>
+
+  <a routerLink="/"
+     class="inline-flex h-11 items-center text-base underline underline-offset-4 hover:text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">Tints &amp; shades</a>
+
+  <a routerLink="/contrast"
+     class="inline-flex h-11 items-center text-base underline underline-offset-4 hover:text-dim focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">Contrast &amp; type</a>
+</footer>

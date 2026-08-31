@@ -340,7 +340,10 @@ Only template-driven forms are in use:
 - The SPA rewrite in `public/_redirects` answers every path with `index.html`
   and HTTP 200, so an unknown path cannot produce a real 404 status.
   `NotFound` (`src/app/common/components/not-found/`) makes the miss visible to
-  the visitor instead of leaving the viewport blank
+  the visitor instead of leaving the viewport blank. Its `REQUESTED` and
+  `NEAREST VALID` values name a color rather than the requested path: a path
+  has no nearest valid neighbour until the final route set exists to match
+  against
 - Every route carries a `title`. Angular's `DefaultTitleStrategy` leaves the
   previous title standing when a route has none, so a route without one shows
   the tab title of wherever the visitor came from
@@ -350,10 +353,12 @@ Only template-driven forms are in use:
 Anything else gets the header, so a new screen needs no entry to be framed
 correctly. `app.spec.ts` pins both halves.
 
-No route in the table opts out. A screen may only do so once it carries a
-header of its own: without one there is no title, no tabs and no theme
-control, and a visitor who arrives on a url the router does not answer has no
-way off the page.
+The wildcard route is the only one that opts out, because `NotFound` carries
+a header of its own. A screen may only do so on the same terms: without a
+header there is no title, no tabs and no theme control, and a visitor who
+arrives on a url the router does not answer has no way off the page. That way
+off is the requirement, not the header markup - `NotFound`'s wordmark links
+into the studio and `not-found.spec.ts` pins it.
 
 ### Services
 

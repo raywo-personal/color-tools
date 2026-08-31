@@ -41,26 +41,26 @@ describe("App", () => {
   });
 
 
-  it("renders the app header on an unknown path, because the not-found page has none", async () => {
+  it("leaves the app header out on an unknown path, because the not-found page carries its own", async () => {
     configure(routes);
 
     const shell = await shellAt("/does-not-exist");
 
-    expect(shell.querySelector("header[ct-app-header]")).not.toBeNull();
+    expect(shell.querySelector("header[ct-app-header]")).toBeNull();
   });
 
 
-  it("leaves the app header out where a route opts out of it", async () => {
-    // No route in `app.routes.ts` opts out while the not-found page has no
-    // header of its own, so the mechanism is pinned against a route table of
-    // this test's own.
+  it("renders the app header for a route that says nothing about it", async () => {
+    // Both real routes name a component of their own, so the default is
+    // pinned against a route table of this test's own: a screen needs no
+    // entry to be framed correctly.
     configure([
-      {path: "carries-its-own", component: Placeholder, data: {appHeader: false}}
+      {path: "says-nothing", component: Placeholder}
     ]);
 
-    const shell = await shellAt("/carries-its-own");
+    const shell = await shellAt("/says-nothing");
 
-    expect(shell.querySelector("header[ct-app-header]")).toBeNull();
+    expect(shell.querySelector("header[ct-app-header]")).not.toBeNull();
   });
 
 });

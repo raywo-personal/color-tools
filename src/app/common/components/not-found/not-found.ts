@@ -1,23 +1,33 @@
-import {Component, computed, DOCUMENT, inject} from "@angular/core";
-import {ActivatedRoute, RouterLink} from "@angular/router";
-import {toSignal} from "@angular/core/rxjs-interop";
-import chroma, {Color} from "chroma-js";
-import {AppStateStore} from "@core/app-state.store";
-import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
-import {PALETTE_SLOTS} from "@palettes/models/palette.model";
-import {paletteColorFrom} from "@palettes/models/palette-color.model";
-import {generatePalette} from "@palettes/helper/palette.helper";
+import {Component, computed, inject, signal} from "@angular/core";
+import {RouterLink} from "@angular/router";
+import {LiveAnnouncer} from "@angular/cdk/a11y";
+import {fromOklch} from "@common/helpers/color-from-oklch.helper";
+import {maxChroma} from "@common/helpers/oklch.helper";
+import {createTints} from "@common/helpers/tints-and-shades.helper";
+import {OKLCH} from "@palettes/models/oklch.model";
 
 
-/** Filled slots plus the empty ones that stand in for the missing page. */
-const SWATCH_COUNT = 8;
+/** Steps in the tint strip below the swatch. */
+const TINT_COUNT = 8;
 
 /**
- * Mirrors `$primary` in `src/app/styles/_variables.scss` and is only reached
- * when `--bs-primary` cannot be read - outside a browser, or before the
- * stylesheet has landed.
+ * Coordinates whose chroma sRGB cannot hold at that lightness and hue, so
+ * every one of them has a story to tell: what was asked for, and what the
+ * gamut gives back instead.
  */
-const ACCENT_FALLBACK = "hsl(38.66, 100%, 49.61%)";
+const OUT_OF_GAMUT: readonly OKLCH[] = [
+  {l: 0.62, c: 0.34, h: 268},
+  {l: 0.55, c: 0.36, h: 24},
+  {l: 0.70, c: 0.32, h: 148},
+  {l: 0.48, c: 0.33, h: 320},
+  {l: 0.75, c: 0.30, h: 92}
+];
+
+
+/** Formats OKLch coordinates the way CSS spells them. */
+function oklchText(oklch: OKLCH, chromacity: number): string {
+  return `oklch(${(oklch.l * 100).toFixed(0)}% ${chromacity.toFixed(3)} ${oklch.h})`;
+}
 
 
 /**
@@ -25,71 +35,78 @@ const ACCENT_FALLBACK = "hsl(38.66, 100%, 49.61%)";
  *
  * The SPA rewrite in `public/_redirects` answers every path with `index.html`
  * and HTTP 200, so an unknown path cannot produce a real 404 status. This
- * component makes the miss visible to the visitor instead of leaving the page
- * blank, and links back to the three feature routes - keeping the palette and
- * contrast colors the visitor already has, exactly as the top bar does.
+ * component makes the miss visible to the visitor instead of leaving the
+ * viewport blank.
+ *
+ * It carries a header of its own - the wordmark and the `ERROR 404` marker -
+ * which is what lets the route opt out of the app header. The wordmark is the
+ * way off the page, so it stays a link even though the page has no tabs.
+ *
+ * `REQUESTED` and `NEAREST VALID` are stand-ins showing a color instead of
+ * the requested path. The path half is cheap, but the pair only reads as a
+ * pair once `NEAREST VALID` names the nearest existing route - and that needs
+ * the final route set to match against.
  */
 @Component({
   selector: "ct-not-found",
   imports: [RouterLink],
-  templateUrl: "./not-found.html",
-  styleUrl: "./not-found.scss"
+  templateUrl: "./not-found.html"
 })
 export class NotFound {
 
-  readonly #document = inject(DOCUMENT);
-  readonly #route = inject(ActivatedRoute);
-  readonly #stateStore = inject(AppStateStore);
+  readonly #announcer = inject(LiveAnnouncer);
 
-  /**
-   * Two unknown paths share this route config, so the router reuses the
-   * component instance - a snapshot read would keep naming the first path.
-   */
-  readonly #segments = toSignal(this.#route.url, {initialValue: this.#route.snapshot.url});
+  readonly #seed = signal(0);
 
-  protected readonly requestedPath = computed(
-    () => "/" + this.#segments().map(segment => segment.path).join("/")
+  readonly #variant = computed(
+    () => OUT_OF_GAMUT[this.#seed() % OUT_OF_GAMUT.length]
   );
 
-  /**
-   * A muted analogous palette grown from the accent color. Generated once per
-   * visit rather than read from the store, so the page keeps its designed look
-   * instead of inheriting whatever palette the visitor happens to carry.
-   */
-  protected readonly swatches = this.#accentPalette();
+  /** The chroma sRGB actually holds at the variant's lightness and hue. */
+  readonly #clippedChroma = computed(() => {
+    const variant = this.#variant();
 
-  /**
-   * The empty slots trailing the palette. A ColorTools palette holds exactly
-   * `PALETTE_SLOTS.length` colors, so the remainder is what the page is
-   * missing - the visual echo of the route that does not exist.
-   */
-  protected readonly missingSlots = Array.from(
-    {length: SWATCH_COUNT - PALETTE_SLOTS.length},
-    (_, index) => index
-  );
-
-  protected readonly paletteId = computed(() => this.#stateStore.currentPalette().id);
-
-  protected readonly contrastId = computed(() => {
-    return contrastIdFromColors(this.#stateStore.contrastColors());
+    return Math.min(variant.c, maxChroma(variant.l, variant.h));
   });
 
+  readonly #color = computed(() => fromOklch(this.#variant()));
 
-  #accentPalette(): string[] {
-    const accent = paletteColorFrom(this.#accentColor(), "color0");
-    const palette = generatePalette("muted-analog-split", {color0: accent});
+  protected readonly colorHex = computed(
+    () => this.#color().hex().toUpperCase()
+  );
 
-    return PALETTE_SLOTS.map(slot => palette[slot].color.hex().toUpperCase());
-  }
+  /**
+   * The ramp under the swatch. The base color sits above it and pure white
+   * would be invisible on `bg`, so both ends of the scale are dropped.
+   */
+  protected readonly tints = computed(
+    () => createTints(this.#color(), true, true, TINT_COUNT + 2)
+      .slice(1, TINT_COUNT + 1)
+      .map(tint => tint.hex().toUpperCase())
+  );
+
+  protected readonly requested = computed(
+    () => oklchText(this.#variant(), this.#variant().c)
+  );
+
+  protected readonly nearestValid = computed(
+    () => `${oklchText(this.#variant(), this.#clippedChroma())} · ${this.colorHex()}`
+  );
+
+  protected readonly caption = computed(
+    () => `Requested chroma ${this.#variant().c.toFixed(3)} clipped to `
+      + `${this.#clippedChroma().toFixed(3)} in sRGB.`
+  );
 
 
-  /** Reads the accent straight off the theme so it cannot drift from `$primary`. */
-  #accentColor(): Color {
-    const declared = getComputedStyle(this.#document.documentElement)
-      .getPropertyValue("--bs-primary")
-      .trim();
+  /**
+   * Rolls the next out-of-gamut color. Nothing moves focus, so the outcome
+   * is announced rather than left to be discovered.
+   */
+  protected mixAnother(): void {
+    this.#seed.update(seed => seed + 1);
 
-    return chroma(declared || ACCENT_FALLBACK);
+    void this.#announcer.announce(`Mixed ${this.nearestValid()}`);
   }
 
 }
