@@ -39,9 +39,14 @@ describe("NotFound", () => {
   }
 
 
+  /** The label as it is seen, with any screen-reader-only text taken back out. */
   function swatchLabels(page: HTMLElement): string[] {
-    return Array.from(page.querySelectorAll("li span:last-child"))
-      .map(label => label.textContent?.trim() ?? "");
+    return Array.from(page.querySelectorAll("li > span:last-child"))
+      .map(label => {
+        const hidden = label.querySelector(".cdk-visually-hidden")?.textContent ?? "";
+
+        return (label.textContent ?? "").replace(hidden, "").trim();
+      });
   }
 
 
@@ -81,6 +86,17 @@ describe("NotFound", () => {
   });
 
 
+  it("puts the palette after the way out, so a short viewport cuts the picture", async () => {
+    const {page} = await renderAt("/does-not-exist");
+
+    const links = page().querySelector("nav");
+    const palette = page().querySelector("ul");
+    const order = links?.compareDocumentPosition(palette as Node);
+
+    expect(order).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+
   it("stops the palette short, which is what makes the page a picture of a miss", async () => {
     const {page} = await renderAt("/does-not-exist");
 
@@ -88,7 +104,7 @@ describe("NotFound", () => {
 
     expect(labels).toHaveLength(8);
     expect(labels.slice(0, 5).every(label => /^#[0-9A-F]{6}$/.test(label))).toBe(true);
-    expect(labels.slice(5)).toEqual(["—", "—", "—"]);
+    expect(labels.slice(5)).toEqual(["#??????", "#??????", "#??????"]);
   });
 
 
@@ -99,11 +115,22 @@ describe("NotFound", () => {
 
     expect(list?.getAttribute("aria-label")).toBe(
       "A ColorTools palette of 5 colors, with 3 slots left unmixed");
-    expect(page().querySelectorAll("li [aria-hidden=\"true\"]")).toHaveLength(8);
+    expect(page().querySelectorAll("li > span:first-child[aria-hidden=\"true\"]"))
+      .toHaveLength(8);
   });
 
 
-  it("rolls a different palette on demand", async () => {
+  it("names the unmixed slots for a screen reader too, not with six question marks", async () => {
+    const {page} = await renderAt("/does-not-exist");
+
+    const hidden = Array.from(page().querySelectorAll(".cdk-visually-hidden"))
+      .map(text => text.textContent?.trim());
+
+    expect(hidden).toEqual(["Not mixed", "Not mixed", "Not mixed"]);
+  });
+
+
+  it("rolls a whole new palette on demand, base color included", async () => {
     const {fixture, page} = await renderAt("/does-not-exist");
     const before = swatchLabels(page());
 

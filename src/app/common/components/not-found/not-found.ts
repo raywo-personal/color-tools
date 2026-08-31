@@ -14,21 +14,22 @@ const SWATCH_COUNT = 8;
 const MISSING_SLOT_COUNT = SWATCH_COUNT - PALETTE_SLOTS.length;
 
 /**
- * The v1 accent. It is a seed now rather than a theme value: v2 has no
- * themed accent color, and reading one off the root element would either
- * find nothing or tie the page to a token the design system does not have.
+ * The v1 accent, opening the page on a known color rather than a rolled one.
+ * It is a plain seed now: v2 has no themed accent, so there is no token to
+ * read it from and nothing it could drift out of step with.
  */
 const ACCENT = "hsl(38.66, 100%, 49.61%)";
 
 
 /**
- * A muted analogous palette grown from the accent. Rolled per call - the
- * generator jitters every member the pinned color does not fix - so mixing
- * another one produces a palette rather than the same one again.
+ * A muted analogous palette. Given a base color it varies the four members
+ * around it; given none it rolls the base as well, which is what makes a
+ * second palette look like a different palette rather than a reshuffle of
+ * the same hue.
  */
-function accentPalette(): string[] {
-  const accent = paletteColorFrom(chroma(ACCENT), "color0");
-  const palette = generatePalette("muted-analog-split", {color0: accent});
+function mutedPalette(base?: string): string[] {
+  const color0 = base ? paletteColorFrom(chroma(base), "color0") : undefined;
+  const palette = generatePalette("muted-analog-split", color0 ? {color0} : {});
 
   return PALETTE_SLOTS.map(slot => palette[slot].color.hex().toUpperCase());
 }
@@ -46,10 +47,14 @@ function accentPalette(): string[] {
  * which is what lets the route opt out of the app header. The wordmark is the
  * way off the page, so it stays a link even though the page has no tabs.
  *
- * The picture beside the text is a ColorTools palette that stops short: five
+ * The picture below the text is a ColorTools palette that stops short: five
  * colors, then the slots it never reached. A visitor who mistyped a path
  * needs no color theory to read that, and it says what actually happened -
- * something in a sequence is missing, not something impossible was asked for.
+ * something in a sequence is missing.
+ *
+ * `OUT OF GAMUT` therefore reads figuratively: the requested page lies
+ * outside the gamut of the pages that exist. It is not a claim about sRGB,
+ * and nothing on the page computes a gamut boundary.
  */
 @Component({
   selector: "ct-not-found",
@@ -67,7 +72,7 @@ export class NotFound {
    */
   readonly #segments = toSignal(this.#route.url, {initialValue: this.#route.snapshot.url});
 
-  readonly #swatches = signal(accentPalette());
+  readonly #swatches = signal(mutedPalette(ACCENT));
 
   protected readonly requestedPath = computed(
     () => "/" + this.#segments().map(segment => segment.path).join("/")
@@ -86,8 +91,8 @@ export class NotFound {
   );
 
   /**
-   * The chips are decoration and the hex labels beside them are read out on
-   * their own, so the list says once what the two kinds of row mean.
+   * The chips are decoration and their labels are read out on their own, so
+   * the list says once what the two kinds of entry mean.
    */
   protected readonly swatchesLabel =
     `A ColorTools palette of ${PALETTE_SLOTS.length} colors, `
@@ -95,11 +100,11 @@ export class NotFound {
 
 
   /**
-   * Rolls the palette again. Nothing moves focus, so the outcome is
-   * announced rather than left to be discovered.
+   * Rolls a whole new palette, base color included. Nothing moves focus, so
+   * the outcome is announced rather than left to be discovered.
    */
   protected mixAnother(): void {
-    this.#swatches.set(accentPalette());
+    this.#swatches.set(mutedPalette());
 
     void this.#announcer.announce(`New palette: ${this.#swatches().join(", ")}`);
   }
