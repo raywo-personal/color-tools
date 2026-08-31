@@ -8,7 +8,7 @@ import {ThemeControl} from "@shell/components/theme-control/theme-control";
   imports: [RouterLink, ThemeControl],
   templateUrl: "./app-header.html",
   host: {
-    "class": "flex flex-wrap items-center gap-7 border-b border-line pb-8"
+    "class": "flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:flex-wrap sm:items-center sm:gap-7 sm:pb-8"
   }
 })
 export class AppHeader {
