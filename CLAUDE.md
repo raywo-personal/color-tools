@@ -484,6 +484,20 @@ sees `"system"`. The `dark:` variant is bound to that attribute through
 `@custom-variant`, so `prefers-color-scheme` alone changes nothing - a visitor
 who picked a theme keeps it.
 
+The service is not the first writer, though: the inline script in
+`src/index.html` puts the attribute on `<html>` before the first paint, because
+a theme applied only after the bootstrap is a visible flash.
+`boot-theme.spec.ts` runs that script out of the real file and pins its storage
+key against `LOCAL_STORAGE_KEY` and its fallback against
+`initialState.colorTheme`.
+
+**Critical CSS inlining stays off** (`optimization.styles.inlineCritical:
+false` in the `production` and `cloudflare` configurations). Beasties inlines
+the rules that match the *static* `index.html`, whose root carries no
+`data-theme` yet, so the `:root[data-theme="dark"]` block is left in the
+deferred stylesheet - and a dark visitor paints light until it arrives. Turning
+the flag back on undoes the boot script.
+
 ### No Sass In New Styles
 
 Tailwind v4 does not run through a preprocessor: the global stylesheet is plain

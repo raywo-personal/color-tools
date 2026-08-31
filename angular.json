@@ -58,6 +58,11 @@
                   "maximumError": "8kB"
                 }
               ],
+              "optimization": {
+                "styles": {
+                  "inlineCritical": false
+                }
+              },
               "outputHashing": "all"
             },
             "cloudflare": {
@@ -73,6 +78,11 @@
                   "maximumError": "8kB"
                 }
               ],
+              "optimization": {
+                "styles": {
+                  "inlineCritical": false
+                }
+              },
               "outputHashing": "all",
               "localize": false,
               "fileReplacements": [

@@ -35,7 +35,7 @@ export function loadAppStateReducer(
     : generateRandomContrastColors();
 
   return {
-    colorTheme: persistence.getOrDefault("colorTheme", "dark"),
+    colorTheme: persistence.getOrDefault("colorTheme", state.colorTheme),
     currentColor,
     tintColors,
     shadeColors,
