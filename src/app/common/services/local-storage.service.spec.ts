@@ -53,6 +53,21 @@ describe("LocalStorage", () => {
   });
 
 
+  it("falls back to the defaults when the stored entry is unreadable", () => {
+    // The constructor reads the entry, so an unguarded parse throws right
+    // here - and with it every `inject(LocalStorage)`, which is how the app
+    // loads its state at all.
+    localStorage.setItem(LOCAL_STORAGE_KEY, "{not json");
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({providers: [provideZonelessChangeDetection()]});
+
+    const corrupted = TestBed.inject(LocalStorage);
+
+    expect(corrupted.get("currentPaletteId")).toBe(EMPTY_SETTINGS.currentPaletteId);
+    expect(corrupted.get("colorTheme")).toBeNull();
+  });
+
+
   it("keeps the other keys when one is written", () => {
     service.set("colorTheme", "dark");
     service.set("currentColor", "#123456");
