@@ -340,10 +340,10 @@ Only template-driven forms are in use:
 - The SPA rewrite in `public/_redirects` answers every path with `index.html`
   and HTTP 200, so an unknown path cannot produce a real 404 status.
   `NotFound` (`src/app/common/components/not-found/`) makes the miss visible to
-  the visitor instead of leaving the viewport blank. Its `REQUESTED` and
-  `NEAREST VALID` values name a color rather than the requested path: a path
-  has no nearest valid neighbour until the final route set exists to match
-  against
+  the visitor instead of leaving the viewport blank, and names the path that
+  was asked for. It reads that path from `ActivatedRoute.url` rather than the
+  snapshot: two unknown paths share the one route config, so the router reuses
+  the component and a snapshot read would keep naming the first path
 - Every route carries a `title`. Angular's `DefaultTitleStrategy` leaves the
   previous title standing when a route has none, so a route without one shows
   the tab title of wherever the visitor came from

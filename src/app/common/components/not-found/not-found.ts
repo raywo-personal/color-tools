@@ -1,32 +1,36 @@
 import {Component, computed, inject, signal} from "@angular/core";
-import {RouterLink} from "@angular/router";
+import {ActivatedRoute, RouterLink} from "@angular/router";
+import {toSignal} from "@angular/core/rxjs-interop";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
-import {fromOklch} from "@common/helpers/color-from-oklch.helper";
-import {maxChroma} from "@common/helpers/oklch.helper";
-import {createTints} from "@common/helpers/tints-and-shades.helper";
-import {OKLCH} from "@palettes/models/oklch.model";
+import chroma from "chroma-js";
+import {PALETTE_SLOTS} from "@palettes/models/palette.model";
+import {paletteColorFrom} from "@palettes/models/palette-color.model";
+import {generatePalette} from "@palettes/helper/palette.helper";
 
 
-/** Steps in the tint strip below the swatch. */
-const TINT_COUNT = 8;
+/** Filled slots plus the empty ones that stand in for the missing page. */
+const SWATCH_COUNT = 8;
+
+const MISSING_SLOT_COUNT = SWATCH_COUNT - PALETTE_SLOTS.length;
 
 /**
- * Coordinates whose chroma sRGB cannot hold at that lightness and hue, so
- * every one of them has a story to tell: what was asked for, and what the
- * gamut gives back instead.
+ * The v1 accent. It is a seed now rather than a theme value: v2 has no
+ * themed accent color, and reading one off the root element would either
+ * find nothing or tie the page to a token the design system does not have.
  */
-const OUT_OF_GAMUT: readonly OKLCH[] = [
-  {l: 0.62, c: 0.34, h: 268},
-  {l: 0.55, c: 0.36, h: 24},
-  {l: 0.70, c: 0.32, h: 148},
-  {l: 0.48, c: 0.33, h: 320},
-  {l: 0.75, c: 0.30, h: 92}
-];
+const ACCENT = "hsl(38.66, 100%, 49.61%)";
 
 
-/** Formats OKLch coordinates the way CSS spells them. */
-function oklchText(oklch: OKLCH, chromacity: number): string {
-  return `oklch(${(oklch.l * 100).toFixed(0)}% ${chromacity.toFixed(3)} ${oklch.h})`;
+/**
+ * A muted analogous palette grown from the accent. Rolled per call - the
+ * generator jitters every member the pinned color does not fix - so mixing
+ * another one produces a palette rather than the same one again.
+ */
+function accentPalette(): string[] {
+  const accent = paletteColorFrom(chroma(ACCENT), "color0");
+  const palette = generatePalette("muted-analog-split", {color0: accent});
+
+  return PALETTE_SLOTS.map(slot => palette[slot].color.hex().toUpperCase());
 }
 
 
@@ -42,10 +46,10 @@ function oklchText(oklch: OKLCH, chromacity: number): string {
  * which is what lets the route opt out of the app header. The wordmark is the
  * way off the page, so it stays a link even though the page has no tabs.
  *
- * `REQUESTED` and `NEAREST VALID` are stand-ins showing a color instead of
- * the requested path. The path half is cheap, but the pair only reads as a
- * pair once `NEAREST VALID` names the nearest existing route - and that needs
- * the final route set to match against.
+ * The picture beside the text is a ColorTools palette that stops short: five
+ * colors, then the slots it never reached. A visitor who mistyped a path
+ * needs no color theory to read that, and it says what actually happened -
+ * something in a sequence is missing, not something impossible was asked for.
  */
 @Component({
   selector: "ct-not-found",
@@ -55,58 +59,49 @@ function oklchText(oklch: OKLCH, chromacity: number): string {
 export class NotFound {
 
   readonly #announcer = inject(LiveAnnouncer);
-
-  readonly #seed = signal(0);
-
-  readonly #variant = computed(
-    () => OUT_OF_GAMUT[this.#seed() % OUT_OF_GAMUT.length]
-  );
-
-  /** The chroma sRGB actually holds at the variant's lightness and hue. */
-  readonly #clippedChroma = computed(() => {
-    const variant = this.#variant();
-
-    return Math.min(variant.c, maxChroma(variant.l, variant.h));
-  });
-
-  readonly #color = computed(() => fromOklch(this.#variant()));
-
-  protected readonly colorHex = computed(
-    () => this.#color().hex().toUpperCase()
-  );
+  readonly #route = inject(ActivatedRoute);
 
   /**
-   * The ramp under the swatch. The base color sits above it and pure white
-   * would be invisible on `bg`, so both ends of the scale are dropped.
+   * Two unknown paths share this route config, so the router reuses the
+   * component instance - a snapshot read would keep naming the first path.
    */
-  protected readonly tints = computed(
-    () => createTints(this.#color(), true, true, TINT_COUNT + 2)
-      .slice(1, TINT_COUNT + 1)
-      .map(tint => tint.hex().toUpperCase())
+  readonly #segments = toSignal(this.#route.url, {initialValue: this.#route.snapshot.url});
+
+  readonly #swatches = signal(accentPalette());
+
+  protected readonly requestedPath = computed(
+    () => "/" + this.#segments().map(segment => segment.path).join("/")
   );
 
-  protected readonly requested = computed(
-    () => oklchText(this.#variant(), this.#variant().c)
+  protected readonly swatches = this.#swatches.asReadonly();
+
+  /**
+   * The empty slots trailing the palette. A ColorTools palette holds exactly
+   * `PALETTE_SLOTS.length` colors, so the remainder is what the page is
+   * missing - the visual echo of the route that does not exist.
+   */
+  protected readonly missingSlots = Array.from(
+    {length: MISSING_SLOT_COUNT},
+    (_, index) => index
   );
 
-  protected readonly nearestValid = computed(
-    () => `${oklchText(this.#variant(), this.#clippedChroma())} · ${this.colorHex()}`
-  );
-
-  protected readonly caption = computed(
-    () => `Requested chroma ${this.#variant().c.toFixed(3)} clipped to `
-      + `${this.#clippedChroma().toFixed(3)} in sRGB.`
-  );
+  /**
+   * The chips are decoration and the hex labels beside them are read out on
+   * their own, so the list says once what the two kinds of row mean.
+   */
+  protected readonly swatchesLabel =
+    `A ColorTools palette of ${PALETTE_SLOTS.length} colors, `
+    + `with ${MISSING_SLOT_COUNT} slots left unmixed`;
 
 
   /**
-   * Rolls the next out-of-gamut color. Nothing moves focus, so the outcome
-   * is announced rather than left to be discovered.
+   * Rolls the palette again. Nothing moves focus, so the outcome is
+   * announced rather than left to be discovered.
    */
   protected mixAnother(): void {
-    this.#seed.update(seed => seed + 1);
+    this.#swatches.set(accentPalette());
 
-    void this.#announcer.announce(`Mixed ${this.nearestValid()}`);
+    void this.#announcer.announce(`New palette: ${this.#swatches().join(", ")}`);
   }
 
 }
