@@ -45,12 +45,23 @@ export class LocalStorage {
   }
 
 
+  /**
+   * An unreadable entry falls back to the defaults rather than throwing.
+   * `initSettings()` runs from the constructor and `loadAppStateReducer`
+   * injects this service, so a throw here leaves the visitor without an app at
+   * all - a blank viewport, not a wrong theme. The boot script in
+   * `index.html` makes the same promise for the same reason.
+   */
   private getAllSettings(): Partial<SettingsMap> {
     const storedSettings = localStorage.getItem(LOCAL_STORAGE_KEY);
 
     if (!storedSettings) return EMPTY_SETTINGS;
 
-    return JSON.parse(storedSettings) as Partial<SettingsMap>;
+    try {
+      return JSON.parse(storedSettings) as Partial<SettingsMap>;
+    } catch {
+      return EMPTY_SETTINGS;
+    }
   }
 
 

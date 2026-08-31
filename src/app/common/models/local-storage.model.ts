@@ -24,7 +24,6 @@ export type SettingKey = keyof SettingsMap;
  * default should live.
  */
 export const EMPTY_SETTINGS: Partial<SettingsMap> = {
-  colorTheme: "system",
   currentPaletteId: "",
   selectedFont: null,
   contrastId: ""

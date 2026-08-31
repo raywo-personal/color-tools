@@ -496,7 +496,8 @@ false` in the `production` and `cloudflare` configurations). Beasties inlines
 the rules that match the *static* `index.html`, whose root carries no
 `data-theme` yet, so the `:root[data-theme="dark"]` block is left in the
 deferred stylesheet - and a dark visitor paints light until it arrives. Turning
-the flag back on undoes the boot script.
+the flag back on undoes the boot script, so `boot-theme.spec.ts` reads
+`angular.json` and fails on any configuration that optimizes without it.
 
 ### No Sass In New Styles
 

@@ -54,6 +54,16 @@ describe("loadAppStateReducer", () => {
   });
 
 
+  it("reports the initial theme when the stored settings are unreadable", () => {
+    // The whole state load runs through `inject(LocalStorage)`, so an
+    // unreadable entry that throws leaves the visitor with a blank viewport
+    // rather than a wrong theme.
+    localStorage.setItem(LOCAL_STORAGE_KEY, "{not json");
+
+    expect(loadedTheme()).toBe(initialState.colorTheme);
+  });
+
+
   it("reports a stored theme as it is", () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({colorTheme: "light"}));
 
