@@ -1,4 +1,4 @@
-import {randomBetween} from '@common/helpers/random.helper';
+import {randomBetween} from "@common/helpers/random.helper";
 
 
 /**

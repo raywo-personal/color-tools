@@ -4,10 +4,10 @@ import {AppHeader} from "@shell/components/app-header/app-header";
 
 
 @Component({
-  selector: 'ct-root',
+  selector: "ct-root",
   imports: [RouterOutlet, AppHeader],
-  templateUrl: './app.html',
-  styles: ``
+  templateUrl: "./app.html",
+  styles: ""
 })
 export class App {
 

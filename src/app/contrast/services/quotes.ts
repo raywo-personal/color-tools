@@ -1,4 +1,4 @@
-import {computed, Service} from '@angular/core';
+import {computed, Service} from "@angular/core";
 import {httpResource} from "@angular/common/http";
 import {environment} from "@environments/environment";
 
@@ -16,7 +16,7 @@ export class Quotes {
     return `${(environment.quotesApiUrl)}/random`;
   });
 
-  public quoteOfTheDay = computed(() => {
+  public readonly quoteOfTheDay = computed(() => {
     const resource = this.#quoteOfTheDay;
 
     return resource;

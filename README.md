@@ -46,7 +46,12 @@ Try it out here: https://color-tools.skillbird.de/
    pnpm start
    ```
 
-4. Build for production:
+4. Lint (ESLint plus the sizing check):
+   ```bash
+   pnpm lint
+   ```
+
+5. Build for production:
    ```bash
    pnpm build
    ```
@@ -60,9 +65,9 @@ repository.
 ### Deployment
 
 The application automatically deploys to Cloudflare Pages when changes are pushed to `main` or to
-the v2 branch `redesign-v2`. The workflow `.github/workflows/deploy-to-cloudflare-pages.yml` runs
-the tests, builds with the `cloudflare` configuration and uploads `dist/ColorTools/browser` via
-`wrangler pages deploy`.
+the v2 branch `redesign-v2`. The workflow `.github/workflows/deploy-to-cloudflare-pages.yml` lints,
+runs the tests, builds with the `cloudflare` configuration and uploads `dist/ColorTools/browser`
+via `wrangler pages deploy`.
 
 The deploy hands `wrangler` the branch it was triggered on, and the Pages project uses `main` as its
 production branch. A push to `main` therefore updates production; every other branch in the

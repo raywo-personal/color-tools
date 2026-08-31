@@ -106,7 +106,6 @@ describe("Optimal Text Color Helper", () => {
       // Medium gray that might fail at 16px but pass at 48px
       const mediumGray = "#666666";
 
-      const meetsAt16px = meetsAPCARequirement(mediumGray, "#ffffff", "16px", "400");
       const meetsAt48px = meetsAPCARequirement(mediumGray, "#ffffff", "48px", "400");
 
       // Larger text has lower requirements
@@ -115,10 +114,8 @@ describe("Optimal Text Color Helper", () => {
     });
 
     it("should be more lenient for bolder weights", () => {
-      // Test at 16px where weight matters
-      const contrast = calculateAPCAContrast("#555555", "#ffffff");
-
-      // Check requirements for different weights
+      // Test at 16px where weight matters, checking the requirements for
+      // different weights.
       const meetsAt400 = meetsAPCARequirement("#555555", "#ffffff", "16px", "400");
       const meetsAt700 = meetsAPCARequirement("#555555", "#ffffff", "16px", "700");
 

@@ -34,8 +34,7 @@ export function backgroundColorChangedReducer(
 
 export function contrastColorsChangedWithoutNavReducer(
   this: void,
-  event: EventInstance<"[Contrast] contrastColorsChangedWithoutNav", ContrastColors>,
-  state: AppState
+  event: EventInstance<"[Contrast] contrastColorsChangedWithoutNav", ContrastColors>
 ) {
   return {
     contrastColors: event.payload
@@ -44,9 +43,7 @@ export function contrastColorsChangedWithoutNavReducer(
 
 
 export function newRandomContrastColorsWithNavReducer(
-  this: void,
-  event: EventInstance<"[Contrast] newRandomColorsWithNav", void>,
-  state: AppState
+  this: void
 ) {
   const bgColor = chroma.random();
   const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
@@ -73,8 +70,7 @@ export function switchColorsReducer(
 
 export function restoreContrastColorsReducer(
   this: void,
-  event: EventInstance<"[Contrast] restoreContrastColors", string>,
-  state: AppState
+  event: EventInstance<"[Contrast] restoreContrastColors", string>
 ) {
   try {
     const contrastId = event.payload;

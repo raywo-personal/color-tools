@@ -25,7 +25,7 @@ export function isRestorable(id: string, expectedLength: number): boolean {
   try {
     validateId(id, expectedLength);
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
