@@ -9,6 +9,11 @@ import {contrastEvents} from "@core/contrast/contrast.events";
 import {converterEvents} from "@core/converter/converter.events";
 
 
+/**
+ * None of these effects is registered in `allEffects()`: they navigate to the
+ * v1 routes, and the router no longer answers them. They come back once the
+ * new screens have shareable ids of their own.
+ */
 export function navigateToPaletteIdEffect(
   this: void,
   events: Events,

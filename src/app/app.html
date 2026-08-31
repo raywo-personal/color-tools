@@ -1,5 +1,9 @@
-<nav app-top-bar></nav>
+<div class="mx-auto max-w-7xl px-8 pt-8 pb-24">
+  @if (showsAppHeader()) {
+    <header ct-app-header></header>
+  }
 
-<main class="main">
-  <router-outlet/>
-</main>
+  <main class="pt-8">
+    <router-outlet/>
+  </main>
+</div>

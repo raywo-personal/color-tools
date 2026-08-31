@@ -97,11 +97,14 @@ The app uses a centralized state management system built on @ngrx/signals:
   - `setColorTheme$` - Theme application via ColorThemeService
   - `loadFont$` - Google font loading via GoogleFontLoaderService
   - `setBackgroundColor$` - Background color updates
-  - `navigateToPalette$` - Navigation to palette URLs
-  - `navigateToContrast$` - Navigation to contrast URLs
   - `colorChanged$` - Theme reaction to a changed converter color
   - `anyPersistableEvents$` - Maps every persistable event to `saveAppState()`
   - `persist$` - State persistence to localStorage
+
+  The navigation effects in `src/app/core/common/navigation.effects.ts` are
+  **not** registered: they navigate to the v1 routes, which the router no
+  longer answers. Do not put them back before the new screens have shareable
+  ids of their own.
 
 ### Application Structure
 
@@ -132,6 +135,21 @@ State is divided into four domains:
 4. **Common** (`src/app/common/`) - Shared utilities and theme management
 
 - State: `colorTheme` (light/dark/system), `selectedFont`
+
+### Screens And Shell
+
+The routed screens do not follow the four state domains:
+
+- `src/app/shell/` - `AppHeader` with the two view tabs, the theme control and
+  the repository link, plus `ThemeControl`
+- `src/app/studio/` - the studio view, converter and palette on one screen
+- `src/app/contrast-type/` - the contrast and type view
+
+`src/app/converter/`, `src/app/palettes/`, `src/app/contrast/components/` and
+`src/app/header/` hold the v1 screens. They are no longer routed and no longer
+reach the bundle; they stay as a reference until the new screens have replaced
+them. Do not extend them, and do not build new screens inside them - a v1
+folder is meant to be deletable in one piece.
 
 ### Palette ID System
 
@@ -252,6 +270,9 @@ TypeScript path aliases are configured in `tsconfig.json`:
 - `@common/*` → `src/app/common/*`
 - `@converter/*` → `src/app/converter/*`
 - `@header/*` → `src/app/header/*`
+- `@shell/*` → `src/app/shell/*`
+- `@studio/*` → `src/app/studio/*`
+- `@contrast-type/*` → `src/app/contrast-type/*`
 - `@palettes/*` → `src/app/palettes/*`
 - `@contrast/*` → `src/app/contrast/*`
 - `@core/*` → `src/app/core/*`
@@ -311,29 +332,29 @@ Only template-driven forms are in use:
 ### Routing
 
 - Routes are declared eagerly in `src/app/app.routes.ts`; there is no lazy
-  loading. With three feature routes it would add indirection without benefit
-- `withComponentInputBinding()` is active, so route params (`:paletteId`,
-  `:contrastId`) arrive as component `input()`s
-- Route guards live in `src/app/routes/` (`palette-route.guard.ts`,
-  `contrast-route.guard.ts`)
-- A trailing `**` route renders `NotFound`
-  (`src/app/common/components/not-found/`). The SPA rewrite in
-  `public/_redirects` answers every path with `index.html` and HTTP 200, so an
-  unknown path cannot produce a real 404 status. The page makes the miss
-  visible to the visitor instead of leaving the viewport blank
+  loading. With two feature routes it would add indirection without benefit
+- The router answers three paths: the empty path renders `Studio`, `contrast`
+  renders `ContrastType`, and a trailing `**` renders `NotFound`
+- Both feature routes carry `pathMatch: "full"`, so an extra segment below one
+  of them falls through to the wildcard rather than being ignored
+- `withComponentInputBinding()` is active, so route params arrive as component
+  `input()`s once the shareable ids come back
+- The guards in `src/app/routes/` (`palette-route.guard.ts`,
+  `contrast-route.guard.ts`) are no longer in the routing table. They belong to
+  the v1 ids and wait there for the new ones
+- The SPA rewrite in `public/_redirects` answers every path with `index.html`
+  and HTTP 200, so an unknown path cannot produce a real 404 status.
+  `NotFound` (`src/app/common/components/not-found/`) makes the miss visible to
+  the visitor instead of leaving the viewport blank
 - Every route carries a `title`. Angular's `DefaultTitleStrategy` leaves the
   previous title standing when a route has none, so a route without one shows
   the tab title of wherever the visitor came from
 
-**An invalid id and an unknown path answer differently, on purpose.**
-`/palettes/garbage` matches `:paletteId`, so `paletteGuard` runs, finds the id
-unrestorable and redirects to a freshly generated palette - the visitor lands on
-a working tool. `/palettes/garbage/more` matches no route at all, falls through
-to `**` and gets the not-found page. The asymmetry is the intended reading of
-the two cases: an unrestorable id is recoverable input, because the route itself
-exists and the tool works without it; a path that names nothing is not. Do not
-"harmonize" the two by sending invalid ids to the not-found page - that would
-trade a working palette for a dead end. `app.routes.spec.ts` pins both halves.
+**A route opts out of the app header through its `data`.** `App` renders
+`AppHeader` unless the activated route carries `data: {appHeader: false}`, and
+the wildcard does, because the not-found page carries a header of its own.
+Anything else gets the header, so a new screen needs no entry to be framed
+correctly. `app.spec.ts` pins both halves.
 
 ### Services
 
@@ -384,6 +405,29 @@ or empty.
   The budget counts either form, so moving a block out of the decorator does
   not buy room
 - Global entry point is `src/styles.css`
+
+### Sizes Are Relative, Never Pixels
+
+Every length a visitor can scale - font size, height, padding, gap, radius,
+max-width - comes from Tailwind's own scale (`text-base`, `h-11`, `px-5`,
+`gap-7`, `max-w-7xl`), whose values are `rem` and `em`. A pixel length ignores
+the browser's font size setting, so a visitor who enlarges text gets a layout
+that does not follow.
+
+Do **not** write arbitrary pixel values (`text-[10px]`, `h-[30px]`,
+`max-w-[1240px]`) to match a design draft. The drafts are drawn in pixels;
+divide by 16 and take the nearest scale step. Hairlines are the exception:
+`border` is 1px on purpose, because a border is not text.
+
+### Interactive Controls Follow The Accessible Minimums
+
+- Text a visitor reads is at least `text-base` (1rem). `text-sm` (0.875rem) is
+  for secondary labels, and nothing goes below it
+- A control that gets clicked or tapped is at least `h-11` (2.75rem) tall and
+  as wide, hit area included - an icon-only button pads a small glyph out to
+  that size rather than shrinking the target
+- An icon-only control carries an `aria-label`; the icon itself is
+  `aria-hidden="true"`
 
 ### The Design Tokens Are The Whole Palette
 

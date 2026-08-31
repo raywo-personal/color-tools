@@ -24,6 +24,15 @@
       "@header/*": [
         "./src/app/header/*"
       ],
+      "@shell/*": [
+        "./src/app/shell/*"
+      ],
+      "@studio/*": [
+        "./src/app/studio/*"
+      ],
+      "@contrast-type/*": [
+        "./src/app/contrast-type/*"
+      ],
       "@palettes/*": [
         "./src/app/palettes/*"
       ],

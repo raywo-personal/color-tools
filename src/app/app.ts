@@ -1,20 +1,41 @@
-import {Component, DOCUMENT, inject} from "@angular/core";
-import {TopBar} from "@header/components/top-bar/top-bar";
-import {RouterOutlet} from "@angular/router";
+import {Component, computed, DOCUMENT, inject} from "@angular/core";
+import {ActivatedRouteSnapshot, Router, RouterOutlet} from "@angular/router";
+import {AppHeader} from "@shell/components/app-header/app-header";
 
 
 @Component({
   selector: 'ct-root',
-  imports: [TopBar, RouterOutlet],
+  imports: [RouterOutlet, AppHeader],
   templateUrl: './app.html',
   styles: ``
 })
 export class App {
 
   private document = inject(DOCUMENT);
+  readonly #router = inject(Router);
+
+  /**
+   * A screen opts out of the app header with `data: {appHeader: false}`.
+   * `routerState` is not a signal, so the completed navigation is what makes
+   * the snapshot readable again.
+   */
+  protected readonly showsAppHeader = computed(() => {
+    this.#router.lastSuccessfulNavigation();
+
+    return this.activatedRoute().data["appHeader"] !== false;
+  });
+
 
   constructor() {
     this.addStructuredData();
+  }
+
+
+  private activatedRoute(): ActivatedRouteSnapshot {
+    let route = this.#router.routerState.snapshot.root;
+    while (route.firstChild) route = route.firstChild;
+
+    return route;
   }
 
   private addStructuredData(): void {
