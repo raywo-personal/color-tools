@@ -119,3 +119,56 @@ describe("the boot theme script in index.html", () => {
   });
 
 });
+
+
+/**
+ * Beasties inlines the rules that match the *static* `index.html`, whose root
+ * carries no `data-theme` yet, so with critical CSS inlining on it defers the
+ * `[data-theme="dark"]` block and the script above paints light for a dark
+ * visitor after all. `CLAUDE.md` records the reason, which reaches whoever
+ * reads it and not whoever regenerates `angular.json` or chases the
+ * render-blocking stylesheet - and test, lint and build all stay green either
+ * way. The check lives in this file because the boot script is what it
+ * protects, and because `node:fs` is reachable from here alone.
+ */
+describe("critical CSS inlining in angular.json", () => {
+
+  interface BuildConfiguration {
+    optimization?: boolean | {styles?: {inlineCritical?: boolean}};
+  }
+
+  interface AngularJson {
+    projects: Record<string, {
+      architect: {build: {configurations: Record<string, BuildConfiguration>}};
+    }>;
+  }
+
+  const angularJson = JSON.parse(readFileSync("angular.json", "utf8")) as AngularJson;
+  const configurations = angularJson.projects["ColorTools"].architect.build.configurations;
+
+
+  function inlineCriticalOf(config: BuildConfiguration): boolean | undefined {
+    const optimization = config.optimization;
+
+    if (typeof optimization !== "object") return undefined;
+
+    return optimization.styles?.inlineCritical;
+  }
+
+
+  it("is off in every configuration that optimizes at all", () => {
+    const optimizing = Object.entries(configurations)
+      .filter(([, config]) => config.optimization !== false);
+
+    // Named explicitly so an empty list cannot pass as agreement: these two
+    // are the builds that ship.
+    expect(optimizing.map(([name]) => name))
+      .toEqual(expect.arrayContaining(["production", "cloudflare"]));
+
+    for (const [name, config] of optimizing) {
+      expect(inlineCriticalOf(config), `${name} must set styles.inlineCritical to false`)
+        .toBe(false);
+    }
+  });
+
+});
