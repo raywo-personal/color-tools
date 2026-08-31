@@ -2,24 +2,24 @@
 
 <nav class="flex flex-col overflow-hidden rounded-xs border border-line sm:flex-row" aria-label="Views">
   <a routerLink="/"
-     class="flex h-11 items-center justify-center px-5 font-mono text-base tracking-widest sm:justify-start"
+     class="flex h-11 items-center justify-center px-5 font-mono text-base tracking-widest focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current sm:justify-start"
      [class.bg-text]="studioActive()"
      [class.text-bg]="studioActive()"
-     [class.text-dim]="!studioActive()"
+     [class.text-text]="!studioActive()"
      [attr.aria-current]="studioActive() ? 'page' : null">STUDIO</a>
 
   <a routerLink="/contrast"
-     class="flex h-11 items-center justify-center px-5 font-mono text-base tracking-widest sm:justify-start"
+     class="flex h-11 items-center justify-center px-5 font-mono text-base tracking-widest focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current sm:justify-start"
      [class.bg-text]="contrastActive()"
      [class.text-bg]="contrastActive()"
-     [class.text-dim]="!contrastActive()"
+     [class.text-text]="!contrastActive()"
      [attr.aria-current]="contrastActive() ? 'page' : null">CONTRAST &amp; TYPE</a>
 </nav>
 
 <div class="flex items-center gap-4 sm:ml-auto">
   <ct-theme-control/>
 
-  <a href="https://github.com/raywo/color-tools"
+  <a href="https://github.com/raywo-personal/color-tools"
      class="flex size-11 shrink-0 items-center justify-center text-dim hover:text-text"
      aria-label="ColorTools on GitHub">
     <svg class="size-6" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

@@ -78,7 +78,7 @@ describe("AppHeader", () => {
     const repositoryLink = Array.from(header.querySelectorAll("a"))
       .find(anchor => anchor.getAttribute("href")?.startsWith("https://"));
 
-    expect(repositoryLink?.getAttribute("href")).toBe("https://github.com/raywo/color-tools");
+    expect(repositoryLink?.getAttribute("href")).toBe("https://github.com/raywo-personal/color-tools");
   });
 
 

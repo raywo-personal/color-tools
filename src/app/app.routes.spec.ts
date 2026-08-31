@@ -91,10 +91,10 @@ describe("app routes", () => {
     });
 
 
-    it("opts out of the app header, because the page carries its own", async () => {
+    it("keeps the app header, because the page carries none of its own", async () => {
       const {data} = await activatedComponentFor("/does-not-exist");
 
-      expect(data["appHeader"]).toBe(false);
+      expect(data["appHeader"]).toBeUndefined();
     });
 
   });

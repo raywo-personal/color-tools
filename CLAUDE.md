@@ -343,10 +343,14 @@ Only template-driven forms are in use:
   the tab title of wherever the visitor came from
 
 **A route opts out of the app header through its `data`.** `App` renders
-`AppHeader` unless the activated route carries `data: {appHeader: false}`, and
-the wildcard does, because the not-found page carries a header of its own.
+`AppHeader` unless the activated route carries `data: {appHeader: false}`.
 Anything else gets the header, so a new screen needs no entry to be framed
 correctly. `app.spec.ts` pins both halves.
+
+No route in the table opts out. A screen may only do so once it carries a
+header of its own: without one there is no title, no tabs and no theme
+control, and a visitor who arrives on a url the router does not answer has no
+way off the page.
 
 ### Services
 
