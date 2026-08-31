@@ -75,6 +75,20 @@ describe("NotFound", () => {
   });
 
 
+  it("keeps the query string, because a broken link is what the address is read for", async () => {
+    const {page} = await renderAt("/palletes?color=ff0000");
+
+    expect(page().textContent).toContain("/palletes?color=ff0000");
+  });
+
+
+  it("names a percent-encoded path as it was asked, not decoded", async () => {
+    const {page} = await renderAt("/my%20page");
+
+    expect(page().textContent).toContain("/my%20page");
+  });
+
+
   it("renames it when the router reuses the component for a second unknown path", async () => {
     const {fixture, page} = await renderAt("/contrst");
 

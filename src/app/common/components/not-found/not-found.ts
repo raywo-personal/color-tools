@@ -1,6 +1,5 @@
 import {Component, computed, inject, signal} from "@angular/core";
-import {ActivatedRoute, RouterLink} from "@angular/router";
-import {toSignal} from "@angular/core/rxjs-interop";
+import {Router, RouterLink} from "@angular/router";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
 import chroma from "chroma-js";
 import {PALETTE_SLOTS} from "@palettes/models/palette.model";
@@ -64,19 +63,26 @@ function mutedPalette(base?: string): string[] {
 export class NotFound {
 
   readonly #announcer = inject(LiveAnnouncer);
-  readonly #route = inject(ActivatedRoute);
-
-  /**
-   * Two unknown paths share this route config, so the router reuses the
-   * component instance - a snapshot read would keep naming the first path.
-   */
-  readonly #segments = toSignal(this.#route.url, {initialValue: this.#route.snapshot.url});
+  readonly #router = inject(Router);
 
   readonly #swatches = signal(mutedPalette(ACCENT));
 
-  protected readonly requestedPath = computed(
-    () => "/" + this.#segments().map(segment => segment.path).join("/")
-  );
+  /**
+   * `Router.url`, not `ActivatedRoute.url`: the segments carry the path alone,
+   * so a visitor who followed `/palletes?color=ff0000` would be told they
+   * asked for `/palletes`, and a percent-encoded segment would come back
+   * decoded. The address is the page's one factual claim, and the person
+   * reading it is chasing a broken link.
+   *
+   * Two unknown paths share this route config, so the router reuses the
+   * component instance. Reading `lastSuccessfulNavigation` is what re-reads
+   * the url for the second path - `Router.url` is a plain getter.
+   */
+  protected readonly requestedPath = computed(() => {
+    this.#router.lastSuccessfulNavigation();
+
+    return this.#router.url;
+  });
 
   protected readonly swatches = this.#swatches.asReadonly();
 

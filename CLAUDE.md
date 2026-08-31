@@ -341,9 +341,13 @@ Only template-driven forms are in use:
   and HTTP 200, so an unknown path cannot produce a real 404 status.
   `NotFound` (`src/app/common/components/not-found/`) makes the miss visible to
   the visitor instead of leaving the viewport blank, and names the path that
-  was asked for. It reads that path from `ActivatedRoute.url` rather than the
-  snapshot: two unknown paths share the one route config, so the router reuses
-  the component and a snapshot read would keep naming the first path
+  was asked for. It reads that path from `Router.url`, not from
+  `ActivatedRoute.url`: the segments carry the path alone, so a query string is
+  dropped and a percent-encoded segment comes back decoded - and the address is
+  the page's one factual claim. `Router.url` is a plain getter, so the computed
+  reads `lastSuccessfulNavigation` to re-run: two unknown paths share the one
+  route config, so the router reuses the component and a value read once would
+  keep naming the first path
 - Every route carries a `title`. Angular's `DefaultTitleStrategy` leaves the
   previous title standing when a route has none, so a route without one shows
   the tab title of wherever the visitor came from
