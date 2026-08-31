@@ -55,35 +55,25 @@ The project has four build configurations:
 
 ## Claude Code Agents And Skills
 
-The skills and agents this project relies on come from the `rw` plugin
-(marketplace `raywo-personal`, repository
-`raywo-personal/claude-agents-and-skills`). The plugin is installed per user,
-not vendored into this repository – there is nothing under `.claude/` to commit,
-and `.claude/settings.local.json` stays untracked.
+Skills and agents come from the `rw` plugin (marketplace `raywo-personal`,
+repository `raywo-personal/claude-agents-and-skills`), installed per user. There
+is nothing under `.claude/` to commit, and `.claude/settings.local.json` stays
+untracked.
 
-That plugin is **shared across projects**, so a change to a skill affects every
-project using it. Project-specific rules therefore do not belong there: if a
-convention only holds for ColorTools, it goes in this file. The skills describe
-general practice; this file describes what this codebase actually does, and it
-wins where the two differ.
+The plugin is shared across projects, so a convention that only holds for
+ColorTools goes in this file – and this file wins where the two differ.
 
 ## Writing Text For GitHub
 
-Anything GitHub renders as HTML is **not** hard-wrapped - its UI does the
-wrapping, and a hard wrap produces ragged paragraphs and breaks quoting in
-comments. This covers issue bodies and comments, PR descriptions, PR and review
-comments, replies to review comments, and release notes.
+Anything GitHub renders as HTML is **not** hard-wrapped – its UI wraps, and a
+hard wrap produces ragged paragraphs and breaks quoting. One paragraph is one
+line; break only between paragraphs, per list item, per table row, and around
+code blocks. This covers issue bodies and comments, PR descriptions, review
+comments, replies, and release notes.
 
-One paragraph is one line. Break only where the break carries meaning: between
-paragraphs, per list item, per table row, and around code blocks.
-
-Hard-wrapping stays for anything read in monospace without reflow: commit
-messages (subject at most 50 characters, body wrapped at 72), files in this
-repository including this one, and code comments.
-
-This is the convention from the `rw` plugin's README, adopted here because that
-README asks each project to adopt it explicitly - the rule applies whenever
-GitHub text is written, including when no skill is running.
+Hard-wrapping stays where text is read in monospace without reflow: commit
+messages (subject at most 50 characters, body at 72), files in this repository
+including this one, and code comments.
 
 ## Architecture
 
@@ -127,106 +117,65 @@ The app uses a centralized state management system built on @ngrx/signals:
   answers. Do not put them back before the new screens have shareable ids of
   their own.
 
-### Application Structure
+### State Domains
 
-State is divided into four domains:
+State lives in `src/app/core/{domain}/`, divided into four domains. Their shape
+is in `src/app/core/models/app-state.model.ts` – read the field list there
+rather than duplicating it here.
 
-1. **Converter** (`src/app/converter/`) - Color conversion and tint/shade
-   generation
-
-- Manages current color, display format (RGB/HSL/HEX/OKLCH), and color space
-  settings
-- Generates tints and shades using Bezier interpolation when enabled
-- State: `currentColor`, `textColor`, `useAsBackground`, `correctLightness`,
-  `useBezier`, `displayColorSpace`, `tintColors`, `shadeColors`
-
-2. **Palettes** (`src/app/palettes/`) - Color palette generation
-
-- Ten palette styles, defined in `PaletteStyles`
-  (`src/app/palettes/models/palette-style.model.ts`): random, analogous,
-  muted-analog-split, harmonic, monochromatic, vibrant-balanced, high-contrast,
-  triadic, complementary, split-complementary
-- `generatePalette()` in `src/app/palettes/helper/palette.helper.ts` dispatches
-  the style to its generator
-- Each style has a dedicated generator in
-  `src/app/palettes/helper/*-palette.helper.ts`
-- Palettes support pinned colors that remain fixed during regeneration
-- State: `paletteStyle`, `useRandomStyle`, `currentPalette`
-
-3. **Contrast** (`src/app/contrast/`) - Color contrast analysis and
-   accessibility
-
-- Analyzes text and background color combinations for readability
-- Uses APCA (Accessible Perceptual Contrast Algorithm) for contrast calculation
-- Supports color switching, random generation, and restoration from IDs
-- State: `contrastColors` (text color, background color, contrast value)
-
-4. **Common** (`src/app/common/`) - Shared utilities and theme management
-
-- State: `colorTheme` (light/dark/system), `selectedFont`
+1. **Converter** – the current color, its display format and color space, and
+   the tints and shades derived from it
+2. **Palettes** – the current palette, its style, and whether the style is
+   rolled. The styles are listed in `PaletteStyles`
+   (`src/app/palettes/models/palette-style.model.ts`); `generatePalette()`
+   (`src/app/palettes/helper/palette.helper.ts`) hands each to its own
+   `*-palette.helper.ts`. Pinned colors survive a regenerate
+3. **Contrast** – the text and background pair with its APCA value. The math
+   sits in `src/app/contrast/helper/`
+4. **Common** – the color theme (light/dark/system) and the selected font
 
 ### Screens And Shell
 
-The routed screens do not follow the four state domains:
+The routed screens do not follow the state domains:
 
-- `src/app/shell/` - `AppHeader` with the two view tabs, the theme control, and
-  the repository link, plus `ThemeControl`
-- `src/app/studio/` - the studio view, converter, and palette on one screen
-- `src/app/contrast-type/` - the contrast and type view
+- `src/app/shell/` – `AppHeader` and `ThemeControl`
+- `src/app/studio/` – the studio view
+- `src/app/contrast-type/` – the contrast and type view
 
-`src/app/converter/`, `src/app/palettes/`, `src/app/contrast/components/` and
-`src/app/header/` hold the v1 screens. They are no longer routed and no longer
-reach the bundle; they stay as a reference until the new screens have replaced
-them. Do not extend them, and do not build new screens inside them - a v1 folder
-is meant to be deletable in one piece.
+The v1 screens are `src/app/converter/`, `src/app/palettes/components/`,
+`src/app/contrast/components/` and `src/app/header/`. They are no longer routed
+and no longer reach the bundle; do not extend them and do not build new screens
+inside them.
+
+**Only the `components/` folders are v1.** `palettes/helper/`,
+`contrast/helper/`, their `models/` and `common/helpers/` are the live
+engine – `app-state.model.ts` and `persistence.reducers.ts` call
+`generatePalette()` and `paletteFromId()` at startup. Deleting a v1 screen
+means deleting its `components/`, never the folder above it.
 
 ### Palette ID System
 
-Palettes can be encoded into shareable URLs via a compact ID system:
+`paletteIdFromPalette()` encodes a palette into 43 characters: one decimal digit
+for the style index, then 42 characters of base62 over 31 bytes – 30 RGB bytes
+for ten colors (five current, five starting) and one byte for the pinned
+bitmask. `paletteFromId()` restores all of it, starting colors included, so a
+regenerate picks up where the shared palette left off. The payload is
+fixed-length, so the bitmask is always encoded.
 
-- **Encoding** (`paletteIdFromPalette`) - Converts palette to a fixed-length
-  43-character string:
-  - First character: style index as a single decimal digit, parsed with
-    `parseInt(id[0], 10)`
-  - Remaining 42 characters: base62-encoded payload of 31 bytes - 30 RGB bytes
-    for 10 colors (5 current + 5 starting colors) plus one trailing byte holding
-    the pinned-colors bitmask
-  - The payload is fixed-length, so the pinned bitmask is always encoded, even
-    when nothing is pinned
+**Known limit:** the style index is exactly one decimal digit, so ten styles are <!-- durable-ok -->
+the maximum the format can represent. Adding a style beyond that needs a wider
+index field first; without one `styleFromPaletteId` falls back to a random
+style and says nothing.
 
-- **Decoding** (`paletteFromId`) - Restores palette from ID:
-  - Extracts style, colors, and pinned state
-  - Reconstructs full palette with starting colors for regeneration
-
-This allows palettes to be shared via URL: `/palettes/{paletteId}`
-
-**Known limit:** the style index occupies exactly one decimal digit, so at most
-ten styles are representable. `PaletteStyles` currently holds ten entries - the
-format is at capacity. An eleventh style would need a wider index field;
-`styleFromPaletteId` would otherwise silently fall back to a random style.
+The ids are generated and persisted, but no route takes one until the new
+screens have shareable urls of their own.
 
 ### Contrast ID System
 
-Contrast color pairs can be encoded into shareable URLs via a compact ID system:
-
-- **Encoding** (`contrastIdFromColors`) - Converts two colors to base62-encoded
-  string:
-  - 6 bytes (2 colors × 3 RGB channels) encoded in base62
-  - Fixed length: 9 characters
-  - Encodes text color RGB + background color RGB
-
-- **Decoding** (`contrastColorsFromId`) - Restores colors from ID:
-  - Extracts RGB values for both text and background colors
-  - Calculates APCA contrast value between the colors
-  - Returns ContrastColors object with text, background, and contrast value
-
-- **Random Generation** (`generateRandomContrastColors`) - Creates random color
-  pairs:
-  - Generates random background color
-  - Finds harmonizing text color for optimal readability
-  - Calculates APCA contrast
-
-This allows contrast color pairs to be shared via URL: `/contrast/{contrastId}`
+`contrastIdFromColors()` encodes the pair as six RGB bytes in base62, nine
+characters fixed. `contrastColorsFromId()` restores both colors and recomputes
+the APCA value; `generateRandomContrastColors()` rolls a background and picks a
+text color that reads on it. Like the palette id, none of it is routed yet.
 
 ### Color Libraries
 
@@ -299,6 +248,10 @@ reachable: a converter color and a contrast background each arrive as a pinned
 The initial budget is 700 kB warning / 800 kB error. It is meant to catch
 regressions, so keep it close to the actual size rather than raising it to make
 a warning go away - `pnpm build` prints the current initial total.
+
+Do not lower it to the size the app has while the v2 screens are missing: the
+v1 screens left the bundle with their routes, and the figure the budget has to
+catch is the one after the new screens land.
 
 ### Path Aliases
 
@@ -414,7 +367,7 @@ correctly. `app.spec.ts` pins both halves.
 - Use double quotes for strings (`quote_type = double` in `.editorconfig`)
 - Import through the path aliases above, never through relative `../../` paths
 
-### State Management
+### Component State
 
 - Use signals for local component state
 - Use `computed()` for derived state
