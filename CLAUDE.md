@@ -37,8 +37,11 @@ Live site: https://color-tools.skillbird.de/
 - `pnpm start` - Start dev server (defaults to development configuration)
 - `pnpm build` - Build for production
 - `pnpm test` - Run tests with Vitest
+- `pnpm lint` - Run ESLint and the sizing check
 - `pnpm run build:cloudflare` - Build for the Cloudflare Pages deployment
 - `pnpm run test:ci` - Single test run (no watch), as used in CI
+- `pnpm run lint:fix` - As `pnpm lint`, applying the fixes ESLint can make
+  itself
 - `pnpm run cf <args>` - Run wrangler against this project's Cloudflare account;
   sources the untracked `.cloudflare.env` (see README)
 
@@ -413,12 +416,22 @@ that does not follow.
 Do **not** write arbitrary pixel values (`text-[10px]`, `h-[30px]`,
 `max-w-[1240px]`) to match a design draft. The drafts are drawn in pixels;
 divide by 16 and take the nearest scale step. Hairlines are the exception:
-`border` is 1px on purpose, because a border is not text.
+`border` is 1px on purpose, because a border is not text - it is a utility, not
+an arbitrary value, so the check below never sees it.
+
+`tools/lint-sizes.js` enforces this, and `pnpm lint` runs it: it rejects an
+arbitrary value carrying an absolute unit, a `max-*:` variant, and `text-xs`.
+It also checks the ring offset, see "A Focus Ring Must Survive An Arbitrary
+Background".
+A pixel length written as plain CSS is not covered - ESLint parses no
+stylesheet and the script reads Tailwind classes, so `font-size: 10px` in a
+component `.css` still holds by review.
 
 ### Layouts Are Mobile-First
 
 - The unprefixed utility describes the narrow column; `sm:` and `lg:` widen it.
-  Do not write the desktop layout first and walk it back with `max-*:`
+  Do not write the desktop layout first and walk it back with `max-*:`;
+  `pnpm lint` rejects the variant
 - A screen is built responsive from the start. Retrofitting it means changing
   DOM order and pulling grid containers up a level – the part that is no longer
   cheap to change once the screen is in place
@@ -465,59 +478,121 @@ CSS, and `angular.json` sets `inlineStyleLanguage` and the component schematic
 to `css`. The `.scss` files still present belong to v1 screens and go with them;
 do not add more.
 
+## Linting
+
+`pnpm lint` is two halves: `eslint .` and `node tools/lint-sizes.js`. CI runs it
+ahead of the build, so a finding blocks the deployment the way a failing test
+does.
+
+`eslint.config.js` is CommonJS on purpose - package.json declares no `type`, so
+a `.js` config is loaded as CommonJS. It turns on `typescript-eslint`'s
+`recommended`, `angular-eslint`'s `tsRecommended`, `templateRecommended` and
+`templateAccessibility`, and the rules that mirror the conventions above: no
+`ngClass`, no `ngStyle`, no `@HostBinding`/`@HostListener`, `@Service()` over
+`@Injectable()`, the signal-based `input()`/`output()`/query functions, and
+`ngSrc` over `src`.
+
+**Linting is not type-aware.** `parserOptions.projectService` is off, so a rule
+that needs type information - `no-uncalled-signals`, anything in
+`recommendedTypeChecked` - cannot be switched on and will fail the whole run
+with a parser error if it is. Turning type-aware linting on is a separate
+decision: it needs a program per lint run and slows `pnpm lint` down by roughly
+an order of magnitude.
+
+**Double quotes come from `@stylistic/eslint-plugin`, not from ESLint core.**
+Core's own `quotes` is deprecated with `availableUntil: 11.0.0`, so a config
+built on it breaks at the next ESLint major.
+
+**A leading underscore marks a binding that only holds a position** - the full
+match a regex destructuring skips, or a parameter a signature requires.
+`no-unused-vars` is configured to allow it, so the idiom needs no disable
+comment.
+
+**The v1 code is excluded, and `tools/v1-screens.js` is the one list.** Both
+halves of `pnpm lint` read it. Remove an entry together with the folder it
+names, so no exclusion outlives its path. Only the `components/` folders are
+v1 - `palettes/helper/` and `contrast/helper/` are the live engine and stay in
+the lint run. The list also names the v1 widgets under `common/components/`,
+which sit outside a screen folder; `not-found` is the only thing there that
+`main.ts` still reaches. They are listed one by one on purpose, so the next v2
+component written in that folder is linted rather than swallowed.
+
 ## Accessibility
 
-This app judges color contrast, so its own interface has to hold up. Nothing
-here is checked mechanically: the repository has no ESLint and no axe, and
-Vitest with happy-dom sees neither a rendered contrast nor a focus ring. A green
-`pnpm test` therefore says nothing about any rule below – they hold by review.
-Relative sizes are part of this too, see "Sizes Are Relative, Never Pixels"
-above.
+This app judges color contrast, so its own interface has to hold up. Part of
+that is checked mechanically and part is not, so read each rule below for which
+it is. `pnpm lint` covers the structural and ARIA half through
+`angular-eslint`'s template accessibility preset - see "Linting" - and the
+sizing rules through `tools/lint-sizes.js`. Relative sizes are part of this too,
+see "Sizes Are Relative, Never Pixels" above.
+
+There is no axe and no browser in the test run: Vitest with happy-dom computes
+no layout, so it sees neither a rendered contrast nor a focus ring. A green
+`pnpm test` therefore says nothing about any rule here, and a green `pnpm lint`
+says nothing about the rules marked as review-only below.
 
 `@angular/cdk` is already a dependency, so `A11yModule` and `LiveAnnouncer`
 need no new package.
 
 ### Interactive Controls Follow The Accessible Minimums
 
+Only the type floor is checked; the hit area and the label hold by review.
+
 - Text a visitor reads is at least `text-base` (1rem). `text-sm` (0.875rem) is
-  for secondary labels, and nothing goes below it
+  for secondary labels, and nothing goes below it. `pnpm lint` rejects
+  `text-xs`
 - A control that gets clicked or tapped is at least `h-11` (2.75rem) tall and as
   wide, hit area included – an icon-only button pads a small glyph out to that
-  size rather than shrinking the target
+  size rather than shrinking the target. A height built from padding is
+  indistinguishable from a fixed one to a linter, so this is not checked
 - An icon-only control carries an `aria-label`; the icon itself is
-  `aria-hidden="true"`
+  `aria-hidden="true"`. `valid-aria` checks the attribute it finds, not the one
+  that is missing
 
 ### Color Is Never The Only Carrier Of Information
 
-A pass or fail verdict, a contrast value, a pinned swatch, a selected tab – each
-needs text or shape next to the color change. This is the failure the app
-measures, and the easiest one to commit while building it.
+**Review only.** A pass or fail verdict, a contrast value, a pinned swatch, a
+selected tab – each needs text or shape next to the color change. This is the
+failure the app measures, and the easiest one to commit while building it.
+
+Where a carrier already exists, a test pins it, because nothing in the
+toolchain would notice a refactor dropping it: `aria-pressed` in
+`theme-control.spec.ts` and `aria-current` in `app-header.spec.ts`. Both assert
+the value, not just the attribute – without that the selected tab would differ
+from the unselected one by color alone. A new carrier gets the same treatment.
 
 ### A Focus Ring Must Survive An Arbitrary Background
 
-Swatches, tint and shade rows, and the contrast preview carry colors the visitor
-picked, so a ring drawn in the `line` or `text` token vanishes as soon as the
-color underneath sits at the same lightness. Offset the ring off that surface
-(`outline-offset`, or a second ring against `panel`) instead of relying on it to
-contrast with the color.
+Swatches, tint and shade rows, and the contrast preview carry colors the
+visitor picked, so a ring drawn in the `line` or `text` token vanishes as soon
+as the color underneath sits at the same lightness. Offset the ring off that
+surface (`outline-offset`, or a second ring against `panel`) instead of relying
+on it to contrast with the color.
+
+`pnpm lint` checks that the offset is **there**: a focusable element binding a
+visitor color needs `outline-offset-*` or `ring-offset-*` in its own class list.
+Whether the ring is then **visible** against the color needs rendered pixels and
+stays under review. The check reads one element at a time, so an offset
+inherited from a parent or from a component's `host` looks missing to it - put
+the utility on the element itself.
 
 ### Chrome On A Visitor Color Takes Its Foreground From APCA
 
-Where a label, value, or icon sits on a color the visitor chose, its foreground
-comes from the app's own contrast calculation. A token is only guaranteed
-against the six neutral surfaces.
+**Review only.** Where a label, value, or icon sits on a color the visitor
+chose, its foreground comes from the app's own contrast calculation. A token is
+only guaranteed against the six neutral surfaces.
 
 ### A Regenerated Result Is Announced
 
-Regenerating a palette, rolling random colors, and switching text against
-background all replace content without moving focus, so a screen reader is told
-nothing. Announce the outcome through `LiveAnnouncer`.
+**Review only.** Regenerating a palette, rolling random colors, and switching
+text against background all replace content without moving focus, so a screen
+reader is told nothing. Announce the outcome through `LiveAnnouncer`.
 
 ### A Color Surface Carries Its Name
 
-A swatch a visitor can focus or activate has an accessible name saying which
-color it is - `colorName()` already produces the text. Never an unlabelled
-block.
+**Review only.** A swatch a visitor can focus or activate has an accessible
+name saying which color it is - `colorName()` already produces the text. Never
+an unlabelled block.
 
 ## Testing
 

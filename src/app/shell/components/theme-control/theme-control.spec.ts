@@ -44,6 +44,17 @@ describe("ThemeControl", () => {
   });
 
 
+  it("presses the stored state on the first render, before any click", async () => {
+    const {buttons} = await control();
+
+    // "system" is the initial state, so AUTO carries the pressed state without
+    // anyone having clicked. Wiring aria-pressed to the click instead of to the
+    // store would still satisfy the test below.
+    expect(buttons.map(button => button.getAttribute("aria-pressed")))
+      .toEqual(["true", "false", "false"]);
+  });
+
+
   it("presses the button of the stored state", async () => {
     const {fixture, buttons} = await control();
 

@@ -8,8 +8,7 @@ import {AppState} from "@core/models/app-state.model";
 
 
 export function newRandomPaletteReducer(
-  this: void,
-  event: EventInstance<"[Palettes] newRandomPalette", void>,
+  this: void
 ) {
   const style: PaletteStyle = "random";
 
@@ -21,8 +20,7 @@ export function newRandomPaletteReducer(
 
 
 export function newRandomPaletteWithNavReducer(
-  this: void,
-  event: EventInstance<"[Palettes] newRandomPaletteWithNav", void>,
+  this: void
 ) {
   const style: PaletteStyle = "random";
 

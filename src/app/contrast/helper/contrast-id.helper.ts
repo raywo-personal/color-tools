@@ -1,4 +1,4 @@
-import chroma, {Color} from "chroma-js";
+import chroma from "chroma-js";
 import {base62ToBigInt, bigIntToBase62} from "@common/helpers/base62.helper";
 import {isRestorable, validateId} from "@common/helpers/validate-string-id.helper";
 import {findHarmonicTextColor} from "@contrast/helper/optimal-text-color.helper";

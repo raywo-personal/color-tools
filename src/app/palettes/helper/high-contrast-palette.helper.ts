@@ -1,7 +1,7 @@
-import {fromHsl} from '@common/helpers/color-from-hsl.helper';
-import {vary} from '@palettes/helper/variation.helper';
-import {clamp01} from '@common/helpers/hsl.helper';
-import {complement} from '@common/helpers/hue.helper';
+import {fromHsl} from "@common/helpers/color-from-hsl.helper";
+import {vary} from "@palettes/helper/variation.helper";
+import {clamp01} from "@common/helpers/hsl.helper";
+import {complement} from "@common/helpers/hue.helper";
 import {Palette, PaletteColors} from "@palettes/models/palette.model";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import {randomBetween} from "@common/helpers/random.helper";

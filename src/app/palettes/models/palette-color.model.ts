@@ -1,4 +1,4 @@
-import chroma, {Color} from 'chroma-js';
+import chroma, {Color} from "chroma-js";
 import {PaletteSlot} from "@palettes/models/palette.model";
 
 

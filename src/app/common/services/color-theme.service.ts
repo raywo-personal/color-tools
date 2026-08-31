@@ -1,5 +1,5 @@
-import {DOCUMENT, inject, Service} from '@angular/core';
-import {ColorTheme} from '@common/models/color-theme.model';
+import {DOCUMENT, inject, Service} from "@angular/core";
+import {ColorTheme} from "@common/models/color-theme.model";
 import {Color} from "chroma-js";
 
 
@@ -28,8 +28,8 @@ export class ColorThemeService {
 
   private getSystemTheme(): ColorTheme {
     return window
-      .matchMedia('(prefers-color-scheme: dark)')
-      .matches ? 'dark' : 'light'
+      .matchMedia("(prefers-color-scheme: dark)")
+      .matches ? "dark" : "light"
   }
 
 }

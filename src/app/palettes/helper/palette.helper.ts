@@ -1,7 +1,7 @@
-import {PaletteStyle} from '@palettes/models/palette-style.model';
-import {generateVibrantBalanced} from '@palettes/helper/vibrant-palette.helper';
-import {generateMutedAnalogSplit} from '@palettes/helper/muted-analog-split-palette.helper';
-import {generateHighContrast} from '@palettes/helper/high-contrast-palette.helper';
+import {PaletteStyle} from "@palettes/models/palette-style.model";
+import {generateVibrantBalanced} from "@palettes/helper/vibrant-palette.helper";
+import {generateMutedAnalogSplit} from "@palettes/helper/muted-analog-split-palette.helper";
+import {generateHighContrast} from "@palettes/helper/high-contrast-palette.helper";
 import {Palette, PaletteColors} from "@palettes/models/palette.model";
 import {generateMonochromatic} from "@palettes/helper/monochromatic-palette.helper";
 import {generateComplementary} from "@palettes/helper/complementary-palette.helper";
@@ -22,15 +22,15 @@ export function generatePalette(style: PaletteStyle,
       return generateRandom(paletteColors, seedHue);
     case "analogous":
       return generateAnalogous(paletteColors, seedHue);
-    case 'muted-analog-split':
+    case "muted-analog-split":
       return generateMutedAnalogSplit(paletteColors, seedHue);
     case "harmonic":
       return generateHarmonic(paletteColors, seedHue);
     case "monochromatic":
       return generateMonochromatic(paletteColors, seedHue);
-    case 'vibrant-balanced':
+    case "vibrant-balanced":
       return generateVibrantBalanced(paletteColors, seedHue);
-    case 'high-contrast':
+    case "high-contrast":
       return generateHighContrast(paletteColors, seedHue);
     case "triadic":
       return generateTriadic(paletteColors, seedHue);

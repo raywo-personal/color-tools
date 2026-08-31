@@ -71,7 +71,7 @@ export function paletteFromId(id: string): Palette {
       acc[slot] = paletteColorFrom(colors[index], slot, colors[index + 5], isPinned);
 
       return acc;
-    }, {} as any);
+    }, {} as PaletteColors);
 
   return {
     id,
