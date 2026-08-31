@@ -62,6 +62,37 @@
   <meta property="twitter:image" content="https://color-tools.skillbird.de/social-media.png">
   <meta property="twitter:image:alt" content="ColorTools - Convert colors and generate palettes">
 
+  <!-- schema.org data for search engines. It is static, so it belongs in the
+       served HTML rather than being appended after the bootstrap: a crawler
+       that does not execute JavaScript would otherwise never see it.
+
+       No `aggregateRating` here. A rating the site awards itself violates
+       Google's structured data policy and puts every rich result for the
+       page at risk, not just the stars. -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "ColorTools",
+      "description": "Free online color converter and palette generator. Convert between HEX, RGB, HSL and other color formats.",
+      "applicationCategory": "DesignApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "url": "https://color-tools.skillbird.de/",
+      "featureList": [
+        "Color format conversion (HEX, RGB, HSL)",
+        "Color palette generation",
+        "Harmonious color schemes",
+        "Color contrast checker"
+      ]
+    }
+  </script>
+
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
