@@ -665,6 +665,24 @@ the ring offset its own class list has to carry.
 name saying which color it is - `colorName()` already produces the text. Never
 an unlabelled block.
 
+### Every List Carries `role="list"`
+
+**Review only.** Tailwind's Preflight sets `ol, ul, menu { list-style: none }`,
+and Safari with VoiceOver then stops treating the element as a list: the item
+count is not announced, and an `aria-label` on the list goes with it, because
+there is no list left to label. So every `<ul>` and `<ol>` a screen reader is
+meant to announce as a list carries `role="list"` - on the element itself, or in
+`host` where the component's selector *is* the list, as in `conversion-list.ts`.
+
+Nothing in the toolchain catches the omission: `angular-eslint`'s `valid-aria`
+checks the attribute it finds, not the one that is missing, and happy-dom
+computes no accessibility tree. Do not remove the role because the markup
+already says `<ul>` - it says it to the parser, not to Safari.
+
+A list a spec already renders gets the role pinned there, because nothing would
+notice a refactor dropping it: `not-found.spec.ts` and `conversion-list.spec.ts`
+both assert it beside the list's own label.
+
 ## Testing
 
 - Test framework: Vitest, run through the `@angular/build:unit-test` builder
