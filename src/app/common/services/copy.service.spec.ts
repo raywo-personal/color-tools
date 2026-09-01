@@ -1,30 +1,29 @@
 import {TestBed} from "@angular/core/testing";
 import {provideZonelessChangeDetection} from "@angular/core";
-import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {afterEach, beforeEach, describe, expect, it, MockInstance, vi} from "vitest";
 import chroma from "chroma-js";
 import {colorName} from "@common/helpers/color-name.helper";
+import {FakeLiveAnnouncer, fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {CopyService} from "./copy.service";
 
 
 describe("CopyService", () => {
 
   let writeText: MockInstance<(text: string) => Promise<void>>;
-  let announce: MockInstance<LiveAnnouncer["announce"]>;
+  let announcer: FakeLiveAnnouncer;
 
 
   beforeEach(() => {
     vi.useFakeTimers();
 
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection()]
+      providers: [provideZonelessChangeDetection(), provideFakeLiveAnnouncer()]
     });
 
     writeText = vi.spyOn(navigator.clipboard, "writeText")
       .mockResolvedValue(undefined);
 
-    announce = vi.spyOn(TestBed.inject(LiveAnnouncer), "announce")
-      .mockResolvedValue(undefined);
+    announcer = fakeLiveAnnouncer();
   });
 
 
@@ -67,9 +66,9 @@ describe("CopyService", () => {
 
       await service().copyColor(color);
 
-      expect(announce)
-        .toHaveBeenCalledWith(`Copied ${colorName(color)}`, "polite");
-      expect(announce.mock.calls[0][0]).not.toMatch(/#[0-9A-F]{6}/i);
+      expect(announcer.last)
+        .toEqual({message: `Copied ${colorName(color)}`, politeness: "polite"});
+      expect(announcer.last?.message).not.toMatch(/#[0-9A-F]{6}/i);
     });
 
 
@@ -78,8 +77,8 @@ describe("CopyService", () => {
 
       await service().copyColor(color, "rgb(51, 102, 204)");
 
-      expect(announce)
-        .toHaveBeenCalledWith(`Copied ${colorName(color)}`, "polite");
+      expect(announcer.last)
+        .toEqual({message: `Copied ${colorName(color)}`, politeness: "polite"});
     });
 
   });
@@ -95,8 +94,8 @@ describe("CopyService", () => {
       expect(writeText).toHaveBeenCalledWith(css);
       expect(service().confirmation())
         .toEqual({message: "Copied the CSS variables", failed: false});
-      expect(announce)
-        .toHaveBeenCalledWith("Copied the CSS variables", "polite");
+      expect(announcer.last)
+        .toEqual({message: "Copied the CSS variables", politeness: "polite"});
     });
 
   });
@@ -120,8 +119,8 @@ describe("CopyService", () => {
 
       await service().copyColor(color);
 
-      expect(announce)
-        .toHaveBeenCalledWith(`Could not copy ${colorName(color)}`, "assertive");
+      expect(announcer.last)
+        .toEqual({message: `Could not copy ${colorName(color)}`, politeness: "assertive"});
     });
 
 
@@ -134,7 +133,8 @@ describe("CopyService", () => {
 
       expect(service().confirmation())
         .toEqual({message: "Could not copy #3366CC", failed: true});
-      expect(announce).toHaveBeenCalledWith(expect.stringMatching(/^Could not copy /), "assertive");
+      expect(announcer.last?.message).toMatch(/^Could not copy /);
+      expect(announcer.last?.politeness).toBe("assertive");
     });
 
   });
