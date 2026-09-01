@@ -40,12 +40,16 @@
   /* Overriding the tokens rather than annotating every element with `dark:`
      keeps a component's markup free of theme knowledge. */
   :root[data-theme="dark"] {
-    --color-bg: #171512;
-    --color-panel: #1F1D19;
+    /* Panel, field and line keep their OKLch lightness distance from `bg`, so
+       the ladder holds wherever `bg` is set: panel lifts off the ground, field
+       and line lift further. Move `bg` and these follow, or a panel ends up
+       darker than the page it sits on. */
+    --color-bg: #272521;
+    --color-panel: #302D29;
     --color-text: #F1EDE6;
-    --color-dim: #98907F;
-    --color-line: #302C25;
-    --color-field: #232019;
+    --color-dim: #ADA594;
+    --color-line: #423D36;
+    --color-field: #343129;
   }
 
   /* Native scrollbars and form controls follow the chosen theme, not the OS. */
