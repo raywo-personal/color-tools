@@ -270,6 +270,8 @@ TypeScript path aliases are configured in `tsconfig.json`:
 - `@contrast/*` → `src/app/contrast/*`
 - `@core/*` → `src/app/core/*`
 - `@environments/*` → `src/environments/*`
+- `@testing/*` → `src/testing/*` (test helpers; `pnpm lint` keeps app code
+  from importing them)
 
 Always use these aliases for imports within the codebase.
 
@@ -533,8 +535,8 @@ a `.js` config is loaded as CommonJS. It turns on `typescript-eslint`'s
 `recommended`, `angular-eslint`'s `tsRecommended`, `templateRecommended` and
 `templateAccessibility`, and the rules that mirror the conventions above: no
 `ngClass`, no `ngStyle`, no `@HostBinding`/`@HostListener`, `@Service()` over
-`@Injectable()`, the signal-based `input()`/`output()`/query functions, and
-`ngSrc` over `src`.
+`@Injectable()`, the signal-based `input()`/`output()`/query functions,
+`ngSrc` over `src`, and no import of a `src/testing` helper outside the specs.
 
 **Linting is not type-aware.** `parserOptions.projectService` is off, so a rule
 that needs type information - `no-uncalled-signals`, anything in
@@ -570,10 +572,15 @@ it is. `pnpm lint` covers the structural and ARIA half through
 sizing rules through `tools/lint-sizes.js`. Relative sizes are part of this too,
 see "Sizes Are Relative, Never Pixels" above.
 
+Two rules are checked by test rather than by lint: an announcement and a
+foreground taken from APCA are assertions about a computation, not about
+rendered pixels, and happy-dom is enough for both. They live in the Testing
+section below, with the helper each of them is pinned by.
+
 There is no axe and no browser in the test run: Vitest with happy-dom computes
 no layout, so it sees neither a rendered contrast nor a focus ring. A green
-`pnpm test` therefore says nothing about any rule here, and a green `pnpm lint`
-says nothing about the rules marked as review-only below.
+`pnpm test` says nothing about the rules marked as review-only below, and
+neither does a green `pnpm lint`.
 
 `@angular/cdk` is already a dependency, so `A11yModule` and `LiveAnnouncer`
 need no new package.
@@ -606,6 +613,11 @@ toolchain would notice a refactor dropping it: `aria-pressed` in
 the value, not just the attribute – without that the selected tab would differ
 from the unselected one by color alone. A new carrier gets the same treatment.
 
+What a test cannot answer is whether the carrier says anything: an icon beside a
+color and an announced sentence both pass every check while telling the visitor
+nothing. That judgement is the review, and it is the reason the rules below that
+*are* pinned by a test still need reading.
+
 ### A Focus Ring Must Survive An Arbitrary Background
 
 Swatches, tint and shade rows, and the contrast preview carry colors the
@@ -620,18 +632,6 @@ Whether the ring is then **visible** against the color needs rendered pixels and
 stays under review. The check reads one element at a time, so an offset
 inherited from a parent or from a component's `host` looks missing to it - put
 the utility on the element itself.
-
-### Chrome On A Visitor Color Takes Its Foreground From APCA
-
-**Review only.** Where a label, value, or icon sits on a color the visitor
-chose, its foreground comes from the app's own contrast calculation. A token is
-only guaranteed against the six neutral surfaces.
-
-### A Regenerated Result Is Announced
-
-**Review only.** Regenerating a palette, rolling random colors, and switching
-text against background all replace content without moving focus, so a screen
-reader is told nothing. Announce the outcome through `LiveAnnouncer`.
 
 ### Copying A Value Goes Through `CopyService`
 
@@ -694,3 +694,53 @@ both assert it beside the list's own label.
   single run
 - Component generation skips test files by default (configured in angular.json
   schematics)
+
+### Test Helpers Live In `src/testing`
+
+They are reachable as `@testing/*` and excluded in `tsconfig.app.json`. That
+exclusion keeps them out of the app's own type check but does not stop an
+import: TypeScript follows one into an excluded file and compiles it anyway, so
+a helper that drifted into app code would build and ship `vitest` and
+`@angular/core/testing` with it. `pnpm lint` is what forbids the import, and it
+runs ahead of the build in CI. Both halves of `pnpm lint` read the helpers
+themselves.
+
+Two accessibility rules hold through these helpers rather than through review.
+Their wording is here because the assertion is what makes them binding: a rule
+that names its helper arrives with its test.
+
+### A Regenerated Result Is Announced
+
+Regenerating a palette, rolling random colors, and switching text against
+background all replace content without moving focus, so a screen reader is told
+nothing. Announce the outcome through `LiveAnnouncer`, and pin it with
+`provideFakeLiveAnnouncer()` from `@testing/live-announcer.fake`.
+
+The fake replaces the service outright rather than spying on it: the real one
+appends a live region to the document and speaks on a timeout, so a spy leaves
+that region behind and has to be told to resolve. `fakeLiveAnnouncer()` hands
+the spec what was said.
+
+**The politeness is part of the assertion.** An announcement that interrupts
+and one that waits are different outcomes - see the rejected field against the
+rolled color in `color-controls.spec.ts`, which is the worked example. The fake
+records the politeness that would have been spoken, so a caller omitting it is
+recorded as polite rather than as nothing.
+
+### Chrome On A Visitor Color Takes Its Foreground From APCA
+
+Where a label, value, or icon sits on a color the visitor chose, its foreground
+comes from the app's own contrast calculation. A token is only guaranteed
+against the six neutral surfaces. `expectApcaForeground()` from
+`@testing/apca-foreground.expectation` pins it, with `swatch.spec.ts` as the
+worked example.
+
+**The assertion is the maximum, not the threshold.** On a mid-lightness color
+neither black nor white reaches what the APCA table asks, so a test phrased as
+"clears the threshold" fails on correct code. What holds everywhere is that no
+candidate sits further from the background than the one the chrome returned -
+and where a candidate does clear the threshold, the maximum clears it too.
+
+The sweep through the RGB cube is deterministic so that a failure names the same
+color twice. Do not replace it with random draws: the region where the choice
+flips is exactly the one a re-run would then miss.

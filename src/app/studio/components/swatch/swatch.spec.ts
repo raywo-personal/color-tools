@@ -5,7 +5,7 @@ import {beforeEach, describe, expect, it} from "vitest";
 import chroma, {Color} from "chroma-js";
 import {converterEvents} from "@core/converter/converter.events";
 import {colorName} from "@common/helpers/color-name.helper";
-import {calculateAPCAContrast} from "@contrast/helper/optimal-text-color.helper";
+import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {Swatch} from "@studio/components/swatch/swatch";
 
 
@@ -55,28 +55,15 @@ describe("Swatch", () => {
 
 
   it("takes the foreground from APCA, not from a neutral token", async () => {
-    // A deterministic sweep rather than a random draw, so a failure names the
-    // same color twice. The assertion is the property the rule is about: of the
-    // two candidates, the one APCA puts further from the background wins -
-    // which is what a neutral token can never promise against a color the
-    // visitor picked.
+    // The property the rule is about, over the whole RGB cube: of the two
+    // candidates, the one APCA puts further from the background wins - which is
+    // what a neutral token can never promise against a color the visitor
+    // picked. `expectApcaForeground` owns the sweep and the assertion, so the
+    // next piece of chrome on a visitor color asserts the same thing.
     const {show} = await swatch();
 
-    for (let red = 0; red < 256; red += 51) {
-      for (let green = 0; green < 256; green += 51) {
-        for (let blue = 0; blue < 256; blue += 51) {
-          const background = chroma(red, green, blue);
-          const {label} = await show(background);
-
-          const black = Math.abs(calculateAPCAContrast("#000000", background));
-          const white = Math.abs(calculateAPCAContrast("#ffffff", background));
-          const expected = black >= white ? "#000000" : "#ffffff";
-
-          expect(label.style.color, `foreground on ${background.hex("rgb")}`)
-            .toBe(expected);
-        }
-      }
-    }
+    await expectApcaForeground(async background =>
+      (await show(background)).label.style.color);
   });
 
 });

@@ -1,12 +1,12 @@
 import {TestBed} from "@angular/core/testing";
 import {provideZonelessChangeDetection} from "@angular/core";
-import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {Dispatcher} from "@ngrx/signals/events";
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {colorName} from "@common/helpers/color-name.helper";
+import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {ColorControls} from "@studio/components/color-controls/color-controls";
 
 
@@ -14,12 +14,9 @@ describe("ColorControls", () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection()]
+      providers: [provideZonelessChangeDetection(), provideFakeLiveAnnouncer()]
     });
   });
-
-
-  afterEach(() => vi.restoreAllMocks());
 
 
   async function controls(start = "#3366CC") {
@@ -116,8 +113,7 @@ describe("ColorControls", () => {
 
 
     it("announces the rejection, because nothing moved and nothing was said", async () => {
-      const announce = vi.spyOn(TestBed.inject(LiveAnnouncer), "announce")
-        .mockResolvedValue(undefined);
+      const announcer = fakeLiveAnnouncer();
       const {store, type, pressEnter} = await controls();
 
       await type("#GGHHII");
@@ -125,10 +121,10 @@ describe("ColorControls", () => {
 
       // Assertive, and by name: the visitor is still in the field, and a hex
       // code is read out one character at a time.
-      expect(announce).toHaveBeenCalledWith(
-        `Not a color. Keeping ${colorName(store.currentColor())}`,
-        "assertive"
-      );
+      expect(announcer.last).toEqual({
+        message: `Not a color. Keeping ${colorName(store.currentColor())}`,
+        politeness: "assertive"
+      });
     });
 
 
@@ -194,17 +190,16 @@ describe("ColorControls", () => {
 
 
     it("announces the color it rolled, because nothing moved the focus", async () => {
-      const announce = vi.spyOn(TestBed.inject(LiveAnnouncer), "announce")
-        .mockResolvedValue(undefined);
+      const announcer = fakeLiveAnnouncer();
       const {fixture, store, random} = await controls();
 
       random.click();
       await fixture.whenStable();
 
-      expect(announce).toHaveBeenCalledWith(
-        `New color ${colorName(store.currentColor())}`,
-        "polite"
-      );
+      expect(announcer.last).toEqual({
+        message: `New color ${colorName(store.currentColor())}`,
+        politeness: "polite"
+      });
     });
 
 

@@ -64,6 +64,25 @@ module.exports = tseslint.config(
       // src.
       "@angular-eslint/prefer-service-decorator": "error",
 
+      // CLAUDE.md: the test helpers under src/testing stay out of app code.
+      // The `exclude` in tsconfig.app.json does not stop this on its own -
+      // TypeScript follows an import into an excluded file and compiles it
+      // anyway, so app code importing a helper builds and ships vitest and
+      // @angular/core/testing with it. The spec files and the helpers
+      // themselves are exempted below.
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@testing/*", "**/testing/*"],
+              message:
+                "Test helpers belong to the specs; app code must not import from src/testing.",
+            },
+          ],
+        },
+      ],
+
       "no-restricted-syntax": [
         "error",
         {
@@ -82,6 +101,14 @@ module.exports = tseslint.config(
           message: "OnPush is the default; remove `changeDetection`.",
         },
       ],
+    },
+  },
+  {
+    // Where the test helpers are the point: the specs that use them and the
+    // helpers themselves.
+    files: ["src/**/*.spec.ts", "src/testing/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": "off",
     },
   },
   {

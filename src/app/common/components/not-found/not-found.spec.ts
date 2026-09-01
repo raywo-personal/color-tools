@@ -1,10 +1,10 @@
 import {TestBed} from "@angular/core/testing";
 import {provideRouter, Router, RouterOutlet} from "@angular/router";
 import {Component, provideZonelessChangeDetection} from "@angular/core";
-import {LiveAnnouncer} from "@angular/cdk/a11y";
-import {beforeEach, describe, expect, it, vi} from "vitest";
+import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {colorName} from "@common/helpers/color-name.helper";
+import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {NotFound} from "./not-found";
 
 
@@ -23,6 +23,7 @@ describe("NotFound", () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideFakeLiveAnnouncer(),
         provideRouter([{path: "**", component: NotFound}])
       ]
     });
@@ -161,8 +162,7 @@ describe("NotFound", () => {
 
 
   it("announces the rolled palette, because nothing moves focus to it", async () => {
-    const announce = vi.spyOn(TestBed.inject(LiveAnnouncer), "announce")
-      .mockResolvedValue(undefined);
+    const announcer = fakeLiveAnnouncer();
     const {fixture, page} = await renderAt("/does-not-exist");
 
     page().querySelector("button")?.click();
@@ -171,19 +171,23 @@ describe("NotFound", () => {
     const names = swatchLabels(page()).slice(0, 5)
       .map(hex => colorName(chroma(hex)));
 
-    expect(announce).toHaveBeenCalledWith(`New palette: ${names.join(", ")}`);
+    // Polite, because the visitor asked for the palette and is not waiting on
+    // it: the roll must not cut into whatever is being read.
+    expect(announcer.last).toEqual({
+      message: `New palette: ${names.join(", ")}`,
+      politeness: "polite"
+    });
   });
 
 
   it("announces color names, because a hex code is spelled out one character at a time", async () => {
-    const announce = vi.spyOn(TestBed.inject(LiveAnnouncer), "announce")
-      .mockResolvedValue(undefined);
+    const announcer = fakeLiveAnnouncer();
     const {fixture, page} = await renderAt("/does-not-exist");
 
     page().querySelector("button")?.click();
     await fixture.whenStable();
 
-    expect(announce.mock.calls[0][0]).not.toMatch(/#[0-9A-F]{6}/);
+    expect(announcer.last?.message).not.toMatch(/#[0-9A-F]{6}/);
   });
 
 });
