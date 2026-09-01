@@ -25,7 +25,7 @@ const DEFAULT_CHROMA = 0.18;
  * offset of 0.06 at the default accent lightness and only diverges from it
  * where that offset had no room left.
  */
-const SUPPORT_LIFT = 0.158;
+export const SUPPORT_LIFT = 0.158;
 
 /** Share of the accent chroma the supporting colors keep - near-neutral. */
 const SUPPORT_CHROMA_FACTOR = 0.12;
@@ -42,7 +42,7 @@ const SUPPORT_CHROMA_JITTER = 0.25;
  * the same reason as the lift itself: an absolute amount survives a light
  * base color that the lift no longer has room for.
  */
-const SUPPORT_LIFT_JITTER = 0.67;
+export const SUPPORT_LIFT_JITTER = 0.67;
 
 
 /**
