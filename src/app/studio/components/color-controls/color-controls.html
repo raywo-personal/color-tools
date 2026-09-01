@@ -1,0 +1,23 @@
+<!-- The native picker. Its own swatch shows the visitor's color, so the focus
+     ring is offset off the control rather than drawn on it. -->
+<input type="color"
+       class="h-11 w-11 shrink-0 cursor-pointer rounded-xs border border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+       aria-label="Pick a color"
+       [(ngModel)]="pickerValue"
+       (change)="commitPicker()">
+
+<input type="text"
+       class="h-11 min-w-0 flex-1 rounded-xs border border-line bg-field px-3 font-mono text-base tracking-wide focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+       aria-label="Color value"
+       placeholder="#RRGGBB"
+       autocomplete="off"
+       spellcheck="false"
+       [(ngModel)]="fieldValue"
+       (blur)="commitField()"
+       (keydown.enter)="commitField()">
+
+<button type="button"
+        title="Random color"
+        class="h-11 shrink-0 cursor-pointer rounded-xs border border-line px-3 font-mono text-base tracking-widest text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+        (click)="rollRandomColor()">Random
+</button>
