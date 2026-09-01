@@ -115,6 +115,23 @@ describe("ColorControls", () => {
     });
 
 
+    it("announces the rejection, because nothing moved and nothing was said", async () => {
+      const announce = vi.spyOn(TestBed.inject(LiveAnnouncer), "announce")
+        .mockResolvedValue(undefined);
+      const {store, type, pressEnter} = await controls();
+
+      await type("#GGHHII");
+      await pressEnter();
+
+      // Assertive, and by name: the visitor is still in the field, and a hex
+      // code is read out one character at a time.
+      expect(announce).toHaveBeenCalledWith(
+        `Not a color. Keeping ${colorName(store.currentColor())}`,
+        "assertive"
+      );
+    });
+
+
     it("normalises the spelling of a value that parses to the color already current", async () => {
       const {field, type, blur} = await controls();
 

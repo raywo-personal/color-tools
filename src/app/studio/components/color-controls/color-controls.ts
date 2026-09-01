@@ -1,10 +1,12 @@
 import {Component, inject, linkedSignal} from "@angular/core";
 import {FormsModule} from "@angular/forms";
+import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {colorFrom} from "@common/helpers/color-format-parser.helper";
 import {formatColor} from "@common/helpers/color-format.helper";
+import {colorName} from "@common/helpers/color-name.helper";
 
 
 /**
@@ -29,6 +31,7 @@ export class ColorControls {
 
   readonly #stateStore = inject(AppStateStore);
   readonly #dispatch = injectDispatch(converterEvents);
+  readonly #announcer = inject(LiveAnnouncer);
 
   /**
    * What the picker shows. The native control only ever holds a valid hex, so
@@ -51,12 +54,28 @@ export class ColorControls {
    * A value that is not a color is rejected by putting the current color back
    * into the field, not by clearing it: the field mirrors the color, so it must
    * never be left showing something the app is not using.
+   *
+   * The rejection is announced, because it is the one outcome here that moves
+   * no focus and changes nothing a screen reader would read on its own: the
+   * content is replaced in place while the cursor is still inside it. Without
+   * the announcement somebody who typed a typo, pressed Enter and moved on
+   * believes the color changed.
+   *
+   * Announced assertively, like the failed copy in `CopyService`: the visitor
+   * is mid-edit, and a polite message queued behind their own typing arrives
+   * after they have already left. The color is spoken by name, never as its
+   * hex code - a screen reader reads that out one character at a time.
    */
   protected commitField(): void {
+    const current = this.#stateStore.currentColor();
     const color = colorFrom(this.fieldValue().trim());
 
     if (!color) {
-      this.fieldValue.set(formatColor(this.#stateStore.currentColor(), "hex"));
+      this.fieldValue.set(formatColor(current, "hex"));
+      void this.#announcer.announce(
+        `Not a color. Keeping ${colorName(current)}`,
+        "assertive"
+      );
 
       return;
     }
