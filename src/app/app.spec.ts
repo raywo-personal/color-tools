@@ -41,6 +41,18 @@ describe("App", () => {
   });
 
 
+  it("renders the copy confirmation, which every screen copies through", async () => {
+    // The shell renders it once, so a copy target neither imports nor
+    // positions it. Nothing else would notice it going missing: the service
+    // would still write and announce, and only the toast would be gone.
+    configure(routes);
+
+    const shell = await shellAt("/");
+
+    expect(shell.querySelectorAll("ct-copy-confirmation")).toHaveLength(1);
+  });
+
+
   it("leaves the app header out on an unknown path, because the not-found page carries its own", async () => {
     configure(routes);
 

@@ -141,7 +141,7 @@ rather than duplicating it here.
 
 The routed screens do not follow the state domains:
 
-- `src/app/shell/` – `AppHeader` and `ThemeControl`
+- `src/app/shell/` – `AppHeader`, `ThemeControl` and `CopyConfirmation`
 - `src/app/studio/` – the studio view
 - `src/app/contrast-type/` – the contrast and type view
 
@@ -464,6 +464,18 @@ convenience.** The only saturated color on screen is the one the visitor is
 working on. Tailwind's default palette is still reachable, so nothing stops a
 stray `text-blue-600` - keep it out.
 
+**`danger` and `on-danger` are the one exception, and they belong to the failed
+copy.** A failure has to be told apart from a success, and the rule below
+forbids doing that by color alone - so the pair never appears without the sign
+beside the message and the weight of the message itself. Do not reach for the
+pair as a general warning color: a second caller is a second design decision,
+not a reuse.
+
+**The dark neutrals keep their OKLch lightness distance from `bg`.** Move
+`--color-bg` and panel, field and line move with it - panel lifts off the
+ground, field and line lift further. Change `bg` alone and a panel comes out
+darker than the page it sits on.
+
 **The `@theme` block is `static`.** Without it Tailwind emits only the tokens
 some utility class happens to use, and a plain `var(--color-panel)` in a
 component stylesheet resolves to nothing in the light theme while working in the
@@ -620,6 +632,32 @@ only guaranteed against the six neutral surfaces.
 **Review only.** Regenerating a palette, rolling random colors, and switching
 text against background all replace content without moving focus, so a screen
 reader is told nothing. Announce the outcome through `LiveAnnouncer`.
+
+### Copying A Value Goes Through `CopyService`
+
+**Review only.** A copy target calls `copyColor()` or `copyText()` on
+`CopyService` (`src/app/common/services/copy.service.ts`) and never reaches for
+`navigator.clipboard` itself. The service writes, confirms through the toast the
+shell renders once, and announces through `LiveAnnouncer` - a screen copying on
+its own is an empty catch block and a forgotten announcement.
+
+`copyColor()` takes the color, plus the text to write where that is not the hex:
+the toast shows what landed on the clipboard, while speech always gets
+`colorName()`, because a hex code is read out one character at a time.
+
+**A failure is not a success with other wording.** It stands far longer than
+the confirmation and carries the `danger` pair, a sign and a semibold message,
+because a success can afford to blink past - the value is on the clipboard
+either way - and a failure cannot: the visitor pastes what was there before and
+never learns why. `copy.service.spec.ts` pins the two durations apart.
+
+The weight is what lets the pill be red at all. At 16px the APCA table in
+`apca-look-up-table.helper.ts` asks Lc 90 at weight 400 and Lc 70 at 600, and
+no red anyone would call red reaches 90 against a readable foreground. Lower
+the weight and the pill has to go pale enough to stop reading as red.
+
+The target itself is still a control - `h-11` hit area, an accessible name, and
+the ring offset its own class list has to carry.
 
 ### A Color Surface Carries Its Name
 
