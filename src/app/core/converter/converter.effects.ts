@@ -1,5 +1,7 @@
 import {Events} from "@ngrx/signals/events";
+import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {ColorThemeService} from "@common/services/color-theme.service";
+import {colorName} from "@common/helpers/color-name.helper";
 import {tap} from "rxjs";
 import {converterEvents} from "./converter.events";
 import {AppStateStore} from "../app-state.store";
@@ -46,6 +48,39 @@ export function useAsBackgroundChangedEffect(
         } else {
           colorThemeService.resetBackgroundColor();
         }
+      })
+    );
+}
+
+
+/**
+ * Announces the color a roll of `RND` produced.
+ *
+ * A roll replaces the swatch and the whole conversion list without moving
+ * focus, so nothing would tell a screen reader that anything happened. Typing
+ * into the field or dragging the picker needs no announcement: the visitor set
+ * that value and the control they are in already carries it.
+ *
+ * It sits in an effect rather than in the button, so the announcement travels
+ * with the event and not with one caller of it. The reducer has run by the
+ * time an effect sees the event, so the store already holds the new color.
+ */
+export function randomColorAnnouncedEffect(
+  this: void,
+  events: Events,
+  announcer: LiveAnnouncer,
+  store: unknown
+) {
+  const typedStore = store as AppStateStore;
+
+  return events
+    .on(converterEvents.newRandomColorWithNav)
+    .pipe(
+      tap(() => {
+        void announcer.announce(
+          `New color ${colorName(typedStore.currentColor())}`,
+          "polite"
+        );
       })
     );
 }
