@@ -129,6 +129,9 @@ describe("NotFound", () => {
 
     const list = page().querySelector("ul");
 
+    // Without the role Safari drops the list semantics Preflight took the
+    // marker from, and the label goes with them.
+    expect(list?.getAttribute("role")).toBe("list");
     expect(list?.getAttribute("aria-label")).toBe(
       "A ColorTools palette of 5 colors, with 3 slots left unmixed");
     expect(page().querySelectorAll("li > span:first-child[aria-hidden=\"true\"]"))

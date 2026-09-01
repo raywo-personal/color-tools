@@ -119,6 +119,18 @@ describe("ConversionList", () => {
   });
 
 
+  it("stays a list once Preflight has taken its marker", async () => {
+    const {fixture} = await list();
+
+    const element = (fixture.nativeElement as HTMLElement).querySelector("ul");
+
+    // Without the role Safari drops the list semantics Preflight took the
+    // marker from, and the label goes with them.
+    expect(element?.getAttribute("role")).toBe("list");
+    expect(element?.getAttribute("aria-label")).toBe("Color conversions");
+  });
+
+
   it("follows the current color", async () => {
     const {fixture, row} = await list();
 
