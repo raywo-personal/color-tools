@@ -1,9 +1,17 @@
-import {describe, expect, it} from "vitest";
+import {afterEach, describe, expect, it, vi} from "vitest";
 import chroma from "chroma-js";
-import {generateTriadic} from "@palettes/helper/triadic-palette.helper";
+import {
+  SUPPORT_LIFT,
+  SUPPORT_LIFT_JITTER,
+  generateTriadic
+} from "@palettes/helper/triadic-palette.helper";
 import {paletteColorFrom} from "@palettes/models/palette-color.model";
 import {PALETTE_SLOTS, Palette, PaletteSlot} from "@palettes/models/palette.model";
-import {maxChroma} from "@common/helpers/oklch.helper";
+import {
+  MAX_USABLE_LIGHTNESS,
+  MIN_USABLE_LIGHTNESS,
+  maxChroma
+} from "@common/helpers/oklch.helper";
 
 
 /** The three accents; the remaining two are the near-neutral supports. */
@@ -42,7 +50,31 @@ function lightnessOf(palette: Palette, slots: PaletteSlot[]): number[] {
 }
 
 
+/**
+ * The narrowest lightness spread the generator can produce for a base color
+ * clamped to the given lightness, read off its construction: the accents sit
+ * at that lightness exactly, and the closest a support comes to them is the
+ * lift with its jitter drawn all the way down.
+ *
+ * Derived rather than written out. A round number written into the assertion
+ * lands somewhere inside the achievable range instead of at its floor, and
+ * the suite then fails whenever every support draws from below it - on a
+ * different seed hue each time, so the failure reads as a real regression.
+ *
+ * The clamped lightness is passed in rather than taken from
+ * `usableLightness()`: a bound computed through the very function under test
+ * collapses to zero along with the spread, and the assertion goes green on
+ * the regression it exists to catch.
+ */
+function narrowestSpread(clampedLightness: number): number {
+  return (1 - clampedLightness) * SUPPORT_LIFT * (1 - SUPPORT_LIFT_JITTER);
+}
+
+
 describe("generateTriadic", () => {
+
+  afterEach(() => vi.restoreAllMocks());
+
 
   describe("the three accents", () => {
 
@@ -163,8 +195,20 @@ describe("generateTriadic", () => {
   // hue holds any chroma, so without the clamp in `usableLightness()` every
   // slot came out the same black or white - clipped, and unchanged by a
   // regenerate. Both remain neutral palettes; they just stop being one color.
-  it.each(["#000000", "#ffffff"])(
-    "keeps a spread of lightness for a base color of %s", hex => {
+  //
+  // The lightness jitter is pinned to its floor, so the spread is not a draw
+  // from the achievable range but its narrowest point, the same for every
+  // seed hue. Left random, the white case sits close enough to the floor that
+  // the assertion is a coin toss: a run fails whenever every support happens
+  // to draw from the bottom of the range, and does so on a different seed hue
+  // each time.
+  it.each([
+    ["#000000", MIN_USABLE_LIGHTNESS],
+    ["#ffffff", MAX_USABLE_LIGHTNESS]
+  ])("keeps a spread of lightness for a base color of %s",
+    (hex, clampedLightness) => {
+      vi.spyOn(Math, "random").mockReturnValue(0);
+
       const base = chroma(hex);
 
       for (let seedHue = 0; seedHue < 360; seedHue += 15) {
@@ -184,7 +228,8 @@ describe("generateTriadic", () => {
         const lightness = lightnessOf(palette, generated);
         const spread = Math.max(...lightness) - Math.min(...lightness);
 
-        expect(spread, `seed hue ${seedHue}`).toBeGreaterThan(0.005);
+        expect(spread, `seed hue ${seedHue}`)
+          .toBeCloseTo(narrowestSpread(clampedLightness), 6);
       }
     });
 

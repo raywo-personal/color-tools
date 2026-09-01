@@ -88,8 +88,8 @@ export function inOklchLightnessRange(this: void, lightness: number | null): lig
  * a tint needs to read as tinted, and the upper one leaves the lighter members
  * room above the accents.
  */
-const MIN_USABLE_LIGHTNESS = 0.12;
-const MAX_USABLE_LIGHTNESS = 0.92;
+export const MIN_USABLE_LIGHTNESS = 0.12;
+export const MAX_USABLE_LIGHTNESS = 0.92;
 
 
 /**
