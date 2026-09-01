@@ -58,7 +58,7 @@ describe("CopyService", () => {
     it("confirms with the value that landed on the clipboard", async () => {
       await service().copyColor(chroma("#3366CC"));
 
-      expect(service().confirmation()).toBe("Copied #3366CC");
+      expect(service().confirmation()).toEqual({message: "Copied #3366CC", failed: false});
     });
 
 
@@ -93,7 +93,8 @@ describe("CopyService", () => {
       await service().copyText(css, "the CSS variables");
 
       expect(writeText).toHaveBeenCalledWith(css);
-      expect(service().confirmation()).toBe("Copied the CSS variables");
+      expect(service().confirmation())
+        .toEqual({message: "Copied the CSS variables", failed: false});
       expect(announce)
         .toHaveBeenCalledWith("Copied the CSS variables", "polite");
     });
@@ -108,7 +109,8 @@ describe("CopyService", () => {
 
       await service().copyColor(chroma("#3366CC"));
 
-      expect(service().confirmation()).toBe("Could not copy #3366CC");
+      expect(service().confirmation())
+        .toEqual({message: "Could not copy #3366CC", failed: true});
     });
 
 
@@ -130,7 +132,8 @@ describe("CopyService", () => {
 
       await service().copyColor(chroma("#3366CC"));
 
-      expect(service().confirmation()).toBe("Could not copy #3366CC");
+      expect(service().confirmation())
+        .toEqual({message: "Could not copy #3366CC", failed: true});
       expect(announce).toHaveBeenCalledWith(expect.stringMatching(/^Could not copy /), "assertive");
     });
 
@@ -155,7 +158,25 @@ describe("CopyService", () => {
       await service().copyColor(chroma("#CC3366"));
       vi.advanceTimersByTime(1000);
 
-      expect(service().confirmation()).toBe("Copied #CC3366");
+      expect(service().confirmation())
+        .toEqual({message: "Copied #CC3366", failed: false});
+    });
+
+
+    it("leaves a failure standing long after a success would have gone", async () => {
+      // A success can afford to blink past: the value is on the clipboard
+      // either way. A failure has no such fallback, so it has to survive the
+      // moment the visitor spends looking at the app they are pasting into.
+      writeText.mockRejectedValue(new Error("NotAllowedError"));
+
+      await service().copyColor(chroma("#3366CC"));
+      vi.advanceTimersByTime(1400);
+
+      expect(service().confirmation()?.failed).toBe(true);
+
+      vi.advanceTimersByTime(4600);
+
+      expect(service().confirmation()).toBeNull();
     });
 
   });

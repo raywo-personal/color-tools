@@ -31,6 +31,17 @@
   --color-line: #E4DED4;
   --color-field: #F2EDE5;
 
+  /* The one exception to "no accent". A failed copy has to be told apart from
+     a successful one, and the app's own rule forbids doing that by color
+     alone - so the pair carries the marked toast, and the sign beside the
+     message carries the same news without color. The message is set semibold,
+     which is what makes both pairs clear the app's own APCA table: at 16px it
+     asks Lc 90 at weight 400 and Lc 70 at 600, and no red anyone would call
+     red reaches 90. Here on-danger against danger is Lc -90.8, and the filled
+     pill separates from both grounds at Lc 86.5 (bg) and 89.5 (panel). */
+  --color-danger: #861F17;
+  --color-on-danger: #FFF7F5;
+
   --font-serif: "Instrument Serif", Georgia, serif;
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
@@ -50,6 +61,14 @@
     --color-dim: #ADA594;
     --color-line: #423D36;
     --color-field: #343129;
+
+    /* Inverted like the neutral pill: a deep red on the light ground, a light
+       one on the dark. Light is not the same as washed out - the chroma sits
+       at the sRGB boundary for this hue, so the pill reads as red rather than
+       as a tinted grey. Lc 72.5 for the semibold message, -70.1 and -68.5 for
+       the pill against the two grounds. */
+    --color-danger: #FFB5AC;
+    --color-on-danger: #2E0705;
   }
 
   /* Native scrollbars and form controls follow the chosen theme, not the OS. */

@@ -5,10 +5,32 @@ import {colorName} from "@common/helpers/color-name.helper";
 
 
 /**
- * How long the confirmation stays on screen. It only has to be seen: the value
+ * How long a confirmed copy stays on screen. It only has to be seen: the value
  * is on the clipboard either way, and `LiveAnnouncer` has already said so.
  */
 const CONFIRMATION_DURATION = 1400;
+
+/**
+ * A failure stays far longer, because it has no such fallback. The visitor
+ * clicks copy, looks away to the app they are pasting into, and pastes
+ * whatever was on the clipboard before - the outcome the whole failure path
+ * exists to prevent. A duration measured for a success is too short to carry
+ * that news.
+ */
+const FAILURE_DURATION = 6000;
+
+
+/**
+ * What the toast shows, and whether the copy failed.
+ *
+ * The outcome travels with the message because the toast may not tell the two
+ * apart by color alone: it also carries a marker, and the marker needs the
+ * flag.
+ */
+export interface CopyOutcome {
+  readonly message: string;
+  readonly failed: boolean;
+}
 
 
 /**
@@ -30,7 +52,7 @@ export class CopyService {
   readonly #announcer = inject(LiveAnnouncer);
   readonly #window = inject(DOCUMENT).defaultView;
 
-  readonly #confirmation = signal<string | null>(null);
+  readonly #confirmation = signal<CopyOutcome | null>(null);
 
   #timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -65,7 +87,7 @@ export class CopyService {
 
   async #copy(text: string, shown: string, spoken: string): Promise<void> {
     if (await this.#write(text)) {
-      this.#confirm(`Copied ${shown}`);
+      this.#confirm(`Copied ${shown}`, false);
       void this.#announcer.announce(`Copied ${spoken}`, "polite");
 
       return;
@@ -73,7 +95,7 @@ export class CopyService {
 
     // Reported, not swallowed. A silent failure leaves the visitor believing
     // the copy worked and pasting whatever was on the clipboard before.
-    this.#confirm(`Could not copy ${shown}`);
+    this.#confirm(`Could not copy ${shown}`, true);
     void this.#announcer.announce(`Could not copy ${spoken}`, "assertive");
   }
 
@@ -95,13 +117,13 @@ export class CopyService {
   }
 
 
-  #confirm(message: string): void {
+  #confirm(message: string, failed: boolean): void {
     this.#clearTimer();
-    this.#confirmation.set(message);
+    this.#confirmation.set({message, failed});
 
     this.#timer = setTimeout(
       () => this.#confirmation.set(null),
-      CONFIRMATION_DURATION
+      failed ? FAILURE_DURATION : CONFIRMATION_DURATION
     );
   }
 
