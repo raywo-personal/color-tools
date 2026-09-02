@@ -7,7 +7,7 @@ import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {CopyService} from "@common/services/copy.service";
-import {cssExport, jsonExport} from "@studio/helper/palette-export.helper";
+import {cssExport, jsonExport, tailwindExport} from "@studio/helper/palette-export.helper";
 import {ExportPanel} from "@studio/components/export-panel/export-panel";
 
 
@@ -96,6 +96,24 @@ describe("ExportPanel", () => {
   });
 
 
+  it("offers CSS, Tailwind and JSON, in that order", async () => {
+    const {tabs} = await panel();
+
+    expect(tabs().map(tab => tab.textContent?.trim())).toEqual(["CSS", "TAILWIND", "JSON"]);
+  });
+
+
+  it("switches the block to the Tailwind theme and presses that tab alone", async () => {
+    const {fromStore, pressed, block, pick} = await panel();
+
+    await pick("TAILWIND");
+
+    expect(pressed()).toEqual(["TAILWIND"]);
+    expect(block().textContent).toBe(tailwindExport(fromStore()));
+    expect(block().textContent).toMatch(/^@theme \{/);
+  });
+
+
   it("switches the block to JSON and presses that tab alone", async () => {
     const {fromStore, pressed, block, pick} = await panel();
 
@@ -140,30 +158,35 @@ describe("ExportPanel", () => {
 
     expect(copyText).toHaveBeenLastCalledWith(block().textContent, "CSS variables");
 
+    await pick("TAILWIND");
+    copyAll().click();
+
+    expect(copyText).toHaveBeenLastCalledWith(block().textContent, "Tailwind theme");
+
     await pick("JSON");
     copyAll().click();
 
     expect(copyText).toHaveBeenLastCalledWith(block().textContent, "JSON export");
-    expect(copyText).toHaveBeenCalledTimes(2);
+    expect(copyText).toHaveBeenCalledTimes(3);
   });
 
 
   it("makes the block the one copy target", async () => {
-    // The rows are not targets: the only control besides the two tabs is
+    // The rows are not targets: the only control besides the three tabs is
     // COPY ALL, and the block itself is not clickable.
     const {host, block} = await panel();
 
-    expect(host.querySelectorAll("button")).toHaveLength(3);
+    expect(host.querySelectorAll("button")).toHaveLength(4);
     expect(block().querySelector("button")).toBeNull();
   });
 
 
-  it("groups the two tabs under a name", async () => {
+  it("groups the three tabs under a name", async () => {
     const {host} = await panel();
     const group = host.querySelector("[role=group]");
 
     expect(group?.getAttribute("aria-label")).toBe("Export format");
-    expect(group?.querySelectorAll("button")).toHaveLength(2);
+    expect(group?.querySelectorAll("button")).toHaveLength(3);
   });
 
 

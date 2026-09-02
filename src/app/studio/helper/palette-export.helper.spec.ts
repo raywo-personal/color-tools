@@ -4,7 +4,7 @@ import {generatePaletteFrom} from "@palettes/helper/palette.helper";
 import {roleCaptionFor} from "@palettes/helper/palette-role.helper";
 import {PALETTE_SLOTS} from "@palettes/models/palette.model";
 import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
-import {cssExport, exportAs, ExportSource, jsonExport} from "@studio/helper/palette-export.helper";
+import {cssExport, exportAs, ExportSource, jsonExport, tailwindExport} from "@studio/helper/palette-export.helper";
 
 
 describe("palette export", () => {
@@ -65,6 +65,36 @@ describe("palette export", () => {
   });
 
 
+  describe("as Tailwind tokens", () => {
+
+    const css = cssExport(source).split("\n");
+    const tailwind = tailwindExport(source).split("\n");
+
+
+    it("wraps everything in a @theme block", () => {
+      expect(tailwind[0]).toBe("@theme {");
+      expect(tailwind[tailwind.length - 1]).toBe("}");
+    });
+
+
+    it("puts the color namespace in front of every CSS name and changes nothing else", () => {
+      // The two formats describe the same thing in the same words: a reader
+      // who has seen the CSS finds every name again as a utility.
+      expect(tailwind.slice(1, -1))
+        .toEqual(css.slice(1, -1).map(line => line.replace("  --", "  --color-")));
+      expect(tailwind[1]).toBe("  --color-base: #3366CC;");
+      expect(tailwind).toContain(`  --color-tint-30: ${hex(source.tints[3])};`);
+    });
+
+
+    it("keeps the role beside each palette color", () => {
+      expect(tailwind.filter(line => line.includes("--color-palette-")).map(line => line.split("/*")[1]?.trim()))
+        .toEqual(PALETTE_SLOTS.map(slot => `${roleCaptionFor("triadic", slot)} */`));
+    });
+
+  });
+
+
   describe("as JSON", () => {
 
     const parsed = JSON.parse(jsonExport(source)) as Record<string, unknown>;
@@ -100,12 +130,14 @@ describe("palette export", () => {
 
   it("picks the renderer by format", () => {
     expect(exportAs("css", source)).toBe(cssExport(source));
+    expect(exportAs("tailwind", source)).toBe(tailwindExport(source));
     expect(exportAs("json", source)).toBe(jsonExport(source));
   });
 
 
   it("writes every hex in upper case, as the screen does", () => {
-    const hexes = (cssExport(source) + jsonExport(source)).match(/#[0-9a-fA-F]{6}/g) ?? [];
+    const hexes = (cssExport(source) + tailwindExport(source) + jsonExport(source))
+      .match(/#[0-9a-fA-F]{6}/g) ?? [];
 
     expect(hexes.length).toBeGreaterThan(0);
     expect(hexes.filter(candidate => candidate !== candidate.toUpperCase())).toEqual([]);
