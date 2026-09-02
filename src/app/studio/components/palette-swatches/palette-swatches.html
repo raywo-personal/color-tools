@@ -1,0 +1,22 @@
+<!-- Three columns unprefixed, so the five swatches take two rows on a phone:
+     five across a 320px screen leave about 50px each, under the touch minimum.
+     sm: puts them in the one row the draft draws. -->
+<ul role="list"
+    aria-label="Palette colors"
+    class="grid grid-cols-3 gap-2 sm:grid-cols-5">
+  @for (swatch of swatches(); track swatch.slot) {
+    <li class="min-w-0">
+      <!-- The ring is offset off the swatch: drawn on it, it vanishes as soon
+           as the color underneath sits at the ring's own lightness. -->
+      <button type="button"
+              class="block h-24 w-full cursor-pointer rounded-xs border border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+              [style.background-color]="swatch.background"
+              [attr.aria-label]="swatch.label"
+              (click)="copy(swatch)"></button>
+      <p class="mt-2 font-mono text-base">{{ swatch.hex }}</p>
+      <p class="font-mono text-sm tracking-widest text-dim">{{ swatch.role }}</p>
+    </li>
+  }
+</ul>
+
+<p class="mt-3 text-sm text-dim text-pretty">{{ description() }}</p>

@@ -5,6 +5,7 @@ import chroma from "chroma-js";
 import {loadAppStateReducer} from "@core/common/persistence.reducers";
 import {initialState} from "@core/models/app-state.model";
 import {LOCAL_STORAGE_KEY} from "@common/models/local-storage.model";
+import {generatePalette, generatePaletteFrom} from "@palettes/helper/palette.helper";
 import {EventInstance} from "@ngrx/signals/events";
 
 
@@ -87,6 +88,73 @@ describe("loadAppStateReducer", () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({currentColor: "#123456"}));
 
     expect(loaded().currentColor.hex()).toBe("#123456");
+  });
+
+
+  it("takes the style from the restored palette, so the picker presses the chip the palette came from", () => {
+    const stored = generatePalette("triadic");
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({currentPaletteId: stored.id}));
+
+    const state = loaded();
+
+    expect(state.currentPalette.style).toBe("triadic");
+    expect(state.paletteStyle).toBe("triadic");
+  });
+
+
+  it("keeps the style and the palette together for a visitor who has never had one", () => {
+    const state = loaded();
+
+    expect(state.paletteStyle).toBe(state.currentPalette.style);
+  });
+
+
+  it("builds the first palette on the stored color", () => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({currentColor: "#3366cc"}));
+
+    expect(loaded().currentPalette.color0.color.hex("rgb")).toBe("#3366cc");
+  });
+
+
+  it("brings a stored palette back exactly when it is built on the stored color", () => {
+    const stored = generatePaletteFrom(chroma("#3366cc"), "complementary", 11);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      currentColor: "#3366cc",
+      currentPaletteId: stored.id,
+      paletteSeed: 11
+    }));
+
+    expect(loaded().currentPalette.id).toBe(stored.id);
+  });
+
+
+  it("rebuilds a stored palette that is not built on the stored color, in its style and roll", () => {
+    // Storage from before the palette followed the color: the BASE swatch would
+    // otherwise show a different color than the swatch above it until the
+    // visitor happens to touch the color.
+    const stored = generatePaletteFrom(chroma("#ff5733"), "complementary", 11);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      currentColor: "#3366cc",
+      currentPaletteId: stored.id,
+      paletteSeed: 11
+    }));
+
+    const {currentPalette, paletteStyle} = loaded();
+
+    expect(currentPalette.id).toBe(generatePaletteFrom(chroma("#3366cc"), "complementary", 11).id);
+    expect(paletteStyle).toBe("complementary");
+  });
+
+
+  it("reports the stored roll, so the first drag after a reload continues the palette", () => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({paletteSeed: 11}));
+
+    expect(loaded().paletteSeed).toBe(11);
+  });
+
+
+  it("keeps the initial roll for a visitor who has none stored", () => {
+    expect(loaded().paletteSeed).toBe(initialState.paletteSeed);
   });
 
 });

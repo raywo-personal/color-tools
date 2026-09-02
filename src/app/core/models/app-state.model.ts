@@ -4,11 +4,12 @@ import {PaletteStyle} from "@palettes/models/palette-style.model";
 import {Palette} from "@palettes/models/palette.model";
 import {ColorTheme} from "@common/models/color-theme.model";
 import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
-import {generatePalette} from "@palettes/helper/palette.helper";
+import {generatePaletteFrom} from "@palettes/helper/palette.helper";
 import {contrastingColor} from "@common/helpers/contrasting-color.helper";
 import {SelectedFont} from "@common/models/google-font.model";
 import {ContrastColors} from "@contrast/models/contrast-colors.model";
 import {generateRandomContrastColors} from "@contrast/helper/contrast-id.helper";
+import {randomSeed} from "@common/helpers/random.helper";
 
 
 export type AppState = {
@@ -25,6 +26,12 @@ export type AppState = {
   // Palette related
   paletteStyle: PaletteStyle;
   useRandomStyle: boolean;
+  /**
+   * The roll the current palette was built with. Kept so the palette can be
+   * rebuilt on a moving base color with the same variations - see
+   * `generatePaletteFrom()`. Picking a style draws a new one.
+   */
+  paletteSeed: number;
   currentPalette: Palette;
 
   // Contrast related
@@ -37,6 +44,7 @@ export type AppState = {
 
 const initialColor = chroma.random();
 const textColor = contrastingColor(initialColor);
+const initialSeed = randomSeed();
 
 export const initialState: AppState = {
   currentColor: initialColor,
@@ -50,7 +58,8 @@ export const initialState: AppState = {
 
   paletteStyle: "random",
   useRandomStyle: false,
-  currentPalette: generatePalette("random"),
+  paletteSeed: initialSeed,
+  currentPalette: generatePaletteFrom(initialColor, "random", initialSeed),
 
   contrastColors: generateRandomContrastColors(),
 

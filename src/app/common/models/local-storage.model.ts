@@ -8,6 +8,8 @@ export interface SettingsMap {
   currentColor: string;
   colorTheme: ColorTheme;
   currentPaletteId: string;
+  /** The roll behind `currentPaletteId`, so a drag after a reload continues it. */
+  paletteSeed: number;
   selectedFont: SelectedFont | null;
   contrastId: string;
 }

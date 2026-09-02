@@ -1,5 +1,45 @@
 import chroma from "chroma-js";
+import basic from "color-namer/lib/colors/basic";
+import html from "color-namer/lib/colors/html";
+import ntc from "color-namer/lib/colors/ntc";
+import pantone from "color-namer/lib/colors/pantone";
+import roygbiv from "color-namer/lib/colors/roygbiv";
+import x11 from "color-namer/lib/colors/x11";
 import {colorName} from "@common/helpers/color-name.helper";
+
+
+/**
+ * The search as it was first written, one `chroma.distance()` per candidate.
+ * The helper now works on precomputed Lab values because a slider drag asks
+ * for six names per frame; this is what it has to keep agreeing with.
+ */
+function referenceName(hex: string): string {
+  const lists = [basic, html, ntc, pantone, roygbiv, x11];
+  let closest: {name: string} | undefined;
+  let closestDistance = Infinity;
+  let closestPantone: {name: string} | undefined;
+  let closestPantoneDistance = Infinity;
+
+  for (const list of lists) {
+    for (const candidate of list) {
+      const distance = chroma.distance(hex, candidate.hex);
+
+      if (distance < closestDistance) {
+        closest = candidate;
+        closestDistance = distance;
+      }
+
+      if (list === pantone && distance < closestPantoneDistance) {
+        closestPantone = candidate;
+        closestPantoneDistance = distance;
+      }
+    }
+  }
+
+  return closestPantone && closestPantoneDistance <= closestDistance + 5
+    ? closestPantone.name
+    : closest!.name;
+}
 
 
 describe("Color Name Helper", () => {
@@ -73,6 +113,25 @@ describe("Color Name Helper", () => {
         expect(fractional.hex()).toBe("#633d36");
         expect(colorName(fractional)).toBe(colorName(chroma("#633d36")));
         expect(colorName(fractional)).toBe("Congo Brown");
+      });
+
+    });
+
+
+    describe("the precomputed search", () => {
+
+      it("names every color the way one chroma.distance() per candidate did", () => {
+        // A deterministic sweep, so a disagreement names the same color twice.
+        // Steps of 51 visit every corner and face of the cube plus its centre.
+        for (let r = 0; r < 256; r += 51) {
+          for (let g = 0; g < 256; g += 51) {
+            for (let b = 0; b < 256; b += 51) {
+              const hex = chroma.rgb(r, g, b).hex();
+
+              expect(colorName(chroma(hex)), hex).toBe(referenceName(hex));
+            }
+          }
+        }
       });
 
     });
