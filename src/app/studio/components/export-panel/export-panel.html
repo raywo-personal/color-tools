@@ -27,5 +27,14 @@
 
 <!-- The block scrolls inside itself, both ways: a long hex line never widens
      the page, and the height cap is a scale step near the draft's 300px
-     rather than the pixel value, so it follows the visitor's font size. -->
-<pre class="max-h-80 overflow-auto rounded-xs border border-line bg-field p-4 font-mono text-sm leading-relaxed">{{ output() }}</pre>
+     rather than the pixel value, so it follows the visitor's font size.
+
+     And it is in the tab order, because it always scrolls: the cap shows
+     about half the CSS export. Chrome and Firefox focus a scroll container
+     by themselves, Safari does not, and there a keyboard-only visitor would
+     read the palette variables and never the ramps. A named region rather
+     than a bare tabindex, so the stop announces what it holds. -->
+<pre tabindex="0"
+     role="region"
+     [attr.aria-label]="selected().label"
+     class="max-h-80 overflow-auto rounded-xs border border-line bg-field p-4 font-mono text-sm leading-relaxed focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current">{{ output() }}</pre>

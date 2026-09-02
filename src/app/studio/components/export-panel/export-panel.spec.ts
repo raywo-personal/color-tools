@@ -203,6 +203,22 @@ describe("ExportPanel", () => {
   });
 
 
+  it("puts the block in the tab order, named for what it holds", async () => {
+    // The block always scrolls - the CSS export is thirty lines under a
+    // 20rem cap - and Safari does not focus a scroll container by itself,
+    // so without the stop a keyboard-only visitor reads only its first half.
+    const {block, pick} = await panel();
+
+    expect(block().getAttribute("tabindex")).toBe("0");
+    expect(block().getAttribute("role")).toBe("region");
+    expect(block().getAttribute("aria-label")).toBe("CSS variables");
+
+    await pick("JSON");
+
+    expect(block().getAttribute("aria-label")).toBe("JSON export");
+  });
+
+
   it("wraps the switch and COPY ALL rather than crowding them", async () => {
     const {host} = await panel();
     const row = host.querySelector("[role=group]")?.parentElement;

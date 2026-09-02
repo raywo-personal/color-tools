@@ -34,7 +34,9 @@ const FORMAT_OPTIONS: readonly FormatOption[] = [
  *
  * The block is the one copy target; its rows are not. Copying goes through
  * `CopyService.copyText()`, whose label is what the toast shows - the block
- * itself is too long for a toast and too long to hear.
+ * itself is too long for a toast and too long to hear. The same label names
+ * the block as a region, so the tab stop it needs to be scrollable by
+ * keyboard says which format the visitor has landed in.
  *
  * The format is component state, not app state: nothing else reads it and
  * a visitor coming back expects the panel as the draft draws it.
@@ -54,6 +56,9 @@ export class ExportPanel {
   protected readonly options = FORMAT_OPTIONS;
   protected readonly format = signal<ExportFormat>("css");
 
+  protected readonly selected = computed(() =>
+    FORMAT_OPTIONS.find(candidate => candidate.format === this.format())!);
+
   protected readonly output = computed(() => exportAs(this.format(), {
     base: this.#stateStore.currentColor(),
     palette: this.#stateStore.currentPalette(),
@@ -68,9 +73,7 @@ export class ExportPanel {
 
 
   protected copyAll(): void {
-    const option = FORMAT_OPTIONS.find(candidate => candidate.format === this.format())!;
-
-    void this.#copy.copyText(this.output(), option.label);
+    void this.#copy.copyText(this.output(), this.selected().label);
   }
 
 }
