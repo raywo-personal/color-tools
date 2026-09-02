@@ -21,7 +21,7 @@ describe("Studio", () => {
   }
 
 
-  it("holds the swatch, the controls, the conversion list, the sliders, the palette and the ramps", async () => {
+  it("holds the swatch, the controls, the conversion list, the sliders, the palette, the ramps and the export panel", async () => {
     const host = await studio();
 
     expect(host.querySelector("ct-swatch")).not.toBeNull();
@@ -31,6 +31,7 @@ describe("Studio", () => {
     expect(host.querySelector("ct-style-picker")).not.toBeNull();
     expect(host.querySelector("ct-palette-swatches")).not.toBeNull();
     expect(host.querySelector("ct-tint-shade-ramps")).not.toBeNull();
+    expect(host.querySelector("ct-export-panel")).not.toBeNull();
   });
 
 

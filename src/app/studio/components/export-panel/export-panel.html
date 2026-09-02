@@ -1,0 +1,40 @@
+<p class="mb-4 font-mono text-sm tracking-widest text-dim">EXPORT PALETTE</p>
+
+<!-- The switch and COPY ALL wrap rather than shrink: both keep their h-11 hit
+     area, so where the narrow column has no room for them side by side the
+     switch takes the first row and COPY ALL the second. -->
+<div class="mb-3 flex flex-wrap items-center gap-3">
+  <div role="group"
+       aria-label="Export format"
+       class="flex overflow-hidden rounded-xs border border-line">
+    @for (option of options; track option.format) {
+      <!-- aria-pressed, not colour alone: the inverted button is the only
+           other thing telling a visitor which format the block shows. -->
+      <button type="button"
+              class="h-11 cursor-pointer px-5 font-mono text-base tracking-widest focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              [class.bg-text]="format() === option.format"
+              [class.text-bg]="format() === option.format"
+              [class.text-text]="format() !== option.format"
+              [attr.aria-pressed]="format() === option.format"
+              (click)="pick(option.format)">{{ option.caption }}</button>
+    }
+  </div>
+
+  <button type="button"
+          class="h-11 cursor-pointer rounded-xs border border-line px-5 font-mono text-base tracking-wide focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+          (click)="copyAll()">COPY ALL</button>
+</div>
+
+<!-- The block scrolls inside itself, both ways: a long hex line never widens
+     the page, and the height cap is a scale step near the draft's 300px
+     rather than the pixel value, so it follows the visitor's font size.
+
+     And it is in the tab order, because it always scrolls: the cap shows
+     about half the CSS export. Chrome and Firefox focus a scroll container
+     by themselves, Safari does not, and there a keyboard-only visitor would
+     read the palette variables and never the ramps. A named region rather
+     than a bare tabindex, so the stop announces what it holds. -->
+<pre tabindex="0"
+     role="region"
+     [attr.aria-label]="selected().label"
+     class="max-h-80 overflow-auto rounded-xs border border-line bg-field p-4 font-mono text-sm leading-relaxed focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current">{{ output() }}</pre>
