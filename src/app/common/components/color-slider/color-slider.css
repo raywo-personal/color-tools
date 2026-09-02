@@ -1,0 +1,67 @@
+/* A range input's track and thumb live in vendor pseudo-elements, which no
+   Tailwind utility can reach - so the draft's look is written out here.
+
+   One rule per vendor pseudo-element on purpose, as in color-controls.css: a
+   browser drops a whole rule whose selector list contains one it does not
+   understand, so joining the WebKit and Gecko spellings with a comma would
+   style neither.
+
+   The lengths are rem, like every length in a template: the control scales with
+   the browser's font size setting. */
+:host {
+  --ct-track-height: 0.75rem;
+  --ct-thumb-width: 0.8125rem;
+  --ct-thumb-height: 1.75rem;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: transparent;
+}
+
+/* `border-box` so the border does not add to the height the thumb is centred
+   against below. */
+input[type="range"]::-webkit-slider-runnable-track {
+  box-sizing: border-box;
+  height: var(--ct-track-height);
+  border: 1px solid var(--color-line);
+  border-radius: 0.125rem;
+  background-image: var(--ct-track-image);
+}
+
+input[type="range"]::-moz-range-track {
+  box-sizing: border-box;
+  height: var(--ct-track-height);
+  border: 1px solid var(--color-line);
+  border-radius: 0.125rem;
+  background-image: var(--ct-track-image);
+}
+
+/* Two tones, not one: the thumb stands on whatever color the track carries at
+   that point, so a fill alone would disappear somewhere along it. The panel
+   fill and the text border are the two ends of the theme's neutral ladder, so
+   one of them always separates from the color underneath.
+
+   WebKit lays the thumb out from the top of the track, so it is pulled up by
+   half the difference in height; Gecko centres it itself. */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: var(--ct-thumb-width);
+  height: var(--ct-thumb-height);
+  margin-top: calc((var(--ct-track-height) - var(--ct-thumb-height)) / 2);
+  border: 1px solid var(--color-text);
+  border-radius: 0.125rem;
+  background-color: var(--color-panel);
+}
+
+input[type="range"]::-moz-range-thumb {
+  box-sizing: border-box;
+  width: var(--ct-thumb-width);
+  height: var(--ct-thumb-height);
+  border: 1px solid var(--color-text);
+  border-radius: 0.125rem;
+  background-color: var(--color-panel);
+}

@@ -27,6 +27,7 @@ describe("Studio", () => {
     expect(host.querySelector("ct-swatch")).not.toBeNull();
     expect(host.querySelector("ct-color-controls")).not.toBeNull();
     expect(host.querySelector("ul[ct-conversion-list]")).not.toBeNull();
+    expect(host.querySelector("ct-color-sliders")).not.toBeNull();
   });
 
 

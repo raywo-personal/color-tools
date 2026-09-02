@@ -7,6 +7,12 @@ import {converterEvents} from "./converter.events";
 import {AppStateStore} from "../app-state.store";
 
 
+/**
+ * Keeps the page background on the color while the visitor is still moving it.
+ *
+ * `colorAdjusted` is listened for beside `colorChanged` so a slider drag paints
+ * the background per frame rather than jumping to its final value on release.
+ */
 export function colorChangedEffect(
   this: void,
   events: Events,
@@ -16,7 +22,11 @@ export function colorChangedEffect(
   const typedStore = store as AppStateStore;
 
   return events
-    .on(converterEvents.colorChanged, converterEvents.newRandomColorWithNav)
+    .on(
+      converterEvents.colorChanged,
+      converterEvents.colorAdjusted,
+      converterEvents.newRandomColorWithNav
+    )
     .pipe(
       tap(() => {
         const color = typedStore.currentColor();
