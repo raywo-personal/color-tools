@@ -20,6 +20,14 @@ describe("palette export", () => {
 
   const hex = (color: chroma.Color) => color.hex("rgb").toUpperCase();
 
+  // Tailwind's `text-` utility reads the color namespace as well as the
+  // font-size scale, and the color wins. A `--color-<size>` therefore
+  // replaces the built-in `text-<size>` wherever the block is pasted.
+  const TAILWIND_TEXT_SIZES = [
+    "xs", "sm", "base", "lg", "xl",
+    "2xl", "3xl", "4xl", "5xl", "6xl", "7xl", "8xl", "9xl"
+  ];
+
 
   describe("as CSS", () => {
 
@@ -33,7 +41,7 @@ describe("palette export", () => {
 
 
     it("starts with the base color", () => {
-      expect(lines[1]).toBe("  --base: #3366CC;");
+      expect(lines[1]).toBe("  --palette-base: #3366CC;");
     });
 
 
@@ -82,13 +90,26 @@ describe("palette export", () => {
       // who has seen the CSS finds every name again as a utility.
       expect(tailwind.slice(1, -1))
         .toEqual(css.slice(1, -1).map(line => line.replace("  --", "  --color-")));
-      expect(tailwind[1]).toBe("  --color-base: #3366CC;");
+      expect(tailwind[1]).toBe("  --color-palette-base: #3366CC;");
       expect(tailwind).toContain(`  --color-tint-30: ${hex(source.tints[3])};`);
     });
 
 
+    it("names nothing after one of Tailwind's own font sizes", () => {
+      // `--color-base` would turn `text-base` into a color utility and drop
+      // the font size and line height it carries in every project the block
+      // is pasted into - without a warning anywhere.
+      const names = tailwindExport(source).split("\n")
+        .map(line => /^ {2}--color-([a-z0-9-]+):/.exec(line)?.[1])
+        .filter(name => name !== undefined);
+
+      expect(names.length).toBeGreaterThan(0);
+      expect(names.filter(name => TAILWIND_TEXT_SIZES.includes(name))).toEqual([]);
+    });
+
+
     it("keeps the role beside each palette color", () => {
-      expect(tailwind.filter(line => line.includes("--color-palette-")).map(line => line.split("/*")[1]?.trim()))
+      expect(tailwind.filter(line => /--color-palette-\d/.test(line)).map(line => line.split("/*")[1]?.trim()))
         .toEqual(PALETTE_SLOTS.map(slot => `${roleCaptionFor("triadic", slot)} */`));
     });
 

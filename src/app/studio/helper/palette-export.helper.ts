@@ -53,6 +53,13 @@ export function cssExport(source: ExportSource): string {
  * namespace in front, so the two formats describe the same thing in the same
  * words. It is v4's own syntax and nothing else - `theme.extend.colors` for a
  * v3 `tailwind.config.js` is a different format, not a variant of this one.
+ *
+ * **No exported name may be one of Tailwind's font sizes.** Its `text-`
+ * utility reads the color namespace as well as the font-size scale, and the
+ * color wins: a `--color-base` turns `text-base` into a color utility and
+ * drops the built-in font size and line height, silently, everywhere in the
+ * project the block is pasted into. That is why the base color is
+ * `palette-base` and not `base` - see `TAILWIND_TEXT_SIZES` in the spec.
  */
 export function tailwindExport(source: ExportSource): string {
   return ["@theme {", ...declarations(source, "--color-"), "}"].join("\n");
@@ -76,7 +83,7 @@ export function jsonExport({base, palette, tints, shades}: ExportSource): string
 /** The declarations both CSS formats share; `prefix` is what a name starts with. */
 function declarations({base, palette, tints, shades}: ExportSource, prefix: string): string[] {
   return [
-    `  ${prefix}base: ${hexOf(base)};`,
+    `  ${prefix}palette-base: ${hexOf(base)};`,
     ...PALETTE_SLOTS.map((slot, index) =>
       `  ${prefix}palette-${index + 1}: ${hexOf(palette[slot].color)};  /* ${roleCaptionFor(palette.style, slot)} */`),
     ...rampLines(`${prefix}tint`, tints),

@@ -133,7 +133,7 @@ describe("ExportPanel", () => {
     TestBed.inject(Dispatcher).dispatch(converterEvents.colorAdjusted(chroma("#FF5733")));
     await fixture.whenStable();
 
-    expect(block().textContent).toContain("--base: #FF5733;");
+    expect(block().textContent).toContain("--palette-base: #FF5733;");
     expect(block().textContent).toBe(cssExport(fromStore()));
   });
 
