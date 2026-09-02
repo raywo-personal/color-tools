@@ -23,14 +23,17 @@ const SPACE_OPTIONS: readonly SpaceOption[] = [
   {value: "oklch", label: "OKLCH"}
 ];
 
-/** Hue in degrees, saturation and lightness in percent - the units on screen. */
+/**
+ * Hue in degrees, saturation and lightness in percent - the units on screen,
+ * but not rounded to them; see `hsl` for why.
+ */
 interface Hsl {
   readonly h: number;
   readonly s: number;
   readonly l: number;
 }
 
-/** Lightness in percent, chroma as itself, hue in degrees. */
+/** Lightness in percent, chroma as itself, hue in degrees - unrounded likewise. */
 interface Oklch {
   readonly l: number;
   readonly c: number;
@@ -51,15 +54,17 @@ const OKLCH_CHROMA_STOPS = 8;
 const OKLCH_HUE_STOPS = 14;
 
 /**
- * The chroma an OKLch hue ramp is drawn at when the color itself has almost
- * none.
+ * The chroma an OKLch hue ramp, and the saturation an HSL hue ramp, is drawn
+ * at when the color itself has almost none.
  *
- * A grey has no hue to show, so the honest ramp is fourteen identical greys -
+ * A grey has no hue to show, so the honest ramp is a dozen identical greys -
  * and a track that never changes reads as a broken control rather than as a
- * neutral color. The floor shows what the hues would look like if the visitor
- * gave the color some chroma.
+ * neutral color. The floors show what the hues would look like if the visitor
+ * gave the color some chroma. The two are about the same colorfulness in
+ * either space.
  */
 const HUE_RAMP_MIN_CHROMA = 0.12;
+const HUE_RAMP_MIN_SATURATION = 50;
 
 /** Chroma is written to three decimals, so its ceiling is reachable at three. */
 const CHROMA_STEP = 0.001;
@@ -121,6 +126,11 @@ export class ColorSliders {
    * The values are given up as soon as the color no longer agrees with them -
    * the hex field, the picker or `Random` moving it - which is exactly what the
    * comparison below asks.
+   *
+   * They are kept unrounded, and `hslShown` rounds them for the control. A
+   * value the visitor drags arrives on the slider's step anyway; one that
+   * arrived with the color would otherwise be moved before the first touch.
+   * That matters for OKLch, see `oklch`, and the two are kept alike.
    */
   protected readonly hsl = linkedSignal<Color, Hsl>({
     source: this.#stateStore.currentColor,
@@ -137,6 +147,13 @@ export class ColorSliders {
    * Two of them are what the sliders stand at; the chroma is what the visitor
    * asked for, which the gamut need not hold - `oklchChroma` is the one on
    * screen.
+   *
+   * **Unrounded, because the chroma ceiling is evaluated at the hue.** Near
+   * the sRGB cusps the ceiling falls steeply with it: `#000FF0` holds 0.302
+   * at its own hue and 0.253 at the whole degree next to it. Rounding first
+   * would have the chroma slider read lower than the conversion list for a
+   * color that just arrived, and the first nudge of lightness would rebuild
+   * the color at the lower ceiling - a visible jump for a move of 0.1 %.
    */
   protected readonly oklch = linkedSignal<Color, Oklch>({
     source: this.#stateStore.currentColor,
@@ -177,18 +194,35 @@ export class ColorSliders {
   protected readonly oklchChroma = computed(() =>
     Math.min(this.oklch().c, this.chromaCeiling()));
 
-  protected readonly hslHueText = computed(() => `${this.hsl().h}°`);
-  protected readonly hslSaturationText = computed(() => `${this.hsl().s}%`);
-  protected readonly hslLightnessText = computed(() => `${this.hsl().l}%`);
+  /**
+   * The values the controls stand at: the kept ones, rounded to each slider's
+   * step the way `formatColor()` rounds them for the conversion list.
+   */
+  protected readonly hslShown = computed<Hsl>(() => {
+    const {h, s, l} = this.hsl();
 
-  protected readonly oklchLightnessText = computed(() => `${this.oklch().l.toFixed(1)}%`);
-  protected readonly oklchChromaText = computed(() => this.oklchChroma().toFixed(3));
-  protected readonly oklchHueText = computed(() => `${this.oklch().h}°`);
+    return {h: displayHue(h), s: Math.round(s), l: Math.round(l)};
+  });
+
+  protected readonly oklchShown = computed<Oklch>(() => {
+    const {l, h} = this.oklch();
+
+    return {l: roundTo(l, 1), c: roundTo(this.oklchChroma(), 3), h: displayHue(h)};
+  });
+
+  protected readonly hslHueText = computed(() => `${this.hslShown().h}°`);
+  protected readonly hslSaturationText = computed(() => `${this.hslShown().s}%`);
+  protected readonly hslLightnessText = computed(() => `${this.hslShown().l}%`);
+
+  protected readonly oklchLightnessText = computed(() => `${this.oklchShown().l.toFixed(1)}%`);
+  protected readonly oklchChromaText = computed(() => this.oklchShown().c.toFixed(3));
+  protected readonly oklchHueText = computed(() => `${this.oklchShown().h}°`);
 
   protected readonly hslHueTrack = computed(() => {
     const {s, l} = this.hsl();
+    const saturation = Math.max(s, HUE_RAMP_MIN_SATURATION);
 
-    return ramp(HSL_HUE_STOPS, t => hslColor({h: t * 360, s, l}));
+    return ramp(HSL_HUE_STOPS, t => hslColor({h: t * 360, s: saturation, l}));
   });
 
   protected readonly hslSaturationTrack = computed(() => {
@@ -296,9 +330,9 @@ function readHsl(color: Color): Hsl {
   const [hue, saturation, lightness] = color.hsl();
 
   return {
-    h: displayHue(hue),
-    s: Math.round(saturation * 100),
-    l: Math.round(lightness * 100)
+    h: keptHue(hue),
+    s: saturation * 100,
+    l: lightness * 100
   };
 }
 
@@ -307,23 +341,33 @@ function readOklch(color: Color): Oklch {
   const [lightness, chromacity, hue] = color.oklch();
 
   return {
-    l: roundTo(lightness * 100, 1),
-    c: roundTo(chromacity, 3),
-    h: displayHue(hue)
+    l: lightness * 100,
+    c: chromacity,
+    h: keptHue(hue)
   };
+}
+
+
+/**
+ * The hue as the panel keeps it.
+ *
+ * chroma-js reports NaN for the hue of a grey, where the angle carries no
+ * information; the panel still needs a number to build from, and 0 is what the
+ * conversion list shows for the same color.
+ */
+function keptHue(hue: number): number {
+  return Number.isNaN(hue) ? 0 : hueWrap(hue);
 }
 
 
 /**
  * Rounds a hue for the slider, the way `formatColor()` rounds it for the list.
  *
- * chroma-js reports NaN for the hue of a grey, where the angle carries no
- * information; the slider still needs a position, and 0 is what the conversion
- * list shows for the same color. Wrapping after rounding keeps 359.7 from
- * becoming a 360 the app itself never writes.
+ * Wrapping after rounding keeps 359.7 from becoming a 360 the app itself never
+ * writes.
  */
 function displayHue(hue: number): number {
-  return Number.isNaN(hue) ? 0 : hueWrap(Math.round(hue));
+  return hueWrap(Math.round(hue));
 }
 
 

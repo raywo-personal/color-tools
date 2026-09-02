@@ -68,6 +68,15 @@ describe("ColorSliders", () => {
   }
 
 
+  /** How many different colors a slider's track gradient passes through. */
+  function distinctStops(input: HTMLInputElement): number {
+    const gradient = input.style.getPropertyValue("--ct-track-image");
+    const stops = gradient.match(/#[0-9a-f]{6}/gi) ?? [];
+
+    return new Set(stops.map(stop => stop.toLowerCase())).size;
+  }
+
+
   describe("the switch", () => {
 
     it("starts on HSL and shows that space's three axes", async () => {
@@ -200,6 +209,20 @@ describe("ColorSliders", () => {
     });
 
 
+    it("still shows the hues on a grey's hue track, in either space", async () => {
+      // Drawn at the grey's own saturation or chroma, every stop would be the
+      // same grey and the control would read as dead. The ramp is drawn at a
+      // floor instead, so it shows what the hues would be with some color.
+      const {sliders, select} = await panel("#808080");
+
+      expect(distinctStops(sliders()[0])).toBeGreaterThan(1);
+
+      await select("OKLCH");
+
+      expect(distinctStops(sliders()[2])).toBeGreaterThan(1);
+    });
+
+
     it("follows a color that arrived from somewhere else", async () => {
       const {fixture, sliders} = await panel("#3366CC");
 
@@ -244,17 +267,36 @@ describe("ColorSliders", () => {
 
       await select("OKLCH");
 
-      // From the values the sliders stand at, not from the unrounded color:
-      // the ceiling has to answer for the lightness and hue on screen, or the
-      // chroma slider would let the visitor past what those two can hold.
-      const lightness = Number(sliders()[0].value) / 100;
-      const hue = Number(sliders()[2].value);
+      // From the color itself, not from the rounded values the sliders show:
+      // the color was built at its own lightness and hue, and that is where
+      // the ceiling it sits under has to be read.
+      const [lightness, , hue] = chroma("#3366CC").oklch();
 
       // Rounded down to the slider's step, so the ceiling is a value the
       // control can actually reach.
       const expected = Math.floor(maxChroma(lightness, hue) * 1000) / 1000;
 
       expect(Number(sliders()[1].max)).toBeCloseTo(expected, 3);
+    });
+
+
+    it("holds the chroma of a color that sits near a cusp of the gamut", async () => {
+      // Near the sRGB cusps the ceiling falls steeply with hue - for this blue
+      // from 0.302 at its own hue to 0.253 at the whole degree beside it. A
+      // ceiling read at the rounded hue would have the slider claim less
+      // chroma than the conversion list, and the first nudge of lightness
+      // would rebuild the color under that lower ceiling.
+      const {store, sliders, select, drag} = await panel("#000FF0");
+
+      await select("OKLCH");
+
+      const [lightness, chromacity] = chroma("#000FF0").oklch();
+
+      expect(Number(sliders()[1].value)).toBeCloseTo(chromacity, 3);
+
+      await drag(0, Math.round(lightness * 1000) / 10 + 0.1);
+
+      expect(store.currentColor().oklch()[1]).toBeCloseTo(chromacity, 2);
     });
 
 
