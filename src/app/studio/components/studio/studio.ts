@@ -6,6 +6,7 @@ import {ColorSliders} from "@studio/components/color-sliders/color-sliders";
 import {StylePicker} from "@studio/components/style-picker/style-picker";
 import {PaletteSwatches} from "@studio/components/palette-swatches/palette-swatches";
 import {TintShadeRamps} from "@studio/components/tint-shade-ramps/tint-shade-ramps";
+import {ExportPanel} from "@studio/components/export-panel/export-panel";
 
 
 /**
@@ -23,7 +24,7 @@ import {TintShadeRamps} from "@studio/components/tint-shade-ramps/tint-shade-ram
  */
 @Component({
   selector: "ct-studio",
-  imports: [Swatch, ColorControls, ConversionList, ColorSliders, StylePicker, PaletteSwatches, TintShadeRamps],
+  imports: [Swatch, ColorControls, ConversionList, ColorSliders, StylePicker, PaletteSwatches, TintShadeRamps, ExportPanel],
   templateUrl: "./studio.html",
   host: {
     "class": "grid gap-8 lg:grid-cols-[minmax(17rem,22rem)_minmax(22.5rem,1fr)] lg:items-start lg:gap-13"
