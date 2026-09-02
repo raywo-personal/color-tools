@@ -59,7 +59,7 @@ describe("roleCaptionFor", () => {
       const palette = generatePalette(style, {color0: base});
 
       for (const slot of ["color1", "color4"] as const) {
-        const claimed = Number(roleCaptionFor(style, slot).replace(/^H\s*/, "").replace("−", "-"));
+        const claimed = Number(roleCaptionFor(style, slot).replace("−", "-"));
         const actual = signedHueDistance(palette[slot].color.hsl()[0], baseHue);
 
         expect(Number.isNaN(claimed), `${style} ${slot} carries no number`).toBe(false);

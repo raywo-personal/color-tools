@@ -25,9 +25,9 @@ const ROLE_CAPTIONS: Record<PaletteStyle, RoleCaptions> = {
   "random": ["SEED", "RANDOM", "RANDOM", "RANDOM", "RANDOM"],
   // `analogRange(h, 28, 2)` spans 28 degrees in total, so the two analogs sit
   // 14 degrees either side of the base - not 28.
-  "analogous": ["BASE", "H −14", "PASTEL", "SPLIT", "H +14"],
-  "muted-analog-split": ["BASE", "H −14", "PASTEL", "SPLIT", "H +14"],
-  "harmonic": ["BASE", "H +30", "H +60", "COMP", "H +150"],
+  "analogous": ["BASE", "−14", "PASTEL", "SPLIT", "+14"],
+  "muted-analog-split": ["BASE", "−14", "PASTEL", "SPLIT", "+14"],
+  "harmonic": ["BASE", "+30", "+60", "COMP", "+150"],
   "monochromatic": ["BASE", "TINT", "LIGHT", "PALE", "MIST"],
   "vibrant-balanced": ["BASE", "+120", "+240", "LIGHT +60", "LIGHT −20"],
   "high-contrast": ["BASE", "COMP", "INK", "DEEP", "PALE"],
