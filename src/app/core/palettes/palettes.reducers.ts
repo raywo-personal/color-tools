@@ -1,10 +1,11 @@
 import {EventInstance} from "@ngrx/signals/events";
-import {generatePalette, paletteFrom} from "@palettes/helper/palette.helper";
+import {generatePalette, generatePaletteFrom, paletteFrom} from "@palettes/helper/palette.helper";
 import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
 import {PaletteStyle, randomStyle} from "@palettes/models/palette-style.model";
 import {paletteFromId} from "@palettes/helper/palette-id.helper";
 import {PaletteColor} from "@palettes/models/palette-color.model";
 import {AppState} from "@core/models/app-state.model";
+import {randomSeed} from "@common/helpers/random.helper";
 
 
 export function newRandomPaletteReducer(
@@ -106,16 +107,60 @@ export function useRandomChangedReducer(
 }
 
 
+/**
+ * Picks a style and rolls a palette in it on the current color.
+ *
+ * A pick is a roll: it draws a new seed, so picking the style that is already
+ * set builds the palette again with other variations - which is how a palette
+ * is rolled anew until the regenerate control has a place of its own.
+ */
 export function styleChangedReducer(
   this: void,
   event: EventInstance<"[Palettes] styleChanged", PaletteStyle>,
   state: AppState
 ) {
   const newStyle = event.payload;
+  const seed = randomSeed();
   const paletteColors = getPinnedPaletteColors(state);
-  const newPalette = generatePalette(newStyle, paletteColors);
+  const newPalette = generatePaletteFrom(state.currentColor, newStyle, seed, paletteColors);
 
-  return {paletteStyle: newStyle, currentPalette: newPalette};
+  return {paletteStyle: newStyle, paletteSeed: seed, currentPalette: newPalette};
+}
+
+
+/**
+ * Rebuilds the palette on the color the visitor has just moved to - every
+ * frame of a drag included, so the palette is seen following while the
+ * sliders are still in hand.
+ *
+ * With the seed the palette was rolled with, not a new one: the generators
+ * jitter their members, and a fresh draw per frame would have four swatches
+ * flicker while the fifth moves. Under the kept seed only the base changes
+ * and the other four glide with it.
+ *
+ * Registered **after** the converter's own reducer for the same events and
+ * reading the color from the state rather than from the payload, because one
+ * of the events carries none: `newRandomColorWithNav` rolls its color inside
+ * the reducer. Each case reducer reads the state fresh when its turn comes, so
+ * the color here is already the new one.
+ */
+export function paletteFollowsColorReducer(
+  this: void,
+  event: EventInstance<
+    "[Converter] colorChanged" | "[Converter] colorAdjusted" | "[Converter] newRandomColorWithNav",
+    unknown
+  >,
+  state: AppState
+) {
+  const paletteColors = getPinnedPaletteColors(state);
+  const palette = generatePaletteFrom(
+    state.currentColor,
+    state.paletteStyle,
+    state.paletteSeed,
+    paletteColors
+  );
+
+  return {currentPalette: palette};
 }
 
 

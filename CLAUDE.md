@@ -112,6 +112,8 @@ The app uses a centralized state management system built on @ngrx/signals:
   - `loadFont$` - Google font loading via GoogleFontLoaderService
   - `setBackgroundColor$` - Background color updates
   - `colorChanged$` - Theme reaction to a changed converter color
+  - `randomColorAnnounced$` - Announces the color a roll of `Random` produced
+  - `newPaletteAnnounced$` - Announces the palette a picked style produced
   - `anyPersistableEvents$` - Maps every persistable event to `saveAppState()`
   - `persist$` - State persistence to localStorage
 
@@ -132,7 +134,23 @@ rather than duplicating it here.
    rolled. The styles are listed in `PaletteStyles`
    (`src/app/palettes/models/palette-style.model.ts`); `generatePalette()`
    (`src/app/palettes/helper/palette.helper.ts`) hands each to its own
-   `*-palette.helper.ts`. Pinned colors survive a regenerate
+   `*-palette.helper.ts`. Pinned colors survive a regenerate. What a slot is
+   *for* - base, complement, a lighter tint - is `roleCaptionFor()` in
+   `palette-role.helper.ts`, a function of style and slot. It is not a field
+   on `PaletteColor`: a field would travel into the palette id, whose payload
+   is full (see below), and the generator determines the role anyway.
+   **The palette is built on the current color and follows it live**:
+   `generatePaletteFrom()` hands the color to the generator as `color0`, and
+   `paletteFollowsColorReducer` rebuilds the palette on every color event, a
+   drag's `colorAdjusted` included. It is registered after the converter's
+   reducers and reads the color from the state, so keep that order.
+   **The roll is a seed in the state.** The generators jitter their members
+   through `randomBetween()`, and a fresh draw per frame would have four
+   swatches flicker while the fifth moves; `withSeed()` replays the same
+   draws, so the palette glides. Picking a style draws a new `paletteSeed`,
+   a color change keeps it, and it is persisted beside the palette id. A
+   generator that reads `Math.random` or `chroma.random()` directly escapes
+   the seed - draw through `randomBetween()`
 3. **Contrast** – the text and background pair with its APCA value. The math
    sits in `src/app/contrast/helper/`
 4. **Common** – the color theme (light/dark/system) and the selected font

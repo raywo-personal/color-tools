@@ -28,11 +28,26 @@ export function generateRandom(paletteColors: Partial<PaletteColors> = {},
 
   const pColors: PaletteColors = {
     color0: paletteColors.color0 ?? paletteColorFrom(chroma.hsl(h, s, l), "color0"),
-    color1: paletteColors.color1 ?? paletteColorFrom(chroma.random(), "color1"),
-    color2: paletteColors.color2 ?? paletteColorFrom(chroma.random(), "color2"),
-    color3: paletteColors.color3 ?? paletteColorFrom(chroma.random(), "color3"),
-    color4: paletteColors.color4 ?? paletteColorFrom(chroma.random(), "color4"),
+    color1: paletteColors.color1 ?? paletteColorFrom(randomColor(), "color1"),
+    color2: paletteColors.color2 ?? paletteColorFrom(randomColor(), "color2"),
+    color3: paletteColors.color3 ?? paletteColorFrom(randomColor(), "color3"),
+    color4: paletteColors.color4 ?? paletteColorFrom(randomColor(), "color4"),
   };
 
   return paletteFrom(pColors, "random");
+}
+
+
+/**
+ * Uniform over the RGB cube like `chroma.random()`, but drawn through
+ * `randomBetween()` so that a `withSeed()` scope reaches it - `chroma.random()`
+ * reads `Math.random` directly and would re-roll the four draws on every frame
+ * of a slider drag.
+ */
+function randomColor() {
+  return chroma.rgb(
+    Math.floor(randomBetween(0, 256)),
+    Math.floor(randomBetween(0, 256)),
+    Math.floor(randomBetween(0, 256))
+  );
 }

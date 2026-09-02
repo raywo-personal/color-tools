@@ -25,6 +25,7 @@ export function saveStateEffect(events: Events,
         const state: SettingsMap = {
           currentColor: typedStore.currentColor().hex(),
           currentPaletteId: typedStore.currentPalette().id,
+          paletteSeed: typedStore.paletteSeed(),
           colorTheme: typedStore.colorTheme(),
           selectedFont: typedStore.selectedFont(),
           contrastId

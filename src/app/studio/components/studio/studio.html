@@ -13,8 +13,20 @@
 <div class="min-w-0">
   <ct-color-sliders/>
 
+  <!-- The caption and the chips wrap together: the chips keep their h-11 hit
+       area at every width, so in the narrow column they take the rows they
+       need rather than squeezing past the minimum. -->
+  <section class="mt-8">
+    <div class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <p class="font-mono text-sm tracking-widest text-dim">PALETTE</p>
+
+      <ct-style-picker/>
+    </div>
+
+    <ct-palette-swatches/>
+  </section>
+
   <!-- PLACEHOLDER - the rest of the draft's right-hand column, filled by slices
-       3 to 5: the style chips and the palette, the tint and shade ramps, and
-       the export panel. -->
-  <p class="mt-8 font-serif text-2xl">Palette and ramps land here.</p>
+       4 and 5: the tint and shade ramps, and the export panel. -->
+  <p class="mt-8 font-serif text-2xl">Ramps land here.</p>
 </div>

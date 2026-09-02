@@ -12,6 +12,9 @@ import {generateHarmonic} from "@palettes/helper/harmonic-palette.helper";
 import {generateRandom} from "@palettes/helper/random-palette.helper";
 import {paletteIdFrom} from "@palettes/helper/palette-id.helper";
 import {paletteName} from "@palettes/helper/palette-name.helper";
+import {Color} from "chroma-js";
+import {paletteColorFrom} from "@palettes/models/palette-color.model";
+import {withSeed} from "@common/helpers/random.helper";
 
 
 export function generatePalette(style: PaletteStyle,
@@ -41,6 +44,31 @@ export function generatePalette(style: PaletteStyle,
     default:
       return generateRandom(paletteColors, seedHue);
   }
+}
+
+
+/**
+ * A palette built on a given color: the color is `color0`, and the generator
+ * derives the other four from it, with its jitter drawn from `seed`.
+ *
+ * This is how every palette on the Studio comes about - the base color is the
+ * one the visitor is working on, so the palette says what goes with *that*
+ * color rather than with a hue rolled beside it. The seed is what lets the
+ * palette follow a slider drag: the same seed on every frame keeps the
+ * generator's variations still while the base moves, so the four derived
+ * swatches glide with it instead of flickering. A new seed is a new roll.
+ *
+ * The base arrives unpinned: pinning is a gesture of its own, and the base
+ * needs none, because the next palette is built on the current color anyway.
+ */
+export function generatePaletteFrom(base: Color,
+                                    style: PaletteStyle,
+                                    seed: number,
+                                    paletteColors: Partial<PaletteColors> = {}): Palette {
+  return withSeed(seed, () => generatePalette(style, {
+    ...paletteColors,
+    color0: paletteColorFrom(base, "color0")
+  }));
 }
 
 

@@ -21,13 +21,15 @@ describe("Studio", () => {
   }
 
 
-  it("holds the swatch, the controls and the conversion list", async () => {
+  it("holds the swatch, the controls, the conversion list, the sliders and the palette", async () => {
     const host = await studio();
 
     expect(host.querySelector("ct-swatch")).not.toBeNull();
     expect(host.querySelector("ct-color-controls")).not.toBeNull();
     expect(host.querySelector("ul[ct-conversion-list]")).not.toBeNull();
     expect(host.querySelector("ct-color-sliders")).not.toBeNull();
+    expect(host.querySelector("ct-style-picker")).not.toBeNull();
+    expect(host.querySelector("ct-palette-swatches")).not.toBeNull();
   });
 
 

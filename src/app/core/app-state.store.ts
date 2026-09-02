@@ -11,6 +11,7 @@ import {
   newPaletteWithNavReducer,
   newRandomPaletteWithNavReducer,
   paletteChangedReducer,
+  paletteFollowsColorReducer,
   paletteChangedWithoutNavReducer,
   restorePaletteReducer,
   seedHueChangedReducer,
@@ -50,6 +51,13 @@ export const AppStateStore = signalStore(
     on(converterEvents.correctLightnessChanged, correctLightnessReducer),
     on(converterEvents.useBezierChanged, useBezierReducer),
     on(converterEvents.displayColorSpaceChanged, displayColorSpaceReducer),
+    // After the converter's reducers on purpose: it reads the color they wrote.
+    on(
+      converterEvents.colorChanged,
+      converterEvents.colorAdjusted,
+      converterEvents.newRandomColorWithNav,
+      paletteFollowsColorReducer
+    ),
     on(palettesEvents.paletteChangedWithoutNav, paletteChangedWithoutNavReducer),
     on(palettesEvents.newRandomPaletteWithNav, newRandomPaletteWithNavReducer),
     on(palettesEvents.newPaletteWithNav, newPaletteWithNavReducer),

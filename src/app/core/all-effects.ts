@@ -10,6 +10,7 @@ import {ColorThemeService} from "@common/services/color-theme.service";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
 import {colorThemeChangeEffect, fontSelectedEffect} from "@core/common/common.effects";
 import {colorChangedEffect, randomColorAnnouncedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
+import {newPaletteAnnouncedEffect} from "@core/palettes/palettes.effects";
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
@@ -38,6 +39,8 @@ export function allEffects(
 
     randomColorAnnounced$: randomColorAnnouncedEffect(events, announcer, store),
 
+    newPaletteAnnounced$: newPaletteAnnouncedEffect(events, announcer, store),
+
     anyPersistableEvents$: events
       .on(
         commonEvents.colorThemeChanged,
@@ -46,6 +49,7 @@ export function allEffects(
         converterEvents.colorChanged,
         palettesEvents.paletteChanged,
         palettesEvents.paletteChangedWithoutNav,
+        palettesEvents.styleChanged,
         contrastEvents.switchColors,
         contrastEvents.textColorChanged,
         contrastEvents.backgroundColorChanged,
