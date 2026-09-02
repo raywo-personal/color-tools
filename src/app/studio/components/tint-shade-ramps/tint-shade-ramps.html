@@ -1,0 +1,29 @@
+@for (ramp of ramps(); track ramp.kind) {
+  <section>
+    <p class="mb-2 font-mono text-sm tracking-widest text-dim">{{ ramp.caption }}</p>
+
+    <!-- Six columns unprefixed, so the eleven steps take two rows on a phone:
+         the shell's px-4 leaves 288px of a 320px screen, and eleven across it
+         with the gaps leave 23px each, under the touch minimum; six leave
+         45px. sm: lines them up as the strip the draft draws. -->
+    <ul role="list"
+        [attr.aria-label]="ramp.name"
+        class="grid grid-cols-6 gap-1 sm:grid-cols-11">
+      @for (step of ramp.steps; track step.position) {
+        <li class="min-w-0">
+          <!-- The ring is offset off the step, and the 4px gap is what it
+               lands on: 2px of offset plus 2px of ring reach exactly to the
+               neighbour's edge, so all four sides sit on the page ground,
+               where the text token always shows. A narrower gap puts the
+               sides on the neighbouring steps, whose colors sit one ramp
+               step away from this one and swallow the ring. -->
+          <button type="button"
+                  class="block h-13 w-full cursor-pointer rounded-xs border border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+                  [style.background-color]="step.background"
+                  [attr.aria-label]="step.label"
+                  (click)="copy(step)"></button>
+        </li>
+      }
+    </ul>
+  </section>
+}
