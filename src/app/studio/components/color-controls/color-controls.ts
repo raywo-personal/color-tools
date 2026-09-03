@@ -22,7 +22,7 @@ import {ColorField} from "@common/components/color-field/color-field";
     <ct-color-field [color]="currentColor()" (colorChange)="commit($event)">
       <button type="button"
               title="Random color"
-              class="h-11 shrink-0 cursor-pointer rounded-xs border border-line px-3 font-mono text-base tracking-widest text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              class="h-11 shrink-0 cursor-pointer rounded-xs border border-line px-3 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
               (click)="rollRandomColor()">Random
       </button>
     </ct-color-field>

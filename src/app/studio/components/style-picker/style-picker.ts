@@ -34,7 +34,7 @@ const STYLE_OPTIONS: readonly StyleOption[] = PaletteStyles
       <!-- aria-pressed, not colour alone: the inverted chip is the only thing
            telling a visitor which style the five swatches follow. -->
       <button type="button"
-              class="h-11 cursor-pointer rounded-xs border px-3 font-mono text-base tracking-wide focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              class="h-11 cursor-pointer rounded-xs border px-3 font-sans text-base focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
               [class.border-text]="selected() === option.style"
               [class.bg-text]="selected() === option.style"
               [class.text-bg]="selected() === option.style"

@@ -1,7 +1,7 @@
 <!-- The caption and the two chips wrap together, so in the narrow column the
      target takes the rows it needs rather than squeezing past its hit area. -->
 <div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-  <p class="font-mono text-sm tracking-widest text-dim">APPLY TO</p>
+  <p class="font-sans text-sm tracking-widest text-dim">APPLY TO</p>
 
   <div role="group"
        aria-label="Apply a palette color to"
@@ -10,7 +10,7 @@
       <!-- aria-pressed, not colour alone: the inverted chip is the only other
            thing telling a visitor which half of the pair the row below sets. -->
       <button type="button"
-              class="h-11 cursor-pointer rounded-xs border px-3 font-mono text-base tracking-wide focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              class="h-11 cursor-pointer rounded-xs border px-3 font-sans text-base focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
               [class.border-text]="target() === option.role"
               [class.bg-text]="target() === option.role"
               [class.text-bg]="target() === option.role"

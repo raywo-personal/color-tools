@@ -2,14 +2,14 @@
 
 <nav class="flex flex-col overflow-hidden rounded-xs border border-line sm:flex-row" aria-label="Views">
   <a routerLink="/"
-     class="flex h-11 items-center justify-center px-5 font-mono text-base tracking-widest focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current sm:justify-start"
+     class="flex h-11 items-center justify-center px-5 font-sans text-base focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current sm:justify-start"
      [class.bg-text]="studioActive()"
      [class.text-bg]="studioActive()"
      [class.text-text]="!studioActive()"
      [attr.aria-current]="studioActive() ? 'page' : null">STUDIO</a>
 
   <a routerLink="/contrast"
-     class="flex h-11 items-center justify-center px-5 font-mono text-base tracking-widest focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current sm:justify-start"
+     class="flex h-11 items-center justify-center px-5 font-sans text-base focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current sm:justify-start"
      [class.bg-text]="contrastActive()"
      [class.text-bg]="contrastActive()"
      [class.text-text]="!contrastActive()"

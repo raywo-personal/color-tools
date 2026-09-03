@@ -17,12 +17,12 @@ import {contrastEvents} from "@core/contrast/contrast.events";
   selector: "ct-pair-actions",
   template: `
     <button type="button"
-            class="h-11 cursor-pointer rounded-xs border border-line px-5 font-mono text-base tracking-widest text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+            class="h-11 cursor-pointer rounded-xs border border-line px-5 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
             (click)="swap()">SWAP
     </button>
 
     <button type="button"
-            class="h-11 cursor-pointer rounded-xs border border-line px-5 font-mono text-base tracking-widest text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+            class="h-11 cursor-pointer rounded-xs border border-line px-5 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
             (click)="rollRandomPair()">RANDOM PAIR
     </button>
   `,
