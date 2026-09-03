@@ -2,7 +2,7 @@
   <a routerLink="/"
      class="flex h-11 items-center font-serif text-3xl leading-none font-normal tracking-tight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current sm:text-4xl">Color Tools</a>
 
-  <span class="ml-auto font-mono text-sm tracking-widest text-dim">ERROR 404</span>
+  <span class="ml-auto font-sans text-sm tracking-widest text-dim">ERROR 404</span>
 </header>
 
 <!-- Everything a visitor can act on sits in this row, and the palette below
@@ -11,7 +11,7 @@
 <div class="grid gap-10 py-10 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-16">
 
   <div>
-    <p class="font-mono text-sm tracking-widest text-dim">OUT OF GAMUT</p>
+    <p class="font-sans text-sm tracking-widest text-dim">OUT OF GAMUT</p>
 
     <h1 class="mt-5 max-w-[20ch] font-serif text-5xl leading-none font-normal tracking-tight text-pretty sm:text-6xl lg:text-7xl">
       404 – This shade of the site doesn’t exist.
@@ -29,14 +29,14 @@
          class="inline-flex h-11 items-center rounded-xs bg-text px-5 text-base text-bg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current">Back to the studio</a>
 
       <button type="button"
-              class="inline-flex h-11 cursor-pointer items-center rounded-xs border border-line px-5 font-mono text-base tracking-widest text-dim hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+              class="inline-flex h-11 cursor-pointer items-center rounded-xs border border-line px-5 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
               (click)="mixAnother()">MIX ANOTHER</button>
     </div>
   </div>
 
   <div class="flex flex-col gap-8">
     <div class="border-t border-line pt-4">
-      <p class="font-mono text-sm tracking-widest text-dim">REQUESTED ADDRESS</p>
+      <p class="font-sans text-sm tracking-widest text-dim">REQUESTED ADDRESS</p>
 
       <!-- Arbitrary input: let it break rather than push the page into a
            horizontal scroll. -->
@@ -46,7 +46,7 @@
     <!-- Four entries for the two views v2 renders: the studio answers three
          of them today and grows sections of its own to anchor into later. -->
     <nav class="border-t border-line pt-4" aria-labelledby="try-instead">
-      <p id="try-instead" class="font-mono text-sm tracking-widest text-dim">TRY INSTEAD</p>
+      <p id="try-instead" class="font-sans text-sm tracking-widest text-dim">TRY INSTEAD</p>
 
       <div class="mt-1 flex flex-col items-start">
         <a routerLink="/"

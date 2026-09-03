@@ -10,6 +10,11 @@ import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announc
 import {ColorControls} from "@studio/components/color-controls/color-controls";
 
 
+/**
+ * What the field and the picker do with a value is `ColorField`'s own spec.
+ * What is pinned here is the wiring: the field stands on the store's color and
+ * a commit reaches it, plus the roll, which is this component's own.
+ */
 describe("ColorControls", () => {
 
   beforeEach(() => {
@@ -44,107 +49,16 @@ describe("ColorControls", () => {
       await fixture.whenStable();
     }
 
-    async function pressEnter() {
-      field.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter"}));
-      await fixture.whenStable();
-    }
-
-    return {fixture, store, picker, field, random, type, blur, pressEnter};
+    return {fixture, store, picker, field, random, type, blur};
   }
 
 
-  describe("the value field", () => {
+  describe("the color field", () => {
 
-    it("shows the current color", async () => {
-      const {field} = await controls();
-
-      expect(field.value).toBe("#3366CC");
-    });
-
-
-    it("commits on blur", async () => {
-      const {store, type, blur} = await controls();
-
-      await type("#FF5733");
-      await blur();
-
-      expect(store.currentColor().hex("rgb")).toBe("#ff5733");
-    });
-
-
-    it("commits on Enter, without waiting for the field to lose focus", async () => {
-      const {store, type, pressEnter} = await controls();
-
-      await type("#FF5733");
-      await pressEnter();
-
-      expect(store.currentColor().hex("rgb")).toBe("#ff5733");
-    });
-
-
-    it("takes any format the conversion list writes, not only hex", async () => {
-      const {store, type, blur} = await controls();
-
-      await type("oklch(68.0% 0.210 34)");
-      await blur();
-
-      expect(chroma.deltaE(store.currentColor(), chroma("#ff5733"))).toBeLessThan(2);
-    });
-
-
-    it("rejects what is not a color and keeps the color that is current", async () => {
-      const {store, type, blur} = await controls();
-
-      await type("not a color");
-      await blur();
-
-      expect(store.currentColor().hex("rgb")).toBe("#3366cc");
-    });
-
-
-    it("puts the current value back rather than leaving the field wiped", async () => {
-      const {field, type, blur} = await controls();
-
-      await type("");
-      await blur();
+    it("stands on the color the store holds", async () => {
+      const {picker, field} = await controls();
 
       expect(field.value).toBe("#3366CC");
-    });
-
-
-    it("announces the rejection, because nothing moved and nothing was said", async () => {
-      const announcer = fakeLiveAnnouncer();
-      const {store, type, pressEnter} = await controls();
-
-      await type("#GGHHII");
-      await pressEnter();
-
-      // Assertive, and by name: the visitor is still in the field, and a hex
-      // code is read out one character at a time.
-      expect(announcer.last).toEqual({
-        message: `Not a color. Keeping ${colorName(store.currentColor())}`,
-        politeness: "assertive"
-      });
-    });
-
-
-    it("normalises the spelling of a value that parses to the color already current", async () => {
-      const {field, type, blur} = await controls();
-
-      await type("rgb(51 102 204)");
-      await blur();
-
-      expect(field.value).toBe("#3366CC");
-    });
-
-  });
-
-
-  describe("the picker", () => {
-
-    it("shows the current color", async () => {
-      const {picker} = await controls();
-
       // Case-insensitively: the native control normalises its value to lower
       // case in a browser, and the DOM implementation the tests run on need
       // not do the same.
@@ -152,7 +66,28 @@ describe("ColorControls", () => {
     });
 
 
-    it("commits on change, so a drag through the native picker is one update", async () => {
+    it("carries no caption, so the two controls keep their generic names", async () => {
+      const {fixture, picker, field} = await controls();
+      const host = fixture.nativeElement as HTMLElement;
+
+      // The swatch above says which color this is; a caption would repeat it.
+      expect(host.querySelector("label")).toBeNull();
+      expect(picker.getAttribute("aria-label")).toBe("Pick a color");
+      expect(field.getAttribute("aria-label")).toBe("Color value");
+    });
+
+
+    it("commits into the store", async () => {
+      const {store, type, blur} = await controls();
+
+      await type("#FF5733");
+      await blur();
+
+      expect(store.currentColor().hex("rgb")).toBe("#ff5733");
+    });
+
+
+    it("commits the picker on change, so a drag is one update", async () => {
       const {fixture, store, picker} = await controls();
 
       picker.value = "#ff5733";

@@ -11,6 +11,7 @@ import {GoogleFontLoaderService} from "@common/services/google-font-loader.servi
 import {colorThemeChangeEffect, fontSelectedEffect} from "@core/common/common.effects";
 import {colorChangedEffect, randomColorAnnouncedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
 import {newPaletteAnnouncedEffect} from "@core/palettes/palettes.effects";
+import {contrastPairAnnouncedEffect} from "@core/contrast/contrast.effects";
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
@@ -40,6 +41,8 @@ export function allEffects(
     randomColorAnnounced$: randomColorAnnouncedEffect(events, announcer, store),
 
     newPaletteAnnounced$: newPaletteAnnouncedEffect(events, announcer, store),
+
+    contrastPairAnnounced$: contrastPairAnnouncedEffect(events, announcer, store),
 
     anyPersistableEvents$: events
       .on(

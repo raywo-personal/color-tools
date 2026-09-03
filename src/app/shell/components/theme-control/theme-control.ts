@@ -28,7 +28,7 @@ const THEME_OPTIONS: readonly ThemeOption[] = [
   template: `
     @for (option of options; track option.value) {
       <button type="button"
-              class="h-11 flex-1 cursor-pointer px-2 font-mono text-base tracking-widest focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current sm:flex-none sm:px-5"
+              class="h-11 flex-1 cursor-pointer px-2 font-sans text-base focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current sm:flex-none sm:px-5"
               [class.bg-text]="currentTheme() === option.value"
               [class.text-bg]="currentTheme() === option.value"
               [class.text-text]="currentTheme() !== option.value"
