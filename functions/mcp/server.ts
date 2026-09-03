@@ -1,11 +1,13 @@
 import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {WebStandardStreamableHTTPServerTransport} from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import {registerDescribeColor} from "./tools/describe-color";
+import {registerCheckContrast} from "./tools/check-contrast";
 
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({name: "colortools", version: "0.0.1"});
   registerDescribeColor(server);
+  registerCheckContrast(server);
 
   return server;
 }

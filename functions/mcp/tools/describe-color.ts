@@ -5,13 +5,8 @@ import {colorName} from "@common/helpers/color-name.helper";
 import chroma from "chroma-js";
 import {formatColor} from "@common/helpers/color-format.helper";
 import {maxChroma, usableLightness} from "@common/helpers/oklch.helper";
+import {hasAlpha} from "../helper/color-helper";
 
-
-function hasAlpha(this: void, value: string): boolean {
-  const hex = value.startsWith("#") ? value.slice(1) : value;
-
-  return hex.length === 8;
-}
 
 
 export function registerDescribeColor(server: McpServer): void {
