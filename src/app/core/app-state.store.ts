@@ -31,7 +31,7 @@ import {
   textColorChangedReducer
 } from "@core/contrast/contrast.reducers";
 import {transferEvents} from "@core/common/transfer.events";
-import {generatePaletteFromContrastReducer, sendColorToContrastReducer, useColorAsPaletteStarterReducer} from "@core/common/transfer.reducers";
+import {generatePaletteFromContrastReducer, sendColorToContrastReducer, sendPaletteToContrastReducer, useColorAsPaletteStarterReducer} from "@core/common/transfer.reducers";
 
 
 export const AppStateStore = signalStore(
@@ -49,6 +49,7 @@ export const AppStateStore = signalStore(
     on(transferEvents.useColorAsPaletteStarter, useColorAsPaletteStarterReducer),
     on(transferEvents.sendColorToContrast, sendColorToContrastReducer),
     on(transferEvents.generatePaletteFromContrast, generatePaletteFromContrastReducer),
+    on(transferEvents.sendPaletteToContrast, sendPaletteToContrastReducer),
     on(converterEvents.newRandomColorWithNav, newRandomColorReducer),
     on(converterEvents.colorChanged, colorChangedReducer),
     on(converterEvents.colorAdjusted, colorChangedReducer),

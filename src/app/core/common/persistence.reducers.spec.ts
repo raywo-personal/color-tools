@@ -8,6 +8,8 @@ import {LOCAL_STORAGE_KEY} from "@common/models/local-storage.model";
 import {generatePalette, generatePaletteFrom} from "@engine/palette/palette.helper";
 import {EventInstance} from "@ngrx/signals/events";
 import {FONT_SIZE_RANGE, LINE_HEIGHT_RANGE} from "@engine/contrast/type-settings.model";
+import {contrastIdFromColors} from "@engine/contrast/contrast-id.helper";
+import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 
 
 type LoadEvent = EventInstance<"[Persistence] loadAppState", void>;
@@ -156,6 +158,48 @@ describe("loadAppStateReducer", () => {
 
   it("keeps the initial roll for a visitor who has none stored", () => {
     expect(loaded().paletteSeed).toBe(initialState.paletteSeed);
+  });
+
+
+  it("builds the first pair out of the palette, not out of a roll", () => {
+    // A rolled pair has nothing to do with the color beside it, and nothing
+    // afterwards brings the two together - `PALETTE PAIR` is a gesture, not a
+    // reaction to the palette changing.
+    const state = loaded();
+    const members = PALETTE_SLOTS
+      .map(slot => state.currentPalette[slot].color.hex("rgb"));
+
+    expect(new Set(members).size, "the palette collapsed").toBeGreaterThan(1);
+    expect(members).toContain(state.contrastColors.text.hex("rgb"));
+    expect(members).toContain(state.contrastColors.background.hex("rgb"));
+  });
+
+
+  it("opens on such a pair before the load has even run", () => {
+    // The store stands on `initialState` until `loadAppState` is dispatched,
+    // so the first paint is this pair rather than the reducer's.
+    const members = PALETTE_SLOTS
+      .map(slot => initialState.currentPalette[slot].color.hex("rgb"));
+
+    expect(new Set(members).size, "the palette collapsed").toBeGreaterThan(1);
+    expect(members).toContain(initialState.contrastColors.text.hex("rgb"));
+    expect(members).toContain(initialState.contrastColors.background.hex("rgb"));
+  });
+
+
+  it("reports a stored pair as it is, rather than rebuilding it from the palette", () => {
+    // The fallback may not win over a pair the visitor set: it is the one thing
+    // this screen passes judgement on.
+    const stored = contrastIdFromColors({
+      text: chroma("#123456"),
+      background: chroma("#fedcba")
+    });
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({contrastId: stored}));
+
+    const {contrastColors} = loaded();
+
+    expect(contrastColors.text.hex("rgb")).toBe("#123456");
+    expect(contrastColors.background.hex("rgb")).toBe("#fedcba");
   });
 
 

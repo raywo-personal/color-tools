@@ -5,6 +5,8 @@ import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
+import {converterEvents} from "@core/converter/converter.events";
+import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 import {colorName} from "@engine/color/color-name.helper";
 import {CONTRAST_ID_LENGTH} from "@engine/contrast/contrast-id.helper";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
@@ -48,12 +50,23 @@ describe("PairActions", () => {
   }
 
 
-  it("names both gestures with their own captions", async () => {
+  it("names the three gestures with their own captions", async () => {
     const {buttons} = await actions();
 
     expect(buttons.map(button => button.textContent?.trim()))
-      .toEqual(["SWAP", "RANDOM PAIR"]);
-    expect(buttons.every(button => button.getAttribute("aria-label") === null)).toBe(true);
+      .toEqual(["SWAP", "RANDOM PAIR", "PALETTE PAIR"]);
+  });
+
+
+  it("leaves a caption to stand as the name where it already reads as an action", async () => {
+    // `PALETTE PAIR` names a thing rather than a move, so it carries a name
+    // that says what pressing it does. The other two do not need one.
+    const {buttons} = await actions();
+    const named = buttons
+      .filter(button => button.getAttribute("aria-label") !== null)
+      .map(button => button.textContent?.trim());
+
+    expect(named).toEqual(["PALETTE PAIR"]);
   });
 
 
@@ -114,6 +127,84 @@ describe("PairActions", () => {
       // land on the swapped pair must not be read as a swap.
       expect(announcer.last).toEqual({
         message: `New pair: ${colorName(store.contrastColors.text())}`
+          + ` on ${colorName(store.contrastColors.background())}`,
+        politeness: "polite"
+      });
+    });
+
+  });
+
+
+  describe("PALETTE PAIR", () => {
+
+    it("takes the pair out of the palette, and no pair in it separates further", async () => {
+      const {store, press} = await actions();
+
+      TestBed.inject(Dispatcher).dispatch(converterEvents.colorChanged(chroma("#3366CC")));
+
+      const palette = store.currentPalette();
+      const members = PALETTE_SLOTS.map(slot => palette[slot].color.hex("rgb"));
+
+      // Without this the assertions below would silently be about the
+      // collapsed-palette fallback rather than about the palette's own colors.
+      expect(new Set(members).size, "the palette collapsed").toBeGreaterThan(1);
+
+      await press("PALETTE PAIR");
+
+      const text = store.contrastColors.text().hex("rgb");
+      const background = store.contrastColors.background().hex("rgb");
+
+      expect(members).toContain(text);
+      expect(members).toContain(background);
+
+      expect(chroma(background).luminance(), "the darker color became the ground")
+        .toBeGreaterThanOrEqual(chroma(text).luminance());
+
+      // Oriented the same way the rule orients them - lighter as the ground -
+      // because APCA is not symmetric and the reverse polarity is not a pair
+      // the gesture can produce.
+      const separation = (one: string, other: string) => {
+        const [ground, ink] = chroma(one).luminance() >= chroma(other).luminance()
+          ? [one, other]
+          : [other, one];
+
+        return Math.abs(chroma.contrastAPCA(ink, ground));
+      };
+
+      const chosen = separation(text, background);
+
+      for (const one of members) {
+        for (const other of members) {
+          expect(separation(one, other), `${one} with ${other}`)
+            .toBeLessThanOrEqual(chosen);
+        }
+      }
+    });
+
+
+    it("is a function of the palette, not of what the pair was before", async () => {
+      // The difference to the roll beside it: this one answers "what does my
+      // palette hold", so it has to give the same answer twice.
+      const {store, press} = await actions();
+
+      await press("PALETTE PAIR");
+      const first = store.contrastColors.id();
+
+      await press("RANDOM PAIR");
+      await press("PALETTE PAIR");
+
+      expect(store.contrastColors.id()).toBe(first);
+    });
+
+
+    it("announces the pair, and says it came from the palette", async () => {
+      const announcer = fakeLiveAnnouncer();
+      const {store, press} = await actions();
+
+      await press("PALETTE PAIR");
+
+      expect(announcer.last).toEqual({
+        message: `From the palette: ${colorName(store.contrastColors.text())}`
           + ` on ${colorName(store.contrastColors.background())}`,
         politeness: "polite"
       });

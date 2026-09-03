@@ -8,7 +8,7 @@ import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import {contrastingColor} from "@engine/contrast/contrasting-color.helper";
 import {SelectedFont} from "@common/models/google-font.model";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
-import {generateRandomContrastColors} from "@engine/contrast/contrast-id.helper";
+import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 import {randomSeed} from "@engine/helpers/random.helper";
 import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
 
@@ -60,6 +60,7 @@ export type AppState = {
 const initialColor = chroma.random();
 const textColor = contrastingColor(initialColor);
 const initialSeed = randomSeed();
+const initialPalette = generatePaletteFrom(initialColor, "random", initialSeed);
 
 export const initialState: AppState = {
   currentColor: initialColor,
@@ -74,9 +75,12 @@ export const initialState: AppState = {
   paletteStyle: "random",
   useRandomStyle: false,
   paletteSeed: initialSeed,
-  currentPalette: generatePaletteFrom(initialColor, "random", initialSeed),
+  currentPalette: initialPalette,
 
-  contrastColors: generateRandomContrastColors(),
+  // Out of the palette rather than rolled: a rolled pair has nothing to do
+  // with the color the visitor is working on, and nothing afterwards ever
+  // brings the two together - `PALETTE PAIR` is a gesture, not a reaction.
+  contrastColors: contrastPairFromPalette(initialPalette),
 
   colorTheme: "system",
   selectedFont: null,
