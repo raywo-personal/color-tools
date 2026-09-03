@@ -2,18 +2,23 @@
 
 <!-- The switch and COPY ALL wrap rather than shrink: both keep their h-11 hit
      area, so where the narrow column has no room for them side by side the
-     switch takes the first row and COPY ALL the second. -->
+     switch takes the first rows and COPY ALL the one below. -->
 <div class="mb-3 flex flex-wrap items-center gap-3">
+  <!-- The chips wrap inside the group as well. Five of them do not fit one row
+       of the narrow column, and the group shrinks no further than its widest
+       chip, so nothing is pushed below h-11. -->
   <div role="group"
        aria-label="Export format"
-       class="flex overflow-hidden rounded-xs border border-line">
+       class="flex flex-wrap gap-2">
     @for (option of options; track option.format) {
-      <!-- aria-pressed, not colour alone: the inverted button is the only
+      <!-- aria-pressed, not colour alone: the inverted chip is the only
            other thing telling a visitor which format the block shows. -->
       <button type="button"
-              class="h-11 cursor-pointer px-5 font-mono text-base tracking-widest focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              class="h-11 cursor-pointer rounded-xs border px-3 font-mono text-base tracking-wide focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              [class.border-text]="format() === option.format"
               [class.bg-text]="format() === option.format"
               [class.text-bg]="format() === option.format"
+              [class.border-line]="format() !== option.format"
               [class.text-text]="format() !== option.format"
               [attr.aria-pressed]="format() === option.format"
               (click)="pick(option.format)">{{ option.caption }}</button>
