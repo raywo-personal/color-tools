@@ -1,7 +1,12 @@
 import {APCALookupTable, FONT_SIZES, FontSize, FontWeight} from "@contrast/models/apca-lookup-table.model";
+import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
 
 
 export type APCARating = 0 | 1 | 2 | 3;
+export const APCA_RATING_LABELS = ["Not readable", "Weak", "Good", "Excellent"] as const;
+export type APCARatingLabel = typeof APCA_RATING_LABELS[number];
+export const APCA_POLARITIES = ["dark-on-light", "light-on-dark"] as const;
+export type APCAPolarity = typeof APCA_POLARITIES[number];
 
 export const POSITIVE_MAX_APCA_CONTRAST = 106;
 export const NEGATIVE_MAX_APCA_CONTRAST = 108;
@@ -31,15 +36,43 @@ export function getAPCARating(
   apcaContrast: number,
   fontSize: number,
   fontWeight: FontWeight,
-  lookupTable: APCALookupTable
+  lookupTable: APCALookupTable = apcaLookup
 ): APCARating {
   const absContrast = Math.abs(apcaContrast);
+  const requiredLc = getRequiredLc(fontSize, fontWeight, lookupTable);
+
+  if (requiredLc === null) return 0;
+
+  return calculateRating(absContrast, requiredLc);
+}
+
+
+export function getAPCAPolarity(apcaContrast: number): APCAPolarity {
+  return apcaContrast >= 0 ? "dark-on-light" : "light-on-dark";
+}
+
+
+export function getRequiredLc(fontSize: number,
+                              fontWeight: FontWeight,
+                              lookupTable: APCALookupTable = apcaLookup): number | null {
   const sizeKey = findClosestSizeKey(fontSize, FONT_SIZES);
   const entry = lookupTable[sizeKey][fontWeight];
 
-  if (entry.contrast === null) return 0;
+  return entry.contrast;
+}
 
-  return calculateRating(absContrast, entry.contrast);
+
+export function getAPCARatingLabel(rating: APCARating): APCARatingLabel {
+  if (!isAPCARating(rating)) {
+    throw new Error(`Invalid APCA rating: ${rating}`);
+  }
+
+  return APCA_RATING_LABELS[rating];
+}
+
+
+function isAPCARating(value: number): value is APCARating {
+  return Number.isInteger(value) && value >= 0 && value <= 3;
 }
 
 
@@ -58,6 +91,8 @@ export function getAPCARating(
  *  - 3 indicates the contrast well exceeds the required threshold.
  */
 function calculateRating(absContrast: number, requiredContrast: number): APCARating {
+  if (requiredContrast === 0) return 0;
+
   if (absContrast < requiredContrast * 0.7) return 0;
   if (absContrast < requiredContrast) return 1;
   if (absContrast < requiredContrast * 1.3) return 2;
@@ -77,8 +112,8 @@ function calculateRating(absContrast: number, requiredContrast: number): APCARat
  * @return {FontSize} The closest matching size key as a string (e.g., "14px").
  * @throws {Error} If the list of available size keys is empty.
  */
-function findClosestSizeKey(fontSize: number,
-                            availableSizeKeys: FontSize[]): FontSize {
+export function findClosestSizeKey(fontSize: number,
+                            availableSizeKeys: readonly FontSize[]): FontSize {
   if (availableSizeKeys.length === 0) {
     throw new Error("No available font sizes given");
   }
@@ -89,7 +124,7 @@ function findClosestSizeKey(fontSize: number,
 
   const closestSize = findClosestSize(fontSize, numericSizes);
 
-  return `${closestSize}px`;
+  return `${closestSize}px` as FontSize;
 }
 
 
@@ -114,7 +149,7 @@ function findClosestSize(fontSize: number, availableSizes: number[]): number {
   if (fontSize <= first) return first;
   if (fontSize >= last) return last;
 
-  const nextLargerIndex = availableSizes.findIndex(size => size > fontSize);
+  const nextLargerIndex = availableSizes.findIndex(size => size >= fontSize);
 
   return availableSizes[nextLargerIndex];
 }

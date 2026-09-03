@@ -1,6 +1,23 @@
-import {APCARating, getAPCARating} from "./apca-rating.helper";
-import {APCALookupTable} from "@contrast/models/apca-lookup-table.model";
+import {
+  APCA_RATING_LABELS,
+  APCARating,
+  findClosestSizeKey,
+  getAPCAPolarity,
+  getAPCARating,
+  getAPCARatingLabel,
+  getRequiredLc,
+  NEGATIVE_MAX_APCA_CONTRAST
+} from "./apca-rating.helper";
+import {
+  APCALookupTable,
+  FONT_SIZES,
+  FONT_WEIGHTS
+} from "@contrast/models/apca-lookup-table.model";
 import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
+import {
+  calculateAPCAContrast,
+  meetsAPCARequirement
+} from "@contrast/helper/optimal-text-color.helper";
 
 
 describe("APCA Rating Helper", () => {
@@ -102,11 +119,13 @@ describe("APCA Rating Helper", () => {
       });
 
       it("should use exact size when it matches a lookup key", () => {
-        // 16px is an exact match
-        // 16px/400 requires 90 contrast
-        const rating = getAPCARating(95, 16, "400", apcaLookup);
+        // 16px is an exact match and asks for 90; the next larger row, 18px,
+        // asks for 75. Lc 80 is the value that separates them - it stays
+        // below its own row and clears the larger one, so this fails if the
+        // lookup ever skips to the next size again.
+        const rating = getAPCARating(80, 16, "400", apcaLookup);
 
-        expect(rating).toBe(2);
+        expect(rating).toBe(1);
       });
 
     });
@@ -162,17 +181,12 @@ describe("APCA Rating Helper", () => {
       });
 
       it("should handle exact threshold boundaries", () => {
-        // Due to the algorithm rounding up to next size, 24px maps to 28px
-        // 28px/400 requires 55 contrast
-        // 70% of 55 = 38.5
-        // Test values around this boundary
-        const ratingAt40 = getAPCARating(40, 24, "400", apcaLookup);
-        const ratingAt37 = getAPCARating(37, 24, "400", apcaLookup);
+        // 24px/400 requires 60 contrast, so the 70% boundary sits at 42.
+        const ratingAt43 = getAPCARating(43, 24, "400", apcaLookup);
+        const ratingAt41 = getAPCARating(41, 24, "400", apcaLookup);
 
-        // 40 is above 70% threshold (38.5), should be 1
-        // 37 is below 70% threshold (38.5), should be 0
-        expect(ratingAt40).toBe(1);
-        expect(ratingAt37).toBe(0);
+        expect(ratingAt43).toBe(1);
+        expect(ratingAt41).toBe(0);
       });
 
     });
@@ -238,12 +252,23 @@ describe("APCA Rating Helper", () => {
 
     describe("common use cases", () => {
 
-      it("should rate black text on white background as excellent for body text", () => {
-        // Black on white has APCA contrast of approximately 106
-        // 16px/400 requires 90, so 106 exceeds 130%
+      it("should rate black text on white background as good for body text", () => {
+        // Black on white reaches an APCA contrast of about 106. 16px/400
+        // requires 90, and 106 stays below 130% of that.
         const rating = getAPCARating(106, 16, "400", apcaLookup);
 
-        expect(rating).toBe(3);
+        expect(rating).toBe(2);
+      });
+
+      it("should not offer rating 3 for body text at all", () => {
+        // 130% of the 90 that 16px/400 requires is 117, above the maximum
+        // APCA contrast any pair can reach. A rating of 3 is therefore
+        // unreachable at body size, and an expectation of 3 there is a
+        // symptom of the size lookup reading the next larger row.
+        const rating = getAPCARating(NEGATIVE_MAX_APCA_CONTRAST, 16, "400", apcaLookup);
+
+        expect(90 * 1.3).toBeGreaterThan(NEGATIVE_MAX_APCA_CONTRAST);
+        expect(rating).toBe(2);
       });
 
       it("should rate low contrast text as not readable", () => {
@@ -265,6 +290,128 @@ describe("APCA Rating Helper", () => {
         expect(largeTextRating).toBeGreaterThan(smallTextRating);
       });
 
+    });
+
+  });
+
+
+  describe("getRequiredLc", () => {
+
+    it("should read the row of a size that is a key of the table", () => {
+      // The one statement the rating rests on: an exact size is answered
+      // from its own row, not from the next larger one. Every size but the
+      // last would come back too lenient if the lookup skipped ahead.
+      const wrongRows = FONT_SIZES.flatMap(size => FONT_WEIGHTS
+        .filter(weight =>
+          getRequiredLc(parseInt(size, 10), weight, apcaLookup)
+          !== apcaLookup[size][weight].contrast)
+        .map(weight => `${size}/${weight}`));
+
+      expect(wrongRows).toEqual([]);
+    });
+
+    it("should agree with meetsAPCARequirement for every size and weight", () => {
+      // The two answer the same question through different code: this one
+      // snaps a number of pixels to a row, meetsAPCARequirement() looks a
+      // key up directly. A pair that satisfies one has to satisfy the other,
+      // or check_contrast hands an assistant a rating and a verdict that
+      // contradict each other.
+      const greys = Array.from({length: 64}, (_, step) => step * 4);
+      const pairs = greys.flatMap(grey => {
+        const text = `rgb(${grey}, ${grey}, ${grey})`;
+
+        return [
+          {text, background: "#ffffff"},
+          {text, background: "#000000"}
+        ];
+      });
+
+      const disagreements = FONT_SIZES.flatMap(size => FONT_WEIGHTS
+        .flatMap(weight => pairs
+          .filter(({text, background}) => {
+            const lc = calculateAPCAContrast(text, background);
+            const rating = getAPCARating(lc, parseInt(size, 10), weight, apcaLookup);
+
+            return meetsAPCARequirement(text, background, size, weight)
+              !== (rating >= 2);
+          })
+          .map(({text, background}) => `${size}/${weight} ${text} on ${background}`)));
+
+      expect(disagreements).toEqual([]);
+    });
+
+    it("should report no requirement where the table has none", () => {
+      // Not a missing value: at 12px, and at the thin weights above it, no
+      // text is readable whatever the colors are.
+      expect(getRequiredLc(12, "400", apcaLookup)).toBeNull();
+      expect(getRequiredLc(16, "100", apcaLookup)).toBeNull();
+    });
+
+    it("should clamp a size outside the table to its ends", () => {
+      expect(getRequiredLc(4, "400", apcaLookup))
+        .toBe(getRequiredLc(12, "400", apcaLookup));
+      expect(getRequiredLc(400, "400", apcaLookup))
+        .toBe(getRequiredLc(96, "400", apcaLookup));
+    });
+
+  });
+
+
+  describe("findClosestSizeKey", () => {
+
+    it("should return a size that is a key of the table unchanged", () => {
+      expect(findClosestSizeKey(16, FONT_SIZES)).toBe("16px");
+    });
+
+    it("should round a size between two keys up to the larger one", () => {
+      // Conservative on purpose: the larger row asks for less contrast, so
+      // rounding down would rate a pair better than the text deserves.
+      expect(findClosestSizeKey(17, FONT_SIZES)).toBe("18px");
+    });
+
+    it("should clamp a size outside the table to its ends", () => {
+      expect(findClosestSizeKey(4, FONT_SIZES)).toBe("12px");
+      expect(findClosestSizeKey(400, FONT_SIZES)).toBe("96px");
+    });
+
+    it("should reject an empty list of sizes", () => {
+      expect(() => findClosestSizeKey(16, [])).toThrow();
+    });
+
+  });
+
+
+  describe("getAPCAPolarity", () => {
+
+    it("should call a positive contrast dark text on a light background", () => {
+      expect(getAPCAPolarity(106)).toBe("dark-on-light");
+    });
+
+    it("should call a negative contrast light text on a dark background", () => {
+      expect(getAPCAPolarity(-108)).toBe("light-on-dark");
+    });
+
+    it("should call two identical colors dark on light", () => {
+      // There is no polarity at zero, and inventing a third word for it
+      // would make every caller handle a case that says nothing.
+      expect(getAPCAPolarity(0)).toBe("dark-on-light");
+    });
+
+  });
+
+
+  describe("getAPCARatingLabel", () => {
+
+    it("should name every rating the scale offers", () => {
+      const labels = ([0, 1, 2, 3] as APCARating[]).map(getAPCARatingLabel);
+
+      expect(labels).toEqual([...APCA_RATING_LABELS]);
+    });
+
+    it("should say that the lowest rating is not readable", () => {
+      // The wording is what an assistant quotes, so it is part of the
+      // contract rather than an implementation detail.
+      expect(getAPCARatingLabel(0)).toBe("Not readable");
     });
 
   });
