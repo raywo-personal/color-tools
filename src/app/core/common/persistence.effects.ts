@@ -21,6 +21,7 @@ export function saveStateEffect(events: Events,
         const typedStore = store as AppStateStore;
 
         const contrastId = contrastIdFromColors(typedStore.contrastColors());
+        const {fontSize, fontWeight, lineHeight} = typedStore.typeSettings();
 
         const state: SettingsMap = {
           currentColor: typedStore.currentColor().hex(),
@@ -28,7 +29,10 @@ export function saveStateEffect(events: Events,
           paletteSeed: typedStore.paletteSeed(),
           colorTheme: typedStore.colorTheme(),
           selectedFont: typedStore.selectedFont(),
-          contrastId
+          contrastId,
+          fontSize,
+          fontWeight,
+          lineHeight
         };
 
         Object.keys(state)

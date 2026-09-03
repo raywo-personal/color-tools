@@ -10,6 +10,7 @@ import {SelectedFont} from "@common/models/google-font.model";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 import {generateRandomContrastColors} from "@engine/contrast/contrast-id.helper";
 import {randomSeed} from "@engine/helpers/random.helper";
+import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
 
 
 export type AppState = {
@@ -40,6 +41,20 @@ export type AppState = {
   // Common
   colorTheme: ColorTheme;
   selectedFont: SelectedFont | null;
+  /**
+   * The type the website preview is set in - and, from the rating on, the size
+   * and weight the pair is judged at.
+   *
+   * In the state rather than in the preview's own signals, because the rating
+   * reads them from a component of its own, and because a visitor who set
+   * 14px/500 and comes back to 16px/400 is being shown a verdict about a page
+   * they are not building.
+   *
+   * Here beside `selectedFont` rather than under Contrast: the typeface has
+   * always been a Common setting, and the other three axes of the same type
+   * stack belong with it.
+   */
+  typeSettings: TypeSettings;
 };
 
 const initialColor = chroma.random();
@@ -64,5 +79,6 @@ export const initialState: AppState = {
   contrastColors: generateRandomContrastColors(),
 
   colorTheme: "system",
-  selectedFont: null
+  selectedFont: null,
+  typeSettings: DEFAULT_TYPE_SETTINGS
 };

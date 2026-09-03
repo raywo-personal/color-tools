@@ -1,0 +1,117 @@
+<p class="font-sans text-sm tracking-widest text-dim">PREVIEW</p>
+
+<!-- A named region, so a screen reader can tell the sample page from the app
+     around it and jump past it. The visible caption above says PREVIEW; the
+     name says it in words, as in `palette-chips`.
+
+     Every *font size* inside is a style binding in pixels on purpose - the
+     preview is the thing being measured and APCA is defined on pixel sizes, so
+     the type floor stops at the caption above. Spacing is not measured, so it
+     stays on Tailwind's rem scale like everywhere else. -->
+<section class="mt-3 overflow-hidden rounded-xs border border-line"
+         aria-label="Website preview"
+         [style.background-color]="style().pageBackground"
+         [style.color]="style().pageColor"
+         [style.font-family]="style().fontFamily">
+
+  <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b px-5 py-4 sm:px-6"
+       [style.background-color]="style().navBackground"
+       [style.border-bottom-color]="style().navBorder">
+    <span class="font-semibold tracking-tight"
+          [style.font-size]="style().wordmarkSize"
+          [style.color]="style().accent">Meridian</span>
+
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+      @for (item of navItems; track item) {
+        <span [style.font-size]="style().navItemSize"
+              [style.color]="style().dimColor">{{ item }}</span>
+      }
+
+      <span class="rounded-xs border px-3 py-1.5"
+            [style.font-size]="style().signInSize"
+            [style.border-color]="style().accent"
+            [style.color]="style().accent">Sign in</span>
+    </div>
+  </div>
+
+  <div class="px-5 pt-8 pb-8 sm:px-12 sm:pt-13 sm:pb-10">
+    <span class="mb-3 block tracking-[0.18em]"
+          [style.font-family]="style().monoFamily"
+          [style.font-size]="style().eyebrowSize"
+          [style.color]="style().accentSoft">Field notes</span>
+
+    <!-- The headline is a paragraph, not a heading: it is sample copy, and an
+         h2 here would put "Reading is a physical act" into this page's own
+         outline as if it were a section of the app.
+
+         `wrap-break-word` because this is the one line whose size runs ahead of
+         the column: at the top of the SIZE range a single word is wider than
+         a phone, and the panel's `overflow-hidden` would cut it off without a
+         scrollbar to say so. -->
+    <p class="mb-4 max-w-[24ch] tracking-tight wrap-break-word text-pretty"
+       [style.font-size]="style().headingSize"
+       [style.font-weight]="style().headingWeight"
+       [style.line-height]="style().headingLineHeight">Reading is a physical act</p>
+
+    <p class="max-w-[52ch] text-pretty"
+       [style.font-size]="style().leadSize"
+       [style.font-weight]="style().bodyWeight"
+       [style.line-height]="style().leadLineHeight">A contrast ratio tells you whether two colors are far enough apart to be separated by the eye. It does not tell you whether the result is comfortable over a page of text.</p>
+
+    <!-- Text, not buttons: nothing in the preview is focusable, so the fake
+         nav does not compete with the real one for the tab order. -->
+    <div class="mt-6 mb-10 flex flex-wrap items-center gap-3">
+      <span class="rounded-xs px-5 py-3"
+            [style.font-size]="style().buttonSize"
+            [style.font-weight]="style().buttonWeight"
+            [style.background-color]="style().accent"
+            [style.color]="style().onAccent">Read the notes</span>
+
+      <span class="rounded-xs border px-5 py-3"
+            [style.font-size]="style().buttonSize"
+            [style.font-weight]="style().buttonWeight"
+            [style.border-color]="style().ghostBorder">Browse palettes</span>
+    </div>
+
+    <p class="mb-[1.1em] max-w-[66ch] text-pretty"
+       [style.font-size]="style().bodySize"
+       [style.font-weight]="style().bodyWeight"
+       [style.line-height]="style().bodyLineHeight">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you actually plan to ship, then read this the way a reader would: quickly, at arm's length, without looking for problems.</p>
+
+    <p class="mb-[1.1em] max-w-[66ch] text-pretty"
+       [style.font-size]="style().bodySize"
+       [style.font-weight]="style().bodyWeight"
+       [style.line-height]="style().bodyLineHeight">Watch the line endings and the gaps between words. If your eye keeps returning to the same line, the issue is usually spacing or weight rather than color. If the text seems to vibrate against its background, the two colors are close in lightness but far apart in hue, and no amount of extra size will fix it. Long passages punish decisions that look fine in a headline: thin weights lose their stems, saturated backgrounds bleed into the letterforms, and near-black on near-white can read as cold rather than clear.</p>
+
+    <div class="my-8 rounded-xs border-l-2 px-6 py-5"
+         [style.background-color]="style().cardBackground"
+         [style.border-left-color]="style().accent">
+      <span class="mb-2.5 block tracking-[0.18em]"
+            [style.font-family]="style().monoFamily"
+            [style.font-size]="style().cardLabelSize"
+            [style.color]="style().dimColor">Pull quote</span>
+
+      <p class="max-w-[40ch] italic text-pretty"
+         [style.font-size]="style().quoteSize"
+         [style.font-weight]="style().bodyWeight"
+         [style.line-height]="style().quoteLineHeight">Adjust one variable at a time and keep the paragraph in view.</p>
+    </div>
+
+    <p class="max-w-[66ch] text-pretty"
+       [style.font-size]="style().bodySize"
+       [style.font-weight]="style().bodyWeight"
+       [style.line-height]="style().bodyLineHeight">Where a palette earns its keep is in the parts nobody photographs: the disabled button, the error line, the caption under an image, the row of small numbers in a table. Those are the places to look before signing off on a color.</p>
+
+    <div class="mt-9 flex flex-wrap justify-between gap-5 border-t pt-4"
+         [style.border-top-color]="style().footerBorder">
+      <span class="max-w-[52ch] text-pretty"
+            [style.font-size]="style().smallSize"
+            [style.font-weight]="style().bodyWeight"
+            [style.color]="style().dimColor">Small print, captions and legal notes. This is where most pairings fail first.</span>
+
+      <span [style.font-size]="style().smallSize"
+            [style.font-weight]="style().bodyWeight"
+            [style.color]="style().dimColor">&copy; Meridian</span>
+    </div>
+  </div>
+</section>

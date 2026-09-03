@@ -10,6 +10,7 @@ import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper
 import {AppState} from "@core/models/app-state.model";
 import {isRestorable} from "@engine/helpers/validate-string-id.helper";
 import {CONTRAST_ID_LENGTH, contrastColorsFromId, generateRandomContrastColors} from "@engine/contrast/contrast-id.helper";
+import {normalizedTypeSettings} from "@engine/contrast/type-settings.model";
 
 
 export function loadAppStateReducer(
@@ -42,6 +43,15 @@ export function loadAppStateReducer(
     ? contrastColorsFromId(contrastId)
     : generateRandomContrastColors();
 
+  // Normalized rather than taken as read: the three keys carry plain numbers,
+  // and a weight off the `FONT_WEIGHTS` grid has no row in `apcaLookup` to be
+  // rated against.
+  const typeSettings = normalizedTypeSettings({
+    fontSize: persistence.getOrDefault("fontSize", state.typeSettings.fontSize),
+    fontWeight: persistence.getOrDefault("fontWeight", state.typeSettings.fontWeight),
+    lineHeight: persistence.getOrDefault("lineHeight", state.typeSettings.lineHeight)
+  });
+
   return {
     colorTheme: persistence.getOrDefault("colorTheme", state.colorTheme),
     currentColor,
@@ -51,7 +61,8 @@ export function loadAppStateReducer(
     paletteStyle: currentPalette.style,
     paletteSeed,
     selectedFont: persistence.getOrDefault("selectedFont", null),
-    contrastColors
+    contrastColors,
+    typeSettings
   };
 }
 

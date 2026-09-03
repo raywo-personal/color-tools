@@ -4,9 +4,11 @@
   <ct-palette-chips class="mt-6"/>
 
   <ct-pair-actions class="mt-6"/>
+
+  <!-- A rule above it, as the draft draws it: the type controls are their own
+       block under the pair, not a fourth row of it. The rating lands between
+       the two in the next slice. -->
+  <ct-type-controls class="mt-6 border-t border-line pt-5"/>
 </div>
 
-<div class="min-w-0">
-  <p class="font-sans text-sm tracking-widest text-dim">PREVIEW</p>
-  <p class="mt-3 text-base text-dim text-pretty">The website preview lands in this column.</p>
-</div>
+<ct-website-preview/>

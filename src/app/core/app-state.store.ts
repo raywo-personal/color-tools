@@ -6,7 +6,7 @@ import {persistenceEvents} from "./common/persistence.events";
 import {palettesEvents} from "./palettes/palettes.events";
 import {loadAppStateReducer} from "./common/persistence.reducers";
 import {commonEvents} from "./common/common.events";
-import {colorThemeChangedReducer, fontSelectedReducer} from "./common/common.reducers";
+import {colorThemeChangedReducer, fontSelectedReducer, typeSettingsReducer} from "./common/common.reducers";
 import {
   newPaletteWithNavReducer,
   newRandomPaletteWithNavReducer,
@@ -41,6 +41,11 @@ export const AppStateStore = signalStore(
     on(persistenceEvents.loadAppState, loadAppStateReducer),
     on(commonEvents.colorThemeChanged, colorThemeChangedReducer),
     on(commonEvents.fontSelected, fontSelectedReducer),
+    on(
+      commonEvents.typeSettingsAdjusted,
+      commonEvents.typeSettingsChanged,
+      typeSettingsReducer
+    ),
     on(transferEvents.useColorAsPaletteStarter, useColorAsPaletteStarterReducer),
     on(transferEvents.sendColorToContrast, sendColorToContrastReducer),
     on(transferEvents.generatePaletteFromContrast, generatePaletteFromContrastReducer),

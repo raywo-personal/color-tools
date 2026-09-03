@@ -7,6 +7,7 @@ import {initialState} from "@core/models/app-state.model";
 import {LOCAL_STORAGE_KEY} from "@common/models/local-storage.model";
 import {generatePalette, generatePaletteFrom} from "@engine/palette/palette.helper";
 import {EventInstance} from "@ngrx/signals/events";
+import {FONT_SIZE_RANGE, LINE_HEIGHT_RANGE} from "@engine/contrast/type-settings.model";
 
 
 type LoadEvent = EventInstance<"[Persistence] loadAppState", void>;
@@ -155,6 +156,46 @@ describe("loadAppStateReducer", () => {
 
   it("keeps the initial roll for a visitor who has none stored", () => {
     expect(loaded().paletteSeed).toBe(initialState.paletteSeed);
+  });
+
+
+  it("keeps the initial type settings for a visitor who has none stored", () => {
+    // They are deliberately absent from `EMPTY_SETTINGS`, so this fallback is
+    // reachable - see the note there.
+    expect(loaded().typeSettings).toEqual(initialState.typeSettings);
+  });
+
+
+  it("reports stored type settings as they are", () => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      fontSize: 14,
+      fontWeight: 500,
+      lineHeight: 1.35
+    }));
+
+    expect(loaded().typeSettings).toEqual({
+      fontSize: 14,
+      fontWeight: 500,
+      lineHeight: 1.35
+    });
+  });
+
+
+  it("repairs stored type settings the controls could not have produced", () => {
+    // The three keys carry plain numbers and localStorage is editable by hand.
+    // A weight off the `FONT_WEIGHTS` grid has no row in `apcaLookup`, so the
+    // rating would read `.contrast` off nothing at all.
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      fontSize: 400,
+      fontWeight: 437,
+      lineHeight: 0
+    }));
+
+    expect(loaded().typeSettings).toEqual({
+      fontSize: FONT_SIZE_RANGE.max,
+      fontWeight: 400,
+      lineHeight: LINE_HEIGHT_RANGE.min
+    });
   });
 
 });

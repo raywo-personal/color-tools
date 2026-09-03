@@ -22,12 +22,22 @@ describe("ContrastType", () => {
   }
 
 
-  it("holds the pair, the palette chips and the two gestures", async () => {
+  it("holds the pair, the palette chips, the two gestures and the type controls", async () => {
     const host = await contrastType();
 
     expect(host.querySelector("ct-pair-fields")).not.toBeNull();
     expect(host.querySelector("ct-palette-chips")).not.toBeNull();
     expect(host.querySelector("ct-pair-actions")).not.toBeNull();
+    expect(host.querySelector("ct-type-controls")).not.toBeNull();
+  });
+
+
+  it("puts the website preview in the column that grows", async () => {
+    const host = await contrastType();
+    const preview = host.querySelector("ct-website-preview");
+
+    expect(preview).not.toBeNull();
+    expect(preview?.parentElement).toBe(host);
   });
 
 

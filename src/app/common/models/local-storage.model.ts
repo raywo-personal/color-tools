@@ -12,6 +12,18 @@ export interface SettingsMap {
   paletteSeed: number;
   selectedFont: SelectedFont | null;
   contrastId: string;
+  /**
+   * The three axes of `typeSettings`, one key each rather than one nested
+   * object: the map is flat everywhere else, and `set()` writes a key at a
+   * time.
+   *
+   * Deliberately absent from `EMPTY_SETTINGS` - see the note there. The
+   * fallback is `initialState.typeSettings`, so the preview and the rating
+   * open on the same values a first-time visitor gets.
+   */
+  fontSize: number;
+  fontWeight: number;
+  lineHeight: number;
 }
 
 export type SettingKey = keyof SettingsMap;

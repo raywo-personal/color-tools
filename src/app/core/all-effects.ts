@@ -48,6 +48,7 @@ export function allEffects(
       .on(
         commonEvents.colorThemeChanged,
         commonEvents.fontSelected,
+        commonEvents.typeSettingsChanged,
         converterEvents.newRandomColorWithNav,
         converterEvents.colorChanged,
         palettesEvents.paletteChanged,
