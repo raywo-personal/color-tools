@@ -1,21 +1,21 @@
 import {Component, provideZonelessChangeDetection, signal} from "@angular/core";
 import {TestBed} from "@angular/core/testing";
 import {beforeEach, describe, expect, it} from "vitest";
-import {ColorSlider} from "@common/components/color-slider/color-slider";
+import {Slider} from "@common/components/slider/slider";
 
 
 @Component({
-  imports: [ColorSlider],
+  imports: [Slider],
   template: `
-    <ct-color-slider label="HUE"
-                     [min]="0"
-                     [max]="360"
-                     [step]="1"
-                     [value]="value()"
-                     [valueText]="valueText()"
-                     track="linear-gradient(90deg, #000000, #FFFFFF)"
-                     (valueChange)="onValueChange($event)"
-                     (commit)="commits.set(commits() + 1)"/>
+    <ct-slider label="HUE"
+               [min]="0"
+               [max]="360"
+               [step]="1"
+               [value]="value()"
+               [valueText]="valueText()"
+               track="linear-gradient(90deg, #000000, #FFFFFF)"
+               (valueChange)="onValueChange($event)"
+               (commit)="commits.set(commits() + 1)"/>
   `
 })
 class Host {
@@ -33,7 +33,26 @@ class Host {
 }
 
 
-describe("ColorSlider", () => {
+/** An axis with no ramp to show - a font size, a weight, a leading. */
+@Component({
+  imports: [Slider],
+  template: `
+    <ct-slider label="WEIGHT"
+               [min]="300"
+               [max]="700"
+               [step]="100"
+               [value]="value()"
+               valueText="400"/>
+  `
+})
+class TracklessHost {
+
+  readonly value = signal(400);
+
+}
+
+
+describe("Slider", () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -145,6 +164,22 @@ describe("ColorSlider", () => {
     await drag("42");
 
     expect(element.textContent).toContain("42°");
+  });
+
+
+  it("sets no track image where the axis has no ramp", async () => {
+    // The alternative was a flat grey gradient, which is a ramp claiming to be
+    // one. Left unset, the stylesheet's `field` token shows through instead -
+    // and that fallback is in slider.css, which happy-dom does not compute, so
+    // the property's absence is what can be asserted here.
+    const fixture = TestBed.createComponent(TracklessHost);
+    await fixture.whenStable();
+
+    const input = (fixture.nativeElement as HTMLElement)
+      .querySelector("input[type=range]") as HTMLInputElement;
+
+    expect(input.style.getPropertyValue("--ct-track-image")).toBe("");
+    expect(input.value).toBe("400");
   });
 
 });
