@@ -153,6 +153,15 @@ describe("describe_color", () => {
       expect(result.isError).toBe(true);
     });
 
+    it("should reject an 8-digit hex with an alpha byte", async () => {
+      const result = await describeColor(client, "#1e90ff80");
+
+      // Every output field drops the alpha byte, so answering it as an
+      // opaque color would silently misdescribe the input.
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent).toBeUndefined();
+    });
+
   });
 
 });
