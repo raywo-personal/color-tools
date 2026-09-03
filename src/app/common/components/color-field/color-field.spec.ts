@@ -151,6 +151,23 @@ describe("ColorField", () => {
     });
 
 
+    it("says which field rejected the value, because a blur is spoken after the focus left", async () => {
+      // Without the caption the message names only the color, and on a screen
+      // with two fields the visitor hears it standing on whatever they clicked
+      // next - a palette chip's answer, by the sound of it.
+      const announcer = fakeLiveAnnouncer();
+      const {host, type, blur} = await field("TEXT");
+
+      await type("#GGHHII");
+      await blur();
+
+      expect(announcer.last).toEqual({
+        message: `TEXT: Not a color. Keeping ${colorName(host.color())}`,
+        politeness: "assertive"
+      });
+    });
+
+
     it("normalises the spelling of a value that parses to the color already set", async () => {
       const {input, type, blur} = await field();
 

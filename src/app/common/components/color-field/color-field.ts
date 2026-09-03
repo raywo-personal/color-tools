@@ -108,8 +108,14 @@ export class ColorField {
    * Announced assertively, like the failed copy in `CopyService`: the visitor
    * is mid-edit, and a polite message queued behind their own typing arrives
    * after they have already left. The color is spoken by name, never as its
-   * hex code - a screen reader reads that out one character at a time. Which
-   * field was rejected is not in the message: the visitor is standing in it.
+   * hex code - a screen reader reads that out one character at a time.
+   *
+   * The message opens with the caption where there is one, because a commit on
+   * `blur` is spoken after the focus has left the field: nothing else then says
+   * which of the pair's two fields put its color back, and a rejection heard
+   * while standing on whatever was clicked next reads as that control's answer.
+   * The Studio's field carries no caption and needs none - it is the only one
+   * on its screen.
    *
    * A value that was accepted needs no second write to normalise its spelling.
    * The model changes on every commit, whatever the caller upstream makes of
@@ -123,9 +129,12 @@ export class ColorField {
     const color = colorFrom(this.fieldValue().trim());
 
     if (!color) {
+      const caption = this.label();
+      const opening = caption ? `${caption}: Not a color` : "Not a color";
+
       this.fieldValue.set(formatColor(current, "hex"));
       void this.#announcer.announce(
-        `Not a color. Keeping ${colorName(current)}`,
+        `${opening}. Keeping ${colorName(current)}`,
         "assertive"
       );
 
