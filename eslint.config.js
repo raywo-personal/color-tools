@@ -18,6 +18,8 @@ module.exports = tseslint.config(
     // block for plain .js would otherwise pull them in.
     ignores: [
       ".angular/**",
+      // `wrangler pages dev` writes its bundled Worker here while it runs.
+      ".wrangler/**",
       "dist/**",
       "tmp/**",
       "resources/**",
@@ -109,6 +111,62 @@ module.exports = tseslint.config(
     files: ["src/**/*.spec.ts", "src/testing/**/*.ts"],
     rules: {
       "@typescript-eslint/no-restricted-imports": "off",
+    },
+  },
+  {
+    // The MCP server under functions/ is plain TypeScript for a Cloudflare
+    // Worker - no Angular, so none of the Angular rules above.
+    files: ["functions/**/*.ts"],
+    extends: [tseslint.configs.recommended],
+    plugins: {"@stylistic": stylistic},
+    rules: {
+      "@stylistic/quotes": ["error", "double", {avoidEscape: true}],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+
+      // CLAUDE.md: the server wraps the colour engine and nothing else. The
+      // engine is `*/helper/*` and `*/models/*`; the store, the screens, the
+      // services and Angular itself stay out, or the Worker bundle grows an
+      // Angular runtime it cannot use.
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@angular/*",
+                "@ngrx/*",
+                "@core/*",
+                "@shell/*",
+                "@studio/*",
+                "@contrast-type/*",
+                "@converter/*",
+                "@header/*",
+                "@environments/*",
+                "@testing/*",
+                "**/components/*",
+                "**/services/*",
+                // Aliases and the components/services patterns above catch
+                // every alias-based escape, but a relative path around them -
+                // "../../src/app/core/app-state.store" - passes lint clean.
+                // This catches that string without touching the engine's own
+                // aliases (@common/*, @palettes/*, @contrast/*), which never
+                // contain "src/app" as a literal.
+                "**/src/app/**",
+              ],
+              message:
+                "functions/ may import only from the engine: */helper/* and */models/*.",
+            },
+          ],
+        },
+      ],
     },
   },
   {

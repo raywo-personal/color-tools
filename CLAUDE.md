@@ -44,6 +44,10 @@ Live site: https://color-tools.skillbird.de/
   itself
 - `pnpm run cf <args>` - Run wrangler against this project's Cloudflare account;
   sources the untracked `.cloudflare.env` (see README)
+- `pnpm run mcp:dev` - Serve the built app plus the MCP server locally; needs
+  a `pnpm run build:cloudflare` first, it serves `dist/`
+- `pnpm run mcp:test` - Run the MCP server's tests (separate from `pnpm test`,
+  see "MCP Server")
 
 ### Build Configurations
 
@@ -292,6 +296,111 @@ TypeScript path aliases are configured in `tsconfig.json`:
   from importing them)
 
 Always use these aliases for imports within the codebase.
+
+## MCP Server
+
+`functions/mcp/` is an MCP server on the colour engine, deployed as a
+Cloudflare Pages Function beside the app: `wrangler pages deploy` bundles
+`functions/` from the working directory and serves it under `/mcp` on the
+app's origin, preview branches included. Functions run before static assets,
+so the SPA rewrite in `public/_redirects` does not reach it.
+
+### Layout
+
+- `functions/mcp/[[path]].ts` is the entry and nothing else: it hands
+  `context.request` to `handleMcpRequest()` and returns the `Response`. Pages
+  is the only thing this file knows about; swapping the host means replacing
+  this file alone
+- `functions/mcp/server.ts` holds `createMcpServer()`, which builds the
+  `McpServer` and registers every tool, and `handleMcpRequest()`, which wraps
+  it in the HTTP transport. Keep them separate: the tests connect the server
+  to an in-memory transport and never see HTTP
+- One file per tool under `functions/mcp/tools/`, exporting a
+  `register<Tool>(server)` function that `createMcpServer()` calls
+- `functions/tsconfig.json` extends the root config for the path aliases and
+  includes `src/types/color-namer-lists.d.ts`, because `colorName()` imports
+  the CommonJS lists that file declares
+
+### The Server Wraps The Engine And Nothing Else
+
+`functions/**` imports from `*/helper/*` and `*/models/*` only. `pnpm lint`
+rejects `@angular/*`, `@ngrx/*`, `@core/*`, the screen aliases,
+`**/components/*` and `**/services/*` there. The engine is plain TypeScript;
+anything past the fence drags an Angular runtime into a Worker that cannot
+use it.
+
+`@modelcontextprotocol/sdk` and `zod` are runtime dependencies of the Worker
+and sit in `dependencies`. Nothing in `src/app` imports them, so the app
+bundle never sees them; do not add an import there to share a schema.
+
+### Stateless, Streamable HTTP Only
+
+Every request gets a new `McpServer` and a new
+`WebStandardStreamableHTTPServerTransport` with `sessionIdGenerator:
+undefined`. No session id, no Durable Object, no `agents` SDK, and the
+deprecated SSE transport is not offered. The transport takes the web-standard
+`Request` and returns a `Response`; it answers the HTTP half of the protocol
+itself - `Accept` checks, parse errors, method handling - so the entry does no
+routing.
+
+`enableJsonResponse: true` makes a POST answer with a JSON body instead of an
+SSE stream. A stateless server without notifications loses nothing, and the
+response can be read with `curl`.
+
+### Every Tool Is Read-Only And Typed
+
+- Names in `snake_case`
+- `annotations.readOnlyHint: true`
+- A Zod `inputSchema` as a raw shape (`{color: z.string()...}`, not
+  `z.object()`); hex inputs go through `isHex()`, lists carry a size cap
+- An `outputSchema`, and the result carries the same object as
+  `structuredContent`. The SDK rejects a result that declares a schema and
+  omits the content, so every call fails, not just the validation
+- `content` holds one text block: a sentence the assistant can quote. The
+  numbers are in `structuredContent`; do not repeat them in the text
+- **`NaN` never reaches `structuredContent`.** chroma-js reports the hue of a
+  grey as `NaN`, which JSON cannot carry and the output validation rejects.
+  A field that can be undefined for some colours is `nullable()` in the
+  schema and `null` in the result; `maxChroma()` handles the `NaN` itself
+
+### SDK Imports Carry The `.js` Suffix
+
+`import ... from "@modelcontextprotocol/sdk/server/mcp.js"` - with the
+extension. The SDK's exports map is `./*` to `./dist/esm/*` and adds nothing,
+so esbuild in Wrangler cannot resolve the bare path while TypeScript in the
+editor resolves it silently. `pnpm mcp:test` does not catch the omission
+either, because Vitest resolves the path the way TypeScript does; only
+`npx wrangler pages functions build --outdir <tmp>` does, and so does the
+deploy.
+
+The server path of the SDK imports no Node built-ins, so there is no
+`nodejs_compat` flag and no `wrangler.jsonc`. Add either only when a bundle
+actually asks for it.
+
+### Tests Go Through The Protocol
+
+Specs live beside the code as `functions/**/*.spec.ts` and run with
+`pnpm run mcp:test` through `vitest.config.mcp.ts`: `environment: node`, the
+path aliases read from `tsconfig.json`. `ng test` sees `src/**` only, so the
+two runs do not overlap, and Wrangler bundles only what the entry imports, so
+a spec next to a tool does not reach the Worker.
+
+A tool is tested the way Claude calls it: `InMemoryTransport.createLinkedPair()`
+connects an SDK `Client` to `createMcpServer()`, and the spec calls
+`client.callTool()`. `server.spec.ts` covers the HTTP half by handing
+`handleMcpRequest()` a `Request`.
+
+**Pin behaviour, not colours.** The generators are still moving. Assert
+determinism, roles, round trips and shapes - never a concrete hex value that a
+retuned generator would change.
+
+### The Deploy Job Checks Out The Repository
+
+`wrangler pages deploy` bundles `functions/` from the working directory at
+deploy time, and that bundle imports from `node_modules`. The deploy job in
+`.github/workflows/deploy-to-cloudflare-pages.yml` therefore checks out and
+installs before it downloads the built app. Without that step the deployment
+succeeds and has no Function: `/mcp` answers with the SPA's `index.html`.
 
 ## Angular and TypeScript Conventions
 

@@ -39,6 +39,14 @@ jobs:
       - name: Run tests
         run: pnpm run test:ci
 
+      - name: Run the MCP server tests
+        run: pnpm run mcp:test
+
+      - name: Type-check and bundle the MCP server
+        run: |
+          npx tsc -p functions/tsconfig.json --noEmit
+          npx wrangler pages functions build --outdir tmp/functions-build
+
       - name: Build the app
         run: pnpm run build:cloudflare
 
@@ -60,6 +68,23 @@ jobs:
     if: github.event_name != 'pull_request'
 
     steps:
+      # `pages deploy` bundles the Pages Function from functions/ in the
+      # working directory, and that bundle imports from node_modules - so the
+      # deploy job needs the checkout and the dependencies, not just the
+      # built app.
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+          install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Download build output
         uses: actions/download-artifact@v8
         with:

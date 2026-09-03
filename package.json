@@ -12,7 +12,9 @@
     "test:ci": "ng test --watch=false",
     "lint": "eslint . ; e=$? ; node tools/lint-sizes.js ; exit $(( e || $? ))",
     "lint:fix": "eslint . --fix ; e=$? ; node tools/lint-sizes.js ; exit $(( e || $? ))",
-    "cf": "set -a && . ./.cloudflare.env && set +a && wrangler"
+    "cf": "set -a && . ./.cloudflare.env && set +a && wrangler",
+    "mcp:dev": "wrangler pages dev dist/ColorTools/browser",
+    "mcp:test": "vitest run --config vitest.config.mcp.ts"
   },
   "private": true,
   "dependencies": {
@@ -23,17 +25,20 @@
     "@angular/forms": "^22.1.3",
     "@angular/platform-browser": "^22.1.3",
     "@angular/router": "^22.1.3",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@ngrx/signals": "^21.1.1",
     "chroma-js": "^3.2.0",
     "color-namer": "^1.4.0",
     "rxjs": "~7.8.2",
-    "tslib": "^2.8.1"
+    "tslib": "^2.8.1",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@angular/build": "^22.1.5",
     "@angular/cli": "^22.1.5",
     "@angular/compiler-cli": "^22.1.3",
     "@angular/localize": "^22.1.3",
+    "@cloudflare/workers-types": "^5.20260902.1",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/chroma-js": "^3.1.2",
