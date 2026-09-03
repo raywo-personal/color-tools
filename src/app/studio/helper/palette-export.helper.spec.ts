@@ -4,7 +4,15 @@ import {generatePaletteFrom} from "@palettes/helper/palette.helper";
 import {roleCaptionFor} from "@palettes/helper/palette-role.helper";
 import {PALETTE_SLOTS} from "@palettes/models/palette.model";
 import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
-import {cssExport, exportAs, ExportSource, jsonExport, tailwindExport} from "@studio/helper/palette-export.helper";
+import {
+  cssExport,
+  dtcgExport,
+  exportAs,
+  ExportSource,
+  jsonExport,
+  scssExport,
+  tailwindExport
+} from "@studio/helper/palette-export.helper";
 
 
 describe("palette export", () => {
@@ -68,6 +76,55 @@ describe("palette export", () => {
     it("holds nothing else", () => {
       // 1 base + 5 palette + 11 tints + 11 shades, between the braces.
       expect(lines).toHaveLength(2 + 1 + 5 + 11 + 11);
+    });
+
+  });
+
+
+  describe("as SCSS", () => {
+
+    const css = cssExport(source).split("\n");
+    const scss = scssExport(source).split("\n");
+
+
+    it("declares at the top level, without a wrapping block", () => {
+      expect(scss[0]).toBe("$palette-base: #3366CC;");
+      expect(scss.filter(line => line.startsWith(" "))).toEqual([]);
+      expect(scss.filter(line => line.includes("{") || line.includes("}"))).toEqual([]);
+    });
+
+
+    it("lists the five palette colors with their role in a silent comment", () => {
+      // The CSS spelling is a loud comment in Sass and would show up in the
+      // compiled output of whoever pastes the block.
+      expect(scss.slice(1, 6)).toEqual(PALETTE_SLOTS.map((slot, index) =>
+        `$palette-${index + 1}: ${hex(palette[slot].color)};  // ${roleCaptionFor("triadic", slot)}`));
+      expect(scssExport(source)).not.toContain("/*");
+    });
+
+
+    it("names each ramp step by its position, the base first", () => {
+      const positions = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+      expect(scss.filter(line => line.startsWith("$tint-"))).toEqual(positions.map((position, index) =>
+        `$tint-${position}: ${hex(source.tints[index])};`));
+      expect(scss.filter(line => line.startsWith("$shade-"))).toEqual(positions.map((position, index) =>
+        `$shade-${position}: ${hex(source.shades[index])};`));
+    });
+
+
+    it("declares the same colors under the same names as the CSS export", () => {
+      // A reader who has seen one format finds every name again in the other.
+      expect(scss).toEqual(css.slice(1, -1).map(line => line
+        .replace(/^ {2}--/, () => "$")
+        .replace(/\/\* (.+) \*\//, "// $1")));
+    });
+
+
+    it("keeps the base out of a name a stylesheet already has", () => {
+      // `$base` is the kind of variable a partial defines itself, and pasting
+      // the block would overwrite it without a word.
+      expect(scss).not.toContain("$base: #3366CC;");
     });
 
   });
@@ -149,15 +206,108 @@ describe("palette export", () => {
   });
 
 
+  describe("as DTCG design tokens", () => {
+
+    interface ParsedToken {
+      readonly $type: string;
+      readonly $description?: string;
+      readonly $value: {
+        readonly colorSpace: string;
+        readonly components: number[];
+        readonly hex: string;
+      };
+    }
+
+    const parsed = JSON.parse(dtcgExport(source)) as Record<string, unknown>;
+    const baseToken = parsed["base"] as ParsedToken;
+    const group = (name: string) => parsed[name] as Record<string, ParsedToken>;
+    const every = [
+      baseToken,
+      ...Object.values(group("palette")),
+      ...Object.values(group("tints")),
+      ...Object.values(group("shades"))
+    ];
+
+
+    it("carries the JSON export's groups, in the same order", () => {
+      expect(Object.keys(parsed)).toEqual(["base", "palette", "tints", "shades"]);
+    });
+
+
+    it("types every color as a color token", () => {
+      expect(every).toHaveLength(1 + 5 + 11 + 11);
+      expect(every.filter(token => token.$type !== "color")).toEqual([]);
+    });
+
+
+    it("writes $value as the object the 2025 spec defines, not as a hex string", () => {
+      // The choice is deliberate: a reader that only knows the older string
+      // form sees an object here. Dropping the object is a decision, not a fix.
+      expect(baseToken.$value).toEqual({
+        colorSpace: "srgb",
+        components: [0.2, 0.4, 0.8],
+        hex: "#3366CC"
+      });
+    });
+
+
+    it("reads the components off the same 8-bit color as the hex", () => {
+      // The two halves of $value cannot disagree, whatever a reader picks.
+      for (const {$value} of every) {
+        expect($value.components.map(channel => Math.round(channel * 255)))
+          .toEqual(chroma($value.hex).rgb());
+      }
+    });
+
+
+    it("keys the palette by slot and carries the role as $description", () => {
+      expect(Object.keys(group("palette"))).toEqual(["1", "2", "3", "4", "5"]);
+      expect(Object.values(group("palette")).map(token => token.$description))
+        .toEqual(PALETTE_SLOTS.map(slot => roleCaptionFor("triadic", slot)));
+      expect(Object.values(group("palette")).map(token => token.$value.hex))
+        .toEqual(PALETTE_SLOTS.map(slot => hex(palette[slot].color)));
+    });
+
+
+    it("keys both ramps by position, the base first", () => {
+      const positions = ["0", "10", "20", "30", "40", "50", "60", "70", "80", "90", "100"];
+
+      expect(Object.keys(group("tints"))).toEqual(positions);
+      expect(Object.keys(group("shades"))).toEqual(positions);
+      expect(Object.values(group("tints")).map(token => token.$value.hex))
+        .toEqual(source.tints.map(hex));
+      expect(Object.values(group("shades")).map(token => token.$value.hex))
+        .toEqual(source.shades.map(hex));
+    });
+
+
+    it("leaves $description out where there is no role", () => {
+      // Only the palette colors have one; a null description is not a
+      // description, and the spec has no use for an empty one.
+      expect(dtcgExport(source).match(/\$description/g)).toHaveLength(5);
+      expect(baseToken.$description).toBeUndefined();
+    });
+
+
+    it("is indented, because the block is read on screen before it is pasted", () => {
+      expect(dtcgExport(source)).toContain("\n  \"base\": {");
+    });
+
+  });
+
+
   it("picks the renderer by format", () => {
     expect(exportAs("css", source)).toBe(cssExport(source));
+    expect(exportAs("scss", source)).toBe(scssExport(source));
     expect(exportAs("tailwind", source)).toBe(tailwindExport(source));
     expect(exportAs("json", source)).toBe(jsonExport(source));
+    expect(exportAs("dtcg", source)).toBe(dtcgExport(source));
   });
 
 
   it("writes every hex in upper case, as the screen does", () => {
-    const hexes = (cssExport(source) + tailwindExport(source) + jsonExport(source))
+    const hexes = [cssExport, scssExport, tailwindExport, jsonExport, dtcgExport]
+      .map(render => render(source)).join("")
       .match(/#[0-9a-fA-F]{6}/g) ?? [];
 
     expect(hexes.length).toBeGreaterThan(0);
