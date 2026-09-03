@@ -6,7 +6,7 @@ import {exportAs, ExportFormat} from "@studio/helper/palette-export.helper";
 
 interface FormatOption {
   readonly format: ExportFormat;
-  /** The tab's caption. */
+  /** The chip's caption. */
   readonly caption: string;
   /** What the toast and the announcement call the copied block. */
   readonly label: string;
@@ -15,22 +15,28 @@ interface FormatOption {
 
 const FORMAT_OPTIONS: readonly FormatOption[] = [
   {format: "css", caption: "CSS", label: "CSS variables"},
+  {format: "scss", caption: "SCSS", label: "SCSS variables"},
   {format: "tailwind", caption: "TAILWIND", label: "Tailwind theme"},
-  {format: "json", caption: "JSON", label: "JSON export"}
+  {format: "json", caption: "JSON", label: "JSON export"},
+  {format: "dtcg", caption: "DTCG", label: "DTCG design tokens"}
 ];
 
 
 /**
- * The export panel at the foot of the right column: the `CSS` / `TAILWIND` /
- * `JSON` switch, `COPY ALL`, and the block showing what would be copied.
+ * The export panel at the foot of the right column: the format switch,
+ * `COPY ALL`, and the block showing what would be copied.
  *
  * The block is built from the store on every read, so it describes the palette
- * and the ramps on screen at that moment - a drag included. The two formats
- * are a pressed group like the theme control, not a tablist: a tablist
- * promises arrow-key navigation and a labelled panel, and three buttons
- * switching one block do not need either. The pressed state is the carrier
- * that is not colour. Tailwind sits between the other two because it is CSS
- * in shape and the odd one out in audience.
+ * and the ramps on screen at that moment - a drag included. The formats are a
+ * pressed group like the theme control, not a tablist: a tablist promises
+ * arrow-key navigation and a labelled panel, and a handful of buttons
+ * switching one block need neither. The pressed state is the carrier that is
+ * not colour.
+ *
+ * The chips wrap rather than shrink, the way the style picker's do: five of
+ * them do not fit one row of the narrow column, and the alternative is a chip
+ * below the `h-11` hit area. The three variable formats come first and the two
+ * JSON ones after, so the switch reads as two kinds rather than five items.
  *
  * The block is the one copy target; its rows are not. Copying goes through
  * `CopyService.copyText()`, whose label is what the toast shows - the block

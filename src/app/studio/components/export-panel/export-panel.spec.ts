@@ -7,7 +7,13 @@ import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {CopyService} from "@common/services/copy.service";
-import {cssExport, jsonExport, tailwindExport} from "@studio/helper/palette-export.helper";
+import {
+  cssExport,
+  dtcgExport,
+  jsonExport,
+  scssExport,
+  tailwindExport
+} from "@studio/helper/palette-export.helper";
 import {ExportPanel} from "@studio/components/export-panel/export-panel";
 
 
@@ -96,10 +102,22 @@ describe("ExportPanel", () => {
   });
 
 
-  it("offers CSS, Tailwind and JSON, in that order", async () => {
+  it("offers the three variable formats first and the two JSON ones after", async () => {
     const {tabs} = await panel();
 
-    expect(tabs().map(tab => tab.textContent?.trim())).toEqual(["CSS", "TAILWIND", "JSON"]);
+    expect(tabs().map(tab => tab.textContent?.trim()))
+      .toEqual(["CSS", "SCSS", "TAILWIND", "JSON", "DTCG"]);
+  });
+
+
+  it("switches the block to the SCSS variables and presses that tab alone", async () => {
+    const {fromStore, pressed, block, pick} = await panel();
+
+    await pick("SCSS");
+
+    expect(pressed()).toEqual(["SCSS"]);
+    expect(block().textContent).toBe(scssExport(fromStore()));
+    expect(block().textContent).toMatch(/^\$palette-base: /);
   });
 
 
@@ -122,6 +140,17 @@ describe("ExportPanel", () => {
     expect(pressed()).toEqual(["JSON"]);
     expect(block().textContent).toBe(jsonExport(fromStore()));
     expect(() => JSON.parse(block().textContent ?? "")).not.toThrow();
+  });
+
+
+  it("switches the block to the design tokens and presses that tab alone", async () => {
+    const {fromStore, pressed, block, pick} = await panel();
+
+    await pick("DTCG");
+
+    expect(pressed()).toEqual(["DTCG"]);
+    expect(block().textContent).toBe(dtcgExport(fromStore()));
+    expect(block().textContent).toContain("\"$type\": \"color\"");
   });
 
 
@@ -158,35 +187,38 @@ describe("ExportPanel", () => {
 
     expect(copyText).toHaveBeenLastCalledWith(block().textContent, "CSS variables");
 
-    await pick("TAILWIND");
-    copyAll().click();
+    for (const [caption, label] of [
+      ["SCSS", "SCSS variables"],
+      ["TAILWIND", "Tailwind theme"],
+      ["JSON", "JSON export"],
+      ["DTCG", "DTCG design tokens"]
+    ]) {
+      await pick(caption);
+      copyAll().click();
 
-    expect(copyText).toHaveBeenLastCalledWith(block().textContent, "Tailwind theme");
+      expect(copyText).toHaveBeenLastCalledWith(block().textContent, label);
+    }
 
-    await pick("JSON");
-    copyAll().click();
-
-    expect(copyText).toHaveBeenLastCalledWith(block().textContent, "JSON export");
-    expect(copyText).toHaveBeenCalledTimes(3);
+    expect(copyText).toHaveBeenCalledTimes(5);
   });
 
 
   it("makes the block the one copy target", async () => {
-    // The rows are not targets: the only control besides the three tabs is
+    // The rows are not targets: the only control besides the five tabs is
     // COPY ALL, and the block itself is not clickable.
     const {host, block} = await panel();
 
-    expect(host.querySelectorAll("button")).toHaveLength(4);
+    expect(host.querySelectorAll("button")).toHaveLength(6);
     expect(block().querySelector("button")).toBeNull();
   });
 
 
-  it("groups the three tabs under a name", async () => {
+  it("groups the five tabs under a name", async () => {
     const {host} = await panel();
     const group = host.querySelector("[role=group]");
 
     expect(group?.getAttribute("aria-label")).toBe("Export format");
-    expect(group?.querySelectorAll("button")).toHaveLength(3);
+    expect(group?.querySelectorAll("button")).toHaveLength(5);
   });
 
 
@@ -219,11 +251,14 @@ describe("ExportPanel", () => {
   });
 
 
-  it("wraps the switch and COPY ALL rather than crowding them", async () => {
+  it("wraps the tabs and COPY ALL rather than crowding them", async () => {
+    // Five tabs do not fit one row of the narrow column, so the group wraps
+    // inside itself as well; the alternative is a tab below its hit area.
     const {host} = await panel();
-    const row = host.querySelector("[role=group]")?.parentElement;
+    const group = host.querySelector("[role=group]");
 
-    expect(row?.classList.contains("flex-wrap")).toBe(true);
+    expect(group?.parentElement?.classList.contains("flex-wrap")).toBe(true);
+    expect(group?.classList.contains("flex-wrap")).toBe(true);
   });
 
 });
