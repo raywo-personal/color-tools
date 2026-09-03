@@ -153,6 +153,13 @@ module.exports = tseslint.config(
                 "@testing/*",
                 "**/components/*",
                 "**/services/*",
+                // Aliases and the components/services patterns above catch
+                // every alias-based escape, but a relative path around them -
+                // "../../src/app/core/app-state.store" - passes lint clean.
+                // This catches that string without touching the engine's own
+                // aliases (@common/*, @palettes/*, @contrast/*), which never
+                // contain "src/app" as a literal.
+                "**/src/app/**",
               ],
               message:
                 "functions/ may import only from the engine: */helper/* and */models/*.",
