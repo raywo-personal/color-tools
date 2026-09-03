@@ -42,6 +42,11 @@ jobs:
       - name: Run the MCP server tests
         run: pnpm run mcp:test
 
+      - name: Type-check and bundle the MCP server
+        run: |
+          npx tsc -p functions/tsconfig.json --noEmit
+          npx wrangler pages functions build --outdir tmp/functions-build
+
       - name: Build the app
         run: pnpm run build:cloudflare
 
