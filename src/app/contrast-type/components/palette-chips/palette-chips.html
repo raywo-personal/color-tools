@@ -1,0 +1,45 @@
+<!-- The caption and the two chips wrap together, so in the narrow column the
+     target takes the rows it needs rather than squeezing past its hit area. -->
+<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+  <p class="font-mono text-sm tracking-widest text-dim">APPLY TO</p>
+
+  <div role="group"
+       aria-label="Apply a palette color to"
+       class="flex flex-wrap gap-2">
+    @for (option of options; track option.role) {
+      <!-- aria-pressed, not colour alone: the inverted chip is the only other
+           thing telling a visitor which half of the pair the row below sets. -->
+      <button type="button"
+              class="h-11 cursor-pointer rounded-xs border px-3 font-mono text-base tracking-wide focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              [class.border-text]="target() === option.role"
+              [class.bg-text]="target() === option.role"
+              [class.text-bg]="target() === option.role"
+              [class.border-line]="target() !== option.role"
+              [class.text-text]="target() !== option.role"
+              [attr.aria-pressed]="target() === option.role"
+              (click)="pickTarget(option.role)">{{ option.caption }}</button>
+    }
+  </div>
+</div>
+
+<!-- Five in one row at every width, unlike the Studio's palette: the chips are
+     h-11 rather than square, so the touch minimum is met by their height. The
+     shell's px-4 leaves 288px of a 320px screen, and five across it with the
+     four gaps leave 54px each.
+
+     The ring is offset off the chip, and the 4px gap is what it lands on: 2px
+     of offset plus 2px of ring reach exactly to the neighbour's edge, so all
+     four sides sit on the page ground, where the text token always shows. -->
+<ul role="list"
+    aria-label="Palette colors"
+    class="grid grid-cols-5 gap-1">
+  @for (chip of chips(); track chip.slot) {
+    <li class="min-w-0">
+      <button type="button"
+              class="block h-11 w-full cursor-pointer rounded-xs border border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+              [style.background-color]="chip.background"
+              [attr.aria-label]="chip.label"
+              (click)="apply(chip)"></button>
+    </li>
+  }
+</ul>

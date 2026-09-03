@@ -1,0 +1,18 @@
+@for (row of rows(); track row.role) {
+  <ct-color-field [label]="row.label"
+                  [color]="row.color"
+                  (colorChange)="setColor(row.role, $event)">
+    <!-- `BASE` is on the screen twice, so the caption alone cannot be the
+         accessible name: the two buttons would be indistinguishable in a
+         screen reader's control list, and the row they sit in is not reliably
+         spoken with them. The name still opens with the caption, so what is
+         written stays the phrase voice control matches - and two buttons
+         drawn alike answering to it is the right outcome, not a defect. -->
+    <button type="button"
+            class="h-11 shrink-0 cursor-pointer rounded-xs border border-line px-3 font-mono text-base tracking-widest text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+            [title]="row.baseName"
+            [attr.aria-label]="row.baseName"
+            (click)="useBaseColor(row.role)">BASE
+    </button>
+  </ct-color-field>
+}
