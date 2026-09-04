@@ -131,13 +131,30 @@ describe("find_text_color", () => {
         mode: "harmonic",
         fontSize: "24px"
       }));
-      const [bgHue] = chroma(backgroundColor).hsl();
-      const [textHue] = chroma(result["textColor"] as string).hsl();
+      const [, , bgHue] = chroma(backgroundColor).oklch();
+      const [, textChroma, textHue] = chroma(result["textColor"] as string).oklch();
       const hueDiff = Math.abs(bgHue - textHue);
 
       expect(result["appliedMode"]).toBe("harmonic");
       expect(result["meetsRequirement"]).toBe(true);
-      expect(Math.min(hueDiff, 360 - hueDiff)).toBeLessThan(30);
+      expect(textChroma).toBeGreaterThan(0);
+      expect(Math.min(hueDiff, 360 - hueDiff)).toBeLessThan(10);
+    });
+
+    it("should put harmonic text on the side of the stronger pole", async () => {
+      // #a37575 sits above 0.5 in HSL lightness, but white is the stronger
+      // pole. A side picked by lightness searches the dark side, finds
+      // nothing and falls back to white; the light side holds a pale rose.
+      const result = structured(await findTextColor(client, {
+        backgroundColor: "#a37575",
+        mode: "harmonic",
+        fontSize: "24px",
+        fontWeight: "700"
+      }));
+
+      expect(result["appliedMode"]).toBe("harmonic");
+      expect(result["polarity"]).toBe("light-on-dark");
+      expect(result["textColor"]).not.toBe("#ffffff");
     });
 
     it("should answer harmonic on a gray with a gray and name minimum", async () => {
@@ -326,6 +343,28 @@ describe("find_text_color", () => {
 
       expect(structured(result)["meetsRequirement"]).toBe(false);
       expect(summary(result)).toMatch(/^No text color is readable/);
+    });
+
+    it("should name the mode that answered where it is not the requested one", async () => {
+      // An assistant that quotes the sentence alone would pass a gray or
+      // white on as a color on the background's hue.
+      const onGray = await findTextColor(client, {backgroundColor: "#ffffff", mode: "harmonic", fontSize: "24px"});
+      const onRose = await findTextColor(client, {backgroundColor: "#a37575", mode: "harmonic", fontSize: "24px"});
+      const failing = await findTextColor(client, {backgroundColor: "#808080", mode: "minimum", fontSize: "16px"});
+
+      expect(structured(onGray)["appliedMode"]).toBe("minimum");
+      expect(summary(onGray)).toContain("harmonic could not answer, so this is the minimum result");
+      expect(structured(onRose)["appliedMode"]).toBe("optimal");
+      expect(summary(onRose)).toContain("harmonic could not answer, so this is the optimal result");
+      expect(structured(failing)["appliedMode"]).toBe("optimal");
+      expect(summary(failing)).toContain("minimum could not answer, so this is the optimal result");
+    });
+
+    it("should leave the mode out where the requested one answered", async () => {
+      const result = await findTextColor(client, {backgroundColor: "#3366cc", mode: "harmonic", fontSize: "24px"});
+
+      expect(structured(result)["appliedMode"]).toBe("harmonic");
+      expect(summary(result)).not.toContain("could not answer");
     });
 
   });

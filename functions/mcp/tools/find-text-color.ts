@@ -81,13 +81,15 @@ const callback: ToolCallback<typeof inputSchema> =
       }
     ;
 
-    let text: string;
+    // The payload carries appliedMode; the sentence has to carry it too, or an
+    // assistant quoting the prose passes white on as a color on the hue.
+    const modeNote = foundResult.appliedMode === mode
+      ? ""
+      : `; ${mode} could not answer, so this is the ${foundResult.appliedMode} result`;
 
-    if (!foundResult.meetsRequirement) {
-      text = `No text color is readable on ${backgroundColorName} at ${fontSizeKey}, weight ${fontWeight}; ${textColorName} is the closest.`;
-    } else {
-      text = `${textColorName} on ${backgroundColorName} is readable at ${fontSizeKey}, weight ${fontWeight}.`;
-    }
+    const text = foundResult.meetsRequirement
+      ? `${textColorName} on ${backgroundColorName} is readable at ${fontSizeKey}, weight ${fontWeight}${modeNote}.`
+      : `No text color is readable on ${backgroundColorName} at ${fontSizeKey}, weight ${fontWeight}; ${textColorName} is the closest${modeNote}.`;
 
     return {
       content: [
