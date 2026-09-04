@@ -6,7 +6,9 @@ import {generateRange} from "@common/helpers/iterables.helper";
 
 
 /**
- * An array of predefined mode constants used to specify different operational states or configurations.
+ * The character of the text color a search looks for: `optimal` is the
+ * stronger of black and white, `minimum` a soft gray, `harmonic` a muted color
+ * on the background's own hue, `grayscale` the softest gray that still passes.
  */
 export const MODES = ["optimal", "minimum", "harmonic", "grayscale"] as const;
 export type Mode = typeof MODES[number];
@@ -46,7 +48,9 @@ export interface OptimalTextColorResult {
   requiredContrast: number | null;
 
   /**
-   * Represents the currently applied mode of operation or configuration.
+   * The mode whose search produced the color. It differs from the requested
+   * one where that search could not answer: `optimal` where it found nothing,
+   * `minimum` where `harmonic` met a background without a hue.
    */
   appliedMode: Mode;
 }

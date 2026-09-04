@@ -27,7 +27,7 @@ export const NEGATIVE_MAX_APCA_CONTRAST = 108;
  * - 3: Excellent (> 130% of required contrast)
  *
  * @param apcaContrast - The APCA contrast value (positive or negative)
- * @param fontSizeKey - The font size in pixels
+ * @param fontSizeKey - The row to rate against, a table key such as "16px"
  * @param fontWeight - The font weight (100-900)
  * @param lookupTable - The APCA lookup table
  * @returns Rating from 0-3
