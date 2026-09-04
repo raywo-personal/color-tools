@@ -113,26 +113,14 @@ describe("find_text_color", () => {
       expect(result["appliedMode"]).toBe("optimal");
     });
 
-    it("should answer grayscale with a gray that is not a pole where one passes", async () => {
-      const result = structured(await findTextColor(client, {
-        backgroundColor: "#000000",
-        mode: "grayscale",
-        fontSize: "24px"
-      }));
-      const textColor = result["textColor"] as string;
-
-      expect(result["appliedMode"]).toBe("grayscale");
-      expect(result["meetsRequirement"]).toBe(true);
-      expect(isGray(textColor)).toBe(true);
-      expect(["#000000", "#ffffff"]).not.toContain(textColor);
-    });
-
     it("should answer minimum with a softer gray than optimal", async () => {
       const minimum = structured(await findTextColor(client, {backgroundColor: "#ffffff", mode: "minimum"}));
       const optimal = structured(await findTextColor(client, {backgroundColor: "#ffffff", mode: "optimal"}));
 
       expect(minimum["appliedMode"]).toBe("minimum");
       expect(minimum["meetsRequirement"]).toBe(true);
+      expect(isGray(minimum["textColor"] as string)).toBe(true);
+      expect(["#000000", "#ffffff"]).not.toContain(minimum["textColor"]);
       expect(Math.abs(minimum["lc"] as number)).toBeLessThan(Math.abs(optimal["lc"] as number));
     });
 
@@ -171,15 +159,15 @@ describe("find_text_color", () => {
 
     it("should fall back to optimal and name it where the mode finds nothing", async () => {
       // Body text on mid-gray: no gray reaches 90. The caller asked for
-      // grayscale and gets the pole - and is told which mode answered.
+      // minimum and gets the pole - and is told which mode answered.
       const result = structured(await findTextColor(client, {
         backgroundColor: "#808080",
-        mode: "grayscale",
+        mode: "minimum",
         fontSize: "16px",
         fontWeight: "400"
       }));
 
-      expect(result["mode"]).toBe("grayscale");
+      expect(result["mode"]).toBe("minimum");
       expect(result["appliedMode"]).toBe("optimal");
       expect(result["meetsRequirement"]).toBe(false);
       expect(["#000000", "#ffffff"]).toContain(result["textColor"]);
@@ -307,7 +295,7 @@ describe("find_text_color", () => {
       // miss would answer null for both fields on a pair that passes at 700.
       const result = structured(await findTextColor(client, {
         backgroundColor: "#ffffff",
-        mode: "grayscale",
+        mode: "minimum",
         fontSize: "16px",
         fontWeight: "700"
       }));

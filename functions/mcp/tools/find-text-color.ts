@@ -13,7 +13,7 @@ const inputSchema = {
   backgroundColor: opaqueHexColor("Background color"),
   mode: z.enum(MODES)
     .default("optimal")
-    .describe("optimal: black or white, maximum contrast; minimum: the palest grey that still passes; harmonic: a muted color on the background's own hue; grayscale: the softest grey that still passes, walked from the background's own side."),
+    .describe("optimal: black or white, maximum contrast; minimum: the softest grey that still passes; harmonic: a muted color on the background's own hue."),
   fontSize: fontSizeInput,
   fontWeight: fontWeightInput
 };

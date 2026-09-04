@@ -5,7 +5,6 @@ import {
   DEFAULT_COLOR_CONFIG,
   findHarmonicTextColor,
   findMinimumContrastTextColor,
-  findOptimalGrayscaleTextColor,
   findOptimalTextColor,
   findTextColor,
   meetsAPCARequirement,
@@ -237,76 +236,10 @@ describe("Optimal Text Color Helper", () => {
 
   });
 
-  describe("findOptimalGrayscaleTextColor", () => {
-
-    it("should return a gray", () => {
-      const result = findOptimalGrayscaleTextColor("#3366cc");
-
-      expect(isGray(colorOf(result))).toBe(true);
-    });
-
-    it("should return a dark gray on a light background", () => {
-      const result = findOptimalGrayscaleTextColor("#ffffff");
-
-      expect(colorOf(result).luminance()).toBeLessThan(0.5);
-    });
-
-    it("should return a light gray on a dark background", () => {
-      const result = findOptimalGrayscaleTextColor("#000000");
-
-      expect(colorOf(result).luminance()).toBeGreaterThan(0.5);
-    });
-
-    it("should stop at the softest gray that meets the requirement", () => {
-      // The scale is walked from the background's own side outwards, so the
-      // step before the returned gray sits closer to the background and has
-      // to fail - otherwise the search stopped late.
-      for (const bg of ["#ffffff", "#000000", "#3366cc", "#dddddd", "#222222"]) {
-        const result = findOptimalGrayscaleTextColor(bg, {fontSize: "24px", fontWeight: "400"});
-        const color = colorOf(result);
-        const required = result.requiredContrast!;
-        const towardsBg = chroma(bg).luminance() > color.luminance() ? 0.01 : -0.01;
-        const previous = chroma.hsl(0, 0, color.get("hsl.l") + towardsBg);
-
-        expect(result.meetsRequirement, bg).toBe(true);
-        expect(Math.abs(result.contrast), bg).toBeGreaterThanOrEqual(required);
-        expect(Math.abs(calculateAPCAContrast(previous, bg)), bg).toBeLessThan(required);
-      }
-    });
-
-    it("should return a softer gray than the optimal pole where one passes", () => {
-      const gray = findOptimalGrayscaleTextColor("#ffffff", {fontSize: "24px", fontWeight: "400"});
-      const optimal = findOptimalTextColor("#ffffff", {fontSize: "24px", fontWeight: "400"});
-
-      expect(Math.abs(gray.contrast)).toBeLessThan(Math.abs(optimal.contrast));
-    });
-
-    it("should report a miss and keep the strongest gray where none passes", () => {
-      // Body text on mid-gray: 16px/400 asks for 90 and neither pole gets
-      // there, so the result is the pole itself, flagged as failing.
-      const result = findOptimalGrayscaleTextColor("#808080", {fontSize: "16px", fontWeight: "400"});
-
-      expect(result.meetsRequirement).toBe(false);
-      expect(["#000000", "#ffffff"]).toContain(colorOf(result).hex());
-    });
-
-    it("should answer with a pole and a miss where no text is readable", () => {
-      const result = findOptimalGrayscaleTextColor("#000000", {fontSize: "12px", fontWeight: "400"});
-
-      expect(result.requiredContrast).toBeNull();
-      expect(result.meetsRequirement).toBe(false);
-      expect(colorOf(result).hex()).toBe("#ffffff");
-    });
-
-    it("should carry its own mode", () => {
-      const result = findOptimalGrayscaleTextColor("#ffffff");
-
-      expect(result.appliedMode).toBe("grayscale");
-    });
-
-  });
-
   describe("findMinimumContrastTextColor", () => {
+
+    // 48px/300 asks for 50, low enough for a gray to pass on a mid-tone.
+    const lc50 = {fontSize: "48px", fontWeight: "300"} as const;
 
     it("should come back empty where no text is readable", () => {
       // 12px/400 has no requirement in the APCA table, so there is nothing
@@ -328,16 +261,28 @@ describe("Optimal Text Color Helper", () => {
       expect(isGray(colorOf(result))).toBe(true);
     });
 
-    it("should return a softer contrast than the optimal pole", () => {
+    it("should return a softer gray than the optimal pole where one passes", () => {
+      // Body text on white asks for 90 and black reaches 106, so there is
+      // room below the pole - and the answer has to use it.
       const minResult = findMinimumContrastTextColor("#ffffff");
       const optimalResult = findOptimalTextColor("#ffffff");
 
-      expect(Math.abs(minResult.contrast)).toBeLessThanOrEqual(
-        Math.abs(optimalResult.contrast)
-      );
+      expect(Math.abs(minResult.contrast)).toBeLessThan(Math.abs(optimalResult.contrast));
+      expect(colorOf(minResult).hex()).not.toBe("#000000");
     });
 
-    it("should walk away from the background towards the stronger pole", () => {
+    it("should come back empty where no gray passes", () => {
+      // Body text on mid-gray: 16px/400 asks for 90 and neither pole gets
+      // there. No color and no contrast - the fallback is findTextColor()'s.
+      const result = findMinimumContrastTextColor("#808080", {fontSize: "16px", fontWeight: "400"});
+
+      expect(result.color).toBeNull();
+      expect(result.meetsRequirement).toBe(false);
+      expect(result.requiredContrast).toBe(90);
+      expect(result.contrast).toBe(0);
+    });
+
+    it("should put the text on the side of the stronger pole", () => {
       // The softest passing gray on black sits below a luminance of 0.5, so
       // the assertion is the direction, not a threshold.
       const onLight = findMinimumContrastTextColor("#ffffff", {fontSize: "24px"});
@@ -352,6 +297,65 @@ describe("Optimal Text Color Helper", () => {
       const result = findMinimumContrastTextColor("#ffffff", {fontSize: "24px"});
 
       expect(result.requiredContrast).toBeGreaterThan(0);
+    });
+
+    it("should stop at the softest gray that meets the requirement", () => {
+      // The scale is the 256 renderable grays, so the gray one 8-bit step
+      // closer to the background has to fail - otherwise the search stopped
+      // early. #f0f000 is a saturated yellow whose HSL lightness sits far
+      // from its luminance, the case a search that trusts HSL gets wrong.
+      for (const bg of ["#ffffff", "#000000", "#3366cc", "#dddddd", "#222222", "#f0f000"]) {
+        const result = findMinimumContrastTextColor(bg, lc50);
+        const color = colorOf(result);
+        const required = result.requiredContrast!;
+        const towardsBg = chroma(bg).luminance() > color.luminance() ? 1 : -1;
+        const [value] = color.rgb();
+        const previous = chroma.rgb(value + towardsBg, value + towardsBg, value + towardsBg);
+
+        expect(result.meetsRequirement, bg).toBe(true);
+        expect(Math.abs(result.contrast), bg).toBeGreaterThanOrEqual(required);
+        expect(Math.abs(calculateAPCAContrast(previous, bg)), bg).toBeLessThan(required);
+      }
+    });
+
+    it("should take the polarity of the stronger pole on a mid-tone background", () => {
+      // On #00a0f5 black reaches 50.0 and white -59.3. A walk that starts at
+      // the pole of the background's side begins at black, which passes 50
+      // by a hair, and answers with the losing side's polarity. The softest
+      // gray sits on white's side.
+      const result = findMinimumContrastTextColor("#00a0f5", lc50);
+
+      expect(result.meetsRequirement).toBe(true);
+      expect(result.contrast).toBeLessThan(0);
+      expect(colorOf(result).luminance()).toBeGreaterThan(0.5);
+    });
+
+    it("should agree with the stronger pole's polarity on every gray and every mid-tone", () => {
+      const backgrounds = [
+        ...Array.from({length: 16}, (_, step) => chroma.rgb(step * 17, step * 17, step * 17)),
+        chroma("#00a0f5"), chroma("#c3f000"), chroma("#e1e100"), chroma("#3ca5ff"), chroma("#3366cc")
+      ];
+
+      for (const bg of backgrounds) {
+        const result = findMinimumContrastTextColor(bg, lc50);
+        const pole = findOptimalTextColor(bg, lc50);
+
+        if (!result.meetsRequirement) continue;
+
+        expect(Math.sign(result.contrast), bg.hex()).toBe(Math.sign(pole.contrast));
+      }
+    });
+
+    it("should answer with a renderable gray", () => {
+      // An 8-bit walk lands on integers by construction; a fractional
+      // channel would round on its way into CSS and could stop passing.
+      for (const bg of ["#ffffff", "#000000", "#00a0f5", "#3366cc"]) {
+        const [r, g, b] = colorOf(findMinimumContrastTextColor(bg, lc50)).rgb(false);
+
+        expect(Number.isInteger(r), bg).toBe(true);
+        expect(r, bg).toBe(g);
+        expect(g, bg).toBe(b);
+      }
     });
 
   });
@@ -443,7 +447,7 @@ describe("Optimal Text Color Helper", () => {
   describe("findTextColor", () => {
 
     it("should always hand over a color", () => {
-      for (const mode of ["optimal", "minimum", "harmonic", "grayscale"] as const) {
+      for (const mode of ["optimal", "minimum", "harmonic"] as const) {
         for (const bg of ["#000000", "#ffffff", "#808080", "#3366cc"]) {
           const result = findTextColor(bg, mode, {fontSize: "12px", fontWeight: "400"});
 
@@ -454,9 +458,9 @@ describe("Optimal Text Color Helper", () => {
     });
 
     it("should answer in the requested mode where it meets the requirement", () => {
-      const result = findTextColor("#000000", "grayscale", {fontSize: "24px", fontWeight: "400"});
+      const result = findTextColor("#000000", "minimum", {fontSize: "24px", fontWeight: "400"});
 
-      expect(result.appliedMode).toBe("grayscale");
+      expect(result.appliedMode).toBe("minimum");
       expect(result.meetsRequirement).toBe(true);
       expect(isGray(result.color)).toBe(true);
       expect(result.color.hex()).not.toBe("#ffffff");
@@ -464,8 +468,8 @@ describe("Optimal Text Color Helper", () => {
 
     it("should fall back to optimal and say so where the mode fails", () => {
       // Body text on mid-gray: no gray reaches 90, so the answer is the
-      // optimal pole - and a caller who asked for grayscale is told.
-      const result = findTextColor("#808080", "grayscale", {fontSize: "16px", fontWeight: "400"});
+      // optimal pole - and a caller who asked for minimum is told.
+      const result = findTextColor("#808080", "minimum", {fontSize: "16px", fontWeight: "400"});
       const optimal = findOptimalTextColor("#808080", {fontSize: "16px", fontWeight: "400"});
 
       expect(result.appliedMode).toBe("optimal");
@@ -496,7 +500,7 @@ describe("Optimal Text Color Helper", () => {
     it("should read a light text color off a dark background in every mode", () => {
       // The one case a sign error in the polarity check gets wrong: every
       // mode then treats black as light and answers with black on black.
-      for (const mode of ["optimal", "minimum", "harmonic", "grayscale"] as const) {
+      for (const mode of ["optimal", "minimum", "harmonic"] as const) {
         const result = findTextColor("#000000", mode);
 
         expect(result.color.luminance(), mode).toBeGreaterThan(0.5);

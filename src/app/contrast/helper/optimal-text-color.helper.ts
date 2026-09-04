@@ -7,10 +7,10 @@ import {generateRange} from "@common/helpers/iterables.helper";
 
 /**
  * The character of the text color a search looks for: `optimal` is the
- * stronger of black and white, `minimum` a soft gray, `harmonic` a muted color
- * on the background's own hue, `grayscale` the softest gray that still passes.
+ * stronger of black and white, `minimum` the softest gray that still passes,
+ * `harmonic` a muted color on the background's own hue.
  */
-export const MODES = ["optimal", "minimum", "harmonic", "grayscale"] as const;
+export const MODES = ["optimal", "minimum", "harmonic"] as const;
 export type Mode = typeof MODES[number];
 
 /**
@@ -139,8 +139,7 @@ export function findTextColor(bgColor: Color | string,
   const finders: Record<Mode, TextColorFinder> = {
     optimal: findOptimalTextColor,
     minimum: findMinimumContrastTextColor,
-    harmonic: findHarmonicTextColor,
-    grayscale: findOptimalGrayscaleTextColor,
+    harmonic: findHarmonicTextColor
   } as const;
 
   const foundResult = finders[mode](toColor(bgColor), config);
@@ -199,47 +198,15 @@ export function findOptimalTextColor(
 
 
 /**
- * Finds the optimal text color on a gray scale.
+ * Finds the softest gray that still meets the APCA requirement.
  *
- * This provides more fine-grained control than just black/white,
- * useful when you want a softer contrast that still meets APCA requirements.
- *
- * @param bgColor - The background color
- * @param config - Optional configuration
- * @returns The optimal text color result
- */
-export function findOptimalGrayscaleTextColor(
-  bgColor: Color | string,
-  config?: Partial<OptimalColorConfigOptions>
-): OptimalTextColorResult {
-  const options: OptimalColorConfigOptions = {...DEFAULT_COLOR_CONFIG, ...config};
-
-  const bg = toColor(bgColor);
-  const {fontSize, fontWeight} = options;
-
-  const requiredContrast = getRequiredContrast(fontSize, fontWeight);
-  const bestMatch = findBestContrastColorFromGrays(bg, requiredContrast);
-
-  const meetsRequirement =
-    requiredContrast !== null && Math.abs(bestMatch.contrast) >= requiredContrast;
-
-  return {
-    ...createResult("grayscale", requiredContrast, bestMatch),
-    meetsRequirement
-  };
-}
-
-
-/**
- * Finds the minimum contrast text color that still meets APCA requirements.
- *
- * Useful when you want a softer, less harsh contrast that still passes
- * accessibility requirements.
+ * Secondary text, captions, help text: quiet, but demonstrably readable.
+ * Comes back without a color where no gray passes - findTextColor() is what
+ * falls back.
  *
  * @param bgColor - The background color
  * @param config - Optional configuration
- * @returns The optimal text color result (color may be null if no valid color
- *          was found)
+ * @returns The result; its color is null where no gray meets the requirement
  */
 export function findMinimumContrastTextColor(
   bgColor: Color | string,
@@ -253,8 +220,7 @@ export function findMinimumContrastTextColor(
 
   if (requiredContrast == null) return createResult("minimum", null);
 
-  const bestMatch =
-    findMinimumContrastGray(bg, requiredContrast);
+  const bestMatch = findMinimumContrastGray(bg, requiredContrast);
 
   return createResult("minimum", requiredContrast, bestMatch);
 }
@@ -356,39 +322,52 @@ function findBestHarmonicColor(
 
 
 /**
- * Finds the gray color with the minimum acceptable contrast against a given
- * background color.
+ * Finds the softest gray that meets the required contrast against a
+ * background.
  *
- * @param {Color} bg - The background color to check contrast against.
- * @param {number} requiredContrast - The minimum acceptable contrast value.
- * @return {{ color: Color; contrast: number } | null} An object containing the
- *          gray color and its contrast if a suitable one is found, or null if
- *          no valid color meets the required contrast.
+ * Only the side of the stronger pole is searched. Its contrast is the larger
+ * of the two, so where any gray passes, one on that side does - and the text
+ * keeps the polarity the optimal finder would give it. Taking the softer of
+ * both sides' boundaries instead would let the polarity depend on which 8-bit
+ * boundary happens to sit closer to the threshold: on a mid-gray the text
+ * would flip between dark and light while the background is dragged.
+ *
+ * Lc falls monotonically as a gray moves from the pole towards the
+ * background, so the passing grays are a run from the pole to a boundary, and
+ * a binary search over the 256 renderable grays finds that boundary exactly.
+ * The predicate keeps the sign for that reason: with the absolute value the
+ * losing side's grays would pass again beyond the crossing.
+ *
+ * @param bg - The background color to check contrast against
+ * @param requiredContrast - The minimum acceptable contrast value
+ * @returns The gray and its contrast, or null where no gray passes
  */
 function findMinimumContrastGray(
   bg: Color,
   requiredContrast: number
 ): { color: Color; contrast: number } | null {
-  const endL = isLightColor(bg) ? 0 : 100;
-  const lightnessValues = generateRange(50, endL, 1);
+  const darkText = isLightColor(bg);
+  const sign = darkText ? 1 : -1;
+  const lcOf = (value: number): number => chroma.contrastAPCA(chroma.rgb(value, value, value), bg);
+  const passes = (value: number): boolean => sign * lcOf(value) >= requiredContrast;
 
-  let best: { color: Color; contrast: number } | null = null;
+  // `pass` always passes, `fail` never does; they close in on the boundary
+  let pass = darkText ? 0 : 255;
+  let fail = darkText ? 256 : -1;
 
-  for (const l of lightnessValues) {
-    const testColor = chroma.hsl(0, 0, l / 100);
-    const contrast = chroma.contrastAPCA(testColor, bg);
-    const abs = Math.abs(contrast);
+  if (!passes(pass)) return null;
 
-    if (abs < requiredContrast) {
-      continue;
-    }
+  while (Math.abs(pass - fail) > 1) {
+    const mid = Math.floor((pass + fail) / 2);
 
-    if (!best || abs < Math.abs(best.contrast)) {
-      best = {color: testColor, contrast};
+    if (passes(mid)) {
+      pass = mid;
+    } else {
+      fail = mid;
     }
   }
 
-  return best;
+  return {color: chroma.rgb(pass, pass, pass), contrast: lcOf(pass)};
 }
 
 
@@ -401,42 +380,6 @@ function findBestContrastColorFromBW(bg: Color): { color: Color; contrast: numbe
   };
 }
 
-
-function findBestContrastColorFromGrays(bg: Color, requiredContrast: number | null): { color: Color; contrast: number } {
-  const bgIsLightColor = isLightColor(bg);
-
-  if (!requiredContrast) {
-    const color = bgIsLightColor ? BLACK : WHITE;
-
-    return {
-      color,
-      contrast: chroma.contrastAPCA(color, bg)
-    };
-  }
-
-  const start = bgIsLightColor ? 1 : 0;
-  const direction = bgIsLightColor ? -1 : 1;
-
-  let bestColor = bgIsLightColor ? WHITE : BLACK;
-  let bestContrast = chroma.contrastAPCA(bestColor, bg);
-
-  for (let i = 0; i <= 100; i++) {
-    const lightness = start + (i / 100) * direction;
-    const grayColor = chroma.hsl(0, 0, lightness);
-    const contrast = chroma.contrastAPCA(grayColor, bg);
-
-    if (Math.abs(contrast) >= Math.abs(requiredContrast)) {
-      return {color: grayColor, contrast};
-    }
-
-    if (Math.abs(contrast) > Math.abs(bestContrast)) {
-      bestColor = grayColor;
-      bestContrast = contrast;
-    }
-  }
-
-  return {color: bestColor, contrast: bestContrast};
-}
 
 /** Accepts either spelling of a color and hands back a chroma `Color`. */
 function toColor(color: Color | string): Color {
@@ -471,8 +414,6 @@ function getRequiredContrast(
  * empty rather than as a guess; `findTextColor()` is what turns that into an
  * answer. `meetsRequirement` therefore means "a match was found", which is the
  * same thing for a search that only keeps candidates clearing the requirement.
- * A finder that always yields its best candidate - the grayscale one - has to
- * override it.
  *
  * @param appliedMode - The mode that produced the match
  * @param requiredContrast - The lookup row's requirement, null where unreadable
