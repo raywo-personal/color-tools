@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 import chroma from "chroma-js";
-import {colorFrom, isHex, isHsl, isOklch, isRgb} from "@common/helpers/color-format-parser.helper";
+import {colorFrom, isHex, isHsl, isOklch, isRgb, isTranslucent} from "@common/helpers/color-format-parser.helper";
 import {maxChroma} from "@common/helpers/oklch.helper";
 
 
@@ -18,6 +18,29 @@ describe("isHex", () => {
     expect(isHex("#abcd")).toBe(false);
     expect(isHex("#aabbc")).toBe(false);
     expect(isHex("#gghhii")).toBe(false);
+  });
+
+});
+
+
+describe("isTranslucent", () => {
+
+  it("calls a color without an alpha channel opaque", () => {
+    expect(isTranslucent(chroma("#1e90ff"))).toBe(false);
+    expect(isTranslucent(chroma("rgb(30, 144, 255)"))).toBe(false);
+  });
+
+  it("calls an alpha byte of ff opaque too", () => {
+    // The question is whether anything would be lost by dropping the
+    // channel, not whether the channel is written out - so an 8-digit
+    // hex that is fully opaque passes.
+    expect(isTranslucent(chroma("#1e90ffff"))).toBe(false);
+  });
+
+  it("calls any alpha below one translucent", () => {
+    expect(isTranslucent(chroma("#1e90ff80"))).toBe(true);
+    expect(isTranslucent(chroma("#1e90ff00"))).toBe(true);
+    expect(isTranslucent(chroma("rgba(30, 144, 255, 0.5)"))).toBe(true);
   });
 
 });

@@ -27,19 +27,19 @@ export const NEGATIVE_MAX_APCA_CONTRAST = 108;
  * - 3: Excellent (> 130% of required contrast)
  *
  * @param apcaContrast - The APCA contrast value (positive or negative)
- * @param fontSize - The font size in pixels
+ * @param fontSizeKey - The font size in pixels
  * @param fontWeight - The font weight (100-900)
  * @param lookupTable - The APCA lookup table
  * @returns Rating from 0-3
  */
 export function getAPCARating(
   apcaContrast: number,
-  fontSize: number,
+  fontSizeKey: FontSize,
   fontWeight: FontWeight,
   lookupTable: APCALookupTable = apcaLookup
 ): APCARating {
   const absContrast = Math.abs(apcaContrast);
-  const requiredLc = getRequiredLc(fontSize, fontWeight, lookupTable);
+  const requiredLc = getRequiredLc(fontSizeKey, fontWeight, lookupTable);
 
   if (requiredLc === null) return 0;
 
@@ -52,11 +52,10 @@ export function getAPCAPolarity(apcaContrast: number): APCAPolarity {
 }
 
 
-export function getRequiredLc(fontSize: number,
+export function getRequiredLc(fontSizeKey: FontSize,
                               fontWeight: FontWeight,
                               lookupTable: APCALookupTable = apcaLookup): number | null {
-  const sizeKey = findClosestSizeKey(fontSize, FONT_SIZES);
-  const entry = lookupTable[sizeKey][fontWeight];
+  const entry = lookupTable[fontSizeKey][fontWeight];
 
   return entry.contrast;
 }
@@ -175,9 +174,13 @@ function calculateRating(absContrast: number, requiredContrast: number): APCARat
  * @throws {Error} If the list of available size keys is empty.
  */
 export function findClosestSizeKey(fontSize: number,
-                            availableSizeKeys: readonly FontSize[]): FontSize {
+                                   availableSizeKeys: readonly FontSize[] = FONT_SIZES): FontSize {
   if (availableSizeKeys.length === 0) {
     throw new Error("No available font sizes given");
+  }
+
+  if (!Number.isFinite(fontSize)) {
+    throw new Error("Invalid font size. Font size must be a number.");
   }
 
   const numericSizes = availableSizeKeys
