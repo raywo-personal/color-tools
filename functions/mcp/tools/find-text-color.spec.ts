@@ -2,6 +2,8 @@ import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import chroma from "chroma-js";
 import {beforeEach, describe, expect, it} from "vitest";
 import {MODES} from "@contrast/helper/optimal-text-color.helper";
+import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
+import {FONT_SIZES, FONT_WEIGHTS, FontSize, FontWeight} from "@contrast/models/apca-lookup-table.model";
 import {connectedClient, structured, summary} from "../test-support/connected-client";
 
 
@@ -234,6 +236,85 @@ describe("find_text_color", () => {
           expect(result.isError, `${mode} at ${fontSize}`).toBeFalsy();
         }
       }
+    });
+
+  });
+
+
+  describe("the remedies", () => {
+
+    // The two fields answer "the pair fails, what would make it pass": the
+    // smallest size at the given weight, and the lightest weight at the given
+    // size, at which the returned contrast meets the table. Each is read off
+    // the table here so a retuned finder cannot move the expectation.
+    function passes(lc: number, size: FontSize, weight: FontWeight): boolean {
+      const required = apcaLookup[size][weight].contrast;
+
+      return required !== null && Math.abs(lc) >= required;
+    }
+
+    it("should name the smallest passing size and the lightest passing weight for a failing pair", async () => {
+      // Body text on a light gray: black is the answer and still misses 90.
+      const result = structured(await findTextColor(client, {
+        backgroundColor: "#bbbbbb",
+        fontSize: "16px",
+        fontWeight: "400"
+      }));
+      const lc = result["lc"] as number;
+      const size = result["smallestPassingFontSize"] as FontSize;
+      const weight = result["lightestPassingFontWeight"] as FontWeight;
+
+      expect(result["meetsRequirement"]).toBe(false);
+      expect(passes(lc, size, "400")).toBe(true);
+      expect(FONT_SIZES.filter(candidate => parseInt(candidate, 10) < parseInt(size, 10))
+        .some(smaller => passes(lc, smaller, "400"))).toBe(false);
+      expect(passes(lc, "16px", weight)).toBe(true);
+      expect(FONT_WEIGHTS.filter(candidate => parseInt(candidate, 10) < parseInt(weight, 10))
+        .some(lighter => passes(lc, "16px", lighter))).toBe(false);
+    });
+
+    it("should leave the weight empty where no weight helps and still name a size", async () => {
+      // At 12px every cell is null, so no weight makes the pair pass; a
+      // larger size does. The two levers are independent.
+      const result = structured(await findTextColor(client, {
+        backgroundColor: "#bbbbbb",
+        fontSize: "12px",
+        fontWeight: "400"
+      }));
+
+      expect(result["lightestPassingFontWeight"]).toBeNull();
+      expect(result["smallestPassingFontSize"]).not.toBeNull();
+    });
+
+    it("should name the levers for a passing pair too", async () => {
+      // The fields describe the returned contrast, not the failure: for a
+      // pair that passes they say how far it could be pushed, and neither
+      // can name a row or cell stricter than the one that already passes.
+      const result = structured(await findTextColor(client, {
+        backgroundColor: "#ffffff",
+        fontSize: "16px",
+        fontWeight: "400"
+      }));
+
+      expect(result["meetsRequirement"]).toBe(true);
+      expect(parseInt(result["smallestPassingFontSize"] as string, 10)).toBeLessThanOrEqual(16);
+      expect(parseInt(result["lightestPassingFontWeight"] as string, 10)).toBeLessThanOrEqual(400);
+    });
+
+    it("should scan the whole row and column, not up to the first empty cell", async () => {
+      // At 16px the weights 100 to 300 are null and 900 is null again; at
+      // weight 400 the 12px row is null. A scan that stopped at the first
+      // miss would answer null for both fields on a pair that passes at 700.
+      const result = structured(await findTextColor(client, {
+        backgroundColor: "#ffffff",
+        mode: "grayscale",
+        fontSize: "16px",
+        fontWeight: "700"
+      }));
+
+      expect(result["meetsRequirement"]).toBe(true);
+      expect(result["smallestPassingFontSize"]).not.toBeNull();
+      expect(result["lightestPassingFontWeight"]).not.toBeNull();
     });
 
   });

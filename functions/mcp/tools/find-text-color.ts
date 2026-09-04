@@ -32,10 +32,10 @@ const outputSchema = {
   fontWeight: z.enum(FONT_WEIGHTS),
   smallestPassingFontSize: z.enum(FONT_SIZES)
     .nullable()
-    .describe("The smallest font size that meets the APCA requirement. Maybe null if none meets the requirement."),
+    .describe("The smallest font size at which the returned contrast meets the table at this weight - what would make a failing pair pass. Null where no row does."),
   lightestPassingFontWeight: z.enum(FONT_WEIGHTS)
     .nullable()
-    .describe("The smallest font weight that meets the APCA requirement. Maybe null if none meets the requirement."),
+    .describe("The lightest font weight at which the returned contrast meets the table at this size - what would make a failing pair pass. Null where no cell does."),
 };
 
 export function registerFindTextColor(server: McpServer) {

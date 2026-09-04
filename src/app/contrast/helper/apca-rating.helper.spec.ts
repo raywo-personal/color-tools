@@ -6,7 +6,9 @@ import {
   getAPCARating,
   getAPCARatingLabel,
   getRequiredLc,
-  NEGATIVE_MAX_APCA_CONTRAST
+  lightestPassingFontWeight,
+  NEGATIVE_MAX_APCA_CONTRAST,
+  smallestPassingFontSize
 } from "./apca-rating.helper";
 import {
   APCALookupTable,
@@ -356,6 +358,52 @@ describe("APCA Rating Helper", () => {
       // search finds no row and answers with the key "undefinedpx".
       expect(() => findClosestSizeKey(NaN)).toThrow();
       expect(() => findClosestSizeKey(Infinity)).toThrow();
+    });
+
+  });
+
+
+  describe("smallestPassingFontSize", () => {
+
+    it("should name the first row of the column the contrast clears", () => {
+      // At weight 400 the column asks 100, 100, 90, 75 from 14px to 18px.
+      expect(smallestPassingFontSize(75, "400")).toBe("18px");
+      expect(smallestPassingFontSize(90, "400")).toBe("16px");
+      expect(smallestPassingFontSize(-100, "400")).toBe("14px");
+    });
+
+    it("should scan past the empty 12px row rather than stop at it", () => {
+      // A null cell is a gap in the column, not its end.
+      expect(smallestPassingFontSize(106, "400")).toBe("14px");
+    });
+
+    it("should come back empty where no size passes", () => {
+      // The table asks 30 at the least; below that no row helps.
+      expect(smallestPassingFontSize(0, "400")).toBeNull();
+      expect(smallestPassingFontSize(29, "900")).toBeNull();
+    });
+
+  });
+
+
+  describe("lightestPassingFontWeight", () => {
+
+    it("should name the first cell of the row the contrast clears", () => {
+      // At 16px the row asks 90, 75, 70, 60, 60 from 400 to 800.
+      expect(lightestPassingFontWeight(60, "16px")).toBe("700");
+      expect(lightestPassingFontWeight(75, "16px")).toBe("500");
+      expect(lightestPassingFontWeight(-90, "16px")).toBe("400");
+    });
+
+    it("should scan past the empty thin weights rather than stop at them", () => {
+      // 100 to 300 are null at 16px, and so is 900 again after 800: the
+      // row has gaps on both sides of its values.
+      expect(lightestPassingFontWeight(106, "16px")).toBe("400");
+    });
+
+    it("should come back empty where no weight passes", () => {
+      expect(lightestPassingFontWeight(106, "12px")).toBeNull();
+      expect(lightestPassingFontWeight(50, "16px")).toBeNull();
     });
 
   });
