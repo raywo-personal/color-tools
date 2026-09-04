@@ -3,6 +3,8 @@ import chroma, {Color} from "chroma-js";
 import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
 import {FontSize, FontWeight} from "@contrast/models/apca-lookup-table.model";
 import {generateRange} from "@common/helpers/iterables.helper";
+import {fromOklch} from "@common/helpers/color-from-oklch.helper";
+import {MAX_USABLE_LIGHTNESS, maxChroma, MIN_USABLE_LIGHTNESS} from "@common/helpers/oklch.helper";
 
 
 /**
@@ -70,6 +72,16 @@ export type TextColorFinder = (bgColor: Color | string, config?: Partial<Optimal
 
 const WHITE = chroma("#ffffff");
 const BLACK = chroma("#000000");
+
+/**
+ * The share of the chroma sRGB can hold at a lightness and hue that a
+ * harmonic text color takes. Half reads as the hue without competing with
+ * the background; the full chroma is a vivid color, not a text color.
+ */
+const HARMONIC_CHROMA_SHARE = 0.5;
+
+/** OKLch lightness between two harmonic candidates. */
+const HARMONIC_LIGHTNESS_STEP = 0.01;
 
 
 /**
@@ -227,21 +239,33 @@ export function findMinimumContrastTextColor(
 
 
 /**
- * Finds an optimal text color that preserves the hue of the background color.
+ * Finds the softest muted color on the background's own hue that meets the
+ * APCA requirement.
  *
- * The algorithm:
- * 1. Extracts the hue from the background color
- * 2. Tests various lightness/saturation combinations with the same hue
- * 3. Finds a color that meets APCA requirements while staying in the same color family
- * 4. Comes back without a color where nothing on that hue passes -
- *    findTextColor() is what falls back
+ * Labels, links, chrome that should belong to the surface it sits on rather
+ * than cut across it. Comes back without a color where nothing on that hue
+ * passes - findTextColor() is what falls back.
+ *
+ * The search runs in OKLch, where lightness is perceptual and hue holds
+ * still: it keeps the background's hue, takes a share of the chroma the gamut
+ * offers at each lightness, and walks the lightness from the background
+ * towards the stronger pole until a candidate passes. HSL does not do here:
+ * its lightness is not the one the eye sees, so a walk along it changes the
+ * perceived hue on the way and picks the side of the text from a threshold
+ * that has nothing to do with contrast.
+ *
+ * The walk stays inside the lightness band in which sRGB still holds chroma
+ * at every hue. Beyond it a candidate is an off-white or off-black that no
+ * one reads as the hue, and answering with one as "harmonic" would tell the
+ * caller it has a color on the hue when it has white. Where only such a
+ * candidate passes, the search comes back empty and the fallback says so.
  *
  * A gray, white or black background has no hue to stay on, so the minimum
  * finder answers in its place and the result carries `appliedMode: "minimum"`.
  *
  * @param bgColor - The background color
  * @param config - Optional configuration
- * @returns The optimal text color result
+ * @returns The result; its color is null where nothing on the hue meets the requirement
  */
 export function findHarmonicTextColor(
   bgColor: Color | string,
@@ -256,68 +280,57 @@ export function findHarmonicTextColor(
 
   if (requiredContrast == null) return createResult("harmonic", null);
 
-  const [bgHue, , bgLight] = bg.hsl();
+  const [bgLightness, , bgHue] = bg.oklch();
 
   // chroma reports the hue of an achromatic color as NaN. Searching on hue 0
   // instead would hand back a red-brown that belongs to no part of the design.
   if (Number.isNaN(bgHue)) return findMinimumContrastTextColor(bg, options);
 
-  const isLightBg = bgLight > 0.5;
-
-  const saturationLevels = generateRange(0.2, 1.0, 0.1);
-  const lightnessRange = isLightBg
-    ? generateRange(0, bgLight - 0.1, 0.05)  // dark text on a light background
-    : generateRange(bgLight + 0.1, 1, 0.05); // light text on a dark background
-
-  const bestMatch =
-    findBestHarmonicColor(bg, bgHue, saturationLevels, lightnessRange, requiredContrast);
+  const bestMatch = findSoftestHarmonicColor(bg, bgHue, bgLightness, requiredContrast);
 
   return createResult("harmonic", requiredContrast, bestMatch);
 }
 
 
 /**
- * Finds the best harmonic color that meets the required contrast ratio.
+ * Walks the OKLch lightness from the background towards the stronger pole
+ * and answers with the first candidate on the hue that passes.
  *
- * @param {Color} bg - The background color against which the contrast is
- *                     measured.
- * @param {number} hue - The hue value of the desired color.
- * @param {Iterable<number> | number[]} saturationLevels - A collection of
- *                            saturation values to evaluate.
- * @param {Iterable<number> | number[]} lightnessRange - A collection of
- *                            lightness values to evaluate.
- * @param {number} requiredContrast - The minimum absolute contrast ratio
- *                                    required between the color and the
- *                                    background.
- * @return {{color: Color, contrast: number} | null} An object containing the
- *                             best matching color and its contrast value, or
- *                             null if no match is found.
+ * Only the side of the stronger pole is searched, for the same reason the
+ * gray search does: its contrast is the larger of the two, and the text keeps
+ * the polarity the optimal finder would give it instead of flipping while the
+ * background is dragged across mid-lightness.
+ *
+ * Every candidate is the 8-bit color its hex names, not the fractional one
+ * OKLch produced: the caller hands out the hex, and a candidate that passed
+ * by a hair before rounding would fail after it.
+ *
+ * @param bg - The background color to check contrast against
+ * @param hue - The background's OKLch hue, which every candidate keeps
+ * @param bgLightness - The background's OKLch lightness, where the walk starts
+ * @param requiredContrast - The minimum acceptable contrast value
+ * @returns The color and its contrast, or null where nothing on the hue passes
  */
-function findBestHarmonicColor(
+function findSoftestHarmonicColor(
   bg: Color,
   hue: number,
-  saturationLevels: Iterable<number> | number[],
-  lightnessRange: Iterable<number> | number[],
+  bgLightness: number,
   requiredContrast: number
 ): { color: Color; contrast: number } | null {
-  let bestMatch: { color: Color; contrast: number } | null = null;
+  const darkText = isLightColor(bg);
+  const sign = darkText ? 1 : -1;
+  const start = Math.min(Math.max(bgLightness, MIN_USABLE_LIGHTNESS), MAX_USABLE_LIGHTNESS);
+  const end = darkText ? MIN_USABLE_LIGHTNESS : MAX_USABLE_LIGHTNESS;
 
-  for (const sat of saturationLevels) {
-    for (const light of lightnessRange) {
-      const testColor = chroma.hsl(hue, sat, light);
-      const contrast = chroma.contrastAPCA(testColor, bg);
+  for (const lightness of generateRange(start, end, HARMONIC_LIGHTNESS_STEP)) {
+    const chromacity = HARMONIC_CHROMA_SHARE * maxChroma(lightness, hue);
+    const color = chroma(fromOklch({l: lightness, c: chromacity, h: hue}).hex());
+    const contrast = chroma.contrastAPCA(color, bg);
 
-      if (Math.abs(contrast) < requiredContrast) continue;
-
-      if (!bestMatch || Math.abs(contrast) < Math.abs(bestMatch.contrast)) {
-        bestMatch = {color: testColor, contrast};
-      }
-    }
-
-    if (bestMatch) break;
+    if (sign * contrast >= requiredContrast) return {color, contrast};
   }
 
-  return bestMatch;
+  return null;
 }
 
 

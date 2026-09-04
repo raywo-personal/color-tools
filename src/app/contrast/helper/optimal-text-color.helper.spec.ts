@@ -365,41 +365,92 @@ describe("Optimal Text Color Helper", () => {
     // Body text asks for 90 and only the poles get there against a
     // mid-lightness color, so the harmonic search has room at 24px/400 (60).
     const largeText = {fontSize: "24px", fontWeight: "400"} as const;
+    // 24px/700 asks for 45, low enough for a color on the hue to pass on
+    // most mid-tones.
+    const lc45 = {fontSize: "24px", fontWeight: "700"} as const;
 
-    it("should preserve the hue of a colored background", () => {
-      const bgColor = chroma.hsl(220, 0.8, 0.5);
-      const result = findHarmonicTextColor(bgColor, largeText);
-      const color = colorOf(result);
+    /** The shorter way round the OKLch hue circle between two colors. */
+    function hueDistance(a: Color, b: Color): number {
+      const diff = Math.abs(a.oklch()[2] - b.oklch()[2]);
 
-      const [bgHue] = bgColor.hsl();
-      const [resultHue] = color.hsl();
-      const hueDiff = Math.abs(bgHue - resultHue);
+      return Math.min(diff, 360 - diff);
+    }
 
-      expect(color.get("hsl.s")).toBeGreaterThan(0.1);
-      expect(Math.min(hueDiff, 360 - hueDiff)).toBeLessThan(30);
+    it("should keep the hue of a colored background", () => {
+      // The hue is the whole point of the mode. Measured in OKLch, where the
+      // hue of a tinted near-white still holds - HSL's would drift with the
+      // lightness on the way.
+      for (const bg of ["#3366cc", "#804000", "#ffd8d8", "#202840", "#f0f000"]) {
+        const result = findHarmonicTextColor(bg, largeText);
+        const color = colorOf(result);
+
+        expect(result.meetsRequirement, bg).toBe(true);
+        expect(color.oklch()[1], bg).toBeGreaterThan(0);
+        expect(hueDistance(color, chroma(bg)), bg).toBeLessThan(10);
+      }
     });
 
-    it("should return a valid result structure", () => {
-      const result = findHarmonicTextColor("#3366cc", largeText);
+    it("should answer with a softer color than the pole", () => {
+      // The pole passes with room to spare on all of these; the harmonic
+      // answer has to use that room rather than sit at the pole.
+      for (const bg of ["#3366cc", "#804000", "#ffd8d8", "#202840"]) {
+        const result = findHarmonicTextColor(bg, largeText);
+        const pole = findOptimalTextColor(bg, largeText);
 
-      expect(result.color).not.toBeNull();
-      expect(typeof result.contrast).toBe("number");
-      expect(typeof result.meetsRequirement).toBe("boolean");
-      expect(result.requiredContrast).not.toBeNull();
+        expect(Math.abs(result.contrast), bg).toBeGreaterThanOrEqual(result.requiredContrast!);
+        expect(Math.abs(result.contrast), bg).toBeLessThan(Math.abs(pole.contrast));
+      }
     });
 
-    it("should return a darker color on a light background", () => {
-      const lightBg = chroma.hsl(220, 0.5, 0.8);
-      const result = findHarmonicTextColor(lightBg, largeText);
+    it("should return a darker color on a light background and a lighter one on a dark background", () => {
+      const lightBg = chroma("#ffd8d8");
+      const darkBg = chroma("#202840");
 
-      expect(colorOf(result).get("hsl.l")).toBeLessThan(lightBg.get("hsl.l"));
+      expect(colorOf(findHarmonicTextColor(lightBg, largeText)).oklch()[0]).toBeLessThan(lightBg.oklch()[0]);
+      expect(colorOf(findHarmonicTextColor(darkBg, largeText)).oklch()[0]).toBeGreaterThan(darkBg.oklch()[0]);
     });
 
-    it("should return a lighter color on a dark background", () => {
-      const darkBg = chroma.hsl(220, 0.5, 0.2);
-      const result = findHarmonicTextColor(darkBg, largeText);
+    it("should put the text on the side of the stronger pole, not the one HSL lightness suggests", () => {
+      // #a37575 has an HSL lightness of 0.55, so a threshold at 0.5 sends the
+      // search down the dark side, where black reaches 37.6 and nothing on
+      // the hue passes. White reaches -72: the light side is the one with
+      // room, and a pale rose there passes 45.
+      const bg = chroma("#a37575");
+      const result = findHarmonicTextColor(bg, lc45);
 
-      expect(colorOf(result).get("hsl.l")).toBeGreaterThan(darkBg.get("hsl.l"));
+      expect(result.meetsRequirement).toBe(true);
+      expect(result.contrast).toBeLessThan(0);
+      expect(colorOf(result).oklch()[0]).toBeGreaterThan(bg.oklch()[0]);
+    });
+
+    it("should agree with the stronger pole's polarity on every background it answers", () => {
+      const backgrounds = [
+        ...Array.from({length: 12}, (_, step) => chroma.hsl(step * 30, 0.6, 0.55)),
+        chroma("#a37575"), chroma("#00a0f5"), chroma("#c3f000"), chroma("#e1e100"), chroma("#3ca5ff"), chroma("#3366cc")
+      ];
+
+      for (const bg of backgrounds) {
+        const result = findHarmonicTextColor(bg, lc45);
+        const pole = findOptimalTextColor(bg, lc45);
+
+        if (!result.meetsRequirement) continue;
+
+        expect(Math.sign(result.contrast), bg.hex()).toBe(Math.sign(pole.contrast));
+      }
+    });
+
+    it("should hand out the contrast of the 8-bit color its hex names", () => {
+      // The caller hands out the hex. A candidate that passed by a hair
+      // before rounding and fails after it would report a pair that is never
+      // rendered.
+      for (const bg of ["#3366cc", "#804000", "#ffd8d8", "#202840"]) {
+        const result = findHarmonicTextColor(bg, largeText);
+        const color = colorOf(result);
+        const [r, g, b] = color.rgb(false);
+
+        expect([r, g, b].every(Number.isInteger), bg).toBe(true);
+        expect(result.contrast, bg).toBe(calculateAPCAContrast(chroma(color.hex()), bg));
+      }
     });
 
     it("should hand a background without a hue to the minimum finder", () => {
@@ -418,12 +469,28 @@ describe("Optimal Text Color Helper", () => {
     });
 
     it("should come back empty where nothing on the hue passes", () => {
-      // 14px/400 asks for 100, and no color on a hue reaches that against a
-      // mid-gray. The fallback is findTextColor()'s job, not this one's.
-      const result = findHarmonicTextColor("#808080", {fontSize: "14px", fontWeight: "400"});
+      // Body text on #3366cc asks for 90 and white reaches -82, so nothing on
+      // the hue gets there either. The fallback is findTextColor()'s job, not
+      // this one's.
+      const result = findHarmonicTextColor("#3366cc", {fontSize: "16px", fontWeight: "400"});
 
       expect(result.color).toBeNull();
       expect(result.meetsRequirement).toBe(false);
+      expect(result.requiredContrast).toBe(90);
+    });
+
+    it("should come back empty where only an off-white would pass", () => {
+      // On #a37575 at 24px/400 white reaches -72 and passes, but every color
+      // on the hue that still holds a visible chroma stops short of 60. A
+      // near-white is not a color on the hue, so the search says nothing
+      // rather than handing one out as harmonic - findTextColor() then names
+      // optimal.
+      const result = findHarmonicTextColor("#a37575", largeText);
+      const pole = findOptimalTextColor("#a37575", largeText);
+
+      expect(result.color).toBeNull();
+      expect(result.meetsRequirement).toBe(false);
+      expect(pole.meetsRequirement).toBe(true);
     });
 
     it("should come back empty where no text is readable", () => {
@@ -488,6 +555,17 @@ describe("Optimal Text Color Helper", () => {
       expect(onWhite.meetsRequirement).toBe(true);
       expect(isGray(onWhite.color)).toBe(true);
       expect(onMidGray.appliedMode).toBe("optimal");
+    });
+
+    it("should answer optimal and say so where harmonic has only an off-white", () => {
+      // White passes on #a37575 at 24px/400 and nothing on the hue does, so
+      // the caller gets white - and is told it is the optimal answer, not a
+      // color on the hue.
+      const result = findTextColor("#a37575", "harmonic", {fontSize: "24px", fontWeight: "400"});
+
+      expect(result.appliedMode).toBe("optimal");
+      expect(result.color.hex()).toBe("#ffffff");
+      expect(result.meetsRequirement).toBe(true);
     });
 
     it("should describe the color it returns, not the search that failed", () => {
