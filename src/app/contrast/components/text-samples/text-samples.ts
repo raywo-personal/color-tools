@@ -4,6 +4,7 @@ import {FONT_WEIGHTS, FontWeight} from "@contrast/models/apca-lookup-table.model
 import {StarRating} from "@contrast/components/star-rating/star-rating";
 import {getAPCARating} from "@contrast/helper/apca-rating.helper";
 import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
+import {fontSizeKeyFrom} from "@common/helpers/font-size.helper";
 
 
 @Component({
@@ -60,7 +61,12 @@ export class TextSamples {
 
 
   protected ratingFor(fontSize: number, fontWeight: FontWeight): number {
-    return getAPCARating(this.contrast(), fontSize, fontWeight, apcaLookup);
+    return getAPCARating(
+      this.contrast(),
+      fontSizeKeyFrom(fontSize),
+      fontWeight,
+      apcaLookup
+    );
   }
 
 }

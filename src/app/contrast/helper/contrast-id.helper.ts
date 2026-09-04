@@ -1,7 +1,7 @@
 import chroma from "chroma-js";
 import {base62ToBigInt, bigIntToBase62} from "@common/helpers/base62.helper";
 import {isRestorable, validateId} from "@common/helpers/validate-string-id.helper";
-import {findHarmonicTextColor} from "@contrast/helper/optimal-text-color.helper";
+import {findTextColor} from "@contrast/helper/optimal-text-color.helper";
 import {ContrastColors} from "@contrast/models/contrast-colors.model";
 
 
@@ -71,7 +71,7 @@ export function contrastColorsFromId(id: string): ContrastColors {
  */
 export function generateRandomContrastColors(): ContrastColors {
   const bgColor = chroma.random();
-  const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
+  const textColor = findTextColor(bgColor, "harmonic").color;
   const contrast = chroma.contrastAPCA(textColor, bgColor);
   const id = contrastIdFromColors({text: textColor, background: bgColor});
 

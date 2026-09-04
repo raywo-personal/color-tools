@@ -40,13 +40,13 @@ export class ContrastEvaluation {
   protected readonly smallFontRating = computed(() => {
     const ratio = this.contrast();
 
-    return getAPCARating(ratio, 14, "400", apcaLookup);
+    return getAPCARating(ratio, "14px", "400", apcaLookup);
   });
 
   protected readonly largeFontRating = computed(() => {
     const ratio = this.contrast();
 
-    return getAPCARating(ratio, 24, "400", apcaLookup);
+    return getAPCARating(ratio, "24px", "400", apcaLookup);
   });
 
   protected readonly isVeryGoodRating = computed(() =>

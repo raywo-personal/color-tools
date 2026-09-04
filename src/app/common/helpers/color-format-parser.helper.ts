@@ -8,6 +8,11 @@ const HSL_PATTERN = /^hsl\(\s*(\d+(?:\.\d+)?)(?:\s*deg)?\s*(?:,|\s)\s*(?:(\d+(?:
 const OKLCH_PATTERN = /^oklch\(\s*(?:(\d+(?:\.\d+)?|\.\d+)%|(\d+(?:\.\d+)?|\.\d+))\s+(\d+(?:\.\d+)?|\.\d+)\s+(\d+(?:\.\d+)?|\.\d+)(?:\s*deg)?\s*\)$/;
 
 
+export function isTranslucent(this: void, color: Color): boolean {
+  return color.alpha() !== 1;
+}
+
+
 export function isHex(this: void, value: string): boolean {
   const hex = value.startsWith("#") ? value.slice(1) : value;
   const validLengths = [3, 6, 8];
@@ -15,7 +20,6 @@ export function isHex(this: void, value: string): boolean {
 
   return validLengths.includes(hex.length) && hexPattern.test(hex);
 }
-
 
 export function isRgb(this: void, value: string): boolean {
   return RGB_PATTERN.test(value);

@@ -1,7 +1,7 @@
 import {EventInstance} from "@ngrx/signals/events";
 import {AppState} from "@core/models/app-state.model";
 import chroma, {Color} from "chroma-js";
-import {findHarmonicTextColor} from "@contrast/helper/optimal-text-color.helper";
+import {findTextColor} from "@contrast/helper/optimal-text-color.helper";
 import {ContrastColors, createContrastColors} from "@contrast/models/contrast-colors.model";
 import {contrastColorsFromId} from "@contrast/helper/contrast-id.helper";
 
@@ -46,7 +46,7 @@ export function newRandomContrastColorsWithNavReducer(
   this: void
 ) {
   const bgColor = chroma.random();
-  const textColor = findHarmonicTextColor(bgColor)?.color ?? chroma.random();
+  const textColor = findTextColor(bgColor, "harmonic").color;
   const contrastColors = createContrastColors(textColor, bgColor);
 
   return {

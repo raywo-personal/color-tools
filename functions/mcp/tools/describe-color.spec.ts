@@ -1,34 +1,12 @@
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
-import {InMemoryTransport} from "@modelcontextprotocol/sdk/inMemory.js";
 import chroma from "chroma-js";
 import {beforeEach, describe, expect, it} from "vitest";
 import {colorName} from "@common/helpers/color-name.helper";
-import {createMcpServer} from "../server";
+import {connectedClient, structured, summary} from "../test-support/connected-client";
 
-
-/**
- * Connects an SDK client to a fresh server the way Claude would, minus HTTP:
- * the linked pair hands each side the other's messages in memory.
- */
-async function connectedClient(): Promise<Client> {
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const client = new Client({name: "describe-color.spec", version: "0.0.0"});
-
-  await createMcpServer().connect(serverTransport);
-  await client.connect(clientTransport);
-
-  return client;
-}
 
 function describeColor(client: Client, color: string) {
   return client.callTool({name: "describe_color", arguments: {color}});
-}
-
-function structured(result: Awaited<ReturnType<Client["callTool"]>>): Record<string, unknown> {
-  expect(result.isError).toBeFalsy();
-  expect(result.structuredContent).toBeDefined();
-
-  return result.structuredContent as Record<string, unknown>;
 }
 
 
@@ -36,7 +14,7 @@ describe("describe_color", () => {
   let client: Client;
 
   beforeEach(async () => {
-    client = await connectedClient();
+    client = await connectedClient("describe-color.spec");
   });
 
 
@@ -94,7 +72,7 @@ describe("describe_color", () => {
 
     it("should quote the name and the hex in the text summary", async () => {
       const result = await describeColor(client, "#1e90ff");
-      const text = (result.content as {type: string; text: string}[])[0].text;
+      const text = summary(result);
       const expected = structured(result);
 
       expect(text).toContain(expected["name"]);
@@ -153,13 +131,22 @@ describe("describe_color", () => {
       expect(result.isError).toBe(true);
     });
 
-    it("should reject an 8-digit hex with an alpha byte", async () => {
+    it("should reject an 8-digit hex with a translucent alpha byte", async () => {
       const result = await describeColor(client, "#1e90ff80");
 
       // Every output field drops the alpha byte, so answering it as an
       // opaque color would silently misdescribe the input.
       expect(result.isError).toBe(true);
       expect(result.structuredContent).toBeUndefined();
+    });
+
+    it("should accept an 8-digit hex whose alpha byte is ff", async () => {
+      // Nothing is lost by dropping a channel that says opaque, so the
+      // color is described exactly like its 6-digit spelling.
+      const withAlpha = structured(await describeColor(client, "#1e90ffff"));
+      const without = structured(await describeColor(client, "#1e90ff"));
+
+      expect(withAlpha).toEqual(without);
     });
 
   });

@@ -317,6 +317,15 @@ so the SPA rewrite in `public/_redirects` does not reach it.
   to an in-memory transport and never see HTTP
 - One file per tool under `functions/mcp/tools/`, exporting a
   `register<Tool>(server)` function that `createMcpServer()` calls
+- `functions/mcp/helper/` holds what more than one tool asks for:
+  `tool-schemas.helper.ts` carries `opaqueHexColor(role)` with the
+  hex-without-alpha check and its one wording, and `fontSizeInput` and
+  `fontWeightInput`, the two fields the APCA row depends on. A schema one
+  tool uses stays in that tool's file
+- `functions/mcp/test-support/` is for the specs alone: `connectedClient()`
+  links an SDK `Client` to a fresh server in memory, `structured()` and
+  `summary()` read the two halves of a result. Nothing the entry imports
+  reaches it, so it never enters the Worker bundle
 - `functions/tsconfig.json` extends the root config for the path aliases and
   includes `src/types/color-namer-lists.d.ts`, because `colorName()` imports
   the CommonJS lists that file declares
@@ -385,8 +394,9 @@ path aliases read from `tsconfig.json`. `ng test` sees `src/**` only, so the
 two runs do not overlap, and Wrangler bundles only what the entry imports, so
 a spec next to a tool does not reach the Worker.
 
-A tool is tested the way Claude calls it: `InMemoryTransport.createLinkedPair()`
-connects an SDK `Client` to `createMcpServer()`, and the spec calls
+A tool is tested the way Claude calls it: `connectedClient()` from
+`functions/mcp/test-support/` connects an SDK `Client` to `createMcpServer()`
+over `InMemoryTransport.createLinkedPair()`, and the spec calls
 `client.callTool()`. `server.spec.ts` covers the HTTP half by handing
 `handleMcpRequest()` a `Request`.
 
