@@ -1,4 +1,4 @@
-import {APCALookupTable, FONT_SIZES, FontSize, FontWeight} from "@contrast/models/apca-lookup-table.model";
+import {APCAContrastValue, APCALookupTable, FONT_SIZES, FONT_WEIGHTS, FontSize, FontWeight} from "@contrast/models/apca-lookup-table.model";
 import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
 
 
@@ -59,6 +59,68 @@ export function getRequiredLc(fontSize: number,
   const entry = lookupTable[sizeKey][fontWeight];
 
   return entry.contrast;
+}
+
+
+/**
+ * Finds the smallest font size whose requirement the given contrast satisfies
+ * at a fixed font weight.
+ *
+ * This is the answer to "the pair fails, what would make it pass": the first
+ * row of the weight's column that the contrast clears. The column is scanned in
+ * full rather than up to the first miss - a cell without a value is a gap in
+ * the table, not its end, and the requirements do not fall in step across a
+ * column.
+ *
+ * `requiresBold` and `requires15pt` are ignored, as everywhere else in this
+ * app: at weight 400 every size from 14px to 36px carries one of them, so
+ * honouring them would push every answer past 42px and make the value useless.
+ *
+ * @param {number} apcaContrast - The APCA contrast value (positive or negative)
+ * @param {FontWeight} fontWeight - The weight the size is looked up for
+ * @param {APCALookupTable} lookupTable - The APCA lookup table
+ * @return {FontSize | null} The smallest passing size, or null where no size
+ *                           passes at this weight
+ */
+export function smallestPassingFontSize(
+  apcaContrast: number,
+  fontWeight: FontWeight,
+  lookupTable: APCALookupTable = apcaLookup
+): FontSize | null {
+  const absContrast = Math.abs(apcaContrast);
+  const passing = FONT_SIZES
+    .filter(size => passesRequirement(absContrast, lookupTable[size][fontWeight]));
+
+  return smallestByNumber(passing);
+}
+
+
+/**
+ * Finds the lightest font weight whose requirement the given contrast satisfies
+ * at a fixed font size.
+ *
+ * The row counterpart to {@link smallestPassingFontSize}, and the one that
+ * comes back empty far more often: at 16px the lowest requirement in the whole
+ * row is 60, and at 12px every cell is null, so a contrast the size cannot
+ * carry leaves no weight to name.
+ *
+ * @param {number} apcaContrast - The APCA contrast value (positive or negative)
+ * @param {FontSize} fontSize - The size the weight is looked up for
+ * @param {APCALookupTable} lookupTable - The APCA lookup table
+ * @return {FontWeight | null} The lightest passing weight, or null where no
+ *                             weight passes at this size
+ */
+export function lightestPassingFontWeight(
+  apcaContrast: number,
+  fontSize: FontSize,
+  lookupTable: APCALookupTable = apcaLookup
+): FontWeight | null {
+  const absContrast = Math.abs(apcaContrast);
+  const row = lookupTable[fontSize];
+  const passing = FONT_WEIGHTS
+    .filter(weight => passesRequirement(absContrast, row[weight]));
+
+  return smallestByNumber(passing);
 }
 
 
@@ -152,4 +214,40 @@ function findClosestSize(fontSize: number, availableSizes: number[]): number {
   const nextLargerIndex = availableSizes.findIndex(size => size >= fontSize);
 
   return availableSizes[nextLargerIndex];
+}
+
+
+/**
+ * Whether an absolute contrast satisfies a single cell of the lookup table.
+ *
+ * @param {number} absContrast - The absolute APCA contrast value
+ * @param {APCAContrastValue} entry - The cell to test against
+ * @return {boolean} True where the cell asks for a value and the contrast
+ *                   reaches it
+ */
+function passesRequirement(absContrast: number,
+                           entry: APCAContrastValue): boolean {
+  return entry.contrast !== null && absContrast >= entry.contrast;
+}
+
+
+/**
+ * Picks the numerically smallest of a list of table keys.
+ *
+ * The keys are strings - "12px", "400" - so their declaration order is what a
+ * caller would otherwise have to trust. Reading the number keeps the answer
+ * right if the constants are ever reordered, the same reason
+ * findClosestSizeKey() sorts rather than indexing.
+ *
+ * @param {readonly T[]} keys - The keys to choose from
+ * @return {T | null} The smallest key, or null where the list is empty
+ */
+function smallestByNumber<T extends string>(keys: readonly T[]): T | null {
+  return keys.reduce<T | null>(
+    (smallest, key) =>
+      smallest === null || parseInt(key, 10) < parseInt(smallest, 10)
+        ? key
+        : smallest,
+    null
+  );
 }

@@ -6,6 +6,7 @@ import chroma from "chroma-js";
 import {colorName} from "@common/helpers/color-name.helper";
 import {FONT_SIZES, FONT_WEIGHTS} from "@contrast/models/apca-lookup-table.model";
 import {APCA_POLARITIES, findClosestSizeKey, getAPCAPolarity, getAPCARating, getAPCARatingLabel, getRequiredLc} from "@contrast/helper/apca-rating.helper";
+import {calculateAPCAContrast, meetsAPCARequirement} from "@contrast/helper/optimal-text-color.helper";
 
 
 export function registerCheckContrast(server: McpServer) {
@@ -52,7 +53,7 @@ export function registerCheckContrast(server: McpServer) {
       const backgroundClr = chroma(backgroundColor);
       const fontSizeNumber = parseInt(fontSize, 10);
       const fontSizeKey = findClosestSizeKey(fontSizeNumber, FONT_SIZES);
-      const lc = chroma.contrastAPCA(textClr, backgroundClr);
+      const lc = calculateAPCAContrast(textClr, backgroundClr);
       const requiredLc = getRequiredLc(fontSizeNumber, fontWeight);
       const apcaRating = getAPCARating(lc, fontSizeNumber, fontWeight);
 
@@ -62,7 +63,7 @@ export function registerCheckContrast(server: McpServer) {
         fontSize: fontSizeKey,
         fontWeight,
         requiredLc,
-        meetsRequirement: apcaRating >= 2,
+        meetsRequirement: meetsAPCARequirement(textClr, backgroundClr, fontSizeKey, fontWeight),
         rating: apcaRating,
         ratingLabel: getAPCARatingLabel(apcaRating),
         textColorName: colorName(textClr),
@@ -73,7 +74,7 @@ export function registerCheckContrast(server: McpServer) {
         content: [
           {
             type: "text",
-            text: `With a font size of ${fontSize} and font weight of ${fontWeight} the colors ${(colorName(textClr))} and ${(colorName(backgroundClr))} have APCA rating of "${structuredContent.ratingLabel}"`
+            text: `${structuredContent.textColorName} on ${structuredContent.backgroundColorName} is "${structuredContent.ratingLabel}" at ${fontSizeKey}, weight ${fontWeight}.`
           }
         ],
         structuredContent
