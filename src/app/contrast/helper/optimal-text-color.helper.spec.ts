@@ -398,6 +398,21 @@ describe("Optimal Text Color Helper", () => {
       expect(colorOf(result).get("hsl.l")).toBeGreaterThan(darkBg.get("hsl.l"));
     });
 
+    it("should hand a background without a hue to the minimum finder", () => {
+      // chroma reports the hue of a gray as NaN, and a search on hue 0 would
+      // answer with a red-brown on a surface that holds no red. Gray text is
+      // the color that belongs to a gray surface, and the result names the
+      // mode that produced it.
+      for (const bg of ["#ffffff", "#000000", "#808080", "#e0e0e0"]) {
+        const result = findHarmonicTextColor(bg, largeText);
+        const minimum = findMinimumContrastTextColor(bg, largeText);
+
+        expect(result.appliedMode, bg).toBe("minimum");
+        expect(isGray(colorOf(result)), bg).toBe(true);
+        expect(result.color!.hex(), bg).toBe(colorOf(minimum).hex());
+      }
+    });
+
     it("should come back empty where nothing on the hue passes", () => {
       // 14px/400 asks for 100, and no color on a hue reaches that against a
       // mid-gray. The fallback is findTextColor()'s job, not this one's.
@@ -457,6 +472,18 @@ describe("Optimal Text Color Helper", () => {
       expect(result.color.hex()).toBe(optimal.color.hex());
       expect(result.contrast).toBe(optimal.contrast);
       expect(result.meetsRequirement).toBe(false);
+    });
+
+    it("should report minimum where harmonic met a background without a hue", () => {
+      // Two steps down, not one: the harmonic search stands aside for the
+      // minimum one, and only where that finds nothing does optimal answer.
+      const onWhite = findTextColor("#ffffff", "harmonic", {fontSize: "24px", fontWeight: "400"});
+      const onMidGray = findTextColor("#808080", "harmonic", {fontSize: "16px", fontWeight: "400"});
+
+      expect(onWhite.appliedMode).toBe("minimum");
+      expect(onWhite.meetsRequirement).toBe(true);
+      expect(isGray(onWhite.color)).toBe(true);
+      expect(onMidGray.appliedMode).toBe("optimal");
     });
 
     it("should describe the color it returns, not the search that failed", () => {

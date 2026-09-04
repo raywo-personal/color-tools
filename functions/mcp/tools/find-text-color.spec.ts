@@ -150,6 +150,23 @@ describe("find_text_color", () => {
       expect(Math.min(hueDiff, 360 - hueDiff)).toBeLessThan(30);
     });
 
+    it("should answer harmonic on a gray with a gray and name minimum", async () => {
+      // A white or gray surface has no hue to harmonise with. #109 names the
+      // case: the tool degrades to minimum and says so, rather than handing
+      // out a red-brown "on the background's own hue".
+      for (const backgroundColor of ["#ffffff", "#000000", "#808080"]) {
+        const result = structured(await findTextColor(client, {
+          backgroundColor,
+          mode: "harmonic",
+          fontSize: "24px"
+        }));
+
+        expect(result["mode"], backgroundColor).toBe("harmonic");
+        expect(result["appliedMode"], backgroundColor).toBe("minimum");
+        expect(isGray(result["textColor"] as string), backgroundColor).toBe(true);
+      }
+    });
+
     it("should fall back to optimal and name it where the mode finds nothing", async () => {
       // Body text on mid-gray: no gray reaches 90. The caller asked for
       // grayscale and gets the pole - and is told which mode answered.

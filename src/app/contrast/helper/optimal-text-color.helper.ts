@@ -266,6 +266,9 @@ export function findMinimumContrastTextColor(
  * 4. Comes back without a color where nothing on that hue passes -
  *    findTextColor() is what falls back
  *
+ * A gray, white or black background has no hue to stay on, so the minimum
+ * finder answers in its place and the result carries `appliedMode: "minimum"`.
+ *
  * @param bgColor - The background color
  * @param config - Optional configuration
  * @returns The optimal text color result
@@ -284,7 +287,11 @@ export function findHarmonicTextColor(
   if (requiredContrast == null) return createResult("harmonic", null);
 
   const [bgHue, , bgLight] = bg.hsl();
-  const hue = bgHue || 0;
+
+  // chroma reports the hue of an achromatic color as NaN. Searching on hue 0
+  // instead would hand back a red-brown that belongs to no part of the design.
+  if (Number.isNaN(bgHue)) return findMinimumContrastTextColor(bg, options);
+
   const isLightBg = bgLight > 0.5;
 
   const saturationLevels = generateRange(0.2, 1.0, 0.1);
@@ -293,7 +300,7 @@ export function findHarmonicTextColor(
     : generateRange(bgLight + 0.1, 1, 0.05); // light text on a dark background
 
   const bestMatch =
-    findBestHarmonicColor(bg, hue, saturationLevels, lightnessRange, requiredContrast);
+    findBestHarmonicColor(bg, bgHue, saturationLevels, lightnessRange, requiredContrast);
 
   return createResult("harmonic", requiredContrast, bestMatch);
 }
