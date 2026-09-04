@@ -83,6 +83,21 @@ describe("check_contrast", () => {
       expect(lightOnDark["polarity"]).toBe("light-on-dark");
     });
 
+    it("should call two identical colors dark on light and not readable", async () => {
+      // Lc is 0 and there is no polarity to name; dark-on-light is the
+      // convention rather than a third word every caller would have to
+      // handle. The pair fails at every size, so the verdict says so.
+      const result = structured(await checkContrast(client, {
+        textColor: "#3366cc",
+        backgroundColor: "#3366cc"
+      }));
+
+      expect(result["lc"]).toBe(0);
+      expect(result["polarity"]).toBe("dark-on-light");
+      expect(result["meetsRequirement"]).toBe(false);
+      expect(result["rating"]).toBe(0);
+    });
+
     it("should read the pair in the order it was given", async () => {
       // APCA is directional: chroma-js reports a different magnitude
       // depending on which color is the text, so a swapped pair is a
