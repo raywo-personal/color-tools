@@ -67,13 +67,6 @@ export type TextColorFinder = (bgColor: Color | string, config?: Partial<Optimal
 const WHITE = chroma("#ffffff");
 const BLACK = chroma("#000000");
 
-// Grayscale candidates for fine-tuning
-const GRAYSCALE_STEPS = [
-  "#000000", "#111111", "#222222", "#333333", "#444444",
-  "#555555", "#666666", "#777777", "#888888", "#999999",
-  "#aaaaaa", "#bbbbbb", "#cccccc", "#dddddd", "#eeeeee", "#ffffff"
-];
-
 
 /**
  * Calculates the APCA contrast ratio between text and background colors.
@@ -185,7 +178,7 @@ export function findOptimalTextColor(
   const {fontSize, fontWeight} = options;
 
   // Pick the better of black and white
-  const bestMatch = findBestContrastColorFromSteps([BLACK.hex(), WHITE.hex()], bg);
+  const bestMatch = findBestContrastColorFromBW(bg);
 
   // Check it against the lookup row
   const requiredContrast = getRequiredContrast(fontSize, fontWeight);
@@ -202,7 +195,7 @@ export function findOptimalTextColor(
 
 
 /**
- * Finds the optimal text color from a range of grayscale values.
+ * Finds the optimal text color on a gray scale.
  *
  * This provides more fine-grained control than just black/white,
  * useful when you want a softer contrast that still meets APCA requirements.
@@ -221,9 +214,7 @@ export function findOptimalGrayscaleTextColor(
   const {fontSize, fontWeight} = options;
 
   const requiredContrast = getRequiredContrast(fontSize, fontWeight);
-
-  const bestMatch =
-    findBestContrastColorFromSteps(GRAYSCALE_STEPS, bg);
+  const bestMatch = findBestContrastColorFromGrays(bg, requiredContrast);
 
   const meetsRequirement =
     requiredContrast !== null && Math.abs(bestMatch.contrast) >= requiredContrast;
@@ -367,10 +358,7 @@ function findMinimumContrastGray(
   bg: Color,
   requiredContrast: number
 ): { color: Color; contrast: number } | null {
-  const isLightBg = bg.luminance() > 0.5;
-
-  // Start at mid grey, then walk towards black (light bg) or white (dark)
-  const endL = isLightBg ? 0 : 100;
+  const endL = isLightColor(bg) ? 0 : 100;
   const lightnessValues = generateRange(50, endL, 1);
 
   let best: { color: Color; contrast: number } | null = null;
@@ -393,27 +381,42 @@ function findMinimumContrastGray(
 }
 
 
-/**
- * Finds the best contrast color from a list of gray shades (steps) for a given
- * background color.
- *
- * @param {string[]} graySteps - An array of gray color strings to evaluate
- *                               for contrast.
- * @param {Color} bg - The background color to compare the gray shades against.
- * @return {{ color: Color, contrast: number }} An object containing the color
- *                                              with the best contrast and the
- *                                              contrast value.
- */
-function findBestContrastColorFromSteps(
-  graySteps: string[],
-  bg: Color
-): { color: Color; contrast: number } {
-  let bestColor = BLACK;
-  let bestContrast = chroma.contrastAPCA(BLACK, bg);
+function findBestContrastColorFromBW(bg: Color): { color: Color; contrast: number } {
+  const color = isLightColor(bg) ? BLACK : WHITE;
 
-  for (const gray of graySteps) {
-    const grayColor = chroma(gray);
+  return {
+    color,
+    contrast: chroma.contrastAPCA(color, bg)
+  };
+}
+
+
+function findBestContrastColorFromGrays(bg: Color, requiredContrast: number | null): { color: Color; contrast: number } {
+  const bgIsLightColor = isLightColor(bg);
+
+  if (!requiredContrast) {
+    const color = bgIsLightColor ? BLACK : WHITE;
+
+    return {
+      color,
+      contrast: chroma.contrastAPCA(color, bg)
+    };
+  }
+
+  const start = bgIsLightColor ? 1 : 0;
+  const direction = bgIsLightColor ? -1 : 1;
+
+  let bestColor = bgIsLightColor ? WHITE : BLACK;
+  let bestContrast = chroma.contrastAPCA(bestColor, bg);
+
+  for (let i = 0; i <= 100; i++) {
+    const lightness = start + (i / 100) * direction;
+    const grayColor = chroma.hsl(0, 0, lightness);
     const contrast = chroma.contrastAPCA(grayColor, bg);
+
+    if (Math.abs(contrast) >= Math.abs(requiredContrast)) {
+      return {color: grayColor, contrast};
+    }
 
     if (Math.abs(contrast) > Math.abs(bestContrast)) {
       bestColor = grayColor;
@@ -427,6 +430,11 @@ function findBestContrastColorFromSteps(
 /** Accepts either spelling of a color and hands back a chroma `Color`. */
 function toColor(color: Color | string): Color {
   return typeof color === "string" ? chroma(color) : color;
+}
+
+
+function isLightColor(color: Color): boolean {
+  return Math.abs(chroma.contrastAPCA(WHITE, color)) <= Math.abs(chroma.contrastAPCA(BLACK, color));
 }
 
 
