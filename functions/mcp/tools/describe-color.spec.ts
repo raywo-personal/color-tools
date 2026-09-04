@@ -131,13 +131,22 @@ describe("describe_color", () => {
       expect(result.isError).toBe(true);
     });
 
-    it("should reject an 8-digit hex with an alpha byte", async () => {
+    it("should reject an 8-digit hex with a translucent alpha byte", async () => {
       const result = await describeColor(client, "#1e90ff80");
 
       // Every output field drops the alpha byte, so answering it as an
       // opaque color would silently misdescribe the input.
       expect(result.isError).toBe(true);
       expect(result.structuredContent).toBeUndefined();
+    });
+
+    it("should accept an 8-digit hex whose alpha byte is ff", async () => {
+      // Nothing is lost by dropping a channel that says opaque, so the
+      // color is described exactly like its 6-digit spelling.
+      const withAlpha = structured(await describeColor(client, "#1e90ffff"));
+      const without = structured(await describeColor(client, "#1e90ff"));
+
+      expect(withAlpha).toEqual(without);
     });
 
   });

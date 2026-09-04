@@ -1,31 +1,21 @@
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {z} from "zod";
-import {isHex} from "@common/helpers/color-format-parser.helper";
-import {hasAlpha} from "../helper/color-helper";
 import {FONT_SIZES, FONT_WEIGHTS} from "@contrast/models/apca-lookup-table.model";
-import {APCA_POLARITIES, findClosestSizeKey, getAPCAPolarity, lightestPassingFontWeight, smallestPassingFontSize} from "@contrast/helper/apca-rating.helper";
+import {APCA_POLARITIES, getAPCAPolarity, lightestPassingFontWeight, smallestPassingFontSize} from "@contrast/helper/apca-rating.helper";
 import {colorName} from "@common/helpers/color-name.helper";
 import chroma from "chroma-js";
 import {findTextColor, MODES} from "@contrast/helper/optimal-text-color.helper";
+import {fontSizeKeyFrom} from "@common/helpers/font-size.helper";
+import {opaqueHexColor, fontSizeInput, fontWeightInput} from "../helper/tool-schemas.helper";
 
 
 const inputSchema = {
-  backgroundColor: z.string()
-    .refine(
-      (value) => isHex(value) && !hasAlpha(value),
-      {message: "Background color must be a valid hex color without alpha channel"}
-    )
-    .describe("Background color in hex format without alpha channel."),
+  backgroundColor: opaqueHexColor("Background color"),
   mode: z.enum(MODES)
     .default("optimal")
     .describe("optimal: black or white, maximum contrast; minimum: the palest grey that still passes; harmonic: a muted color on the background's own hue."),
-  fontSize: z.string()
-    .regex(/^\d+px$/, {message: "Font size must be a pixel value like '16px'."})
-    .default("16px")
-    .describe("Font size in CSS pixels, for example '16px'. The APCA requirement depends on it."),
-  fontWeight: z.enum(FONT_WEIGHTS)
-    .default("400")
-    .describe("CSS font weight, for example '400' for regular or '700' for bold. The APCA requirement depends on it.")
+  fontSize: fontSizeInput,
+  fontWeight: fontWeightInput
 };
 
 const outputSchema = {
@@ -38,7 +28,7 @@ const outputSchema = {
   meetsRequirement: z.boolean(),
   mode: z.enum(MODES),
   appliedMode: z.enum(MODES),
-  fontSize: z.string(),
+  fontSize: z.enum(FONT_SIZES),
   fontWeight: z.enum(FONT_WEIGHTS),
   smallestPassingFontSize: z.enum(FONT_SIZES)
     .nullable()
@@ -61,51 +51,51 @@ export function registerFindTextColor(server: McpServer) {
 }
 
 
-const callback: ToolCallback<typeof inputSchema> = ({backgroundColor, mode, fontSize, fontWeight}) => {
-  const backgroundClr = chroma(backgroundColor);
-  const backgroundColorName = colorName(backgroundClr);
-  const fontSizeNumber = parseInt(fontSize, 10);
-  const fontSizeKey = findClosestSizeKey(fontSizeNumber, FONT_SIZES);
+const callback: ToolCallback<typeof inputSchema> =
+  ({backgroundColor, mode, fontSize, fontWeight}) => {
+    const backgroundClr = chroma(backgroundColor);
+    const backgroundColorName = colorName(backgroundClr);
+    const fontSizeKey = fontSizeKeyFrom(fontSize);
 
-  const config = {fontSize: fontSizeKey, fontWeight};
-  const foundResult = findTextColor(backgroundClr, mode, config);
-  const textColor = foundResult.color;
-  const textColorName = colorName(textColor);
+    const config = {fontSize: fontSizeKey, fontWeight};
+    const foundResult = findTextColor(backgroundClr, mode, config);
+    const textColor = foundResult.color;
+    const textColorName = colorName(textColor);
 
-  const meetsRequirement = foundResult.meetsRequirement;
+    const meetsRequirement = foundResult.meetsRequirement;
 
-  const structuredContent = {
-      textColor: textColor.hex(),
-      textColorName,
-      backgroundColorName,
-      lc: foundResult.contrast,
-      polarity: getAPCAPolarity(foundResult.contrast),
-      requiredLc: foundResult.requiredContrast,
-      meetsRequirement,
-      mode,
-      appliedMode: foundResult.appliedMode,
-      fontSize: fontSizeKey,
-      fontWeight: fontWeight,
-      smallestPassingFontSize: smallestPassingFontSize(foundResult.contrast, fontWeight),
-      lightestPassingFontWeight: lightestPassingFontWeight(foundResult.contrast, fontSizeKey)
-    }
-  ;
-
-  let text: string;
-
-  if (!foundResult.meetsRequirement) {
-    text = `No text color is readable on ${backgroundColorName} at ${fontSizeKey}, weight ${fontWeight}; ${textColorName} is the closest.`;
-  } else {
-    text = `${textColorName} on ${backgroundColorName} is readable at ${fontSizeKey}, weight ${fontWeight}.`;
-  }
-
-  return {
-    content: [
-      {
-        type: "text",
-        text
+    const structuredContent = {
+        textColor: textColor.hex(),
+        textColorName,
+        backgroundColorName,
+        lc: foundResult.contrast,
+        polarity: getAPCAPolarity(foundResult.contrast),
+        requiredLc: foundResult.requiredContrast,
+        meetsRequirement,
+        mode,
+        appliedMode: foundResult.appliedMode,
+        fontSize: fontSizeKey,
+        fontWeight: fontWeight,
+        smallestPassingFontSize: smallestPassingFontSize(foundResult.contrast, fontWeight),
+        lightestPassingFontWeight: lightestPassingFontWeight(foundResult.contrast, fontSizeKey)
       }
-    ],
-    structuredContent
+    ;
+
+    let text: string;
+
+    if (!foundResult.meetsRequirement) {
+      text = `No text color is readable on ${backgroundColorName} at ${fontSizeKey}, weight ${fontWeight}; ${textColorName} is the closest.`;
+    } else {
+      text = `${textColorName} on ${backgroundColorName} is readable at ${fontSizeKey}, weight ${fontWeight}.`;
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text
+        }
+      ],
+      structuredContent
+    };
   };
-};
