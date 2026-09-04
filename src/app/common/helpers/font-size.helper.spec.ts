@@ -23,6 +23,14 @@ describe("fontSizeKeyFrom", () => {
     expect(fontSizeKeyFrom("17px")).toBe("18px");
   });
 
+  it("reads a fractional pixel size and rounds it up like any other", () => {
+    // An assistant converting from rem lands on 16.5px now and then; a
+    // pattern that only knew integers refused the call.
+    expect(fontSizeKeyFrom("16.5px")).toBe("18px");
+    expect(fontSizeKeyFrom("16.0px")).toBe("16px");
+    expect(fontSizeKeyFrom("16.5px")).toBe(fontSizeKeyFrom(16.5));
+  });
+
   it("clamps a size outside the table to its ends", () => {
     expect(fontSizeKeyFrom(4)).toBe(FONT_SIZES[0]);
     expect(fontSizeKeyFrom("400px")).toBe(FONT_SIZES[FONT_SIZES.length - 1]);
@@ -34,6 +42,8 @@ describe("fontSizeKeyFrom", () => {
     // is a font size, so neither gets a row.
     expect(() => fontSizeKeyFrom("1rem")).toThrow();
     expect(() => fontSizeKeyFrom("rem")).toThrow();
+    expect(() => fontSizeKeyFrom(".5px")).toThrow();
+    expect(() => fontSizeKeyFrom("16.px")).toThrow();
     expect(() => fontSizeKeyFrom("")).toThrow();
     expect(() => fontSizeKeyFrom(NaN)).toThrow();
   });

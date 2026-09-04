@@ -1,7 +1,7 @@
 import {findClosestSizeKey} from "@contrast/helper/apca-rating.helper";
 import {FontSize} from "@contrast/models/apca-lookup-table.model";
 
-export const PIXEL_FONT_SIZE_PATTERN = /^\d+px$/;
+export const PIXEL_FONT_SIZE_PATTERN = /^\d+(\.\d+)?px$/;
 
 export function fontSizeKeyFrom(rawFontSize: string | number): FontSize {
   const fontSize = typeof rawFontSize === "number"
@@ -16,5 +16,5 @@ function parsePixelFontSize(rawFontSize: string): number {
     throw new Error("Invalid font size format");
   }
 
-  return Number.parseInt(rawFontSize, 10);
+  return Number.parseFloat(rawFontSize);
 }
