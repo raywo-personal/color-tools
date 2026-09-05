@@ -248,9 +248,8 @@ describe("WebsitePreview", () => {
 
 
   it("runs on the app's own stack until a typeface is picked", async () => {
-    // `commonEvents.fontSelected` has no caller on this screen yet - the
-    // typeface control is its own slice - so this is the state the preview is
-    // in today, and an empty font-family would be the alternative.
+    // Nothing chosen, on a first visit or after a clear. An empty font-family
+    // would be the alternative.
     const {page} = await preview();
 
     expect(page.style.fontFamily).toBe("var(--font-sans)");
@@ -263,7 +262,8 @@ describe("WebsitePreview", () => {
     TestBed.inject(Dispatcher).dispatch(commonEvents.fontSelected({
       family: "Source Serif 4",
       category: "serif",
-      variant: "regular"
+      variant: "regular",
+      weights: [400, 600, 700]
     }));
     await fixture.whenStable();
 
