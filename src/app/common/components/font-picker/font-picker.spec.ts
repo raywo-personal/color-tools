@@ -1,5 +1,6 @@
 import {Component, provideZonelessChangeDetection, signal} from "@angular/core";
 import {ComponentFixture, TestBed} from "@angular/core/testing";
+import {readFileSync} from "node:fs";
 import {beforeEach, describe, expect, it} from "vitest";
 import {FontPicker} from "@common/components/font-picker/font-picker";
 import {SelectedFont} from "@common/models/google-font.model";
@@ -59,6 +60,14 @@ describe("FontPicker", () => {
       return options().map(option => option.querySelector("span")?.textContent?.trim() ?? "");
     }
 
+    function usage(): string {
+      const describedBy = field().getAttribute("aria-describedby");
+
+      return describedBy
+        ? host.querySelector(`#${describedBy}`)?.textContent?.trim() ?? ""
+        : "";
+    }
+
     function status(): string {
       return host.querySelector("[role=status]")?.textContent?.trim() ?? "";
     }
@@ -108,6 +117,7 @@ describe("FontPicker", () => {
       listbox,
       options,
       families,
+      usage,
       status,
       button,
       settle,
@@ -126,6 +136,51 @@ describe("FontPicker", () => {
 
     expect(label?.textContent?.trim()).toBe("TYPEFACE");
     expect(label?.getAttribute("for")).toBe(field().id);
+  });
+
+
+  it("names the app's own type while nothing is chosen", async () => {
+    // The field is empty then, and nothing else on the screen says which type
+    // the preview is running on.
+    const {usage} = await picker();
+
+    expect(usage()).toContain("IBM Plex Sans");
+  });
+
+
+  it("names the family the preview is set in, not the query being typed", async () => {
+    const {type, press, usage} = await picker();
+
+    await type("lobster");
+    await press("Enter");
+    await type("merri");
+
+    expect(usage()).toBe("Set in Lobster.");
+  });
+
+
+  it("goes back to naming the app's own type after a clear", async () => {
+    const {type, press, button, click, usage} = await picker();
+
+    await type("lobster");
+    await press("Enter");
+    await click(button("CLEAR") as Element);
+
+    expect(usage()).toContain("IBM Plex Sans");
+  });
+
+
+  it("keeps the app's own family name in step with the stylesheet", () => {
+    // The name is a copy of the first family in `--font-sans`, which no
+    // compiler compares against the control's own literal - so the stylesheet
+    // is read and the two are pinned together.
+    const styles = readFileSync("src/styles.css", "utf8");
+    const declaration = /--font-sans:\s*"([^"]+)"/.exec(styles);
+
+    expect(declaration, "src/styles.css declares no quoted --font-sans family").not.toBeNull();
+    expect(`Set in ${declaration?.[1]}, the app's own type.`).toBe(
+      "Set in IBM Plex Sans, the app's own type."
+    );
   });
 
 

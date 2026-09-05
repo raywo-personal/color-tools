@@ -17,6 +17,16 @@ let nextInstance = 0;
  */
 const RESULT_LIMIT = 20;
 
+/**
+ * The family the app sets itself in, and the one the preview falls back to.
+ *
+ * A copy of the first name in `--font-sans` in `src/styles.css`, which no
+ * compiler compares against this. `font-picker.spec.ts` reads the stylesheet
+ * and pins the two together - the field can be empty, and a visitor is then
+ * owed the name of the type they are actually looking at.
+ */
+const APP_TYPE_FAMILY = "IBM Plex Sans";
+
 
 /** One row of the listbox, with the id its `aria-activedescendant` needs. */
 interface FontOption {
@@ -54,6 +64,10 @@ interface FontOption {
  * store does with it. So the catalog request lives here and the store wiring
  * does not.
  *
+ * **The family in use is named under the field, whatever the field says.** The
+ * field is a query as much as a selection, and after a clear it is empty - so
+ * on its own it never reliably answers "what am I looking at".
+ *
  * **A catalog that does not answer says so and offers the request again.** The
  * proxy behind `environment.webFontsApiUrl` can be down and a visitor can be
  * offline. Without the list nothing can be looked up, so the field is disabled
@@ -83,6 +97,7 @@ export class FontPicker {
   protected readonly instance = nextInstance++;
   protected readonly fieldId = `ct-font-picker-${this.instance}`;
   protected readonly listId = `${this.fieldId}-list`;
+  protected readonly usageId = `${this.fieldId}-usage`;
 
   protected readonly catalog = this.#fonts.googleFonts;
 
@@ -172,6 +187,22 @@ export class FontPicker {
   protected readonly activeId = computed(() =>
     this.listOpen() ? this.activeOption()?.id ?? null : null
   );
+
+  /**
+   * The family the preview is actually set in.
+   *
+   * Always on screen, and the field is described by it. The field alone cannot
+   * carry this: it holds a query as much as a selection, so it reads `merri`
+   * while Lobster is still what the preview uses - and after a clear it is
+   * empty, where the app's own type is doing the work and nothing said so.
+   */
+  protected readonly usageText = computed(() => {
+    const family = this.font()?.family;
+
+    return family
+      ? `Set in ${family}.`
+      : `Set in ${APP_TYPE_FAMILY}, the app's own type.`;
+  });
 
   protected readonly statusText = computed(() => {
     if (this.loading()) return "Loading the font catalog …";
