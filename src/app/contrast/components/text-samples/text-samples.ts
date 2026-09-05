@@ -3,7 +3,6 @@ import {AppStateStore} from "@core/app-state.store";
 import {FONT_WEIGHTS, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {StarRating} from "@contrast/components/star-rating/star-rating";
 import {getAPCARating} from "@engine/contrast/apca-rating.helper";
-import {apcaLookup} from "@engine/contrast/apca-look-up-table.helper";
 import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
 
 
@@ -64,8 +63,7 @@ export class TextSamples {
     return getAPCARating(
       this.contrast(),
       fontSizeKeyFrom(fontSize),
-      fontWeight,
-      apcaLookup
+      fontWeight
     );
   }
 

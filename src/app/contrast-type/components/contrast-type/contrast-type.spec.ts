@@ -22,12 +22,13 @@ describe("ContrastType", () => {
   }
 
 
-  it("holds the pair, the palette chips, the two gestures and the type controls", async () => {
+  it("holds the pair, the palette chips, the two gestures, the rating and the type controls", async () => {
     const host = await contrastType();
 
     expect(host.querySelector("ct-pair-fields")).not.toBeNull();
     expect(host.querySelector("ct-palette-chips")).not.toBeNull();
     expect(host.querySelector("ct-pair-actions")).not.toBeNull();
+    expect(host.querySelector("ct-apca-rating")).not.toBeNull();
     expect(host.querySelector("ct-type-controls")).not.toBeNull();
   });
 

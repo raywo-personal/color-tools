@@ -1,0 +1,84 @@
+<!-- Right-aligned, so the figure shares an edge with the verdicts in the list
+     below it: the two are readings of the same number and line up as one
+     column. The unit leads, as it does in APCA's own notation, and is set at
+     half the figure rather than at the draft's caption size - at `text-sm` it
+     read as a label beside the number instead of as its unit. -->
+<p class="flex items-baseline justify-end gap-2">
+  <span class="font-sans text-2xl tracking-widest text-dim">Lc</span>
+  <span class="font-serif text-5xl leading-none">{{ figure() }}</span>
+</p>
+
+<p class="mt-2 text-right text-sm text-dim">{{ polarityText() }}</p>
+
+<!-- `role="list"` because Preflight removes the list style, and Safari with
+     VoiceOver then stops treating the element as a list. -->
+<ul role="list"
+    aria-label="APCA rating"
+    class="mt-5 grid gap-2">
+  @for (row of rows(); track row.key) {
+    <!-- The verdict is pushed right by `ml-auto` rather than by a column of a
+         fixed width: at the narrow end of the column the row wraps instead of
+         truncating, and a caption never has to fit a guess. -->
+    <li class="flex flex-wrap items-center gap-x-3 gap-y-1"
+        [class.mt-3]="row.startsReference"
+        [class.text-text]="row.state === 'pass'"
+        [class.text-dim]="row.state !== 'pass'">
+      <!-- A tick, a cross, a dash. The three carry the verdict in shape rather
+           than in colour, which is what keeps `danger` out of here.
+
+           Drawn as strokes rather than as the `✓` and `✗` characters, for the
+           reason `copy-confirmation.ts` gives for its own sign: at text weight
+           in the sans face they thin out next to the row they belong to. A
+           stroked path holds its width at any size, and three of them are not
+           an icon set worth a font file.
+
+           `data-marker` is what the spec reads: the rule it pins - a pass
+           differs from a fail by more than its colour - is about the shape,
+           and a shape has no other stable handle in the DOM. -->
+      @switch (row.state) {
+        @case ("pass") {
+          <svg data-marker="tick"
+               class="size-4 shrink-0"
+               viewBox="0 0 16 16" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M3 8.5 6.5 12 13 4"/>
+          </svg>
+        }
+        @case ("fail") {
+          <svg data-marker="cross"
+               class="size-4 shrink-0"
+               viewBox="0 0 16 16" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8"/>
+          </svg>
+        }
+        @default {
+          <svg data-marker="dash"
+               class="size-4 shrink-0"
+               viewBox="0 0 16 16" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round"
+               aria-hidden="true">
+            <path d="M4 8h8"/>
+          </svg>
+        }
+      }
+
+      <span class="font-sans text-sm tracking-widest">{{ row.caption }}</span>
+
+      <!-- The spec and the verdict carry `text-text` themselves rather than
+           taking the row's colour: `dim` reaches Lc 68.4 against `bg` in the
+           light theme and 50.9 in the dark one, and this very list asks Lc 100
+           at 14px - a row saying `Needs Lc 100` would sit below the bar it
+           announces. The caption keeps the row's colour, as the all-caps label
+           does in `palette-swatches` and `conversion-list`: there `dim` carries
+           the label and the value beside it stands in `text`. -->
+      <span class="font-mono text-sm text-text">{{ row.spec }}</span>
+
+      <span class="ml-auto text-sm text-text">{{ row.verdict }}</span>
+    </li>
+  }
+</ul>
+
+<p class="mt-4 text-sm text-dim text-pretty">{{ sizeNote() }}</p>
