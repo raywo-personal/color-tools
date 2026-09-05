@@ -128,8 +128,8 @@ through them, never through relative `../../` paths.
 
 ### Shareable Ids
 
-`paletteIdFromPalette()` and `contrastIdFromColors()` encode a palette and a
-contrast pair into fixed-length base62 ids; their helpers document the layout.
+`paletteIdFrom()` and `contrastIdFromColors()` encode a palette and a contrast
+pair into fixed-length base62 ids; their helpers document the layout.
 The ids are generated and persisted, but no route takes one until the new
 screens have shareable urls of their own. The guards in `src/app/routes/` and
 the navigation effects in `core/common/navigation.effects.ts` wait for that and
