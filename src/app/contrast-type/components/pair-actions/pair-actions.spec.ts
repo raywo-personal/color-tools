@@ -1,6 +1,6 @@
 import {TestBed} from "@angular/core/testing";
 import {provideZonelessChangeDetection} from "@angular/core";
-import {Dispatcher} from "@ngrx/signals/events";
+import {Dispatcher, EventInstance} from "@ngrx/signals/events";
 import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
@@ -11,11 +11,19 @@ import {colorName} from "@engine/color/color-name.helper";
 import {CONTRAST_ID_LENGTH} from "@engine/contrast/contrast-id.helper";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {PairActions} from "@contrast-type/components/pair-actions/pair-actions";
+import {loadAppStateReducer} from "@core/common/persistence.reducers";
+import {initialState} from "@core/models/app-state.model";
+
+
+type LoadEvent = EventInstance<"[Persistence] loadAppState", void>;
+
+const loadEvent = {type: "[Persistence] loadAppState", payload: undefined} as LoadEvent;
 
 
 describe("PairActions", () => {
 
   beforeEach(() => {
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), provideFakeLiveAnnouncer()]
     });
@@ -194,6 +202,26 @@ describe("PairActions", () => {
       await press("PALETTE PAIR");
 
       expect(store.contrastColors.id()).toBe(first);
+    });
+
+
+    it("survives a reload, the way the random roll's pair does", async () => {
+      // `sendPaletteToContrast` sits in the same persistable list as the roll
+      // and the manual edit, so this pins that the palette-derived pair
+      // actually round-trips through save and load rather than assuming the
+      // shared mechanism carries it.
+      const {store, press} = await actions();
+
+      await press("PALETTE PAIR");
+      const text = store.contrastColors.text().hex("rgb");
+      const background = store.contrastColors.background().hex("rgb");
+
+      const loaded = TestBed.runInInjectionContext(
+        () => loadAppStateReducer(loadEvent, initialState)
+      );
+
+      expect(loaded.contrastColors.text.hex("rgb")).toBe(text);
+      expect(loaded.contrastColors.background.hex("rgb")).toBe(background);
     });
 
 
