@@ -3,6 +3,7 @@
 //
 // This file is CommonJS on purpose: package.json declares no "type", so a .js
 // config is loaded as CommonJS.
+const {defineConfig, globalIgnores} = require("eslint/config");
 const path = require("node:path");
 const angular = require("angular-eslint");
 const stylistic = require("@stylistic/eslint-plugin");
@@ -28,21 +29,19 @@ const APP_ALIASES = Object.keys(tsconfig.compilerOptions.paths).filter(
   (alias) => alias !== ENGINE_ALIAS,
 );
 
-module.exports = tseslint.config(
-  {
-    // `resources/**` holds the design drafts, not app code: exported .dc.html
-    // pages with their own support.js. They are not ours to lint, and a config
-    // block for plain .js would otherwise pull them in.
-    ignores: [
-      ".angular/**",
-      // `wrangler pages dev` writes its bundled Worker here while it runs.
-      ".wrangler/**",
-      "dist/**",
-      "tmp/**",
-      "resources/**",
-      ...V1_SCREENS,
-    ],
-  },
+module.exports = defineConfig(
+  // `resources/**` holds the design drafts, not app code: exported .dc.html
+  // pages with their own support.js. They are not ours to lint, and a config
+  // block for plain .js would otherwise pull them in.
+  globalIgnores([
+    ".angular/**",
+    // `wrangler pages dev` writes its bundled Worker here while it runs.
+    ".wrangler/**",
+    "dist/**",
+    "tmp/**",
+    "resources/**",
+    ...V1_SCREENS,
+  ]),
   {
     files: ["src/**/*.ts"],
     // Lints the `template` of a component declared inline, so an inline
