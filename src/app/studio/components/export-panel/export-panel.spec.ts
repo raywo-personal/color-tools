@@ -13,7 +13,7 @@ import {
   jsonExport,
   scssExport,
   tailwindExport
-} from "@studio/helper/palette-export.helper";
+} from "@engine/palette/palette-export.helper";
 import {ExportPanel} from "@studio/components/export-panel/export-panel";
 
 

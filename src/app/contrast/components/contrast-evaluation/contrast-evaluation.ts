@@ -2,8 +2,8 @@ import {Component, computed, inject} from "@angular/core";
 import {StarRating} from "@contrast/components/star-rating/star-rating";
 import {AppStateStore} from "@core/app-state.store";
 import {DecimalPipe} from "@angular/common";
-import {getAPCARating, NEGATIVE_MAX_APCA_CONTRAST, POSITIVE_MAX_APCA_CONTRAST} from "@contrast/helper/apca-rating.helper";
-import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
+import {getAPCARating, NEGATIVE_MAX_APCA_CONTRAST, POSITIVE_MAX_APCA_CONTRAST} from "@engine/contrast/apca-rating.helper";
+import {apcaLookup} from "@engine/contrast/apca-look-up-table.helper";
 
 
 @Component({

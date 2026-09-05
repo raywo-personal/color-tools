@@ -4,7 +4,7 @@ import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {tap} from "rxjs";
 import {transferEvents} from "@core/common/transfer.events";
-import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {contrastIdFromColors} from "@engine/contrast/contrast-id.helper";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {converterEvents} from "@core/converter/converter.events";
 

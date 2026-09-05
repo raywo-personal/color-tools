@@ -4,10 +4,10 @@ import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {ColorSlider} from "@common/components/color-slider/color-slider";
-import {fromHsl} from "@common/helpers/color-from-hsl.helper";
-import {fromOklch} from "@common/helpers/color-from-oklch.helper";
-import {maxChroma} from "@common/helpers/oklch.helper";
-import {hueWrap} from "@common/helpers/hsl.helper";
+import {fromHsl} from "@engine/color/color-from-hsl.helper";
+import {fromOklch} from "@engine/color/color-from-oklch.helper";
+import {maxChroma} from "@engine/color/oklch.helper";
+import {hueWrap} from "@engine/color/hsl.helper";
 
 
 /** Which three axes the panel is showing. */

@@ -3,7 +3,7 @@ import {Color} from "chroma-js";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
-import {ContrastColorRole} from "@contrast/models/contrast-color.model";
+import {ContrastColorRole} from "@engine/contrast/contrast-color.model";
 import {ColorField} from "@common/components/color-field/color-field";
 
 

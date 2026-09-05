@@ -7,10 +7,10 @@ import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {CopyService} from "@common/services/copy.service";
-import {colorName} from "@common/helpers/color-name.helper";
-import {PALETTE_SLOTS} from "@palettes/models/palette.model";
-import {PaletteStyle, styleDescriptionFor} from "@palettes/models/palette-style.model";
-import {roleCaptionFor} from "@palettes/helper/palette-role.helper";
+import {colorName} from "@engine/color/color-name.helper";
+import {PALETTE_SLOTS} from "@engine/palette/palette.model";
+import {PaletteStyle, styleDescriptionFor} from "@engine/palette/palette-style.model";
+import {roleCaptionFor} from "@engine/palette/palette-role.helper";
 import {PaletteSwatches} from "@studio/components/palette-swatches/palette-swatches";
 
 

@@ -1,10 +1,10 @@
 import {Component, inject, signal} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
-import {FONT_WEIGHTS, FontWeight} from "@contrast/models/apca-lookup-table.model";
+import {FONT_WEIGHTS, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {StarRating} from "@contrast/components/star-rating/star-rating";
-import {getAPCARating} from "@contrast/helper/apca-rating.helper";
-import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
-import {fontSizeKeyFrom} from "@common/helpers/font-size.helper";
+import {getAPCARating} from "@engine/contrast/apca-rating.helper";
+import {apcaLookup} from "@engine/contrast/apca-look-up-table.helper";
+import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
 
 
 @Component({

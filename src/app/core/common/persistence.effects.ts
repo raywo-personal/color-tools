@@ -4,7 +4,7 @@ import {SettingKey, SettingsMap} from "@common/models/local-storage.model";
 import {Events} from "@ngrx/signals/events";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {AppStateStore} from "../app-state.store";
-import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {contrastIdFromColors} from "@engine/contrast/contrast-id.helper";
 
 
 export function saveStateEffect(events: Events,

@@ -1,15 +1,15 @@
 import chroma, {Color} from "chroma-js";
-import {ColorSpace} from "@common/models/color-space.model";
-import {PaletteStyle} from "@palettes/models/palette-style.model";
-import {Palette} from "@palettes/models/palette.model";
+import {ColorSpace} from "@engine/color/color-space.model";
+import {PaletteStyle} from "@engine/palette/palette-style.model";
+import {Palette} from "@engine/palette/palette.model";
 import {ColorTheme} from "@common/models/color-theme.model";
-import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
-import {generatePaletteFrom} from "@palettes/helper/palette.helper";
-import {contrastingColor} from "@common/helpers/contrasting-color.helper";
+import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
+import {generatePaletteFrom} from "@engine/palette/palette.helper";
+import {contrastingColor} from "@engine/contrast/contrasting-color.helper";
 import {SelectedFont} from "@common/models/google-font.model";
-import {ContrastColors} from "@contrast/models/contrast-colors.model";
-import {generateRandomContrastColors} from "@contrast/helper/contrast-id.helper";
-import {randomSeed} from "@common/helpers/random.helper";
+import {ContrastColors} from "@engine/contrast/contrast-colors.model";
+import {generateRandomContrastColors} from "@engine/contrast/contrast-id.helper";
+import {randomSeed} from "@engine/helpers/random.helper";
 
 
 export type AppState = {

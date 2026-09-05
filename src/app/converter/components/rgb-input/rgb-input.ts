@@ -1,7 +1,7 @@
 import {Component, computed, inject, linkedSignal} from "@angular/core";
 import {FormsModule} from "@angular/forms";
 import chroma from "chroma-js";
-import {inRgbRange} from "@common/helpers/rgb.helper";
+import {inRgbRange} from "@engine/color/rgb.helper";
 import {CopyCss} from "@converter/components/copy-css/copy-css";
 import {RangedInput} from "@converter/components/ranged-input/ranged-input";
 import {injectDispatch} from "@ngrx/signals/events";

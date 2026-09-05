@@ -1,7 +1,7 @@
 import {Component, computed, inject, linkedSignal} from "@angular/core";
 import chroma from "chroma-js";
 import {FormsModule} from "@angular/forms";
-import {inHslAngleRange, inHslPercentRange} from "@common/helpers/hsl.helper";
+import {inHslAngleRange, inHslPercentRange} from "@engine/color/hsl.helper";
 import {RangedInput} from "@converter/components/ranged-input/ranged-input";
 import {CopyCss} from "@converter/components/copy-css/copy-css";
 import {AppStateStore} from "@core/app-state.store";

@@ -1,15 +1,15 @@
 import {EventInstance} from "@ngrx/signals/events";
 import {inject} from "@angular/core";
 import {LocalStorage} from "@common/services/local-storage.service";
-import {generatePaletteFrom} from "@palettes/helper/palette.helper";
-import {PALETTE_ID_BASE62_LENGTH, paletteFromId} from "@palettes/helper/palette-id.helper";
+import {generatePaletteFrom} from "@engine/palette/palette.helper";
+import {PALETTE_ID_BASE62_LENGTH, paletteFromId} from "@engine/palette/palette-id.helper";
 import chroma, {Color} from "chroma-js";
-import {Palette} from "@palettes/models/palette.model";
-import {PaletteStyle} from "@palettes/models/palette-style.model";
-import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
+import {Palette} from "@engine/palette/palette.model";
+import {PaletteStyle} from "@engine/palette/palette-style.model";
+import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
 import {AppState} from "@core/models/app-state.model";
-import {isRestorable} from "@common/helpers/validate-string-id.helper";
-import {CONTRAST_ID_LENGTH, contrastColorsFromId, generateRandomContrastColors} from "@contrast/helper/contrast-id.helper";
+import {isRestorable} from "@engine/helpers/validate-string-id.helper";
+import {CONTRAST_ID_LENGTH, contrastColorsFromId, generateRandomContrastColors} from "@engine/contrast/contrast-id.helper";
 
 
 export function loadAppStateReducer(

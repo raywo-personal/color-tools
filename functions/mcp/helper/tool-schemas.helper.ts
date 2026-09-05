@@ -1,7 +1,7 @@
-import {isTranslucent, isHex} from "@common/helpers/color-format-parser.helper";
-import {FONT_WEIGHTS} from "@contrast/models/apca-lookup-table.model";
+import {isTranslucent, isHex} from "@engine/color/color-format-parser.helper";
+import {FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
 import {z} from "zod";
-import {PIXEL_FONT_SIZE_PATTERN} from "@common/helpers/font-size.helper";
+import {PIXEL_FONT_SIZE_PATTERN} from "@engine/helpers/font-size.helper";
 import chroma from "chroma-js";
 
 

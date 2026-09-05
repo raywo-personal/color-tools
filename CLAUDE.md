@@ -136,8 +136,8 @@ rather than duplicating it here.
    the tints and shades derived from it
 2. **Palettes** – the current palette, its style, and whether the style is
    rolled. The styles are listed in `PaletteStyles`
-   (`src/app/palettes/models/palette-style.model.ts`); `generatePalette()`
-   (`src/app/palettes/helper/palette.helper.ts`) hands each to its own
+   (`src/engine/palette/palette-style.model.ts`); `generatePalette()`
+   (`src/engine/palette/palette.helper.ts`) hands each to its own
    `*-palette.helper.ts`. Pinned colors survive a regenerate. What a slot is
    *for* - base, complement, a lighter tint - is `roleCaptionFor()` in
    `palette-role.helper.ts`, a function of style and slot. It is not a field
@@ -156,7 +156,7 @@ rather than duplicating it here.
    generator that reads `Math.random` or `chroma.random()` directly escapes
    the seed - draw through `randomBetween()`
 3. **Contrast** – the text and background pair with its APCA value. The math
-   sits in `src/app/contrast/helper/`
+   sits in `src/engine/contrast/`
 4. **Common** – the color theme (light/dark/system) and the selected font
 
 ### Screens And Shell
@@ -167,16 +167,27 @@ The routed screens do not follow the state domains:
 - `src/app/studio/` – the studio view
 - `src/app/contrast-type/` – the contrast and type view
 
-The v1 screens are `src/app/converter/`, `src/app/palettes/components/`,
-`src/app/contrast/components/` and `src/app/header/`. They are no longer routed
-and no longer reach the bundle; do not extend them and do not build new screens
-inside them.
+The v1 screens are `src/app/converter/`, `src/app/palettes/`,
+`src/app/contrast/` and `src/app/header/`. They are no longer routed and no
+longer reach the bundle; do not extend them and do not build new screens inside
+them.
 
-**Only the `components/` folders are v1.** `palettes/helper/`,
-`contrast/helper/`, their `models/` and `common/helpers/` are the live
-engine – `app-state.model.ts` and `persistence.reducers.ts` call
-`generatePalette()` and `paletteFromId()` at startup. Deleting a v1 screen
-means deleting its `components/`, never the folder above it.
+### The Colour Engine
+
+The colour math lives in `src/engine/`, cut by domain: `color/`, `contrast/`
+and `palette/`, with `helpers/` for what serves all three and each model beside
+the code that uses it. The app and the MCP server both build on it, and both
+reach it through `@engine/*` alone.
+
+The engine is plain TypeScript - chroma-js, color-namer's lists and each other,
+no import from `@angular/*`, `@ngrx/*` or `@core/*`. Keep it that way: the
+Worker bundle takes whatever the engine imports. What belongs to the app stays
+in `src/app/` – the models in `common/models/`, the services, the route guards.
+
+It sits under `src/` on purpose. `sourceRoot` is `src`, and
+`@angular/build:unit-test` resolves its `include` relative to it, so the engine
+specs run with `pnpm test` as they are; a folder beside `src/` would need its
+own include patterns in both tsconfigs.
 
 ### Palette ID System
 
@@ -210,7 +221,7 @@ The app uses two main color libraries:
   math)
 - **color-namer** - Color name identification, used for its color lists only
 
-`src/app/common/helpers/color-name.helper.ts` deliberately does **not** call
+`src/engine/color/color-name.helper.ts` deliberately does **not** call
 `color-namer`'s own entry point. It imports the six color lists
 (`color-namer/lib/colors/*`) and does the nearest-color search with the app's
 own chroma-js. Importing the package proper pulls in a second, much older
@@ -219,7 +230,7 @@ bundle for a `WeakMap` cache that never hits, because `color-namer` keys it on a
 freshly allocated object on every call.
 
 Both variants produce identical names. The deep imports are declared in
-`src/types/color-namer-lists.d.ts` and listed in `allowedCommonJsDependencies`
+`src/engine/color-namer-lists.d.ts` and listed in `allowedCommonJsDependencies`
 in `angular.json`, because the lists are CommonJS.
 
 **The distance must be measured from `color.hex()`, not from the `Color`
@@ -237,7 +248,7 @@ Note that `colorName()` must stay synchronous: `generatePalette()` and
 ### Palette Generators Build Colors In OKLch
 
 A generator that holds lightness and rotates hue must build its colors with
-`fromOklch()` (`src/app/common/helpers/color-from-oklch.helper.ts`), not with
+`fromOklch()` (`src/engine/color/color-from-oklch.helper.ts`), not with
 `fromHsl()`. Equal HSL lightness is not equal perceived lightness: at the
 default saturation a triad's members land up to 0.34 OKLch lightness apart, so
 one member glows and another sinks.
@@ -282,6 +293,8 @@ catch is the one after the new screens land.
 
 TypeScript path aliases are configured in `tsconfig.json`:
 
+- `@engine/*` → `src/engine/*` (the colour engine; the one alias `functions/`
+  may import)
 - `@common/*` → `src/app/common/*`
 - `@converter/*` → `src/app/converter/*`
 - `@header/*` → `src/app/header/*`
@@ -327,16 +340,17 @@ so the SPA rewrite in `public/_redirects` does not reach it.
   `summary()` read the two halves of a result. Nothing the entry imports
   reaches it, so it never enters the Worker bundle
 - `functions/tsconfig.json` extends the root config for the path aliases and
-  includes `src/types/color-namer-lists.d.ts`, because `colorName()` imports
+  includes `src/engine/color-namer-lists.d.ts`, because `colorName()` imports
   the CommonJS lists that file declares
 
 ### The Server Wraps The Engine And Nothing Else
 
-`functions/**` imports from `*/helper/*` and `*/models/*` only. `pnpm lint`
-rejects `@angular/*`, `@ngrx/*`, `@core/*`, the screen aliases,
-`**/components/*` and `**/services/*` there. The engine is plain TypeScript;
-anything past the fence drags an Angular runtime into a Worker that cannot
-use it.
+`functions/**` imports the engine through `@engine/*` and nothing else from
+`src/`. `pnpm lint` holds the fence: `eslint.config.js` reads the aliases from
+`tsconfig.json` and forbids every one but `@engine/*`, plus `@angular/*`,
+`@ngrx/*` and any relative path into `src/`. A new alias is fenced the moment
+it is declared, so the list is not kept by hand. Anything past the fence drags
+an Angular runtime into a Worker that cannot use it.
 
 `@modelcontextprotocol/sdk` and `zod` are runtime dependencies of the Worker
 and sit in `dependencies`. Nothing in `src/app` imports them, so the app
@@ -693,9 +707,9 @@ comment.
 
 **The v1 code is excluded, and `tools/v1-screens.js` is the one list.** Both
 halves of `pnpm lint` read it. Remove an entry together with the folder it
-names, so no exclusion outlives its path. Only the `components/` folders are
-v1 - `palettes/helper/` and `contrast/helper/` are the live engine and stay in
-the lint run. The list also names the v1 widgets under `common/components/`,
+names, so no exclusion outlives its path. The colour engine in `src/engine/`
+is not on it and stays in the lint run. The list also names the v1 widgets
+under `common/components/`,
 which sit outside a screen folder; `not-found` is the only thing there that
 `main.ts` still reaches. They are listed one by one on purpose, so the next v2
 component written in that folder is linted rather than swallowed.

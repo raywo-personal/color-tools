@@ -1,7 +1,7 @@
 import {eventGroup} from "@ngrx/signals/events";
 import {type} from "@ngrx/signals";
 import {Color} from "chroma-js";
-import {ColorSpace} from "@common/models/color-space.model";
+import {ColorSpace} from "@engine/color/color-space.model";
 
 
 export const converterEvents = eventGroup({

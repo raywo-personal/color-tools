@@ -1,11 +1,11 @@
 import {EventInstance} from "@ngrx/signals/events";
 import chroma, {Color} from "chroma-js";
 import {AppState} from "@core/models/app-state.model";
-import {paletteColorFrom} from "@palettes/models/palette-color.model";
-import {generatePalette} from "@palettes/helper/palette.helper";
-import {ContrastColor} from "@contrast/models/contrast-color.model";
-import {ContrastColors} from "@contrast/models/contrast-colors.model";
-import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {paletteColorFrom} from "@engine/palette/palette-color.model";
+import {generatePalette} from "@engine/palette/palette.helper";
+import {ContrastColor} from "@engine/contrast/contrast-color.model";
+import {ContrastColors} from "@engine/contrast/contrast-colors.model";
+import {contrastIdFromColors} from "@engine/contrast/contrast-id.helper";
 
 
 export function useColorAsPaletteStarterReducer(

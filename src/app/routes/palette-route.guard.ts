@@ -1,11 +1,11 @@
 import {injectDispatch} from "@ngrx/signals/events";
 import {ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree} from "@angular/router";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {isRestorable} from "@common/helpers/validate-string-id.helper";
-import {PALETTE_ID_BASE62_LENGTH} from "@palettes/helper/palette-id.helper";
+import {isRestorable} from "@engine/helpers/validate-string-id.helper";
+import {PALETTE_ID_BASE62_LENGTH} from "@engine/palette/palette-id.helper";
 import {inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
-import {generatePalette} from "@palettes/helper/palette.helper";
+import {generatePalette} from "@engine/palette/palette.helper";
 
 
 /**

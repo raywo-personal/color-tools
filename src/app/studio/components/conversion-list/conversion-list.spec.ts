@@ -6,7 +6,7 @@ import chroma from "chroma-js";
 import {converterEvents} from "@core/converter/converter.events";
 import {AppStateStore} from "@core/app-state.store";
 import {CopyService} from "@common/services/copy.service";
-import {COLOR_SPACES} from "@common/models/color-space.model";
+import {COLOR_SPACES} from "@engine/color/color-space.model";
 import {ConversionList} from "@studio/components/conversion-list/conversion-list";
 
 

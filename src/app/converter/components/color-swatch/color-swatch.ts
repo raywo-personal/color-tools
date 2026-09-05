@@ -1,6 +1,6 @@
 import {Component, computed, input} from "@angular/core";
 import {Color} from "chroma-js";
-import {ColorSpace} from "@common/models/color-space.model";
+import {ColorSpace} from "@engine/color/color-space.model";
 import {NgTemplateOutlet} from "@angular/common";
 import {KeyValueDisplay} from "@converter/components/key-value-display/key-value-display";
 import {injectDispatch} from "@ngrx/signals/events";

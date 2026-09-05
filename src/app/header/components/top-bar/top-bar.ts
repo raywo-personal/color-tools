@@ -8,7 +8,7 @@ import {converterEvents} from "@core/converter/converter.events";
 import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
-import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {contrastIdFromColors} from "@engine/contrast/contrast-id.helper";
 
 
 @Component({

@@ -3,9 +3,9 @@ import {Color} from "chroma-js";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
-import {ContrastColorRole} from "@contrast/models/contrast-color.model";
-import {PALETTE_SLOTS, PaletteSlot} from "@palettes/models/palette.model";
-import {colorName} from "@common/helpers/color-name.helper";
+import {ContrastColorRole} from "@engine/contrast/contrast-color.model";
+import {PALETTE_SLOTS, PaletteSlot} from "@engine/palette/palette.model";
+import {colorName} from "@engine/color/color-name.helper";
 
 
 interface Chip {

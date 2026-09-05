@@ -1,5 +1,5 @@
 import {Component, computed, inject} from "@angular/core";
-import {PaletteStyles, styleCaptionFor} from "@palettes/models/palette-style.model";
+import {PaletteStyles, styleCaptionFor} from "@engine/palette/palette-style.model";
 import {FormsModule} from "@angular/forms";
 import {AppStateStore} from "@core/app-state.store";
 import {injectDispatch} from "@ngrx/signals/events";

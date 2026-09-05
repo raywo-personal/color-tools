@@ -1,7 +1,7 @@
 import {Component, computed, inject, signal} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 import {CopyService} from "@common/services/copy.service";
-import {exportAs, ExportFormat} from "@studio/helper/palette-export.helper";
+import {exportAs, ExportFormat} from "@engine/palette/palette-export.helper";
 
 
 interface FormatOption {

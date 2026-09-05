@@ -6,7 +6,7 @@ import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {PaletteChips} from "@contrast-type/components/palette-chips/palette-chips";
 

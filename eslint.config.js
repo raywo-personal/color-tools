@@ -3,13 +3,30 @@
 //
 // This file is CommonJS on purpose: package.json declares no "type", so a .js
 // config is loaded as CommonJS.
+const path = require("node:path");
 const angular = require("angular-eslint");
 const stylistic = require("@stylistic/eslint-plugin");
+const ts = require("typescript");
 const tseslint = require("typescript-eslint");
 
 // Shared with tools/lint-sizes.js so both halves of `pnpm lint` skip the same
 // folders. The file says why they are skipped and when to take an entry out.
 const V1_SCREENS = require("./tools/v1-screens");
+
+// Every path alias tsconfig.json declares, except the engine's own. The fence
+// around functions/ below forbids them all, and it reads them from the file so
+// that a new alias is fenced the moment it exists - a copy kept here would let
+// it through until somebody remembers this list. tsconfig.json carries
+// comments, so it goes through TypeScript's reader rather than JSON.parse, as
+// vitest.config.mcp.ts does.
+const ENGINE_ALIAS = "@engine/*";
+const {config: tsconfig} = ts.readConfigFile(
+  path.join(__dirname, "tsconfig.json"),
+  ts.sys.readFile,
+);
+const APP_ALIASES = Object.keys(tsconfig.compilerOptions.paths).filter(
+  (alias) => alias !== ENGINE_ALIAS,
+);
 
 module.exports = tseslint.config(
   {
@@ -132,9 +149,9 @@ module.exports = tseslint.config(
       ],
 
       // CLAUDE.md: the server wraps the colour engine and nothing else. The
-      // engine is `*/helper/*` and `*/models/*`; the store, the screens, the
-      // services and Angular itself stay out, or the Worker bundle grows an
-      // Angular runtime it cannot use.
+      // engine is reached through @engine/*; the store, the screens, the
+      // services, the test helpers and Angular itself stay out, or the Worker
+      // bundle grows an Angular runtime it cannot use.
       "@typescript-eslint/no-restricted-imports": [
         "error",
         {
@@ -143,26 +160,18 @@ module.exports = tseslint.config(
               group: [
                 "@angular/*",
                 "@ngrx/*",
-                "@core/*",
-                "@shell/*",
-                "@studio/*",
-                "@contrast-type/*",
-                "@converter/*",
-                "@header/*",
-                "@environments/*",
-                "@testing/*",
-                "**/components/*",
-                "**/services/*",
-                // Aliases and the components/services patterns above catch
-                // every alias-based escape, but a relative path around them -
-                // "../../src/app/core/app-state.store" - passes lint clean.
-                // This catches that string without touching the engine's own
-                // aliases (@common/*, @palettes/*, @contrast/*), which never
-                // contain "src/app" as a literal.
-                "**/src/app/**",
+                // Every alias tsconfig.json declares but @engine/*.
+                ...APP_ALIASES,
+                // The patterns match the import string as written, not the
+                // resolved path, so the aliases above say nothing about a
+                // relative import - "../../src/app/core/app-state.store"
+                // passes them clean. This catches every path back into src/,
+                // the engine's own included: the engine is reached through
+                // its alias, not by walking up to it.
+                "**/src/**",
               ],
               message:
-                "functions/ may import only from the engine: */helper/* and */models/*.",
+                "functions/ imports the engine through @engine/* and nothing else from src/.",
             },
           ],
         },

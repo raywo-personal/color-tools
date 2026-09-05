@@ -5,8 +5,8 @@ import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
-import {colorName} from "@common/helpers/color-name.helper";
-import {CONTRAST_ID_LENGTH} from "@contrast/helper/contrast-id.helper";
+import {colorName} from "@engine/color/color-name.helper";
+import {CONTRAST_ID_LENGTH} from "@engine/contrast/contrast-id.helper";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {PairActions} from "@contrast-type/components/pair-actions/pair-actions";
 

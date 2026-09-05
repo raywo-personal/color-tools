@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 import chroma, {Color} from "chroma-js";
-import {findOptimalTextColor} from "@contrast/helper/optimal-text-color.helper";
+import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {expectApcaForeground, rgbCube} from "@testing/apca-foreground.expectation";
 
 

@@ -1,6 +1,6 @@
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {beforeEach, describe, expect, it} from "vitest";
-import {FONT_SIZES, FONT_WEIGHTS} from "@contrast/models/apca-lookup-table.model";
+import {FONT_SIZES, FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
 import {connectedClient, structured, summary} from "../test-support/connected-client";
 
 

@@ -7,7 +7,7 @@ import chroma, {Color} from "chroma-js";
 
 import {ColorAreaComponent} from "@common/components/color-area/color-area";
 import {HueSliderComponent} from "@common/components/hue-slider/hue-slider";
-import {ColorSpace} from "@common/models/color-space.model";
+import {ColorSpace} from "@engine/color/color-space.model";
 
 
 @Component({

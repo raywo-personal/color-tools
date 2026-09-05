@@ -1,7 +1,7 @@
 import {eventGroup} from "@ngrx/signals/events";
 import {type} from "@ngrx/signals";
 import {Color} from "chroma-js";
-import {ContrastColors} from "@contrast/models/contrast-colors.model";
+import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 
 
 export const contrastEvents = eventGroup({

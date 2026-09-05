@@ -1,7 +1,7 @@
 import {Component, computed, inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
-import {colorName} from "@common/helpers/color-name.helper";
-import {findOptimalTextColor} from "@contrast/helper/optimal-text-color.helper";
+import {colorName} from "@engine/color/color-name.helper";
+import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
 
 
 /**

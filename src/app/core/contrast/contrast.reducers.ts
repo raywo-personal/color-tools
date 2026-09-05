@@ -1,9 +1,9 @@
 import {EventInstance} from "@ngrx/signals/events";
 import {AppState} from "@core/models/app-state.model";
 import chroma, {Color} from "chroma-js";
-import {findTextColor} from "@contrast/helper/optimal-text-color.helper";
-import {ContrastColors, createContrastColors} from "@contrast/models/contrast-colors.model";
-import {contrastColorsFromId} from "@contrast/helper/contrast-id.helper";
+import {findTextColor} from "@engine/contrast/optimal-text-color.helper";
+import {ContrastColors, createContrastColors} from "@engine/contrast/contrast-colors.model";
+import {contrastColorsFromId} from "@engine/contrast/contrast-id.helper";
 
 
 export function textColorChangedReducer(

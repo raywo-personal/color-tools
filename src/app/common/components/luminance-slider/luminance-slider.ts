@@ -1,6 +1,6 @@
 import {Component, model} from "@angular/core";
 import {FormsModule} from "@angular/forms";
-import {randomBetween} from "@common/helpers/random.helper";
+import {randomBetween} from "@engine/helpers/random.helper";
 
 
 @Component({

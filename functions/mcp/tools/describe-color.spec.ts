@@ -1,7 +1,7 @@
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import chroma from "chroma-js";
 import {beforeEach, describe, expect, it} from "vitest";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import {connectedClient, structured, summary} from "../test-support/connected-client";
 
 

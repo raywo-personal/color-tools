@@ -6,7 +6,7 @@ import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {LOCAL_STORAGE_KEY, SettingsMap} from "@common/models/local-storage.model";
-import {maxChroma} from "@common/helpers/oklch.helper";
+import {maxChroma} from "@engine/color/oklch.helper";
 import {ColorSliders} from "@studio/components/color-sliders/color-sliders";
 
 

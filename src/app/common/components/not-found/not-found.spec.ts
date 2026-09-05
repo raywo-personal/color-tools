@@ -3,7 +3,7 @@ import {provideRouter, Router, RouterOutlet} from "@angular/router";
 import {Component, provideZonelessChangeDetection} from "@angular/core";
 import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {NotFound} from "./not-found";
 

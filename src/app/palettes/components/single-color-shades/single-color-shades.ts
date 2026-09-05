@@ -1,8 +1,8 @@
 import {Component, computed, input, output} from "@angular/core";
-import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
-import {PaletteColor} from "@palettes/models/palette-color.model";
+import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
+import {PaletteColor} from "@engine/palette/palette-color.model";
 import {Color} from "chroma-js";
-import {contrastingColor} from "@common/helpers/contrasting-color.helper";
+import {contrastingColor} from "@engine/contrast/contrasting-color.helper";
 
 
 @Component({

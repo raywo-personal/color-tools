@@ -2,10 +2,10 @@ import {Component, computed, inject, signal} from "@angular/core";
 import {Router, RouterLink} from "@angular/router";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
 import chroma from "chroma-js";
-import {PALETTE_SLOTS} from "@palettes/models/palette.model";
-import {paletteColorFrom} from "@palettes/models/palette-color.model";
-import {generatePalette} from "@palettes/helper/palette.helper";
-import {colorName} from "@common/helpers/color-name.helper";
+import {PALETTE_SLOTS} from "@engine/palette/palette.model";
+import {paletteColorFrom} from "@engine/palette/palette-color.model";
+import {generatePalette} from "@engine/palette/palette.helper";
+import {colorName} from "@engine/color/color-name.helper";
 
 
 /** Filled slots plus the empty ones that stand in for the missing page. */

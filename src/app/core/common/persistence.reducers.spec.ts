@@ -5,7 +5,7 @@ import chroma from "chroma-js";
 import {loadAppStateReducer} from "@core/common/persistence.reducers";
 import {initialState} from "@core/models/app-state.model";
 import {LOCAL_STORAGE_KEY} from "@common/models/local-storage.model";
-import {generatePalette, generatePaletteFrom} from "@palettes/helper/palette.helper";
+import {generatePalette, generatePaletteFrom} from "@engine/palette/palette.helper";
 import {EventInstance} from "@ngrx/signals/events";
 
 
