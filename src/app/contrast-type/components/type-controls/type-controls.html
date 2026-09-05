@@ -1,3 +1,8 @@
+<!-- One-way in, an event out, like the sliders below: the selection lives in the
+     store, and nothing two-way can bind to a signal read out of it. -->
+<ct-font-picker [font]="selectedFont()"
+                (fontChange)="fontPicked($event)"/>
+
 <!-- No `track` on any of the three: a size, a weight and a leading pass through
      no colors, so the slider draws the plain `field` strip instead of a ramp. -->
 <ct-slider label="SIZE"
@@ -9,12 +14,16 @@
            (valueChange)="sizeChanged($event)"
            (commit)="commit()"/>
 
+<!-- Over the rows of `weightStops`, not over the weights themselves - see the
+     component. `valueText` is what carries the weight to eye and speech. -->
 <ct-slider label="WEIGHT"
-           [min]="weightRange.min"
-           [max]="weightRange.max"
-           [step]="weightRange.step"
-           [value]="settings().fontWeight"
+           [min]="0"
+           [max]="weightMax()"
+           [step]="1"
+           [value]="weightIndex()"
            [valueText]="weightText()"
+           [description]="weightNote()"
+           [disabled]="singleWeight()"
            (valueChange)="weightChanged($event)"
            (commit)="commit()"/>
 

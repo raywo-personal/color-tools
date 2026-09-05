@@ -4,6 +4,7 @@ import {Component, provideZonelessChangeDetection} from "@angular/core";
 import {describe, expect, it} from "vitest";
 import {App} from "./app";
 import {routes} from "./app.routes";
+import {provideFakeGoogleFonts} from "@testing/google-fonts.fake";
 
 
 @Component({template: ""})
@@ -17,7 +18,10 @@ describe("App", () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideRouter(routeTable)
+        provideRouter(routeTable),
+        // The contrast route carries the typeface control, which reaches the
+        // font catalog.
+        provideFakeGoogleFonts()
       ]
     });
   }

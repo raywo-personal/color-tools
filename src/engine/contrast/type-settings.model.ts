@@ -52,11 +52,16 @@ export const DEFAULT_TYPE_SETTINGS: TypeSettings = {
 };
 
 /**
- * The weights the slider can stand on, taken from the lookup table rather than
- * from the step: the grid the control moves on is the set of rows the rating
- * has, and stating it this way keeps the two from drifting apart.
+ * The weights the slider can stand on where nothing narrows them further,
+ * taken from the lookup table rather than from the step: the grid the control
+ * moves on is the set of rows the rating has, and stating it this way keeps
+ * the two from drifting apart.
+ *
+ * A chosen typeface narrows it again - see `weightStopsFor()`. A weight a
+ * family does not ship is synthesised by the browser, and a rating about a
+ * faux-bold answers a question nobody asked.
  */
-const WEIGHT_STOPS: readonly number[] = FONT_WEIGHTS
+export const WEIGHT_STOPS: readonly number[] = FONT_WEIGHTS
   .map(Number)
   .filter(weight => weight >= FONT_WEIGHT_RANGE.min && weight <= FONT_WEIGHT_RANGE.max);
 
@@ -68,11 +73,19 @@ const WEIGHT_STOPS: readonly number[] = FONT_WEIGHTS
  * hand and outlives a change of range - and a weight off the `FONT_WEIGHTS`
  * grid is the one that does real damage: it has no row in `apcaLookup`, so the
  * rating would answer about a size and weight nobody is looking at.
+ *
+ * `weightStops` is the set of weights the chosen typeface actually ships, so
+ * the same normalization also keeps the weight off a synthesised one. Left
+ * out, the whole grid stands - which is what a preview on the app's own type
+ * stack needs.
  */
-export function normalizedTypeSettings(settings: TypeSettings): TypeSettings {
+export function normalizedTypeSettings(
+  settings: TypeSettings,
+  weightStops: readonly number[] = WEIGHT_STOPS
+): TypeSettings {
   return {
     fontSize: snapped(settings.fontSize, FONT_SIZE_RANGE, DEFAULT_TYPE_SETTINGS.fontSize),
-    fontWeight: nearestStop(settings.fontWeight, WEIGHT_STOPS, DEFAULT_TYPE_SETTINGS.fontWeight),
+    fontWeight: nearestStop(settings.fontWeight, weightStops, DEFAULT_TYPE_SETTINGS.fontWeight),
     lineHeight: snapped(settings.lineHeight, LINE_HEIGHT_RANGE, DEFAULT_TYPE_SETTINGS.lineHeight)
   };
 }
@@ -97,11 +110,19 @@ function snapped(value: number, range: TypeSettingRange, fallback: number): numb
 }
 
 
+/**
+ * The stop closest to `value`, with a tie going to the lighter one.
+ *
+ * The fallback is a value rather than a result: an empty stop list and a
+ * weight that is not a number both have to end on a stop the caller's list
+ * actually holds, and a family that ships no 400 must not be handed one.
+ */
 function nearestStop(value: number, stops: readonly number[], fallback: number): number {
-  if (!Number.isFinite(value)) return fallback;
+  const usable = stops.length > 0 ? stops : WEIGHT_STOPS;
+  const target = Number.isFinite(value) ? value : fallback;
 
-  return stops.reduce((closest, stop) =>
-    Math.abs(stop - value) < Math.abs(closest - value) ? stop : closest);
+  return usable.reduce((closest, stop) =>
+    Math.abs(stop - target) < Math.abs(closest - target) ? stop : closest);
 }
 
 

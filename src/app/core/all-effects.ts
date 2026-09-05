@@ -8,7 +8,7 @@ import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {ColorThemeService} from "@common/services/color-theme.service";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
-import {colorThemeChangeEffect, fontSelectedEffect} from "@core/common/common.effects";
+import {colorThemeChangeEffect, fontAnnouncedEffect, fontSelectedEffect} from "@core/common/common.effects";
 import {colorChangedEffect, randomColorAnnouncedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
 import {newPaletteAnnouncedEffect} from "@core/palettes/palettes.effects";
 import {contrastPairAnnouncedEffect} from "@core/contrast/contrast.effects";
@@ -33,6 +33,8 @@ export function allEffects(
     setColorTheme$: colorThemeChangeEffect(events, themeService),
 
     loadFont$: fontSelectedEffect(events, fontLoaderService),
+
+    fontAnnounced$: fontAnnouncedEffect(events, announcer, store),
 
     setBackgroundColor$: useAsBackgroundChangedEffect(events, themeService, store),
 

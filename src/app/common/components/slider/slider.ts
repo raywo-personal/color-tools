@@ -62,6 +62,25 @@ export class Slider {
    */
   readonly track = input<string>();
 
+  /**
+   * A sentence under the control saying why it stands as it does.
+   *
+   * Wired to the input through `aria-describedby`, so the reason travels with
+   * the control rather than sitting beside it as loose text - which is what a
+   * disabled slider needs: without it a screen reader says "dimmed" and stops.
+   */
+  readonly description = input("");
+
+  /**
+   * An axis the visitor cannot move.
+   *
+   * Only where there is nothing to move it to - a typeface with a single
+   * weight. A disabled range input leaves the tab order and is announced as
+   * unavailable, which is the honest answer; the reason belongs in
+   * `description`.
+   */
+  readonly disabled = input(false);
+
   readonly value = model.required<number>();
 
   /**
@@ -75,5 +94,6 @@ export class Slider {
   readonly commit = output<void>();
 
   protected readonly inputId = `ct-slider-${nextInstance++}`;
+  protected readonly descriptionId = `${this.inputId}-description`;
 
 }

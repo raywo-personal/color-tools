@@ -133,8 +133,8 @@ interface PreviewStyle {
  * button's outline, the eyebrow and the card's tint are the four roles, and
  * they take their colors from `PALETTE_SLOTS` in order, skipping whichever
  * slot is also the pair's ground. So a visitor sees four of their five
- * colors on a page of text without a single selector, in a column that still
- * has the rating, the typeface and the colour-vision rows to come.
+ * colors on a page of text without a single selector, in a column that also
+ * carries the rating, the typeface and the type controls.
  *
  * Which slot fills which role is deliberately not a setting beyond that.
  * The palette id is full, so an assignment would survive a reload but not a
@@ -233,10 +233,10 @@ export class WebsitePreview {
   /**
    * The family the preview is set in.
    *
-   * `selectedFont` is written by `commonEvents.fontSelected`, which nothing on
-   * this screen raises yet - the typeface control is its own slice. Until then
-   * the fallback stands, so the preview runs on the app's own stack rather
-   * than on an empty `font-family`.
+   * `selectedFont` is written by `commonEvents.fontSelected`, which the
+   * typeface control above the sliders raises. Nothing chosen - a first visit,
+   * or a cleared selection - leaves the fallback standing, so the preview runs
+   * on the app's own stack rather than on an empty `font-family`.
    */
   #fontFamily(): string {
     const font = this.#stateStore.selectedFont();

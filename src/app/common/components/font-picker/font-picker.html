@@ -1,0 +1,92 @@
+<label class="mb-2 block font-sans text-sm tracking-widest text-dim"
+       [attr.for]="fieldId">{{ label() }}</label>
+
+<!-- `relative` so the list can hang under the whole row rather than under the
+     field alone: the width the dropdown takes is the width of field plus
+     button, which is what the draft's select spans. -->
+<div class="relative flex items-center gap-2">
+  <input #field
+         type="text"
+         role="combobox"
+         aria-autocomplete="list"
+         class="h-11 min-w-0 flex-1 rounded-xs border border-line bg-field px-3 font-sans text-base focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:text-dim"
+         [id]="fieldId"
+         placeholder="Search the font catalog"
+         autocomplete="off"
+         spellcheck="false"
+         [attr.aria-controls]="listId"
+         [attr.aria-expanded]="listOpen()"
+         [attr.aria-activedescendant]="activeId()"
+         [attr.disabled]="fieldDisabled()"
+         [ngModel]="query()"
+         (ngModelChange)="queryTyped($event)"
+         (keydown)="onKeydown($event)"
+         (click)="openList()"
+         (focus)="selectQuery()"
+         (blur)="close()">
+
+  <!-- Always here rather than appearing with the selection: a button that comes
+       and goes moves the field's width under the visitor's cursor. The caption
+       says what it does; the name says what it goes back to, which "clear"
+       alone does not. -->
+  <button type="button"
+          class="h-11 shrink-0 cursor-pointer rounded-xs border border-line px-3 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:hover:text-dim"
+          aria-label="CLEAR: set the preview in the app's own type again"
+          [disabled]="!font()"
+          (click)="clear()">CLEAR
+  </button>
+
+  @if (listOpen()) {
+    <ul role="listbox"
+        aria-label="Font families"
+        class="absolute top-full left-0 z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-xs border border-line bg-panel"
+        [id]="listId">
+      @for (option of options(); track option.family; let index = $index) {
+        <!-- The options carry no key handler and no focus on purpose: this is
+             the combobox pattern, where the field keeps focus and the arrow
+             keys move `aria-activedescendant` through the list. A keyboard
+             handler here would be a second, competing way to walk the same
+             rows.
+
+             The active row is marked twice - the bar on its left edge and the
+             field tint - because the tint alone is colour carrying the
+             information on its own. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
+        <li #option
+            role="option"
+            tabindex="-1"
+            class="flex min-h-11 cursor-pointer items-center justify-between gap-3 border-l-2 px-3"
+            [id]="option.id"
+            [attr.aria-selected]="index === activeIndex()"
+            [class.border-l-text]="index === activeIndex()"
+            [class.bg-field]="index === activeIndex()"
+            [class.border-l-transparent]="index !== activeIndex()"
+            (mousedown)="keepFocus($event)"
+            (click)="select(option)">
+          <span class="min-w-0 truncate font-sans text-base">{{ option.family }}</span>
+          <span class="shrink-0 font-mono text-sm text-dim">{{ option.category }}</span>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<!-- The region is always in the document, empty and zero-height while there is
+     nothing to say: a live region created together with its message is not
+     reliably announced, and a retry that fails again changes nothing else on
+     the page. -->
+<div class="flex flex-wrap items-center gap-3"
+     [class.mt-2]="statusText()">
+  <p role="status"
+     class="min-w-0 font-sans text-sm text-dim">{{ statusText() }}</p>
+
+  <!-- Stays while the request it started is out, disabled: removing it would
+       drop the focus of the visitor who just pressed it onto the document. -->
+  @if (failed() || retrying()) {
+    <button type="button"
+            class="h-11 shrink-0 cursor-pointer rounded-xs border border-line px-3 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed"
+            [disabled]="loading()"
+            (click)="retry()">TRY AGAIN
+    </button>
+  }
+</div>

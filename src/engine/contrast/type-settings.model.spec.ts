@@ -7,7 +7,8 @@ import {
   FONT_WEIGHT_RANGE,
   LINE_HEIGHT_RANGE,
   normalizedTypeSettings,
-  TypeSettings
+  TypeSettings,
+  WEIGHT_STOPS
 } from "@engine/contrast/type-settings.model";
 
 
@@ -99,6 +100,36 @@ describe("normalizedTypeSettings", () => {
     } as unknown as TypeSettings;
 
     expect(normalizedTypeSettings(garbage)).toEqual(DEFAULT_TYPE_SETTINGS);
+  });
+
+
+  it("holds the weight to the stops a caller hands it", () => {
+    // The stops of a chosen typeface. A weight the family does not ship is
+    // synthesised by the browser, and the rating would judge a faux-bold.
+    const stops = [400, 700];
+
+    expect(normalizedTypeSettings(withFontWeight(500), stops).fontWeight).toBe(400);
+    expect(normalizedTypeSettings(withFontWeight(650), stops).fontWeight).toBe(700);
+  });
+
+
+  it("lands on a stop the caller has even where the default is not one of them", () => {
+    // A family without a 400 must not be handed one just because a stored
+    // value was unreadable.
+    const stops = [300, 700];
+    const garbage = {...DEFAULT_TYPE_SETTINGS, fontWeight: Number.NaN};
+
+    expect(normalizedTypeSettings(garbage, stops).fontWeight).toBe(300);
+  });
+
+
+  it("falls back to the whole grid where a caller hands it no stop at all", () => {
+    expect(normalizedTypeSettings(withFontWeight(600), []).fontWeight).toBe(600);
+  });
+
+
+  it("offers the grid as the range's own weights, so slider and rating agree", () => {
+    expect(WEIGHT_STOPS).toEqual([300, 400, 500, 600, 700]);
   });
 
 

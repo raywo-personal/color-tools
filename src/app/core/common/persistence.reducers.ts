@@ -12,6 +12,7 @@ import {isRestorable} from "@engine/helpers/validate-string-id.helper";
 import {CONTRAST_ID_LENGTH, contrastColorsFromId} from "@engine/contrast/contrast-id.helper";
 import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 import {normalizedTypeSettings} from "@engine/contrast/type-settings.model";
+import {SelectedFont, weightStopsFor} from "@common/models/google-font.model";
 
 
 export function loadAppStateReducer(
@@ -47,14 +48,17 @@ export function loadAppStateReducer(
     ? contrastColorsFromId(contrastId)
     : contrastPairFromPalette(currentPalette);
 
+  const selectedFont = restoreFont(persistence.getOrDefault("selectedFont", null));
+
   // Normalized rather than taken as read: the three keys carry plain numbers,
   // and a weight off the `FONT_WEIGHTS` grid has no row in `apcaLookup` to be
-  // rated against.
+  // rated against. Against the restored family's own weights, so a reload
+  // lands on the same weight the picker would have allowed.
   const typeSettings = normalizedTypeSettings({
     fontSize: persistence.getOrDefault("fontSize", state.typeSettings.fontSize),
     fontWeight: persistence.getOrDefault("fontWeight", state.typeSettings.fontWeight),
     lineHeight: persistence.getOrDefault("lineHeight", state.typeSettings.lineHeight)
-  });
+  }, weightStopsFor(selectedFont));
 
   return {
     colorTheme: persistence.getOrDefault("colorTheme", state.colorTheme),
@@ -64,10 +68,29 @@ export function loadAppStateReducer(
     currentPalette,
     paletteStyle: currentPalette.style,
     paletteSeed,
-    selectedFont: persistence.getOrDefault("selectedFont", null),
+    selectedFont,
     contrastColors,
     typeSettings
   };
+}
+
+
+/**
+ * The stored selection, with its weight list made usable.
+ *
+ * An entry written before `SelectedFont` carried the weights has none, and the
+ * two readers of the field would otherwise see `undefined` where they expect a
+ * list. Empty rather than guessed: the catalog is the only place the family's
+ * weights come from, and it may not answer at all.
+ */
+function restoreFont(stored: SelectedFont | null): SelectedFont | null {
+  if (!stored) return null;
+
+  const weights = Array.isArray(stored.weights)
+    ? stored.weights.filter(weight => Number.isFinite(weight))
+    : [];
+
+  return {...stored, weights};
 }
 
 
