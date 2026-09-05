@@ -1,13 +1,14 @@
-<!-- `Lc` before the figure, where the draft puts its `: 1` after it: the unit
-     leads in APCA's own notation, and the figure is what the eye lands on
-     either way. The serif face is the draft's, one step down from its 54px so
-     the number still fits the narrow column. -->
-<p class="flex items-baseline gap-2">
-  <span class="font-sans text-sm tracking-widest text-dim">Lc</span>
+<!-- Right-aligned, so the figure shares an edge with the verdicts in the list
+     below it: the two are readings of the same number and line up as one
+     column. The unit leads, as it does in APCA's own notation, and is set at
+     half the figure rather than at the draft's caption size - at `text-sm` it
+     read as a label beside the number instead of as its unit. -->
+<p class="flex items-baseline justify-end gap-2">
+  <span class="font-sans text-2xl tracking-widest text-dim">Lc</span>
   <span class="font-serif text-5xl leading-none">{{ figure() }}</span>
 </p>
 
-<p class="mt-2 text-sm text-dim">{{ polarityText() }}</p>
+<p class="mt-2 text-right text-sm text-dim">{{ polarityText() }}</p>
 
 <!-- `role="list"` because Preflight removes the list style, and Safari with
      VoiceOver then stops treating the element as a list. -->
@@ -20,20 +21,47 @@
          truncating, and a caption never has to fit a guess. -->
     <li class="flex flex-wrap items-center gap-x-3 gap-y-1"
         [class.mt-3]="row.startsReference"
-        [class.text-text]="row.state === 'fail'"
-        [class.text-dim]="row.state !== 'fail'">
-      <!-- Filled, hollow, a rule: the shape is what separates the three states
-           without colour. The words beside it say the same thing, so the
-           marker itself is decoration to a screen reader. -->
+        [class.text-text]="row.state === 'pass'"
+        [class.text-dim]="row.state !== 'pass'">
+      <!-- A tick, a cross, a dash. The three carry the verdict in shape rather
+           than in colour, which is what keeps `danger` out of here.
+
+           Drawn as strokes rather than as the `✓` and `✗` characters, for the
+           reason `copy-confirmation.ts` gives for its own sign: at text weight
+           in the sans face they thin out next to the row they belong to. A
+           stroked path holds its width at any size, and three of them are not
+           an icon set worth a font file.
+
+           `data-marker` is what the spec reads: the rule it pins - a pass
+           differs from a fail by more than its colour - is about the shape,
+           and a shape has no other stable handle in the DOM. -->
       @switch (row.state) {
         @case ("pass") {
-          <span aria-hidden="true" class="size-2 shrink-0 rounded-full bg-current"></span>
+          <svg data-marker="tick"
+               class="size-4 shrink-0"
+               viewBox="0 0 16 16" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M3 8.5 6.5 12 13 4"/>
+          </svg>
         }
         @case ("fail") {
-          <span aria-hidden="true" class="size-2 shrink-0 rounded-full border border-current"></span>
+          <svg data-marker="cross"
+               class="size-4 shrink-0"
+               viewBox="0 0 16 16" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8"/>
+          </svg>
         }
         @default {
-          <span aria-hidden="true" class="w-2 shrink-0 border-t border-current"></span>
+          <svg data-marker="dash"
+               class="size-4 shrink-0"
+               viewBox="0 0 16 16" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round"
+               aria-hidden="true">
+            <path d="M4 8h8"/>
+          </svg>
         }
       }
 

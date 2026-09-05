@@ -77,11 +77,12 @@ const REFERENCE_ROWS: readonly ReferenceRow[] = [
  * - Pass` reads as the answer to "is my type body text", not as a repeat.
  *
  * **A fail is not told by colour.** `CLAUDE.md` keeps `danger` for the failed
- * copy, so the three carriers here are the marker's shape - filled, hollow,
- * a rule - the wording, which names the Lc the table asked for, and the
- * neutral token: a fail is the loud row in `text`, everything settled is
- * `dim`. That inverts the usual emphasis deliberately; what is unresolved is
- * what the eye should land on.
+ * copy, so the carriers here are the marker's shape - a tick, a cross, a dash
+ * - the wording, which names the Lc the table asked for, and the neutral
+ * token. A pass is the row in `text` and everything else is `dim`: the list
+ * answers "where does this pair work", so what it carries is what should read
+ * first, and a page of crossed-out rows shouted at the visitor would be the
+ * loudest where there is least to do.
  *
  * **Nothing here is a live region.** The Lc changes on every frame of a slider
  * drag and on every move of the colour picker, so a polite region would queue

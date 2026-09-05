@@ -66,27 +66,30 @@ describe("ApcaRating", () => {
         const spans = Array.from(item.querySelectorAll("span"));
 
         return {
-          marker: spans[0],
-          caption: spans[1].textContent?.trim() ?? "",
-          spec: spans[2].textContent?.trim() ?? "",
-          verdict: spans[3].textContent?.trim() ?? ""
+          caption: spans[0].textContent?.trim() ?? "",
+          spec: spans[1].textContent?.trim() ?? "",
+          verdict: spans[2].textContent?.trim() ?? ""
         };
       });
     }
 
     /** What the row's marker is, read off its shape rather than its colour. */
-    function shapes(): string[] {
-      return rows().map(row => {
-        const classes = row.marker.classList;
-
-        if (classes.contains("bg-current")) return "filled";
-        if (classes.contains("rounded-full")) return "hollow";
-
-        return "rule";
-      });
+    function markers(): string[] {
+      return items().map(item => item.querySelector("[data-marker]")?.getAttribute("data-marker") ?? "");
     }
 
-    return {fixture, host, text, items, rows, shapes};
+    /** The unit and the figure. */
+    function figureParts(): (string | undefined)[] {
+      return Array.from(host.querySelectorAll("p")[0].querySelectorAll("span"))
+        .map(span => span.textContent?.trim());
+    }
+
+    /** Which neutral token each row is set in. */
+    function emphasis(): string[] {
+      return items().map(item => item.classList.contains("text-text") ? "loud" : "quiet");
+    }
+
+    return {fixture, host, text, items, rows, markers, figureParts, emphasis};
   }
 
 
@@ -94,22 +97,18 @@ describe("ApcaRating", () => {
     // The verdicts are all reached through Math.abs(), so a minus on the hero
     // figure would suggest a deficit it never causes. The sign is a polarity,
     // and the sentence below says it in words.
-    const {host} = await rating(LIGHT_ON_DARK);
-    const parts = Array.from(host.querySelectorAll("p")[0].querySelectorAll("span"))
-      .map(span => span.textContent?.trim());
+    const {figureParts} = await rating(LIGHT_ON_DARK);
 
-    expect(parts).toEqual(["Lc", "107"]);
+    expect(figureParts()).toEqual(["Lc", "107"]);
   });
 
 
   it("rounds the figure down, so it never heads a row it contradicts", async () => {
     // Rounded to the nearest, Lc 74.76 would read `Lc 75` over a row asking
     // for exactly that and marked a fail.
-    const {host, rows} = await rating(JUST_UNDER_75);
-    const parts = Array.from(host.querySelectorAll("p")[0].querySelectorAll("span"))
-      .map(span => span.textContent?.trim());
+    const {figureParts, rows} = await rating(JUST_UNDER_75);
 
-    expect(parts).toEqual(["Lc", "74"]);
+    expect(figureParts()).toEqual(["Lc", "74"]);
     expect(rows()[0].verdict).toBe("Needs Lc 75");
   });
 
@@ -188,13 +187,22 @@ describe("ApcaRating", () => {
   });
 
 
+  it("sets the passing rows in `text` and everything else in `dim`", async () => {
+    // The list answers "where does this pair work", so what it carries reads
+    // first. At Lc 74.3 only the 24px reference passes.
+    const {emphasis} = await rating(MID);
+
+    expect(emphasis()).toEqual(["quiet", "quiet", "loud", "quiet"]);
+  });
+
+
   it("separates a fail from a pass by shape and wording, not by colour", async () => {
     // At Lc 74.3: 16px asks 90 and 14px asks 100, 24px asks 60.
-    const {rows, shapes} = await rating(MID);
+    const {rows, markers} = await rating(MID);
 
     expect(rows().map(row => row.verdict))
       .toEqual(["Needs Lc 75", "Needs Lc 90", "Pass", "Needs Lc 100"]);
-    expect(shapes()).toEqual(["hollow", "hollow", "filled", "hollow"]);
+    expect(markers()).toEqual(["cross", "cross", "tick", "cross"]);
   });
 
 
@@ -208,10 +216,10 @@ describe("ApcaRating", () => {
   it("calls a size the table declines to rate unrated rather than failed", async () => {
     // Every cell of the 12px row is null. That is not a pairing that came up
     // short, so it gets its own marker and its own word.
-    const {rows, shapes} = await rating(DARK_ON_LIGHT, {...DEFAULT_TYPE_SETTINGS, fontSize: 12});
+    const {rows, markers} = await rating(DARK_ON_LIGHT, {...DEFAULT_TYPE_SETTINGS, fontSize: 12});
 
     expect(rows()[0].verdict).toBe("Not rated");
-    expect(shapes()[0]).toBe("rule");
+    expect(markers()[0]).toBe("dash");
   });
 
 

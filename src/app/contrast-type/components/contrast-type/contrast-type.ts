@@ -17,13 +17,19 @@ import {ApcaRating} from "@contrast-type/components/apca-rating/apca-rating";
  * The left column is the whole control stack - the pair, the palette chips,
  * the two gestures, the rating and the type controls. The right column is the
  * website preview, which is why it is the one that grows.
+ *
+ * **The left column is sized by the rating's longest row.** `YOUR TYPE 34px /
+ * 700` and `Needs Lc 100` beside it need about 19rem, and a column narrower
+ * than that wraps the verdict onto a line of its own - which reads as a second
+ * badge rather than as the verdict of the row above it. The preview keeps well
+ * over its own minimum at every width the two columns appear at.
  */
 @Component({
   selector: "ct-contrast-type",
   imports: [PairFields, PaletteChips, PairActions, ApcaRating, TypeControls, WebsitePreview],
   templateUrl: "./contrast-type.html",
   host: {
-    "class": "grid gap-8 lg:grid-cols-[minmax(15rem,18rem)_minmax(24rem,1fr)] lg:items-start lg:gap-13"
+    "class": "grid gap-8 lg:grid-cols-[minmax(18rem,22rem)_minmax(24rem,1fr)] lg:items-start lg:gap-13"
   }
 })
 export class ContrastType {
