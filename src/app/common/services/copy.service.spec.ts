@@ -2,7 +2,7 @@ import {TestBed} from "@angular/core/testing";
 import {provideZonelessChangeDetection} from "@angular/core";
 import {afterEach, beforeEach, describe, expect, it, MockInstance, vi} from "vitest";
 import chroma from "chroma-js";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import {FakeLiveAnnouncer, fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {CopyService} from "./copy.service";
 

@@ -18,6 +18,9 @@
       "@common/*": [
         "./src/app/common/*"
       ],
+      "@engine/*":  [
+        "./src/engine/*"
+      ],
       "@converter/*": [
         "./src/app/converter/*"
       ],

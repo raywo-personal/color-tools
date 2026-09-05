@@ -7,13 +7,12 @@
 // Remove an entry together with the folder it names, so no exclusion outlives
 // its path.
 //
-// Only the `components/` folders are v1. `palettes/helper/`, `contrast/helper/`
-// and their `models/` are the live engine and stay in the lint run - deleting a
-// v1 screen means deleting its `components/`, never the folder above it.
+// The colour engine lives in `src/engine/` and is not v1; nothing under it
+// belongs here.
 module.exports = [
   "src/app/converter/**",
-  "src/app/palettes/components/**",
-  "src/app/contrast/components/**",
+  "src/app/palettes/**",
+  "src/app/contrast/**",
   "src/app/header/**",
 
   // The v1 widgets. They sit under `common/` rather than in a screen folder,

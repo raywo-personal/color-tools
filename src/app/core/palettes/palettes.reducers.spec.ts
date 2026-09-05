@@ -6,7 +6,7 @@ import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {PALETTE_SLOTS} from "@palettes/models/palette.model";
+import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 
 
 /**

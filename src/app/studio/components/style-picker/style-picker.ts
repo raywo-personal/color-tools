@@ -2,7 +2,7 @@ import {Component, inject} from "@angular/core";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {PaletteStyle, PaletteStyles, styleCaptionFor} from "@palettes/models/palette-style.model";
+import {PaletteStyle, PaletteStyles, styleCaptionFor} from "@engine/palette/palette-style.model";
 
 
 interface StyleOption {

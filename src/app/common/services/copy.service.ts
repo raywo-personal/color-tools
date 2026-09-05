@@ -1,7 +1,7 @@
 import {DestroyRef, DOCUMENT, inject, Service, signal} from "@angular/core";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {Color} from "chroma-js";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 
 
 /**

@@ -1,16 +1,16 @@
 import {Component, computed, input, linkedSignal, signal} from "@angular/core";
-import {contrastingColor, contrastingMutedColor} from "@common/helpers/contrasting-color.helper";
+import {contrastingColor, contrastingMutedColor} from "@engine/contrast/contrasting-color.helper";
 import {ToggleButton} from "@common/components/toggle-button/toggle-button";
-import {PaletteColor} from "@palettes/models/palette-color.model";
-import {PaletteSlot} from "@palettes/models/palette.model";
+import {PaletteColor} from "@engine/palette/palette-color.model";
+import {PaletteSlot} from "@engine/palette/palette.model";
 import {SingleColorShades} from "@palettes/components/single-color-shades/single-color-shades";
 import chroma, {Color} from "chroma-js";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {HslColorEdit} from "@common/components/hsl-color-edit/hsl-color-edit";
 import {CdkDragHandle} from "@angular/cdk/drag-drop";
-import {ContrastColor} from "@contrast/models/contrast-color.model";
+import {ContrastColor} from "@engine/contrast/contrast-color.model";
 import {transferEvents} from "@core/common/transfer.events";
 
 

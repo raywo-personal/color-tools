@@ -4,7 +4,7 @@ import {Dispatcher} from "@ngrx/signals/events";
 import {beforeEach, describe, expect, it} from "vitest";
 import chroma, {Color} from "chroma-js";
 import {converterEvents} from "@core/converter/converter.events";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {Swatch} from "@studio/components/swatch/swatch";
 

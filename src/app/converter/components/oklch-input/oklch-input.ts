@@ -5,7 +5,7 @@ import {AppStateStore} from "@core/app-state.store";
 import {injectDispatch} from "@ngrx/signals/events";
 import {converterEvents} from "@core/converter/converter.events";
 import chroma from "chroma-js";
-import {isValidOklch, maxChroma} from "@common/helpers/oklch.helper";
+import {isValidOklch, maxChroma} from "@engine/color/oklch.helper";
 
 
 @Component({

@@ -1,8 +1,8 @@
 import {Component, computed, inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 import {CopyService} from "@common/services/copy.service";
-import {COLOR_SPACES} from "@common/models/color-space.model";
-import {formatColor} from "@common/helpers/color-format.helper";
+import {COLOR_SPACES} from "@engine/color/color-space.model";
+import {formatColor} from "@engine/color/color-format.helper";
 
 
 /**

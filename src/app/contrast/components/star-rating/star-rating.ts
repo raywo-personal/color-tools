@@ -1,5 +1,5 @@
 import {Component, computed, input} from "@angular/core";
-import {rangeToArray} from "@common/helpers/iterables.helper";
+import {rangeToArray} from "@engine/helpers/iterables.helper";
 
 
 @Component({

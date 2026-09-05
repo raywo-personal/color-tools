@@ -2,9 +2,9 @@ import {Component, computed, inject, input, linkedSignal, model} from "@angular/
 import {FormsModule} from "@angular/forms";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {Color} from "chroma-js";
-import {colorFrom} from "@common/helpers/color-format-parser.helper";
-import {formatColor} from "@common/helpers/color-format.helper";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorFrom} from "@engine/color/color-format-parser.helper";
+import {formatColor} from "@engine/color/color-format.helper";
+import {colorName} from "@engine/color/color-name.helper";
 
 
 /** Distinguishes the label from the input it names, once per instance. */

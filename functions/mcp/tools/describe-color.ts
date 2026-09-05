@@ -1,9 +1,9 @@
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {z} from "zod";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import chroma from "chroma-js";
-import {formatColor} from "@common/helpers/color-format.helper";
-import {maxChroma, usableLightness} from "@common/helpers/oklch.helper";
+import {formatColor} from "@engine/color/color-format.helper";
+import {maxChroma, usableLightness} from "@engine/color/oklch.helper";
 import {opaqueHexColor} from "../helper/tool-schemas.helper";
 
 

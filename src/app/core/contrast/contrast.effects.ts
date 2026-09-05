@@ -1,7 +1,7 @@
 import {Events} from "@ngrx/signals/events";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {tap} from "rxjs";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import {contrastEvents} from "./contrast.events";
 import {AppStateStore} from "../app-state.store";
 

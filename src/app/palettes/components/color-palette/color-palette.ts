@@ -1,13 +1,13 @@
 import {Component, computed, inject, input} from "@angular/core";
 import {SinglePaletteColor} from "@palettes/components/single-palette-color/single-palette-color";
 import {GeneratorStyleSwitcher} from "@palettes/components/generator-style-switcher/generator-style-switcher";
-import {PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
+import {PALETTE_SLOTS, PaletteColors} from "@engine/palette/palette.model";
 import {AppStateStore} from "@core/app-state.store";
 import {injectDispatch} from "@ngrx/signals/events";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {styleCaptionFor, styleDescriptionFor} from "@palettes/models/palette-style.model";
+import {styleCaptionFor, styleDescriptionFor} from "@engine/palette/palette-style.model";
 import {CdkDrag, CdkDragDrop, CdkDropList} from "@angular/cdk/drag-drop";
-import {paletteFrom} from "@palettes/helper/palette.helper";
+import {paletteFrom} from "@engine/palette/palette.helper";
 
 
 @Component({

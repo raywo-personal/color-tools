@@ -1,11 +1,11 @@
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {z} from "zod";
-import {FONT_SIZES, FONT_WEIGHTS} from "@contrast/models/apca-lookup-table.model";
-import {APCA_POLARITIES, getAPCAPolarity, lightestPassingFontWeight, smallestPassingFontSize} from "@contrast/helper/apca-rating.helper";
-import {colorName} from "@common/helpers/color-name.helper";
+import {FONT_SIZES, FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
+import {APCA_POLARITIES, getAPCAPolarity, lightestPassingFontWeight, smallestPassingFontSize} from "@engine/contrast/apca-rating.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import chroma from "chroma-js";
-import {findTextColor, MODES} from "@contrast/helper/optimal-text-color.helper";
-import {fontSizeKeyFrom} from "@common/helpers/font-size.helper";
+import {findTextColor, MODES} from "@engine/contrast/optimal-text-color.helper";
+import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
 import {opaqueHexColor, fontSizeInput, fontWeightInput} from "../helper/tool-schemas.helper";
 
 

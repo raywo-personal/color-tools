@@ -1,9 +1,9 @@
 import {EventInstance} from "@ngrx/signals/events";
 import chroma, {Color} from "chroma-js";
-import {createShades, createTints} from "@common/helpers/tints-and-shades.helper";
-import {ColorSpace} from "@common/models/color-space.model";
+import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
+import {ColorSpace} from "@engine/color/color-space.model";
 import {AppState} from "@core/models/app-state.model";
-import {contrastingColor} from "@common/helpers/contrasting-color.helper";
+import {contrastingColor} from "@engine/contrast/contrasting-color.helper";
 
 
 export function newRandomColorReducer(

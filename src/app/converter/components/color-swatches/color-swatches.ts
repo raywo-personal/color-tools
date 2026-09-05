@@ -1,12 +1,12 @@
 import {Component, computed, inject} from "@angular/core";
 import {ColorSwatch} from "@converter/components/color-swatch/color-swatch";
 import {DecimalPipe} from "@angular/common";
-import {ColorSpace} from "@common/models/color-space.model";
+import {ColorSpace} from "@engine/color/color-space.model";
 import {FormsModule} from "@angular/forms";
 import {AppStateStore} from "@core/app-state.store";
 import {injectDispatch} from "@ngrx/signals/events";
 import {converterEvents} from "@core/converter/converter.events";
-import {rangeToArray} from "@common/helpers/iterables.helper";
+import {rangeToArray} from "@engine/helpers/iterables.helper";
 
 
 @Component({

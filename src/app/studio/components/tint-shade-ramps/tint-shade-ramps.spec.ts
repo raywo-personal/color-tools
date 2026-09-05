@@ -6,7 +6,7 @@ import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {CopyService} from "@common/services/copy.service";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 import {TintShadeRamps} from "@studio/components/tint-shade-ramps/tint-shade-ramps";
 
 

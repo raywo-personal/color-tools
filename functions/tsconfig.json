@@ -6,6 +6,6 @@
   },
   "include": [
     "./**/*.ts",
-    "../src/types/color-namer-lists.d.ts"
+    "../src/engine/color-namer-lists.d.ts"
   ]
 }

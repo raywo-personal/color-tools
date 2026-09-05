@@ -1,9 +1,9 @@
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import chroma from "chroma-js";
 import {beforeEach, describe, expect, it} from "vitest";
-import {MODES} from "@contrast/helper/optimal-text-color.helper";
-import {apcaLookup} from "@contrast/helper/apca-look-up-table.helper";
-import {FONT_SIZES, FONT_WEIGHTS, FontSize, FontWeight} from "@contrast/models/apca-lookup-table.model";
+import {MODES} from "@engine/contrast/optimal-text-color.helper";
+import {apcaLookup} from "@engine/contrast/apca-look-up-table.helper";
+import {FONT_SIZES, FONT_WEIGHTS, FontSize, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {connectedClient, structured, summary} from "../test-support/connected-client";
 
 

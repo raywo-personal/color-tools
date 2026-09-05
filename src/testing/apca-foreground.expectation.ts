@@ -1,6 +1,6 @@
 import {expect} from "vitest";
 import chroma, {Color} from "chroma-js";
-import {calculateAPCAContrast} from "@contrast/helper/optimal-text-color.helper";
+import {calculateAPCAContrast} from "@engine/contrast/optimal-text-color.helper";
 
 
 /** The two foregrounds the app puts on a color the visitor picked. */

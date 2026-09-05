@@ -1,6 +1,6 @@
 import {Component, inject, OnDestroy, OnInit, signal} from "@angular/core";
 import {FormsModule} from "@angular/forms";
-import {colorFrom} from "@common/helpers/color-format-parser.helper";
+import {colorFrom} from "@engine/color/color-format-parser.helper";
 import {Subscription} from "rxjs";
 import {Events, injectDispatch} from "@ngrx/signals/events";
 import {converterEvents} from "@core/converter/converter.events";

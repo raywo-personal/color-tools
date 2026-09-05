@@ -1,11 +1,11 @@
 import {EventInstance} from "@ngrx/signals/events";
-import {generatePalette, generatePaletteFrom, paletteFrom} from "@palettes/helper/palette.helper";
-import {Palette, PALETTE_SLOTS, PaletteColors} from "@palettes/models/palette.model";
-import {PaletteStyle, randomStyle} from "@palettes/models/palette-style.model";
-import {paletteFromId} from "@palettes/helper/palette-id.helper";
-import {PaletteColor} from "@palettes/models/palette-color.model";
+import {generatePalette, generatePaletteFrom, paletteFrom} from "@engine/palette/palette.helper";
+import {Palette, PALETTE_SLOTS, PaletteColors} from "@engine/palette/palette.model";
+import {PaletteStyle, randomStyle} from "@engine/palette/palette-style.model";
+import {paletteFromId} from "@engine/palette/palette-id.helper";
+import {PaletteColor} from "@engine/palette/palette-color.model";
 import {AppState} from "@core/models/app-state.model";
-import {randomSeed} from "@common/helpers/random.helper";
+import {randomSeed} from "@engine/helpers/random.helper";
 
 
 export function newRandomPaletteReducer(

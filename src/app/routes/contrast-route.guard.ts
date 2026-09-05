@@ -2,8 +2,8 @@ import {contrastEvents} from "@core/contrast/contrast.events";
 import {injectDispatch} from "@ngrx/signals/events";
 import {ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree} from "@angular/router";
 import {inject} from "@angular/core";
-import {CONTRAST_ID_LENGTH, generateRandomContrastColors} from "@contrast/helper/contrast-id.helper";
-import {isRestorable} from "@common/helpers/validate-string-id.helper";
+import {CONTRAST_ID_LENGTH, generateRandomContrastColors} from "@engine/contrast/contrast-id.helper";
+import {isRestorable} from "@engine/helpers/validate-string-id.helper";
 
 
 /**

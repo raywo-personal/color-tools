@@ -2,7 +2,7 @@ import {TestBed} from "@angular/core/testing";
 import {provideZonelessChangeDetection} from "@angular/core";
 import {beforeEach, describe, expect, it} from "vitest";
 import {AppStateStore} from "@core/app-state.store";
-import {PaletteStyles, styleCaptionFor} from "@palettes/models/palette-style.model";
+import {PaletteStyles, styleCaptionFor} from "@engine/palette/palette-style.model";
 import {LOCAL_STORAGE_KEY, SettingsMap} from "@common/models/local-storage.model";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {StylePicker} from "@studio/components/style-picker/style-picker";

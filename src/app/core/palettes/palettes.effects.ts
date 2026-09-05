@@ -1,7 +1,7 @@
 import {Events} from "@ngrx/signals/events";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {tap} from "rxjs";
-import {styleCaptionFor} from "@palettes/models/palette-style.model";
+import {styleCaptionFor} from "@engine/palette/palette-style.model";
 import {palettesEvents} from "./palettes.events";
 import {AppStateStore} from "../app-state.store";
 

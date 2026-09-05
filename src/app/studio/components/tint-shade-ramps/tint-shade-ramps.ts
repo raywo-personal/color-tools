@@ -2,7 +2,7 @@ import {Component, computed, inject} from "@angular/core";
 import {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {CopyService} from "@common/services/copy.service";
-import {colorName} from "@common/helpers/color-name.helper";
+import {colorName} from "@engine/color/color-name.helper";
 
 
 type RampKind = "tint" | "shade";

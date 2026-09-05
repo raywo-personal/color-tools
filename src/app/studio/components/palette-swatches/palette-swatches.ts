@@ -2,10 +2,10 @@ import {Component, computed, inject} from "@angular/core";
 import {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {CopyService} from "@common/services/copy.service";
-import {colorName} from "@common/helpers/color-name.helper";
-import {PALETTE_SLOTS, PaletteSlot} from "@palettes/models/palette.model";
-import {styleDescriptionFor} from "@palettes/models/palette-style.model";
-import {roleCaptionFor} from "@palettes/helper/palette-role.helper";
+import {colorName} from "@engine/color/color-name.helper";
+import {PALETTE_SLOTS, PaletteSlot} from "@engine/palette/palette.model";
+import {styleDescriptionFor} from "@engine/palette/palette-style.model";
+import {roleCaptionFor} from "@engine/palette/palette-role.helper";
 
 
 interface SwatchRow {
