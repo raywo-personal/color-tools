@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 import {beforeEach, describe, expect, it} from "vitest";
 import {FontPicker} from "@common/components/font-picker/font-picker";
 import {SelectedFont} from "@common/models/google-font.model";
+import {WEIGHT_STOPS} from "@engine/contrast/type-settings.model";
 import {fakeGoogleFonts, provideFakeGoogleFonts} from "@testing/google-fonts.fake";
 
 
@@ -181,6 +182,22 @@ describe("FontPicker", () => {
     expect(`Set in ${declaration?.[1]}, the app's own type.`).toBe(
       "Set in IBM Plex Sans, the app's own type."
     );
+  });
+
+
+  it("loads every weight the app's own type is offered at", () => {
+    // With no typeface chosen the preview runs on `--font-sans` and the WEIGHT
+    // slider offers the whole grid. A weight `index.html` does not load is
+    // synthesised by the browser, and the rating beside it would be judging a
+    // faux-bold - the one thing this slice set out to stop.
+    const indexHtml = readFileSync("src/index.html", "utf8");
+    const declaration = /IBM\+Plex\+Sans:wght@([\d;]+)/.exec(indexHtml);
+
+    expect(declaration, "src/index.html loads IBM Plex Sans without a wght list").not.toBeNull();
+
+    const loaded = (declaration?.[1] ?? "").split(";").map(Number);
+
+    expect(WEIGHT_STOPS.filter(weight => !loaded.includes(weight))).toEqual([]);
   });
 
 
