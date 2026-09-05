@@ -324,6 +324,25 @@ describe("WebsitePreview", () => {
   });
 
 
+  it("skips a role past the ground rather than putting it on the page's own color", async () => {
+    // `color0` is the accent and also a candidate for the ground once a pair
+    // is taken from the palette - `PALETTE PAIR` or the initial state can draw
+    // exactly this. A first pass reads what `color0` comes out to for this
+    // base and seed, then the ground is set to match it on purpose.
+    const {store: firstPass} = await preview();
+    const ground = firstPass.currentPalette().color0.color.hex("rgb");
+
+    const {store, copy} = await preview({background: ground});
+    const palette = store.currentPalette();
+
+    // The role does not fall back to a fixed slot that happens to be the
+    // ground - it reads the next one in line, so the button stays visible.
+    expect(copy(ACCENT_BUTTON).style.backgroundColor).not.toBe(ground);
+    expect(copy(ACCENT_BUTTON).style.backgroundColor)
+      .toBe(palette.color1.color.hex("rgb"));
+  });
+
+
   it("keeps the separators out of the palette, so a rule stays structure", async () => {
     // `color4` has no role on purpose: the nav's underline and the footer rule
     // are the only places left, and a separator in a palette color reads as

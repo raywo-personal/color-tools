@@ -3,6 +3,7 @@ import {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {mixColors} from "@engine/color/mix-color.helper";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
+import {Palette, PALETTE_SLOTS} from "@engine/palette/palette.model";
 
 
 /**
@@ -127,22 +128,31 @@ interface PreviewStyle {
  * the rating judges. An unreadable label there says nothing about the pairing
  * and only looks broken.
  *
- * **The palette is read in fixed roles, not through a control.** `color0` is
- * the accent - wordmark, `Sign in`, the filled button, the card's edge -
- * `color1` outlines the ghost button, `color2` sets the eyebrow, and `color3`
- * tints the card. So a visitor sees four of their five colors on a page of
- * text without a single selector, in a column that still has the rating, the
- * typeface and the colour-vision rows to come.
+ * **The palette is read in fixed roles, not through a control.** The accent -
+ * wordmark, `Sign in`, the filled button, the card's edge - the ghost
+ * button's outline, the eyebrow and the card's tint are the four roles, and
+ * they take their colors from `PALETTE_SLOTS` in order, skipping whichever
+ * slot is also the pair's ground. So a visitor sees four of their five
+ * colors on a page of text without a single selector, in a column that still
+ * has the rating, the typeface and the colour-vision rows to come.
  *
- * Which slot fills which role is deliberately not a setting. The palette id is
- * full, so an assignment would survive a reload but not a shared link; the
- * rating judges the pair and would say nothing about an accent the visitor had
- * just tuned; and `roleCaptionFor()` already names the slots, so a second
- * vocabulary would be a second name for the same color.
+ * Which slot fills which role is deliberately not a setting beyond that.
+ * The palette id is full, so an assignment would survive a reload but not a
+ * shared link; the rating judges the pair and would say nothing about an
+ * accent the visitor had just tuned; and `roleCaptionFor()` already names the
+ * slots, so a second vocabulary would be a second name for the same color.
  *
- * `color4` is left out on purpose. The two places left are the nav's underline
- * and the footer rule, and both stay mixes out of the pair: a separator drawn
- * in a palette color reads as decoration rather than as structure.
+ * **Skipping the ground rather than filling it in.** `color0` is also a
+ * candidate for the pair's background once `PALETTE PAIR` or the initial
+ * state draws the pair from the same five colors, and a role landing on the
+ * ground would put the wordmark, a button or the card's edge on top of a
+ * color identical to the page - not a low-contrast choice but an invisible
+ * one, on about a fifth of palettes. Reading the roles from the four slots
+ * that are not the ground fixes that without a threshold: `color4`, normally
+ * passed over, takes a role's place exactly when its predecessor is the
+ * ground. Where none of the five slots is the ground - a rolled or hand-set
+ * pair, not one taken from the palette - the first four stand as before and
+ * `color4` stays unused, same as ever.
  *
  * **Nothing in here is focusable or announced as a control.** The nav links,
  * `Sign in` and the two buttons are text: a focusable button that does nothing
@@ -168,8 +178,7 @@ export class WebsitePreview {
     const {fontSize, fontWeight, lineHeight} = this.#stateStore.typeSettings();
     const palette = this.#stateStore.currentPalette();
 
-    const accent = palette.color0.color;
-    const accentSoft = palette.color2.color;
+    const [accent, ghostBorderColor, accentSoft, cardTintColor] = roleColorsFrom(palette, background);
     const navTarget = background.luminance() > LIGHT_BACKGROUND_LUMINANCE ? BLACK : WHITE;
 
     return {
@@ -187,13 +196,13 @@ export class WebsitePreview {
       // choice does not depend on a size, so none is passed: the button label
       // is set at a fraction of `SIZE` and has no fixed row in the table.
       onAccent: hex(findOptimalTextColor(accent).color),
-      cardBackground: hex(mixColors(background, palette.color3.color, CARD_TINT)),
+      cardBackground: hex(mixColors(background, cardTintColor, CARD_TINT)),
       // A palette color rather than a mix out of the pair, so the secondary
       // action reads as a second colour of the visitor's own. Only the outline
-      // depends on it: the label keeps the pair's text color, so a `color1`
-      // that sits at the page's lightness costs the box, not the words - and a
-      // hairline that disappears is a fact about the palette worth seeing.
-      ghostBorder: hex(palette.color1.color),
+      // depends on it: the label keeps the pair's text color, so a border that
+      // sits at the page's lightness would cost the box, not the words - and
+      // `roleColorsFrom()` is what keeps it off the ground in the first place.
+      ghostBorder: hex(ghostBorderColor),
       footerBorder: hex(mixColors(background, text, FOOTER_BORDER_MIX)),
 
       bodyWeight: fontWeight,
@@ -240,6 +249,32 @@ export class WebsitePreview {
 
 function hex(color: Color): string {
   return color.hex("rgb");
+}
+
+
+/**
+ * The four roles' colors - accent, ghost border, eyebrow, card tint, in that
+ * order - read from the palette in slot order, skipping whichever slot is
+ * also the pair's ground.
+ *
+ * `color0` is both the accent and a candidate for the ground once the pair is
+ * taken from the same five colors, and a role landing on the ground is not a
+ * low-contrast choice but an invisible one - about a fifth of palettes would
+ * otherwise put the wordmark, a button or the card's edge on the page's own
+ * color. Reading the remaining four slots in order settles it without a
+ * threshold, and finally gives `color4` a job.
+ *
+ * Where none of the five slots is the ground - a rolled or hand-set pair, not
+ * one taken from the palette - all five stay candidates and the first four
+ * stand as before.
+ */
+function roleColorsFrom(palette: Palette, ground: Color): readonly [Color, Color, Color, Color] {
+  const members = PALETTE_SLOTS.map(slot => palette[slot].color);
+  const groundHex = hex(ground);
+  const withoutGround = members.filter(color => hex(color) !== groundHex);
+  const roles = withoutGround.length >= 4 ? withoutGround : members;
+
+  return [roles[0], roles[1], roles[2], roles[3]];
 }
 
 
