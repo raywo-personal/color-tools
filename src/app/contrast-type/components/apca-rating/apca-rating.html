@@ -67,9 +67,16 @@
 
       <span class="font-sans text-sm tracking-widest">{{ row.caption }}</span>
 
-      <span class="font-mono text-sm">{{ row.spec }}</span>
+      <!-- The spec and the verdict carry `text-text` themselves rather than
+           taking the row's colour: `dim` reaches Lc 68.4 against `bg` in the
+           light theme and 50.9 in the dark one, and this very list asks Lc 100
+           at 14px - a row saying `Needs Lc 100` would sit below the bar it
+           announces. The caption keeps the row's colour, as the all-caps label
+           does in `palette-swatches` and `conversion-list`: there `dim` carries
+           the label and the value beside it stands in `text`. -->
+      <span class="font-mono text-sm text-text">{{ row.spec }}</span>
 
-      <span class="ml-auto text-sm">{{ row.verdict }}</span>
+      <span class="ml-auto text-sm text-text">{{ row.verdict }}</span>
     </li>
   }
 </ul>

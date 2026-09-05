@@ -196,6 +196,20 @@ describe("ApcaRating", () => {
   });
 
 
+  it("holds the spec and the verdict in `text`, whatever the row's state", async () => {
+    // `dim` reaches Lc 68.4 against `bg` in the light theme and 50.9 in the
+    // dark one, and a row that fails asks Lc 100 at the size it is set in: in
+    // the row's own colour its wording would sit below the bar it announces.
+    const {items} = await rating(MID);
+
+    const carries = (index: number) => items()
+      .map(item => item.querySelectorAll("span")[index].classList.contains("text-text"));
+
+    expect(carries(1)).toEqual([true, true, true, true]);
+    expect(carries(2)).toEqual([true, true, true, true]);
+  });
+
+
   it("separates a fail from a pass by shape and wording, not by colour", async () => {
     // At Lc 74.3: 16px asks 90 and 14px asks 100, 24px asks 60.
     const {rows, markers} = await rating(MID);
