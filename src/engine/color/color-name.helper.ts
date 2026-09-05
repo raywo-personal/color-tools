@@ -25,10 +25,13 @@ interface Candidate {
 }
 
 /**
- * The lists come from `color-namer`, but the distance math does not - see the
- * Color Libraries section in CLAUDE.md for why the package's own entry point is
- * bypassed. Order matters: on equal distance the first list wins, which is what
- * `color-namer` did with its stable sort.
+ * The lists come from `color-namer`, but the distance math does not. The
+ * package's own entry point is bypassed on purpose: importing it pulls in a
+ * second, much older chroma-js (1.4.1) plus `es6-weak-map` and its `es5-ext`
+ * tail - some 59 kB of raw bundle for a `WeakMap` cache that never hits,
+ * because `color-namer` keys it on a freshly allocated object on every call.
+ * Both variants produce identical names. Order matters: on equal distance the
+ * first list wins, which is what `color-namer` did with its stable sort.
  */
 const LISTS: readonly NamedColor[][] = [basic, html, ntc, pantone, roygbiv, x11];
 

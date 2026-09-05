@@ -99,8 +99,9 @@ through them, never through relative `../../` paths.
   relative to `sourceRoot`, so a folder beside `src/` would need its own
   include patterns in both tsconfigs
 - `colorName()` imports the six `color-namer/lib/colors/*` lists, never the
-  package's entry point, which drags in a second chroma-js. The lists are
-  CommonJS: declared in `src/engine/color-namer-lists.d.ts`, listed in
+  package's entry point; the comment on `LISTS` in
+  `src/engine/color/color-name.helper.ts` says why. The lists are CommonJS:
+  declared in `src/engine/color-namer-lists.d.ts`, listed in
   `allowedCommonJsDependencies` in `angular.json`
 - `colorName()` measures from `color.hex()`, not from the `Color` object, and
   stays synchronous – reducers and guards call it. `color-name.helper.spec.ts`
