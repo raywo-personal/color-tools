@@ -79,9 +79,9 @@ repository.
 
 The workflow `.github/workflows/deploy-to-cloudflare-pages.yml` runs on every
 pull request and on every push to `main` or `redesign-v2`. It lints, runs both
-test suites and builds with the `cloudflare` configuration. On a push it then
-deploys `dist/ColorTools/browser` with `wrangler pages deploy`; a pull request
-stops after the build.
+test suites, type-checks and bundles the MCP server, and builds with the
+`cloudflare` configuration. On a push it then deploys `dist/ColorTools/browser`
+with `wrangler pages deploy`; a pull request stops after the build.
 
 The deploy takes `functions/` along as a Pages Function, which is how `/mcp`
 reaches the same origin as the app. `wrangler` bundles it from the working
