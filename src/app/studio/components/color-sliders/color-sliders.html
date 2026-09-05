@@ -23,66 +23,66 @@
 
 <div class="grid gap-4">
   @if (space() === "hsl") {
-    <ct-color-slider label="HUE"
-                     [min]="0"
-                     [max]="hueMax"
-                     [step]="1"
-                     [value]="hslShown().h"
-                     [valueText]="hslHueText()"
-                     [track]="hslHueTrack()"
-                     (valueChange)="hslHueChanged($event)"
-                     (commit)="commit()"/>
+    <ct-slider label="HUE"
+               [min]="0"
+               [max]="hueMax"
+               [step]="1"
+               [value]="hslShown().h"
+               [valueText]="hslHueText()"
+               [track]="hslHueTrack()"
+               (valueChange)="hslHueChanged($event)"
+               (commit)="commit()"/>
 
-    <ct-color-slider label="SATURATION"
-                     [min]="0"
-                     [max]="100"
-                     [step]="1"
-                     [value]="hslShown().s"
-                     [valueText]="hslSaturationText()"
-                     [track]="hslSaturationTrack()"
-                     (valueChange)="hslSaturationChanged($event)"
-                     (commit)="commit()"/>
+    <ct-slider label="SATURATION"
+               [min]="0"
+               [max]="100"
+               [step]="1"
+               [value]="hslShown().s"
+               [valueText]="hslSaturationText()"
+               [track]="hslSaturationTrack()"
+               (valueChange)="hslSaturationChanged($event)"
+               (commit)="commit()"/>
 
-    <ct-color-slider label="LIGHTNESS"
-                     [min]="0"
-                     [max]="100"
-                     [step]="1"
-                     [value]="hslShown().l"
-                     [valueText]="hslLightnessText()"
-                     [track]="hslLightnessTrack()"
-                     (valueChange)="hslLightnessChanged($event)"
-                     (commit)="commit()"/>
+    <ct-slider label="LIGHTNESS"
+               [min]="0"
+               [max]="100"
+               [step]="1"
+               [value]="hslShown().l"
+               [valueText]="hslLightnessText()"
+               [track]="hslLightnessTrack()"
+               (valueChange)="hslLightnessChanged($event)"
+               (commit)="commit()"/>
   } @else {
-    <ct-color-slider label="LIGHTNESS"
-                     [min]="0"
-                     [max]="100"
-                     [step]="0.1"
-                     [value]="oklchShown().l"
-                     [valueText]="oklchLightnessText()"
-                     [track]="oklchLightnessTrack()"
-                     (valueChange)="oklchLightnessChanged($event)"
-                     (commit)="commit()"/>
+    <ct-slider label="LIGHTNESS"
+               [min]="0"
+               [max]="100"
+               [step]="0.1"
+               [value]="oklchShown().l"
+               [valueText]="oklchLightnessText()"
+               [track]="oklchLightnessTrack()"
+               (valueChange)="oklchLightnessChanged($event)"
+               (commit)="commit()"/>
 
     <!-- The maximum follows the gamut rather than a constant; see
          `chromaCeiling`. -->
-    <ct-color-slider label="CHROMA"
-                     [min]="0"
-                     [max]="chromaCeiling()"
-                     [step]="0.001"
-                     [value]="oklchShown().c"
-                     [valueText]="oklchChromaText()"
-                     [track]="oklchChromaTrack()"
-                     (valueChange)="oklchChromaChanged($event)"
-                     (commit)="commit()"/>
+    <ct-slider label="CHROMA"
+               [min]="0"
+               [max]="chromaCeiling()"
+               [step]="0.001"
+               [value]="oklchShown().c"
+               [valueText]="oklchChromaText()"
+               [track]="oklchChromaTrack()"
+               (valueChange)="oklchChromaChanged($event)"
+               (commit)="commit()"/>
 
-    <ct-color-slider label="HUE"
-                     [min]="0"
-                     [max]="hueMax"
-                     [step]="1"
-                     [value]="oklchShown().h"
-                     [valueText]="oklchHueText()"
-                     [track]="oklchHueTrack()"
-                     (valueChange)="oklchHueChanged($event)"
-                     (commit)="commit()"/>
+    <ct-slider label="HUE"
+               [min]="0"
+               [max]="hueMax"
+               [step]="1"
+               [value]="oklchShown().h"
+               [valueText]="oklchHueText()"
+               [track]="oklchHueTrack()"
+               (valueChange)="oklchHueChanged($event)"
+               (commit)="commit()"/>
   }
 </div>

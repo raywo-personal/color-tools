@@ -3,7 +3,7 @@ import {Color} from "chroma-js";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
-import {ColorSlider} from "@common/components/color-slider/color-slider";
+import {Slider} from "@common/components/slider/slider";
 import {fromHsl} from "@engine/color/color-from-hsl.helper";
 import {fromOklch} from "@engine/color/color-from-oklch.helper";
 import {maxChroma} from "@engine/color/oklch.helper";
@@ -96,7 +96,7 @@ const HUE_MAX = 359;
  */
 @Component({
   selector: "ct-color-sliders",
-  imports: [ColorSlider],
+  imports: [Slider],
   templateUrl: "./color-sliders.html",
   host: {
     "class": "block"

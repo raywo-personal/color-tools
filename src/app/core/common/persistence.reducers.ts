@@ -9,7 +9,9 @@ import {PaletteStyle} from "@engine/palette/palette-style.model";
 import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
 import {AppState} from "@core/models/app-state.model";
 import {isRestorable} from "@engine/helpers/validate-string-id.helper";
-import {CONTRAST_ID_LENGTH, contrastColorsFromId, generateRandomContrastColors} from "@engine/contrast/contrast-id.helper";
+import {CONTRAST_ID_LENGTH, contrastColorsFromId} from "@engine/contrast/contrast-id.helper";
+import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
+import {normalizedTypeSettings} from "@engine/contrast/type-settings.model";
 
 
 export function loadAppStateReducer(
@@ -38,9 +40,21 @@ export function loadAppStateReducer(
 
   const contrastId = persistence.get("contrastId") ?? "";
   const contrastRestorableId = isRestorable(contrastId, CONTRAST_ID_LENGTH);
+  // The stored pair, or one out of the palette that was just restored - see
+  // `contrastPairFromPalette()`. A rolled pair would leave a first-time
+  // visitor with a page unrelated to the color beside it.
   const contrastColors = contrastRestorableId
     ? contrastColorsFromId(contrastId)
-    : generateRandomContrastColors();
+    : contrastPairFromPalette(currentPalette);
+
+  // Normalized rather than taken as read: the three keys carry plain numbers,
+  // and a weight off the `FONT_WEIGHTS` grid has no row in `apcaLookup` to be
+  // rated against.
+  const typeSettings = normalizedTypeSettings({
+    fontSize: persistence.getOrDefault("fontSize", state.typeSettings.fontSize),
+    fontWeight: persistence.getOrDefault("fontWeight", state.typeSettings.fontWeight),
+    lineHeight: persistence.getOrDefault("lineHeight", state.typeSettings.lineHeight)
+  });
 
   return {
     colorTheme: persistence.getOrDefault("colorTheme", state.colorTheme),
@@ -51,7 +65,8 @@ export function loadAppStateReducer(
     paletteStyle: currentPalette.style,
     paletteSeed,
     selectedFont: persistence.getOrDefault("selectedFont", null),
-    contrastColors
+    contrastColors,
+    typeSettings
   };
 }
 

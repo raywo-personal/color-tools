@@ -2,6 +2,8 @@ import {Component} from "@angular/core";
 import {PairFields} from "@contrast-type/components/pair-fields/pair-fields";
 import {PaletteChips} from "@contrast-type/components/palette-chips/palette-chips";
 import {PairActions} from "@contrast-type/components/pair-actions/pair-actions";
+import {TypeControls} from "@contrast-type/components/type-controls/type-controls";
+import {WebsitePreview} from "@contrast-type/components/website-preview/website-preview";
 
 
 /**
@@ -11,14 +13,14 @@ import {PairActions} from "@contrast-type/components/pair-actions/pair-actions";
  * Unprefixed the screen is one stack, so the narrow column is what the markup
  * describes and the breakpoint widens it.
  *
- * The left column is the whole control stack - the pair, the palette chips and
- * the two gestures now, the rating and the type controls in the slices that
- * follow. The right column is the website preview, which is why it is the one
+ * The left column is the whole control stack - the pair, the palette chips,
+ * the two gestures and the type controls now, the rating in the slice that
+ * follows. The right column is the website preview, which is why it is the one
  * that grows.
  */
 @Component({
   selector: "ct-contrast-type",
-  imports: [PairFields, PaletteChips, PairActions],
+  imports: [PairFields, PaletteChips, PairActions, TypeControls, WebsitePreview],
   templateUrl: "./contrast-type.html",
   host: {
     "class": "grid gap-8 lg:grid-cols-[minmax(15rem,18rem)_minmax(24rem,1fr)] lg:items-start lg:gap-13"

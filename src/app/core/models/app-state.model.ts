@@ -8,8 +8,9 @@ import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import {contrastingColor} from "@engine/contrast/contrasting-color.helper";
 import {SelectedFont} from "@common/models/google-font.model";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
-import {generateRandomContrastColors} from "@engine/contrast/contrast-id.helper";
+import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 import {randomSeed} from "@engine/helpers/random.helper";
+import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
 
 
 export type AppState = {
@@ -40,11 +41,26 @@ export type AppState = {
   // Common
   colorTheme: ColorTheme;
   selectedFont: SelectedFont | null;
+  /**
+   * The type the website preview is set in - and, from the rating on, the size
+   * and weight the pair is judged at.
+   *
+   * In the state rather than in the preview's own signals, because the rating
+   * reads them from a component of its own, and because a visitor who set
+   * 14px/500 and comes back to 16px/400 is being shown a verdict about a page
+   * they are not building.
+   *
+   * Here beside `selectedFont` rather than under Contrast: the typeface has
+   * always been a Common setting, and the other three axes of the same type
+   * stack belong with it.
+   */
+  typeSettings: TypeSettings;
 };
 
 const initialColor = chroma.random();
 const textColor = contrastingColor(initialColor);
 const initialSeed = randomSeed();
+const initialPalette = generatePaletteFrom(initialColor, "random", initialSeed);
 
 export const initialState: AppState = {
   currentColor: initialColor,
@@ -59,10 +75,14 @@ export const initialState: AppState = {
   paletteStyle: "random",
   useRandomStyle: false,
   paletteSeed: initialSeed,
-  currentPalette: generatePaletteFrom(initialColor, "random", initialSeed),
+  currentPalette: initialPalette,
 
-  contrastColors: generateRandomContrastColors(),
+  // Out of the palette rather than rolled: a rolled pair has nothing to do
+  // with the color the visitor is working on, and nothing afterwards ever
+  // brings the two together - `PALETTE PAIR` is a gesture, not a reaction.
+  contrastColors: contrastPairFromPalette(initialPalette),
 
   colorTheme: "system",
-  selectedFont: null
+  selectedFont: null,
+  typeSettings: DEFAULT_TYPE_SETTINGS
 };

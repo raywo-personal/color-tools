@@ -7,7 +7,7 @@ let nextInstance = 0;
 
 
 /**
- * One axis of a color, as a native range input on a gradient track.
+ * One numeric axis, as a native range input with a label and its value.
  *
  * The draft draws the slider as a `<div>` with a pointer handler. This is an
  * `<input type="range">` instead, because that is the difference between a
@@ -17,20 +17,21 @@ let nextInstance = 0;
  * the track pseudo-element through `--ct-track-image`, which is the only way
  * in - no utility class reaches a vendor pseudo-element.
  *
- * The component knows nothing about color. It takes the range, the gradient and
- * the text of the value from its caller, so HSL's three axes and OKLch's three
- * are the same component six times rather than six components.
+ * The component knows nothing about what it moves. It takes the range, the
+ * text of the value and - where there is one - the gradient from its caller,
+ * so the Studio's six color axes and the type controls' three are the same
+ * component nine times rather than nine components.
  */
 @Component({
-  selector: "ct-color-slider",
+  selector: "ct-slider",
   imports: [FormsModule],
-  templateUrl: "./color-slider.html",
-  styleUrl: "./color-slider.css",
+  templateUrl: "./slider.html",
+  styleUrl: "./slider.css",
   host: {
     "class": "block"
   }
 })
-export class ColorSlider {
+export class Slider {
 
   /** The axis, as the visitor reads it and as a screen reader announces it. */
   readonly label = input.required<string>();
@@ -50,8 +51,16 @@ export class ColorSlider {
 
   readonly step = input.required<number>();
 
-  /** A CSS gradient for the track, drawn in the colors the axis passes through. */
-  readonly track = input.required<string>();
+  /**
+   * A CSS gradient for the track, drawn in the colors the axis passes through.
+   *
+   * Optional, because only a color axis has one: a size or a weight passes
+   * through no colors, and a flat grey gradient handed to a track whose whole
+   * point is the ramp would be a ramp claiming to be one. Left out, the track
+   * is the `field` token - the plain strip the draft draws under the type
+   * controls.
+   */
+  readonly track = input<string>();
 
   readonly value = model.required<number>();
 
@@ -60,11 +69,11 @@ export class ColorSlider {
    *
    * Not a second spelling of `valueChange`, which fires per frame: the caller
    * needs both, one to follow the drag and one to know it is over. Every frame
-   * of a drag is a color the visitor is still choosing, and only the last of
+   * of a drag is a value the visitor is still choosing, and only the last of
    * them is worth storing.
    */
   readonly commit = output<void>();
 
-  protected readonly inputId = `ct-color-slider-${nextInstance++}`;
+  protected readonly inputId = `ct-slider-${nextInstance++}`;
 
 }

@@ -1,0 +1,28 @@
+<!-- No `track` on any of the three: a size, a weight and a leading pass through
+     no colors, so the slider draws the plain `field` strip instead of a ramp. -->
+<ct-slider label="SIZE"
+           [min]="sizeRange.min"
+           [max]="sizeRange.max"
+           [step]="sizeRange.step"
+           [value]="settings().fontSize"
+           [valueText]="sizeText()"
+           (valueChange)="sizeChanged($event)"
+           (commit)="commit()"/>
+
+<ct-slider label="WEIGHT"
+           [min]="weightRange.min"
+           [max]="weightRange.max"
+           [step]="weightRange.step"
+           [value]="settings().fontWeight"
+           [valueText]="weightText()"
+           (valueChange)="weightChanged($event)"
+           (commit)="commit()"/>
+
+<ct-slider label="LEADING"
+           [min]="leadingRange.min"
+           [max]="leadingRange.max"
+           [step]="leadingRange.step"
+           [value]="settings().lineHeight"
+           [valueText]="leadingText()"
+           (valueChange)="leadingChanged($event)"
+           (commit)="commit()"/>

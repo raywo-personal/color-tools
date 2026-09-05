@@ -21,13 +21,19 @@ input[type="range"] {
 }
 
 /* `border-box` so the border does not add to the height the thumb is centred
-   against below. */
+   against below.
+
+   The fill is two layers: the `field` token underneath, and the caller's
+   gradient over it where there is one. An axis without a ramp - a font size, a
+   weight - leaves `--ct-track-image` unset and shows the token, which is the
+   plain strip the draft draws under the type controls. */
 input[type="range"]::-webkit-slider-runnable-track {
   box-sizing: border-box;
   height: var(--ct-track-height);
   border: 1px solid var(--color-line);
   border-radius: 0.125rem;
-  background-image: var(--ct-track-image);
+  background-color: var(--color-field);
+  background-image: var(--ct-track-image, none);
 }
 
 input[type="range"]::-moz-range-track {
@@ -35,7 +41,8 @@ input[type="range"]::-moz-range-track {
   height: var(--ct-track-height);
   border: 1px solid var(--color-line);
   border-radius: 0.125rem;
-  background-image: var(--ct-track-image);
+  background-color: var(--color-field);
+  background-image: var(--ct-track-image, none);
 }
 
 /* Two tones, not one: the thumb stands on whatever color the track carries at

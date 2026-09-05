@@ -48,6 +48,7 @@ export function allEffects(
       .on(
         commonEvents.colorThemeChanged,
         commonEvents.fontSelected,
+        commonEvents.typeSettingsChanged,
         converterEvents.newRandomColorWithNav,
         converterEvents.colorChanged,
         palettesEvents.paletteChanged,
@@ -58,7 +59,8 @@ export function allEffects(
         contrastEvents.backgroundColorChanged,
         contrastEvents.contrastColorsChangedWithoutNav,
         contrastEvents.newRandomColorsWithNav,
-        transferEvents.sendColorToContrast
+        transferEvents.sendColorToContrast,
+        transferEvents.sendPaletteToContrast
       )
       .pipe(
         map(() => persistenceEvents.saveAppState())

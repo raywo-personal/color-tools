@@ -6,6 +6,7 @@ import {generatePalette} from "@engine/palette/palette.helper";
 import {ContrastColor} from "@engine/contrast/contrast-color.model";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 import {contrastIdFromColors} from "@engine/contrast/contrast-id.helper";
+import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 
 
 export function useColorAsPaletteStarterReducer(
@@ -39,6 +40,22 @@ export function generatePaletteFromContrastReducer(
   const palette = generatePalette(state.paletteStyle, {color0, color1});
 
   return {currentPalette: palette};
+}
+
+
+/**
+ * Takes the pair out of the current palette - the most readable two of its five
+ * members; see `contrastPairFromPalette()` for why it is a gesture and not a
+ * reaction to the palette changing.
+ */
+export function sendPaletteToContrastReducer(
+  this: void,
+  event: EventInstance<"[Transfer] sendPaletteToContrast", void>,
+  state: AppState
+) {
+  return {
+    contrastColors: contrastPairFromPalette(state.currentPalette)
+  };
 }
 
 
