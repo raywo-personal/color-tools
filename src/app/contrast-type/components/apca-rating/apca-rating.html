@@ -1,0 +1,49 @@
+<!-- `Lc` before the figure, where the draft puts its `: 1` after it: the unit
+     leads in APCA's own notation, and the figure is what the eye lands on
+     either way. The serif face is the draft's, one step down from its 54px so
+     the number still fits the narrow column. -->
+<p class="flex items-baseline gap-2">
+  <span class="font-sans text-sm tracking-widest text-dim">Lc</span>
+  <span class="font-serif text-5xl leading-none">{{ figure() }}</span>
+</p>
+
+<p class="mt-2 text-sm text-dim">{{ polarityText() }}</p>
+
+<!-- `role="list"` because Preflight removes the list style, and Safari with
+     VoiceOver then stops treating the element as a list. -->
+<ul role="list"
+    aria-label="APCA rating"
+    class="mt-5 grid gap-2">
+  @for (row of rows(); track row.key) {
+    <!-- The verdict is pushed right by `ml-auto` rather than by a column of a
+         fixed width: at the narrow end of the column the row wraps instead of
+         truncating, and a caption never has to fit a guess. -->
+    <li class="flex flex-wrap items-center gap-x-3 gap-y-1"
+        [class.mt-3]="row.startsReference"
+        [class.text-text]="row.state === 'fail'"
+        [class.text-dim]="row.state !== 'fail'">
+      <!-- Filled, hollow, a rule: the shape is what separates the three states
+           without colour. The words beside it say the same thing, so the
+           marker itself is decoration to a screen reader. -->
+      @switch (row.state) {
+        @case ("pass") {
+          <span aria-hidden="true" class="size-2 shrink-0 rounded-full bg-current"></span>
+        }
+        @case ("fail") {
+          <span aria-hidden="true" class="size-2 shrink-0 rounded-full border border-current"></span>
+        }
+        @default {
+          <span aria-hidden="true" class="w-2 shrink-0 border-t border-current"></span>
+        }
+      }
+
+      <span class="font-sans text-sm tracking-widest">{{ row.caption }}</span>
+
+      <span class="font-mono text-sm">{{ row.spec }}</span>
+
+      <span class="ml-auto text-sm">{{ row.verdict }}</span>
+    </li>
+  }
+</ul>
+
+<p class="mt-4 text-sm text-dim text-pretty">{{ sizeNote() }}</p>
