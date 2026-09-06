@@ -1,4 +1,4 @@
-import {PaletteStyles} from "@engine/palette/palette-style.model";
+import {PaletteStylesWithoutRandom} from "@engine/palette/palette-style.model";
 import {PALETTE_SLOTS, PaletteColors} from "@engine/palette/palette.model";
 import {opaqueHexColor} from "../helper/tool-schemas.helper";
 import {z} from "zod";
@@ -15,7 +15,7 @@ import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 const inputSchema = {
   baseColor: opaqueHexColor("Base color")
     .describe("The color the palette is built on. It becomes color0 and is returned unchanged."),
-  style: z.enum(PaletteStyles)
+  style: z.enum(PaletteStylesWithoutRandom)
     .describe("Palette style. Read the palette-styles resource for what each one does."),
   seed: z.number()
     .int()
@@ -30,7 +30,7 @@ const outputSchema = {
     .describe("43 characters, decodes back to this palette."),
   name: z.string()
     .describe("The palette's name: style and base color, e.g. \"Triadic – Matisse\"."),
-  style: z.enum(PaletteStyles)
+  style: z.enum(PaletteStylesWithoutRandom)
     .describe("Palette style. Read the palette-styles resource for what each one does."),
   seed: z.number()
     .int()
