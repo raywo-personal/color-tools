@@ -5,8 +5,15 @@ import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 import {paletteFromId} from "@engine/palette/palette-id.helper";
 import {colorName} from "@engine/color/color-name.helper";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
+import {base62ToBigInt} from "@engine/helpers/base62.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 
+
+/**
+ * What a palette id carries after the style digit: 30 RGB channels and the
+ * pinned mask, one byte each.
+ */
+const PALETTE_ID_LIMIT = 256n ** 31n;
 
 /**
  * The id's shape is the whole guard. `paletteFromId()` restores any string of
@@ -14,12 +21,20 @@ import {TOOL_ANNOTATION} from "../helper/annotation.helper";
  * with a random style rather than an error - a malformed id would decode into
  * an invented palette, and the same id twice into two different ones. Rejected
  * here, nothing reaches the decoder that it cannot restore, so the handler
- * needs no try/catch: keep the pattern if the handler stays that way.
+ * needs no try/catch: keep both checks if the handler stays that way.
+ *
+ * The length alone does not make the guard: 42 base62 characters reach past
+ * `PALETTE_ID_LIMIT`, and the decoder pads a value that is too short but
+ * never truncates one that is too long. A value above the limit would be
+ * read from a window shifted by a byte, with the pinned mask fallen to 0.
  */
 const inputSchema = {
   id: z.string()
     .regex(/^[0-9][0-9A-Za-z]{42}$/,
       {message: "A palette id is 43 characters: one digit for the style, then 42 base62 characters."}
+    )
+    .refine(id => base62ToBigInt(id.substring(1)) < PALETTE_ID_LIMIT,
+      {message: "This palette id is out of range: the 42 characters after the style digit encode more than 31 bytes."}
     )
 };
 

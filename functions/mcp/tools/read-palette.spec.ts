@@ -4,6 +4,7 @@ import chroma from "chroma-js";
 import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 import {PaletteStyles} from "@engine/palette/palette-style.model";
 import {generatePaletteFrom} from "@engine/palette/palette.helper";
+import {bigIntToBase62} from "@engine/helpers/base62.helper";
 import {connectedClient, structured, summary} from "../test-support/connected-client";
 
 
@@ -157,6 +158,25 @@ describe("read_palette", () => {
       const result = await readPalette(client, "");
 
       expect(result.isError).toBe(true);
+    });
+
+    it("should reject an id that decodes to more than 31 bytes", async () => {
+      // 42 base62 characters reach past the 2^248 that 31 bytes hold. The
+      // decoder pads a short value and never truncates a long one, so the
+      // five colors would be read from a window shifted by one and the
+      // pinned mask would fall to 0 - an invented palette, not an error.
+      const result = await readPalette(client, `0${"z".repeat(42)}`);
+
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent).toBeUndefined();
+    });
+
+    it("should accept the largest id the encoder can write", async () => {
+      // The bound is exclusive: 31 bytes of 0xff still decode.
+      const largest = bigIntToBase62(256n ** 31n - 1n, 42);
+      const result = await readPalette(client, `1${largest}`);
+
+      expect(result.isError).toBeFalsy();
     });
 
   });
