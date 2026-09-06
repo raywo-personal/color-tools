@@ -1,6 +1,7 @@
+import {DOCUMENT} from "@angular/common";
 import {provideZonelessChangeDetection} from "@angular/core";
 import {TestBed} from "@angular/core/testing";
-import {afterEach, beforeEach, describe, expect, it} from "vitest";
+import {beforeEach, describe, expect, it} from "vitest";
 import {SelectedFont} from "@common/models/google-font.model";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
 
@@ -10,16 +11,71 @@ function selection(family: string, weights: number[]): SelectedFont {
 }
 
 
+/** The link element the service builds, as far as the service touches it. */
+interface StubLink {
+
+  id: string;
+  rel: string;
+  href: string;
+
+  remove(): void;
+
+}
+
+
+/**
+ * A document that collects the link element rather than loading it.
+ *
+ * The real one is happy-dom's, which fetches a `<link rel="stylesheet">` the
+ * moment it reaches the head - so every run would ask fonts.googleapis.com
+ * for a stylesheet, and a request that outlives the test prints a
+ * NetworkError under a green summary. Offline that is every run. The members
+ * below are the whole of what the service asks a document for.
+ */
+function stubDocument() {
+  const links: StubLink[] = [];
+
+  function createElement(): StubLink {
+    const link: StubLink = {
+      id: "",
+      rel: "",
+      href: "",
+      remove: () => {
+        const index = links.indexOf(link);
+
+        if (index >= 0) links.splice(index, 1);
+      }
+    };
+
+    return link;
+  }
+
+  return {
+    links,
+    document: {
+      createElement,
+      getElementById: (id: string) => links.find(link => link.id === id) ?? null,
+      head: {appendChild: (link: StubLink) => links.push(link)},
+      body: {style: {setProperty: () => undefined, removeProperty: () => undefined}}
+    }
+  };
+}
+
+
 describe("GoogleFontLoaderService", () => {
 
+  let stub: ReturnType<typeof stubDocument>;
+
+
   beforeEach(() => {
-    TestBed.configureTestingModule({providers: [provideZonelessChangeDetection()]});
-  });
+    stub = stubDocument();
 
-
-  afterEach(() => {
-    document.getElementById("ct-google-font")?.remove();
-    document.body.style.removeProperty("--ct-selected-font");
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {provide: DOCUMENT, useValue: stub.document}
+      ]
+    });
   });
 
 
@@ -29,7 +85,7 @@ describe("GoogleFontLoaderService", () => {
 
 
   function href(): string {
-    return document.getElementById("ct-google-font")?.getAttribute("href") ?? "";
+    return stub.links.find(link => link.id === "ct-google-font")?.href ?? "";
   }
 
 
@@ -71,7 +127,7 @@ describe("GoogleFontLoaderService", () => {
     service.loadFont(selection("Merriweather", [400]));
     service.loadFont(selection("Lobster", [400]));
 
-    expect(document.querySelectorAll("#ct-google-font")).toHaveLength(1);
+    expect(stub.links).toHaveLength(1);
     expect(href()).toContain("family=Lobster");
   });
 
@@ -79,7 +135,7 @@ describe("GoogleFontLoaderService", () => {
   it("leaves the document alone when nothing is chosen", () => {
     loader().loadFont(null);
 
-    expect(document.getElementById("ct-google-font")).toBeNull();
+    expect(stub.links).toHaveLength(0);
   });
 
 });
