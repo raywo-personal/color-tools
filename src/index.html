@@ -97,7 +97,13 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <!-- Every weight IBM Plex Sans ships, not just the three the app's own
+       chrome sets. It is also what the website preview falls back to while no
+       typeface is chosen, and the WEIGHT slider then offers the whole
+       300-700 grid - a weight that is not loaded gets synthesised by the
+       browser, and the APCA rating beside it would be judging a faux-bold.
+       `font-picker.spec.ts` pins this list against `WEIGHT_STOPS`. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@100;200;300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 </head>
 <body>
   <ct-root></ct-root>

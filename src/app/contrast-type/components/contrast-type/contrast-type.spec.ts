@@ -2,6 +2,7 @@ import {provideZonelessChangeDetection} from "@angular/core";
 import {TestBed} from "@angular/core/testing";
 import {beforeEach, describe, expect, it} from "vitest";
 import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
+import {provideFakeGoogleFonts} from "@testing/google-fonts.fake";
 import {ContrastType} from "@contrast-type/components/contrast-type/contrast-type";
 
 
@@ -9,7 +10,13 @@ describe("ContrastType", () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideFakeLiveAnnouncer()]
+      providers: [
+        provideZonelessChangeDetection(),
+        provideFakeLiveAnnouncer(),
+        // The typeface control reaches the font catalog, so without the fake
+        // every fixture here would wait on a request that never answers.
+        provideFakeGoogleFonts()
+      ]
     });
   });
 

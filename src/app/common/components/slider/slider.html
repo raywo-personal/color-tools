@@ -10,12 +10,19 @@
      around the track, so on a color axis it runs over the panel instead of
      over the visitor's own color. -->
 <input type="range"
-       class="h-11 w-full cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+       class="h-11 w-full cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed"
        [id]="inputId"
        [min]="min()"
        [max]="max()"
        [step]="step()"
+       [disabled]="disabled()"
        [attr.aria-valuetext]="valueText()"
+       [attr.aria-describedby]="description() ? descriptionId : null"
        [style.--ct-track-image]="track()"
        [(ngModel)]="value"
        (change)="commit.emit()">
+
+@if (description()) {
+  <p class="mt-1 font-sans text-sm text-dim"
+     [id]="descriptionId">{{ description() }}</p>
+}

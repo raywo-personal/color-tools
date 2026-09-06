@@ -242,4 +242,47 @@ describe("loadAppStateReducer", () => {
     });
   });
 
+
+  it("restores the chosen typeface with the weights it was stored with", () => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      selectedFont: {
+        family: "Merriweather",
+        category: "serif",
+        variant: "regular",
+        weights: [300, 400, 700, 900]
+      }
+    }));
+
+    expect(loaded().selectedFont?.weights).toEqual([300, 400, 700, 900]);
+  });
+
+
+  it("gives a typeface stored before the weights existed an empty list", () => {
+    // Both readers of the field fall back on an empty list - the slider to the
+    // whole grid, the loader to the family's default weight - and neither
+    // survives an `undefined`.
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      selectedFont: {family: "Lobster", category: "display", variant: "regular"}
+    }));
+
+    expect(loaded().selectedFont?.weights).toEqual([]);
+  });
+
+
+  it("puts the stored weight on a stop the restored family actually ships", () => {
+    // A reload has to land where the picker would have left the visitor, not
+    // on a weight the browser would synthesise.
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      fontWeight: 500,
+      selectedFont: {
+        family: "Merriweather",
+        category: "serif",
+        variant: "regular",
+        weights: [300, 400, 700, 900]
+      }
+    }));
+
+    expect(loaded().typeSettings.fontWeight).toBe(400);
+  });
+
 });
