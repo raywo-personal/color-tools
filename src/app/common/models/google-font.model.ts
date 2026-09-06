@@ -112,10 +112,11 @@ export function fontWeightsOf(font: GoogleFont): number[] {
  *
  * The family's own weights, narrowed to the range the control covers. A
  * selection without weights - none chosen, or one stored before the field
- * existed - falls back to the whole grid, which is what the app's own type
- * stack offers. So does a family that ships nothing inside the range at all:
- * a slider with no stop would be worse than one whose ends the browser has to
- * synthesise.
+ * existed - falls back to `fallback`, which is what the app's own type offers
+ * for the role in question: the whole grid for the sans, fewer for the mono -
+ * see `appTypeFor()`. So does a family that ships nothing inside the range at
+ * all: a slider with no stop would be worse than one whose ends the browser
+ * has to synthesise.
  *
  * **The fallback is the one place the loader and this function disagree.**
  * `fontWeightsOf()` leaves the italics out, so an italic-only family arrives
@@ -125,10 +126,11 @@ export function fontWeightsOf(font: GoogleFont): number[] {
  * would leave the slider standing on a single weight and say the family ships
  * one, which is no truer.
  */
-export function weightStopsFor(font: SelectedFont | null): readonly number[] {
+export function weightStopsFor(font: SelectedFont | null,
+                               fallback: readonly number[] = WEIGHT_STOPS): readonly number[] {
   const stops = (font?.weights ?? []).filter(
     weight => weight >= FONT_WEIGHT_RANGE.min && weight <= FONT_WEIGHT_RANGE.max
   );
 
-  return stops.length > 0 ? stops : WEIGHT_STOPS;
+  return stops.length > 0 ? stops : fallback;
 }

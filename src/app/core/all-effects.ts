@@ -8,12 +8,12 @@ import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {ColorThemeService} from "@common/services/color-theme.service";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
-import {colorThemeChangeEffect, fontAnnouncedEffect, fontSelectedEffect} from "@core/common/common.effects";
+import {colorThemeChangeEffect, fontAnnouncedEffect, loadFontsEffect} from "@core/common/common.effects";
 import {colorChangedEffect, randomColorAnnouncedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
 import {newPaletteAnnouncedEffect} from "@core/palettes/palettes.effects";
 import {contrastPairAnnouncedEffect} from "@core/contrast/contrast.effects";
 import {map} from "rxjs";
-import {restoreFontEffect, saveStateEffect} from "@core/common/persistence.effects";
+import {saveStateEffect} from "@core/common/persistence.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {transferEvents} from "@core/common/transfer.events";
 
@@ -32,9 +32,7 @@ export function allEffects(
   return {
     setColorTheme$: colorThemeChangeEffect(events, themeService),
 
-    loadFont$: fontSelectedEffect(events, fontLoaderService),
-
-    restoreFont$: restoreFontEffect(events, fontLoaderService, store),
+    loadFonts$: loadFontsEffect(events, fontLoaderService, store),
 
     fontAnnounced$: fontAnnouncedEffect(events, announcer, store),
 

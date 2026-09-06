@@ -1,5 +1,6 @@
 import {ColorTheme} from "./color-theme.model";
 import {SelectedFont} from "@common/models/google-font.model";
+import {TypeRolesMap} from "@common/models/type-role-settings.model";
 
 
 export const LOCAL_STORAGE_KEY = "color-tools";
@@ -10,20 +11,28 @@ export interface SettingsMap {
   currentPaletteId: string;
   /** The roll behind `currentPaletteId`, so a drag after a reload continues it. */
   paletteSeed: number;
-  selectedFont: SelectedFont | null;
   contrastId: string;
   /**
-   * The three axes of `typeSettings`, one key each rather than one nested
-   * object: the map is flat everywhere else, and `set()` writes a key at a
-   * time.
+   * The four type roles as one entry, face and settings per role. Nested
+   * where the map is otherwise flat, because the alternative is sixteen keys
+   * that only ever change together.
    *
    * Deliberately absent from `EMPTY_SETTINGS` - see the note there. The
-   * fallback is `initialState.typeSettings`, so the preview and the rating
-   * open on the same values a first-time visitor gets.
+   * fallback is `initialState.typeRoles`, so the preview and the rating open
+   * on the same values a first-time visitor gets.
    */
-  fontSize: number;
-  fontWeight: number;
-  lineHeight: number;
+  typeRoles: TypeRolesMap;
+  /**
+   * The single typeface and its three axes, from before the type roles. Read
+   * as body text's face and settings where `typeRoles` holds no entry for
+   * body, never written: a visitor who set their type before the roles keeps
+   * it. Remove the four together, and only once no storage still carries
+   * them.
+   */
+  selectedFont?: SelectedFont | null;
+  fontSize?: number;
+  fontWeight?: number;
+  lineHeight?: number;
 }
 
 export type SettingKey = keyof SettingsMap;
@@ -39,6 +48,5 @@ export type SettingKey = keyof SettingsMap;
  */
 export const EMPTY_SETTINGS: Partial<SettingsMap> = {
   currentPaletteId: "",
-  selectedFont: null,
   contrastId: ""
 };

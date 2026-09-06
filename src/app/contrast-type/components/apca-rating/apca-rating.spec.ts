@@ -7,25 +7,25 @@ import {AppStateStore} from "@core/app-state.store";
 import {commonEvents} from "@core/common/common.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {createContrastColors} from "@engine/contrast/contrast-colors.model";
-import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
+import {TypeRole} from "@engine/contrast/type-role.model";
 import {ApcaRating} from "@contrast-type/components/apca-rating/apca-rating";
 
 
 /**
- * The three pairs the cases are built from, and what the table makes of them.
+ * The pairs the cases are built from.
  *
- * `MID` is the one that carries most of the work: at Lc 74.3 it sits just under
- * 18px/400's requirement of 75 and clears 21px/400's 70, so it separates two
- * neighbouring rows the way #116 asked a spec to. Colours are pinned here
- * rather than in each case because the requirements they are read against are
+ * The headline and the body text are the pair's text on the pair's ground, so
+ * with the display or the body role selected the figure is the pair's own Lc,
+ * and a pair pins the figure exactly. `JUST_UNDER_75` sits one grey step
+ * under body text's requirement at 18px/400. Colours are pinned here rather
+ * than in each case because the requirements they are read against are
  * `apcaLookup`'s, not a generator's - see "Pin behaviour, not colours".
  */
 const DARK_ON_LIGHT = createContrastColors(chroma("#000000"), chroma("#ffffff"));
 const LIGHT_ON_DARK = createContrastColors(chroma("#ffffff"), chroma("#000000"));
-const MID = createContrastColors(chroma("#707070"), chroma("#ffffff"));
 const IDENTICAL = createContrastColors(chroma("#334455"), chroma("#334455"));
 
-/** Lc 74.76 - one grey step off `MID`, and the far side of 18px/400's 75. */
+/** Lc 74.76, which a figure rounded to the nearest would write as 75. */
 const JUST_UNDER_75 = createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"));
 
 
@@ -39,246 +39,220 @@ describe("ApcaRating", () => {
   });
 
 
-  async function rating(colors = DARK_ON_LIGHT, settings: TypeSettings = DEFAULT_TYPE_SETTINGS) {
+  async function rating(colors = DARK_ON_LIGHT, role: TypeRole = "body") {
     // The store registers its reducers when it is created, so an event
     // dispatched before that is lost and the initial state stands.
     TestBed.inject(AppStateStore);
 
     const dispatcher = TestBed.inject(Dispatcher);
     dispatcher.dispatch(contrastEvents.contrastColorsChangedWithoutNav(colors));
-    dispatcher.dispatch(commonEvents.typeSettingsChanged(settings));
+    dispatcher.dispatch(commonEvents.typeRoleSelected(role));
 
     const fixture = TestBed.createComponent(ApcaRating);
     await fixture.whenStable();
 
     const host = fixture.nativeElement as HTMLElement;
+    const paragraphs = () => Array.from(host.querySelectorAll("p"));
 
-    function text(selector: string): string {
-      return host.querySelector(selector)?.textContent?.trim() ?? "";
-    }
-
-    function items(): HTMLLIElement[] {
-      return Array.from(host.querySelectorAll("li"));
-    }
-
-    function rows() {
-      return items().map(item => {
-        const spans = Array.from(item.querySelectorAll("span"));
-
-        return {
-          caption: spans[0].textContent?.trim() ?? "",
-          spec: spans[1].textContent?.trim() ?? "",
-          verdict: spans[2].textContent?.trim() ?? ""
-        };
-      });
-    }
-
-    /** What the row's marker is, read off its shape rather than its colour. */
-    function markers(): string[] {
-      return items().map(item => item.querySelector("[data-marker]")?.getAttribute("data-marker") ?? "");
+    function caption(): string {
+      return paragraphs()[0].textContent?.trim() ?? "";
     }
 
     /** The unit and the figure. */
     function figureParts(): (string | undefined)[] {
-      return Array.from(host.querySelectorAll("p")[0].querySelectorAll("span"))
+      return Array.from(paragraphs()[1].querySelectorAll("span"))
         .map(span => span.textContent?.trim());
     }
 
-    /** Which neutral token each row is set in. */
-    function emphasis(): string[] {
-      return items().map(item => item.classList.contains("text-text") ? "loud" : "quiet");
+    function row() {
+      const spans = Array.from(paragraphs()[2].querySelectorAll("span"));
+
+      return {
+        caption: spans[0].textContent?.trim() ?? "",
+        spec: spans[1].textContent?.trim() ?? "",
+        verdict: spans[2].textContent?.trim() ?? "",
+        marker: paragraphs()[2].querySelector("[data-marker]")?.getAttribute("data-marker") ?? "",
+        /** Whether the spec and the verdict stand in `text`, whatever the row's colour. */
+        carries: [spans[1], spans[2]].map(span => span.classList.contains("text-text"))
+      };
     }
 
-    return {fixture, host, text, items, rows, markers, figureParts, emphasis};
+    function note(): string {
+      return paragraphs()[3].textContent?.trim() ?? "";
+    }
+
+    function pairNote(): string {
+      return paragraphs()[4].textContent?.trim() ?? "";
+    }
+
+    async function selectRole(next: TypeRole) {
+      dispatcher.dispatch(commonEvents.typeRoleSelected(next));
+      await fixture.whenStable();
+    }
+
+    return {fixture, host, caption, figureParts, row, note, pairNote, selectRole};
   }
 
 
+  it("says which role the figure is about", async () => {
+    const {caption, selectRole} = await rating();
+
+    expect(caption()).toBe("BODY");
+
+    await selectRole("ui");
+
+    expect(caption()).toBe("UI");
+  });
+
+
   it("writes the Lc without its sign, under the unit APCA leads with", async () => {
-    // The verdicts are all reached through Math.abs(), so a minus on the hero
+    // The verdict is reached through Math.abs(), so a minus on the hero
     // figure would suggest a deficit it never causes. The sign is a polarity,
-    // and the sentence below says it in words.
-    const {figureParts} = await rating(LIGHT_ON_DARK);
+    // and the footnote says it in words.
+    const {figureParts} = await rating(LIGHT_ON_DARK, "display");
 
     expect(figureParts()).toEqual(["Lc", "107"]);
   });
 
 
-  it("rounds the figure down, so it never heads a row it contradicts", async () => {
+  it("rounds the figure down, so it never heads a verdict it contradicts", async () => {
     // Rounded to the nearest, Lc 74.76 would read `Lc 75` over a row asking
     // for exactly that and marked a fail.
-    const {figureParts, rows} = await rating(JUST_UNDER_75);
+    const {figureParts, row} = await rating(JUST_UNDER_75, "body");
 
     expect(figureParts()).toEqual(["Lc", "74"]);
-    expect(rows()[0].verdict).toBe("Needs Lc 75");
+    expect(row().verdict).toBe("Needs Lc 75");
+    expect(row().marker).toBe("cross");
   });
 
 
-  it("says a positive Lc as dark text on a light background", async () => {
-    const {host} = await rating(DARK_ON_LIGHT);
+  it("names the element the figure reads, at its own size and the role's weight", async () => {
+    const {row} = await rating(DARK_ON_LIGHT, "display");
 
-    expect(host.querySelectorAll("p")[1].textContent).toContain("Dark text on a light background");
+    expect(row().caption).toBe("HEADLINE");
+    expect(row().spec).toBe("44px / 500");
+    expect(row().verdict).toBe("Pass");
+    expect(row().marker).toBe("tick");
   });
 
 
-  it("says a negative Lc as light text on a dark background", async () => {
-    // The information the dropped sign carries: swapping the pair is not a
-    // cosmetic choice.
-    const {host} = await rating(LIGHT_ON_DARK);
+  it("reads body text's figure off the running text, not off the small print", async () => {
+    // The small print is set in the dim ink at 13px, which the table rates at
+    // Lc 100 - a bar black on white does not clear. A figure reading the
+    // role's weakest element failed whatever the pair was and said nothing.
+    const {row, figureParts} = await rating(DARK_ON_LIGHT, "body");
 
-    expect(host.querySelectorAll("p")[1].textContent).toContain("Light text on a dark background");
+    expect(row().caption).toBe("BODY TEXT");
+    expect(row().spec).toBe("18px / 400");
+    expect(row().verdict).toBe("Pass");
+    expect(figureParts()).toEqual(["Lc", "106"]);
   });
 
 
-  it("claims no polarity where there is nothing to tell apart", async () => {
+  it("moves the figure with the role, so switching roles walks the page through its sizes", async () => {
+    const {row, selectRole} = await rating(DARK_ON_LIGHT, "display");
+
+    expect(row().spec).toBe("44px / 500");
+
+    await selectRole("body");
+
+    expect(row().caption).toBe("BODY TEXT");
+    expect(row().spec).toBe("18px / 400");
+  });
+
+
+  it("calls a size the table declines to rate unrated rather than failed", async () => {
+    // Every cell of the 12px row is null, and the mono role opens at 12px.
+    // That is not a pairing that came up short, so it gets its own marker and
+    // its own word.
+    const {row, note} = await rating(DARK_ON_LIGHT, "mono");
+
+    expect(row().verdict).toBe("Not rated");
+    expect(row().marker).toBe("dash");
+    expect(note()).toContain("has no requirement in the table.");
+  });
+
+
+  it("says what the element sits on, what it needs, and what would carry it", async () => {
+    // Lc 74.76 at 18px / 400: the 21px row asks 70, and weight 500 at 18px
+    // asks 70.
+    const {note} = await rating(JUST_UNDER_75, "body");
+
+    expect(note()).toBe("Body text on the page at 18px / 400 needs Lc 75. It first passes at 21px on this weight, or at weight 500 at this size.");
+  });
+
+
+  it("says what a passing element is holding on to", async () => {
+    // 44px is rated on the 48px row, where weight 500 asks Lc 38.
+    const {note} = await rating(DARK_ON_LIGHT, "display");
+
+    expect(note()).toBe("Headline on the page at 44px / 500, which the table rates on its 48px row, needs Lc 38. A smaller size or a lighter weight asks for more.");
+  });
+
+
+  it("does not name the element the figure reads as its own ground", async () => {
+    // The filled button is the one element that sits on its own fill, and a
+    // ground named after the button would read `Filled button on the filled
+    // button`. Only the requirement is pinned: what carries it depends on the
+    // accent the palette hands the button.
+    const {note} = await rating(DARK_ON_LIGHT, "ui");
+
+    expect(note()).toContain("Filled button on its own background at 15px / 600 needs Lc 75.");
+    expect(note()).not.toContain("on the filled button");
+  });
+
+
+  it("says so where no size or weight in the table carries the element", async () => {
+    // Two identical colors clear no cell of the table, so there is nothing to
+    // name as a way out.
+    const {note, row} = await rating(IDENTICAL, "display");
+
+    expect(row().verdict).toBe("Needs Lc 38");
+    expect(note()).toContain("No size or weight in the table carries it.");
+  });
+
+
+  it("keeps the pair's own Lc and polarity as a footnote", async () => {
+    // The pair is an input now, not the result - but swapping it is not a
+    // cosmetic choice, and the footnote is where that is still said.
+    const {pairNote} = await rating(LIGHT_ON_DARK, "body");
+
+    expect(pairNote()).toBe("The pair itself: Lc 107, light text on a dark background.");
+  });
+
+
+  it("claims no polarity for the pair where there is nothing to tell apart", async () => {
     // `getAPCAPolarity()` splits at zero and answers `dark-on-light` for a pair
     // of identical colors, which is a direction the visitor cannot see.
-    const {host} = await rating(IDENTICAL);
+    const {pairNote} = await rating(IDENTICAL, "display");
 
-    expect(host.querySelectorAll("p")[1].textContent).toContain("Too close to tell");
+    expect(pairNote()).toBe("The pair itself: Lc 0, too close to tell text from background.");
   });
 
 
-  it("opens the list with the size and weight the type controls hold", async () => {
-    const {rows} = await rating(DARK_ON_LIGHT, {...DEFAULT_TYPE_SETTINGS, fontSize: 21, fontWeight: 600});
-    const own = rows()[0];
+  it("carries the four threshold rows no longer", async () => {
+    // Switching roles is what walks the pair through its sizes now.
+    const {host} = await rating();
 
-    expect(own.caption).toBe("YOUR TYPE");
-    expect(own.spec).toBe("21px / 600");
-  });
-
-
-  it("captions the visitor's row with the size the slider says, not the row it is rated on", async () => {
-    // 17px has no row of its own; the table rates it on 18px. A caption saying
-    // 18px would contradict the control that set it - which row was used is in
-    // the note instead.
-    const {rows, text} = await rating(MID, {...DEFAULT_TYPE_SETTINGS, fontSize: 17});
-
-    expect(rows()[0].spec).toBe("17px / 400");
-    expect(text("ul + p")).toContain("which the table rates on its 18px row");
-  });
-
-
-  it("rates an exact table size against its own row", async () => {
-    // The guard on #116: at Lc 74.3 the 18px row asks 75 and the 21px row 70,
-    // so a size rated one row up would read Pass here.
-    const {rows} = await rating(MID, {...DEFAULT_TYPE_SETTINGS, fontSize: 18});
-
-    expect(rows()[0].verdict).toBe("Needs Lc 75");
-  });
-
-
-  it("carries the three references under the visitor's row", async () => {
-    const {rows} = await rating(DARK_ON_LIGHT);
-
-    expect(rows().map(row => `${row.caption} ${row.spec}`)).toEqual([
-      "YOUR TYPE 18px / 400",
-      "BODY 16px / 400",
-      "LARGE 24px / 400",
-      "SMALLEST 14px / 400"
-    ]);
-  });
-
-
-  it("keeps the reference rows whatever the visitor sets, so the list does not move under a drag", async () => {
-    const {rows} = await rating(DARK_ON_LIGHT, {...DEFAULT_TYPE_SETTINGS, fontSize: 16});
-
-    expect(rows()).toHaveLength(4);
-    expect(rows()[1].spec).toBe("16px / 400");
-  });
-
-
-  it("sets the passing rows in `text` and everything else in `dim`", async () => {
-    // The list answers "where does this pair work", so what it carries reads
-    // first. At Lc 74.3 only the 24px reference passes.
-    const {emphasis} = await rating(MID);
-
-    expect(emphasis()).toEqual(["quiet", "quiet", "loud", "quiet"]);
+    expect(host.querySelectorAll("li")).toHaveLength(0);
+    expect(host.textContent).not.toContain("YOUR TYPE");
   });
 
 
   it("holds the spec and the verdict in `text`, whatever the row's state", async () => {
     // `dim` reaches Lc 68.4 against `bg` in the light theme and 50.9 in the
-    // dark one, and a row that fails asks Lc 100 at the size it is set in: in
-    // the row's own colour its wording would sit below the bar it announces.
-    const {items} = await rating(MID);
+    // dark one, and the row can ask Lc 100 at the size it is set in: in the
+    // row's own colour its wording would sit below the bar it announces.
+    const {row} = await rating(JUST_UNDER_75, "body");
 
-    const carries = (index: number) => items()
-      .map(item => item.querySelectorAll("span")[index].classList.contains("text-text"));
-
-    expect(carries(1)).toEqual([true, true, true, true]);
-    expect(carries(2)).toEqual([true, true, true, true]);
-  });
-
-
-  it("separates a fail from a pass by shape and wording, not by colour", async () => {
-    // At Lc 74.3: 16px asks 90 and 14px asks 100, 24px asks 60.
-    const {rows, markers} = await rating(MID);
-
-    expect(rows().map(row => row.verdict))
-      .toEqual(["Needs Lc 75", "Needs Lc 90", "Pass", "Needs Lc 100"]);
-    expect(markers()).toEqual(["cross", "cross", "tick", "cross"]);
+    expect(row().carries).toEqual([true, true]);
   });
 
 
   it("does not reach for the danger pair, which belongs to the failed copy", async () => {
-    const {host} = await rating(MID);
+    const {host} = await rating(JUST_UNDER_75, "body");
 
     expect(host.innerHTML).not.toContain("danger");
-  });
-
-
-  it("calls a size the table declines to rate unrated rather than failed", async () => {
-    // Every cell of the 12px row is null. That is not a pairing that came up
-    // short, so it gets its own marker and its own word.
-    const {rows, markers} = await rating(DARK_ON_LIGHT, {...DEFAULT_TYPE_SETTINGS, fontSize: 12});
-
-    expect(rows()[0].verdict).toBe("Not rated");
-    expect(markers()[0]).toBe("dash");
-  });
-
-
-  it("names what would carry a failing pair", async () => {
-    const {text} = await rating(MID, {...DEFAULT_TYPE_SETTINGS, fontSize: 18});
-
-    expect(text("ul + p"))
-      .toBe("At 18px / 400 the requirement is Lc 75. This pair first passes at 21px on this weight, or at weight 500 at this size.");
-  });
-
-
-  it("says the table sets no requirement where it declines to rate the size", async () => {
-    // The size slider reaches 11px, so the unrated row is not a corner the
-    // visitor has to be talked into.
-    const {text} = await rating(DARK_ON_LIGHT, {...DEFAULT_TYPE_SETTINGS, fontSize: 12});
-
-    expect(text("ul + p"))
-      .toBe("At 12px / 400 the table sets no requirement. This pair first passes at 14px on this weight.");
-  });
-
-
-  it("says so where no size or weight in the table carries the pair", async () => {
-    // Two identical colors clear no cell of the table, so there is nothing to
-    // name as a way out.
-    const {text} = await rating(IDENTICAL);
-
-    expect(text("ul + p"))
-      .toBe("At 18px / 400 the requirement is Lc 75. No size or weight in the table carries this pair.");
-  });
-
-
-  it("says what a passing pair is holding on to", async () => {
-    const {text} = await rating(DARK_ON_LIGHT, {...DEFAULT_TYPE_SETTINGS, fontSize: 16});
-
-    expect(text("ul + p"))
-      .toBe("At 16px / 400 the requirement is Lc 90. A smaller size or a lighter weight asks for more.");
-  });
-
-
-  it("announces the badges as a list", async () => {
-    // Preflight removes the list style, and Safari with VoiceOver then stops
-    // treating the element as a list.
-    const {host} = await rating();
-
-    expect(host.querySelector("ul")?.getAttribute("role")).toBe("list");
   });
 
 

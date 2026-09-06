@@ -1,79 +1,49 @@
 import {Component, computed, inject} from "@angular/core";
 import {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
-import {mixColors} from "@engine/color/mix-color.helper";
-import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
-import {Palette, PALETTE_SLOTS} from "@engine/palette/palette.model";
+import {fontFamilyFor, TypeRolesMap} from "@common/models/type-role-settings.model";
+import {sampleElement, samplePageColors} from "@contrast-type/models/sample-page.model";
 
 
 /**
- * The type scale, as multiples of the size the visitor set. The numbers are
- * the draft's.
+ * The leadings that do not take the role's value as it is: the lead paragraph
+ * rides slightly tighter than the body it introduces, and the quote tighter
+ * still, both as a share of body text's leading so the slider still moves
+ * them.
  */
-const HEADING_RATIO = 2.5;
-const LEAD_RATIO = 1.22;
-const QUOTE_RATIO = 1.3;
-const BUTTON_RATIO = 0.85;
-const SMALL_RATIO = 0.72;
-
-/** A headline is never lighter than this, whatever the body weight is. */
-const HEADING_MIN_WEIGHT = 500;
-
-/** A button label is set at one weight, the way a real site's would be. */
-const BUTTON_WEIGHT = 500;
-
-/**
- * The leadings that do not follow the control: a display line sets its own,
- * and the lead paragraph rides slightly tighter than the body it introduces.
- */
-const HEADING_LINE_HEIGHT = 1.1;
-const QUOTE_LINE_HEIGHT = 1.35;
 const LEAD_LEADING_FACTOR = 0.95;
+const QUOTE_LEADING_FACTOR = 0.85;
 
 /**
- * The fake site's own chrome, in pixels and not following `SIZE`.
+ * The fake site's wordmark, in pixels and not following any role.
  *
- * The draft draws it this way and a real site does too: a wordmark and a nav
- * link do not track the body size of the article below them. What `SIZE`
- * governs is the reading content - the headline, the lead, the body, the quote
- * and the small print - because that is the type the visitor is choosing and
- * the type the rating will judge.
+ * The draft draws it this way and a real site does too: a wordmark does not
+ * track the type of the article below it. It is the one piece of text on the
+ * page outside the four roles, and the rating leaves it alone for the same
+ * reason.
  *
  * Pixels, like every font size inside the preview: the preview is the thing
  * being measured, and APCA is defined on pixel sizes. See `TypeSettings`. The
  * preview's spacing is not measured and stays on Tailwind's rem scale.
  */
 const WORDMARK_SIZE = 17;
-const NAV_ITEM_SIZE = 13;
-const SIGN_IN_SIZE = 12;
-const EYEBROW_SIZE = 10;
-const CARD_LABEL_SIZE = 9;
 
-/**
- * How far each derived surface is mixed, and towards what. The draft's
- * fractions, mixed in OKLab - see `mixColors()`.
- */
-const NAV_TINT = 0.05;
-const CARD_TINT = 0.09;
-const DIM_MIX = 0.4;
-const NAV_BORDER_MIX = 0.12;
-const FOOTER_BORDER_MIX = 0.14;
 
-/**
- * Above this WCAG relative luminance the nav bar is tinted towards black, below
- * it towards white - so the bar lifts off the page in either direction rather
- * than always in one.
- */
-const LIGHT_BACKGROUND_LUMINANCE = 0.4;
+/** The type one element is set in, ready for the style bindings. */
+interface ElementType {
 
-const BLACK = "#000000";
-const WHITE = "#FFFFFF";
+  readonly fontFamily: string;
+  readonly fontSize: string;
+  readonly fontWeight: number;
+  readonly lineHeight: number;
+
+}
 
 
 interface PreviewStyle {
 
+  /** Body text's face, on the page itself, so the wordmark inherits it. */
   readonly fontFamily: string;
-  readonly monoFamily: string;
 
   readonly pageBackground: string;
   readonly pageColor: string;
@@ -87,72 +57,39 @@ interface PreviewStyle {
   readonly ghostBorder: string;
   readonly footerBorder: string;
 
-  readonly bodyWeight: number;
-  readonly headingWeight: number;
-  readonly buttonWeight: number;
-
-  readonly bodyLineHeight: number;
-  readonly leadLineHeight: number;
-  readonly headingLineHeight: number;
-  readonly quoteLineHeight: number;
-
-  readonly bodySize: string;
-  readonly headingSize: string;
-  readonly leadSize: string;
-  readonly buttonSize: string;
-  readonly quoteSize: string;
-  readonly smallSize: string;
-
   readonly wordmarkSize: string;
-  readonly navItemSize: string;
-  readonly signInSize: string;
-  readonly eyebrowSize: string;
-  readonly cardLabelSize: string;
+
+  readonly navItems: ElementType;
+  readonly signIn: ElementType;
+  readonly eyebrow: ElementType;
+  readonly headline: ElementType;
+  readonly lead: ElementType;
+  readonly filledButton: ElementType;
+  readonly ghostButton: ElementType;
+  readonly bodyText: ElementType;
+  readonly cardLabel: ElementType;
+  readonly quote: ElementType;
+  readonly smallPrint: ElementType;
 
 }
 
 
 /**
- * A page of running text set in the pair, at the size, weight and leading the
- * type controls hold.
+ * A page of sample copy set in the pair, in the four type roles at the faces,
+ * sizes, weights and leadings the type controls hold.
  *
- * **Nothing in here corrects its own contrast against the pair.** The text
- * takes the text color and the page takes the background, whatever those two
- * do to each other - a preview that quietly picked a readable foreground would
- * answer the visitor's question for them. That is the one place the app's APCA
- * foreground rule does not reach; it applies to chrome the app draws on a
- * visitor color, and this is not chrome.
+ * **Every element takes its type from its role.** Which role that is, and at
+ * what share of the role's size the element is set, is `SAMPLE_ELEMENTS` in
+ * `sample-page.model.ts` - the same list the rating measures, so the figure
+ * in the left column is about the page on the right. Nothing in here derives
+ * one role from another: the headline's weight is the display role's, not a
+ * step up from body text's, so a display face that ships one weight is set in
+ * that weight rather than in a synthesised semibold.
  *
- * The one foreground that is chosen rather than given is the label on the
- * accent button, because the accent comes from the palette and is not the pair
- * the rating judges. An unreadable label there says nothing about the pairing
- * and only looks broken.
- *
- * **The palette is read in fixed roles, not through a control.** The accent -
- * wordmark, `Sign in`, the filled button, the card's edge - the ghost
- * button's outline, the eyebrow and the card's tint are the four roles, and
- * they take their colors from `PALETTE_SLOTS` in order, skipping whichever
- * slot is also the pair's ground. So a visitor sees four of their five
- * colors on a page of text without a single selector, in a column that also
- * carries the rating, the typeface and the type controls.
- *
- * Which slot fills which role is deliberately not a setting beyond that.
- * The palette id is full, so an assignment would survive a reload but not a
- * shared link; the rating judges the pair and would say nothing about an
- * accent the visitor had just tuned; and `roleCaptionFor()` already names the
- * slots, so a second vocabulary would be a second name for the same color.
- *
- * **Skipping the ground rather than filling it in.** `color0` is also a
- * candidate for the pair's background once `PALETTE PAIR` or the initial
- * state draws the pair from the same five colors, and a role landing on the
- * ground would put the wordmark, a button or the card's edge on top of a
- * color identical to the page - not a low-contrast choice but an invisible
- * one, on about a fifth of palettes. Reading the roles from the four slots
- * that are not the ground fixes that without a threshold: `color4`, normally
- * passed over, takes a role's place exactly when its predecessor is the
- * ground. Where none of the five slots is the ground - a rolled or hand-set
- * pair, not one taken from the palette - the first four stand as before and
- * `color4` stays unused, same as ever.
+ * **The colors come from `samplePageColors()`**, for the same reason: the
+ * rating measures the inks and grounds the page is drawn in, and one
+ * derivation keeps the two from drifting apart. Its comment says why the pair
+ * is painted as it is and how the palette is read.
  *
  * **Nothing in here is focusable or announced as a control.** The nav links,
  * `Sign in` and the two buttons are text: a focusable button that does nothing
@@ -174,107 +111,62 @@ export class WebsitePreview {
   protected readonly navItems = ["Notes", "Palettes", "About"];
 
   protected readonly style = computed<PreviewStyle>(() => {
-    const {text, background} = this.#stateStore.contrastColors();
-    const {fontSize, fontWeight, lineHeight} = this.#stateStore.typeSettings();
-    const palette = this.#stateStore.currentPalette();
-
-    const [accent, ghostBorderColor, accentSoft, cardTintColor] = roleColorsFrom(palette, background);
-    const navTarget = background.luminance() > LIGHT_BACKGROUND_LUMINANCE ? BLACK : WHITE;
+    const colors = samplePageColors(this.#stateStore.contrastColors(), this.#stateStore.currentPalette());
+    const roles = this.#stateStore.typeRoles();
 
     return {
-      fontFamily: this.#fontFamily(),
-      monoFamily: "var(--font-mono)",
+      fontFamily: fontFamilyFor("body", roles.body.font),
 
-      pageBackground: hex(background),
-      pageColor: hex(text),
-      dimColor: hex(mixColors(text, background, DIM_MIX)),
-      navBackground: hex(mixColors(background, navTarget, NAV_TINT)),
-      navBorder: hex(mixColors(background, text, NAV_BORDER_MIX)),
-      accent: hex(accent),
-      accentSoft: hex(accentSoft),
-      // Black or white, whichever APCA puts further from the accent. The
-      // choice does not depend on a size, so none is passed: the button label
-      // is set at a fraction of `SIZE` and has no fixed row in the table.
-      onAccent: hex(findOptimalTextColor(accent).color),
-      cardBackground: hex(mixColors(background, cardTintColor, CARD_TINT)),
-      // A palette color rather than a mix out of the pair, so the secondary
-      // action reads as a second colour of the visitor's own. Only the outline
-      // depends on it: the label keeps the pair's text color, so a border that
-      // sits at the page's lightness would cost the box, not the words - and
-      // `roleColorsFrom()` is what keeps it off the ground in the first place.
-      ghostBorder: hex(ghostBorderColor),
-      footerBorder: hex(mixColors(background, text, FOOTER_BORDER_MIX)),
-
-      bodyWeight: fontWeight,
-      headingWeight: Math.max(fontWeight, HEADING_MIN_WEIGHT),
-      buttonWeight: BUTTON_WEIGHT,
-
-      bodyLineHeight: lineHeight,
-      leadLineHeight: lineHeight * LEAD_LEADING_FACTOR,
-      headingLineHeight: HEADING_LINE_HEIGHT,
-      quoteLineHeight: QUOTE_LINE_HEIGHT,
-
-      bodySize: px(fontSize),
-      headingSize: px(Math.round(fontSize * HEADING_RATIO)),
-      leadSize: px(Math.round(fontSize * LEAD_RATIO)),
-      buttonSize: px(Math.round(fontSize * BUTTON_RATIO)),
-      quoteSize: px(Math.round(fontSize * QUOTE_RATIO)),
-      smallSize: px(Math.round(fontSize * SMALL_RATIO)),
+      pageBackground: hex(colors.page),
+      pageColor: hex(colors.text),
+      dimColor: hex(colors.dim),
+      navBackground: hex(colors.nav),
+      navBorder: hex(colors.navBorder),
+      accent: hex(colors.accent),
+      accentSoft: hex(colors.accentSoft),
+      onAccent: hex(colors.onAccent),
+      cardBackground: hex(colors.card),
+      ghostBorder: hex(colors.ghostBorder),
+      footerBorder: hex(colors.footerBorder),
 
       wordmarkSize: px(WORDMARK_SIZE),
-      navItemSize: px(NAV_ITEM_SIZE),
-      signInSize: px(SIGN_IN_SIZE),
-      eyebrowSize: px(EYEBROW_SIZE),
-      cardLabelSize: px(CARD_LABEL_SIZE)
+
+      navItems: elementType("navItems", roles),
+      signIn: elementType("signIn", roles),
+      eyebrow: elementType("eyebrow", roles),
+      headline: elementType("headline", roles),
+      lead: elementType("lead", roles, LEAD_LEADING_FACTOR),
+      filledButton: elementType("filledButton", roles),
+      ghostButton: elementType("ghostButton", roles),
+      bodyText: elementType("bodyText", roles),
+      cardLabel: elementType("cardLabel", roles),
+      quote: elementType("quote", roles, QUOTE_LEADING_FACTOR),
+      smallPrint: elementType("smallPrint", roles)
     };
   });
 
+}
 
-  /**
-   * The family the preview is set in.
-   *
-   * `selectedFont` is written by `commonEvents.fontSelected`, which the
-   * typeface control above the sliders raises. Nothing chosen - a first visit,
-   * or a cleared selection - leaves the fallback standing, so the preview runs
-   * on the app's own stack rather than on an empty `font-family`.
-   */
-  #fontFamily(): string {
-    const font = this.#stateStore.selectedFont();
 
-    return font ? `"${font.family}", ${font.category}` : "var(--font-sans)";
-  }
+/**
+ * The type an element is set in: its role's face, weight and leading, and
+ * the role's size at the element's share of it.
+ */
+function elementType(key: string, roles: TypeRolesMap, leadingFactor = 1): ElementType {
+  const element = sampleElement(key);
+  const {font, settings} = roles[element.role];
 
+  return {
+    fontFamily: fontFamilyFor(element.role, font),
+    fontSize: px(Math.round(settings.fontSize * element.sizeRatio)),
+    fontWeight: settings.fontWeight,
+    lineHeight: settings.lineHeight * leadingFactor
+  };
 }
 
 
 function hex(color: Color): string {
   return color.hex("rgb");
-}
-
-
-/**
- * The four roles' colors - accent, ghost border, eyebrow, card tint, in that
- * order - read from the palette in slot order, skipping whichever slot is
- * also the pair's ground.
- *
- * `color0` is both the accent and a candidate for the ground once the pair is
- * taken from the same five colors, and a role landing on the ground is not a
- * low-contrast choice but an invisible one - about a fifth of palettes would
- * otherwise put the wordmark, a button or the card's edge on the page's own
- * color. Reading the remaining four slots in order settles it without a
- * threshold, and finally gives `color4` a job.
- *
- * Where none of the five slots is the ground - a rolled or hand-set pair, not
- * one taken from the palette - all five stay candidates and the first four
- * stand as before.
- */
-function roleColorsFrom(palette: Palette, ground: Color): readonly [Color, Color, Color, Color] {
-  const members = PALETTE_SLOTS.map(slot => palette[slot].color);
-  const groundHex = hex(ground);
-  const withoutGround = members.filter(color => hex(color) !== groundHex);
-  const roles = withoutGround.length >= 4 ? withoutGround : members;
-
-  return [roles[0], roles[1], roles[2], roles[3]];
 }
 
 

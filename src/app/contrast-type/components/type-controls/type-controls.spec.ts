@@ -6,10 +6,12 @@ import {AppStateStore} from "@core/app-state.store";
 import {commonEvents} from "@core/common/common.events";
 import {LOCAL_STORAGE_KEY, SettingsMap} from "@common/models/local-storage.model";
 import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
+import {DEFAULT_TYPE_SETTINGS_BY_ROLE, DISPLAY_FONT_SIZE_RANGE, TypeRole} from "@engine/contrast/type-role.model";
 import {SelectedFont} from "@common/models/google-font.model";
 import {TypeControls} from "@contrast-type/components/type-controls/type-controls";
 import {provideFakeGoogleFonts} from "@testing/google-fonts.fake";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
+import {provideSilentFontLoader} from "@testing/font-loader.fake";
 
 
 /** A selection as the picker builds one, with the weights of a real family. */
@@ -26,22 +28,26 @@ describe("TypeControls", () => {
       providers: [
         provideZonelessChangeDetection(),
         provideFakeGoogleFonts(),
-        provideFakeLiveAnnouncer()
+        provideFakeLiveAnnouncer(),
+        provideSilentFontLoader()
       ]
     });
   });
 
 
   async function controls(settings: TypeSettings = DEFAULT_TYPE_SETTINGS,
-                          font: SelectedFont | null = null) {
+                          font: SelectedFont | null = null,
+                          role: TypeRole = "body") {
     // The store registers its reducers when it is created, so an event
     // dispatched before that is lost and the initial settings stand.
     const store = TestBed.inject(AppStateStore);
+    const dispatcher = TestBed.inject(Dispatcher);
 
     // The font first: picking one snaps the weight to what the family ships,
     // so the settings have to be written against the family already chosen.
-    if (font) TestBed.inject(Dispatcher).dispatch(commonEvents.fontSelected(font));
-    TestBed.inject(Dispatcher).dispatch(commonEvents.typeSettingsChanged(settings));
+    if (font) dispatcher.dispatch(commonEvents.fontSelected({role, font}));
+    dispatcher.dispatch(commonEvents.typeSettingsChanged({role, settings}));
+    dispatcher.dispatch(commonEvents.typeRoleSelected(role));
 
     const fixture = TestBed.createComponent(TypeControls);
     await fixture.whenStable();
@@ -71,6 +77,20 @@ describe("TypeControls", () => {
       return describedBy
         ? host.querySelector(`#${describedBy}`)?.textContent?.trim() ?? ""
         : "";
+    }
+
+    /** What the line under the field says the role is set in. */
+    function usage(): string {
+      const describedBy = host.querySelector("input[role=combobox]")?.getAttribute("aria-describedby");
+
+      return describedBy
+        ? host.querySelector(`#${describedBy}`)?.textContent?.trim() ?? ""
+        : "";
+    }
+
+    function summary(): string[] {
+      return Array.from(host.querySelectorAll("li"))
+        .map(item => item.textContent?.replace(/\s+/g, " ").trim() ?? "");
     }
 
     async function pickFont(query: string) {
@@ -104,6 +124,11 @@ describe("TypeControls", () => {
       await fixture.whenStable();
     }
 
+    async function selectRole(next: TypeRole) {
+      dispatcher.dispatch(commonEvents.typeRoleSelected(next));
+      await fixture.whenStable();
+    }
+
     function stored(): Partial<SettingsMap> {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
 
@@ -111,8 +136,8 @@ describe("TypeControls", () => {
     }
 
     return {
-      fixture, store, host, sliders, labels, values, weightSlider, weightNote,
-      pickFont, clearFont, drag, release, stored
+      fixture, store, host, sliders, labels, values, weightSlider, weightNote, usage, summary,
+      pickFont, clearFont, drag, release, selectRole, stored
     };
   }
 
@@ -124,7 +149,7 @@ describe("TypeControls", () => {
   });
 
 
-  it("stands at the settings the store holds", async () => {
+  it("stands at the settings the store holds for the selected role", async () => {
     // The weight slider counts rows of the weight grid, so 600 is the fourth
     // of 300, 400, 500, 600, 700.
     const {sliders} = await controls({fontSize: 21, fontWeight: 600, lineHeight: 1.45});
@@ -137,6 +162,68 @@ describe("TypeControls", () => {
     const {values} = await controls({fontSize: 21, fontWeight: 600, lineHeight: 1.45});
 
     expect(values()).toEqual(["21px", "600", "1.45"]);
+  });
+
+
+  it("switches to the selected role's values when the segments change it", async () => {
+    // The sliders are one set for four roles; which role they show is the
+    // store's `typeRole`, and a switch must move all three.
+    const {sliders, selectRole} = await controls();
+
+    await selectRole("display");
+    const display = DEFAULT_TYPE_SETTINGS_BY_ROLE.display;
+
+    expect(sliders()[0].value).toBe(String(display.fontSize));
+    expect(sliders()[2].value).toBe(String(display.lineHeight));
+  });
+
+
+  it("moves the SIZE slider over the display range for the display role", async () => {
+    // A headline at 34px is not a headline; the range the slider covers is the
+    // role's, not body text's.
+    const {sliders} = await controls(DEFAULT_TYPE_SETTINGS_BY_ROLE.display, null, "display");
+
+    expect(sliders()[0].min).toBe(String(DISPLAY_FONT_SIZE_RANGE.min));
+    expect(sliders()[0].max).toBe(String(DISPLAY_FONT_SIZE_RANGE.max));
+  });
+
+
+  it("writes a drag to the selected role and leaves the others alone", async () => {
+    const {store, drag, selectRole} = await controls();
+
+    await selectRole("ui");
+    await drag(0, 13);
+
+    expect(store.typeRoles().ui.settings.fontSize).toBe(13);
+    expect(store.typeRoles().body.settings).toEqual(DEFAULT_TYPE_SETTINGS);
+  });
+
+
+  it("summarises the three other roles under the sliders, face and settings", async () => {
+    // Nothing a visitor set is hidden while another role is being worked on.
+    const {summary} = await controls();
+
+    expect(summary()).toEqual([
+      "DISPLAY · IBM Plex Sans 44 / 500 / 1.10",
+      "MONO · IBM Plex Mono 12 / 400 / 1.50",
+      "UI · IBM Plex Sans 15 / 600 / 1.20"
+    ]);
+  });
+
+
+  it("names the app's mono face under the field while the mono role has none", async () => {
+    // The picker's own default names the sans; a mono role falling back to
+    // the sans would be a lie about what the eyebrow is set in.
+    const {usage} = await controls(DEFAULT_TYPE_SETTINGS_BY_ROLE.mono, null, "mono");
+
+    expect(usage()).toBe("Set in IBM Plex Mono, the app's own type.");
+  });
+
+
+  it("stands the mono fallback on the two weights the head loads for it", async () => {
+    const {weightSlider} = await controls(DEFAULT_TYPE_SETTINGS_BY_ROLE.mono, null, "mono");
+
+    expect(weightSlider().max).toBe("1");
   });
 
 
@@ -170,7 +257,7 @@ describe("TypeControls", () => {
       selection("Merriweather", [300, 400, 700, 900])
     );
 
-    expect(store.typeSettings().fontWeight).toBe(400);
+    expect(store.typeRoles().body.settings.fontWeight).toBe(400);
   });
 
 
@@ -182,7 +269,7 @@ describe("TypeControls", () => {
 
     await drag(1, 2);
 
-    expect(store.typeSettings().fontWeight).toBe(700);
+    expect(store.typeRoles().body.settings.fontWeight).toBe(700);
   });
 
 
@@ -199,24 +286,27 @@ describe("TypeControls", () => {
   });
 
 
-  it("takes the typeface the picker reports into the store", async () => {
-    const {store, pickFont} = await controls();
+  it("takes the typeface the picker reports into the selected role", async () => {
+    const {store, pickFont, selectRole} = await controls();
 
+    await selectRole("display");
     await pickFont("merriweather");
 
-    expect(store.selectedFont()?.family).toBe("Merriweather");
+    expect(store.typeRoles().display.font?.family).toBe("Merriweather");
+    expect(store.typeRoles().body.font).toBeNull();
   });
 
 
-  it("announces the family and the weight it leaves the visitor on", async () => {
+  it("announces the role, the family and the weight it leaves the visitor on", async () => {
     // Picking a family can move the WEIGHT slider on the other side of the
-    // column, and nothing else says so.
+    // column, and nothing else says so - nor which of the four roles the one
+    // field just set.
     const {pickFont} = await controls({...DEFAULT_TYPE_SETTINGS, fontWeight: 500});
 
     await pickFont("merriweather");
 
     expect(fakeLiveAnnouncer().last).toEqual({
-      message: "Merriweather, weight 400",
+      message: "Body set in Merriweather, weight 400",
       politeness: "polite"
     });
   });
@@ -237,7 +327,7 @@ describe("TypeControls", () => {
     await pickFont("lobster");
     await clearFont();
 
-    expect(fakeLiveAnnouncer().last?.message).toContain("app's own type");
+    expect(fakeLiveAnnouncer().last?.message).toBe("Body set in the app's own type again.");
   });
 
 
@@ -247,7 +337,7 @@ describe("TypeControls", () => {
 
     await drag(0, 27);
 
-    expect(store.typeSettings().fontSize).toBe(27);
+    expect(store.typeRoles().body.settings.fontSize).toBe(27);
   });
 
 
@@ -259,11 +349,11 @@ describe("TypeControls", () => {
     localStorage.clear();
     await drag(2, 1.9);
 
-    expect(stored().lineHeight).toBeUndefined();
+    expect(stored().typeRoles).toBeUndefined();
   });
 
 
-  it("persists the value the gesture ends on", async () => {
+  it("persists the value the gesture ends on, under the role it belongs to", async () => {
     const {drag, release, stored} = await controls();
 
     localStorage.clear();
@@ -271,7 +361,7 @@ describe("TypeControls", () => {
     await drag(2, 1.9);
     await release(2);
 
-    expect(stored().lineHeight).toBe(1.9);
+    expect(stored().typeRoles?.body.settings.lineHeight).toBe(1.9);
   });
 
 
@@ -280,7 +370,7 @@ describe("TypeControls", () => {
 
     await drag(1, 0);
 
-    expect(store.typeSettings()).toEqual({fontSize: 21, fontWeight: 300, lineHeight: 1.45});
+    expect(store.typeRoles().body.settings).toEqual({fontSize: 21, fontWeight: 300, lineHeight: 1.45});
   });
 
 });

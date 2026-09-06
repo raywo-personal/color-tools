@@ -24,7 +24,7 @@ interface StubLink {
 
 
 /**
- * A document that collects the link element rather than loading it.
+ * A document that collects the link elements rather than loading them.
  *
  * The real one is happy-dom's, which fetches a `<link rel="stylesheet">` the
  * moment it reaches the head - so every run would ask fonts.googleapis.com
@@ -55,7 +55,11 @@ function stubDocument() {
     document: {
       createElement,
       getElementById: (id: string) => links.find(link => link.id === id) ?? null,
-      head: {appendChild: (link: StubLink) => links.push(link)},
+      head: {
+        appendChild: (link: StubLink) => links.push(link),
+        // The service only ever asks for its own links, by prefix.
+        querySelectorAll: () => [...links]
+      },
       body: {style: {setProperty: () => undefined, removeProperty: () => undefined}}
     }
   };
@@ -84,8 +88,8 @@ describe("GoogleFontLoaderService", () => {
   }
 
 
-  function href(): string {
-    return stub.links.find(link => link.id === "ct-google-font")?.href ?? "";
+  function hrefs(): string[] {
+    return stub.links.map(link => link.href);
   }
 
 
@@ -94,46 +98,99 @@ describe("GoogleFontLoaderService", () => {
     // ladder - it serves what the family has and drops the rest - but then the
     // request asks for faces that do not exist and says nothing about which
     // weights the visitor actually got.
-    loader().loadFont(selection("Merriweather", [300, 400, 700, 900]));
+    loader().loadFonts([selection("Merriweather", [300, 400, 700, 900])]);
 
-    expect(href()).toContain("family=Merriweather:wght@300;400;700;900");
+    expect(hrefs()[0]).toContain("family=Merriweather:wght@300;400;700;900");
   });
 
 
   it("asks for no weight axis at all where none is known", () => {
     // A selection stored before the weights existed. The family's default is
     // the honest answer; a guessed list could be rejected outright.
-    loader().loadFont(selection("Lobster", []));
+    loader().loadFonts([selection("Lobster", [])]);
 
-    expect(href()).toContain("family=Lobster&");
-    expect(href()).not.toContain("wght");
+    expect(hrefs()[0]).toContain("family=Lobster&");
+    expect(hrefs()[0]).not.toContain("wght");
   });
 
 
   it("writes the family name the way the url wants it", () => {
-    loader().loadFont(selection("Playfair Display", [400]));
+    loader().loadFonts([selection("Playfair Display", [400])]);
 
-    expect(href()).toContain("family=Playfair+Display");
+    expect(hrefs()[0]).toContain("family=Playfair+Display");
+  });
+
+
+  it("loads one stylesheet per family, however many roles share it", () => {
+    // Two roles in Merriweather read the same file; a link per role would
+    // fetch it twice and leave two identical elements in the head.
+    loader().loadFonts([
+      selection("Merriweather", [400, 700]),
+      null,
+      selection("Merriweather", [400, 700]),
+      selection("Lobster", [400])
+    ]);
+
+    expect(hrefs()).toHaveLength(2);
+  });
+
+
+  it("takes out a family no role reads any more", () => {
+    const service = loader();
+
+    service.loadFonts([selection("Lobster", [400]), selection("Merriweather", [400])]);
+    service.loadFonts([selection("Merriweather", [400])]);
+
+    expect(hrefs()).toHaveLength(1);
+    expect(hrefs()[0]).toContain("family=Merriweather");
   });
 
 
   it("brings a family back that was switched away from and returned to", () => {
-    // The link is replaced on every call, so a remembered family would come
-    // back without a stylesheet the second time - the visitor switches away
-    // and back and the preview loses the font.
+    // A remembered family must come back with its stylesheet the second time,
+    // or the visitor switches away and back and the preview loses the font.
     const service = loader();
 
-    service.loadFont(selection("Lobster", [400]));
-    service.loadFont(selection("Merriweather", [400]));
-    service.loadFont(selection("Lobster", [400]));
+    service.loadFonts([selection("Lobster", [400])]);
+    service.loadFonts([selection("Merriweather", [400])]);
+    service.loadFonts([selection("Lobster", [400])]);
 
-    expect(stub.links).toHaveLength(1);
-    expect(href()).toContain("family=Lobster");
+    expect(hrefs()).toHaveLength(1);
+    expect(hrefs()[0]).toContain("family=Lobster");
+  });
+
+
+  it("leaves a family that is already in the head alone", () => {
+    // Replacing the link would fetch the stylesheet again and flash the
+    // preview through its fallback while it does.
+    const service = loader();
+
+    service.loadFonts([selection("Lobster", [400])]);
+    const first = stub.links[0];
+
+    service.loadFonts([selection("Lobster", [400])]);
+
+    expect(stub.links[0]).toBe(first);
+  });
+
+
+  it("brings a standing link up to the weights the roles now ask for", () => {
+    // The id keys the family alone while the url carries the weight axis. A
+    // selection stored before the weights existed asks for none, so a second
+    // role in that family would otherwise stand on a weight the head never
+    // loaded, in the browser's synthesised face, with the rating measuring it.
+    const service = loader();
+
+    service.loadFonts([selection("Lobster", [])]);
+    service.loadFonts([selection("Lobster", []), selection("Lobster", [400, 700])]);
+
+    expect(hrefs()).toHaveLength(1);
+    expect(hrefs()[0]).toContain("family=Lobster:wght@400;700");
   });
 
 
   it("leaves the document alone when nothing is chosen", () => {
-    loader().loadFont(null);
+    loader().loadFonts([null, null, null, null]);
 
     expect(stub.links).toHaveLength(0);
   });

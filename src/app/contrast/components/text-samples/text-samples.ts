@@ -1,4 +1,4 @@
-import {Component, inject, signal} from "@angular/core";
+import {Component, computed, inject, signal} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 import {FONT_WEIGHTS, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {StarRating} from "@contrast/components/star-rating/star-rating";
@@ -27,7 +27,7 @@ export class TextSamples {
   protected readonly textColor = this.#stateStore.contrastColors.text;
   protected readonly bgColor = this.#stateStore.contrastColors.background;
   protected readonly contrast = this.#stateStore.contrastColors.contrast;
-  protected readonly selectedFont = this.#stateStore.selectedFont;
+  protected readonly selectedFont = computed(() => this.#stateStore.typeRoles().body.font);
 
   protected readonly fontSizes = [14, 16, 32];
   protected readonly fontWeights = FONT_WEIGHTS;

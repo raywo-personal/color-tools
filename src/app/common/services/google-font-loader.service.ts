@@ -3,8 +3,11 @@ import {inject, Service} from "@angular/core";
 import {SelectedFont} from "@common/models/google-font.model";
 
 
-/** The one link element the service owns, so a switch replaces rather than adds. */
-const LINK_ID = "ct-google-font";
+/**
+ * What every link element the service owns starts with, so a switch removes
+ * exactly the stylesheets it added and nothing the head carried before.
+ */
+const LINK_PREFIX = "ct-google-font-";
 
 
 /**
@@ -18,7 +21,13 @@ export class GoogleFontLoaderService {
 
 
   /**
-   * Load a Google Font by replacing the link element in the document head.
+   * Puts one stylesheet per chosen family into the head, and takes out the
+   * ones no role uses any more.
+   *
+   * **One link per family, not per role.** Two roles set in the same family
+   * share a stylesheet, and a role switched to another face leaves the family
+   * standing as long as another role still reads it - the weights asked for
+   * are the family's, so what the roles share is the same file.
    *
    * **The request asks for the family's own weights and no others.** `css2`
    * tolerates a `wght` axis naming weights a family does not have - it serves
@@ -30,24 +39,45 @@ export class GoogleFontLoaderService {
    * set by construction. A selection that carries no weights asks for none,
    * which gets the family's default.
    *
-   * **Nothing is cached.** The previous link is removed on every call, so a
-   * remembered family would come back without a stylesheet the second time it
-   * is chosen - the visitor switches away and back and the preview loses the
-   * font.
+   * **A family already in the head is left alone while its url still holds.**
+   * Replacing the link makes the browser fetch the stylesheet again and the
+   * preview flashes through its fallback, so what decides is the url and not
+   * the id: the id keys the family alone, and a selection stored before the
+   * weights existed asks for none - without the comparison a second role in
+   * that family would stand on a weight the head never loaded, in the
+   * browser's synthesised face, with the rating measuring it.
    *
-   * @param font - The font to load, or null to skip loading
+   * @param fonts - The faces the roles are set in; nulls are skipped
    */
-  public loadFont(font: SelectedFont | null): void {
-    if (!font) return;
+  public loadFonts(fonts: Iterable<SelectedFont | null>): void {
+    const wanted = new Map<string, SelectedFont>();
 
-    this.#removePreviousFontLinks();
+    for (const font of fonts) {
+      if (font) wanted.set(linkIdFor(font), font);
+    }
 
-    const link = this.#document.createElement("link");
-    link.id = LINK_ID;
-    link.rel = "stylesheet";
-    link.href = fontStylesheetUrl(font);
+    const standing = new Map(this.#ownLinks().map(link => [link.id, link] as const));
 
-    this.#document.head.appendChild(link);
+    for (const [id, link] of standing) {
+      if (!wanted.has(id)) link.remove();
+    }
+
+    for (const [id, font] of wanted) {
+      const href = fontStylesheetUrl(font);
+      const link = standing.get(id);
+
+      if (link) {
+        if (link.href !== href) link.href = href;
+        continue;
+      }
+
+      const added = this.#document.createElement("link");
+      added.id = id;
+      added.rel = "stylesheet";
+      added.href = href;
+
+      this.#document.head.appendChild(added);
+    }
   }
 
 
@@ -67,17 +97,17 @@ export class GoogleFontLoaderService {
   }
 
 
-  /**
-   * Remove previous font link elements to avoid accumulation.
-   */
-  #removePreviousFontLinks(): void {
-    const existingLink = this.#document.getElementById(LINK_ID);
-
-    if (existingLink) {
-      existingLink.remove();
-    }
+  /** The link elements this service put into the head. */
+  #ownLinks(): HTMLLinkElement[] {
+    return Array.from(this.#document.head.querySelectorAll<HTMLLinkElement>(`link[id^="${LINK_PREFIX}"]`));
   }
 
+}
+
+
+/** The id the family's link carries; spaces become `+`, as in the url. */
+function linkIdFor(font: SelectedFont): string {
+  return `${LINK_PREFIX}${font.family.replace(/ /g, "+")}`;
 }
 
 

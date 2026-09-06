@@ -2,6 +2,7 @@ import {Component} from "@angular/core";
 import {PairFields} from "@contrast-type/components/pair-fields/pair-fields";
 import {PaletteChips} from "@contrast-type/components/palette-chips/palette-chips";
 import {PairActions} from "@contrast-type/components/pair-actions/pair-actions";
+import {TypeRoles} from "@contrast-type/components/type-roles/type-roles";
 import {TypeControls} from "@contrast-type/components/type-controls/type-controls";
 import {WebsitePreview} from "@contrast-type/components/website-preview/website-preview";
 import {ApcaRating} from "@contrast-type/components/apca-rating/apca-rating";
@@ -16,19 +17,27 @@ import {ColorVision} from "@contrast-type/components/color-vision/color-vision";
  * describes and the breakpoint widens it.
  *
  * The left column is the whole control stack - the pair, the palette chips,
- * the two gestures, the rating, the type controls and the colour-vision block.
- * The right column is the website preview, which is why it is the one that
- * grows.
+ * the two gestures, the type roles with the rating under them, the type
+ * controls and the colour-vision block. The right column is the website
+ * preview, which is why it is the one that grows.
  *
- * **The left column is sized by the rating's longest row.** `YOUR TYPE 34px /
- * 700` and `Needs Lc 100` beside it need about 19rem, and a column narrower
- * than that wraps the verdict onto a line of its own - which reads as a second
- * badge rather than as the verdict of the row above it. The preview keeps well
- * over its own minimum at every width the two columns appear at.
+ * **The rating follows the segments, not the sliders.** It answers about the
+ * role the segments select, so it sits directly under them; the picker and the
+ * sliders that tune that role come after, in a block of their own.
+ *
+ * **The left column is sized by the rating's row.** The row holds its caption,
+ * its spec and its verdict on one line; narrower, the verdict wraps onto a
+ * line of its own and reads as a second badge rather than as the verdict of
+ * the row above it. The rating draws one row per role - the `figure` elements
+ * of `SAMPLE_ELEMENTS` - and the widest of the four is the UI role's,
+ * `FILLED BUTTON 15px / 600` with `Needs Lc 75` beside it. That is the row a
+ * narrower `minmax()` has to be measured against; the rest of the page's
+ * elements never reach the rating. The preview keeps well over its own minimum
+ * at every width the two columns appear at.
  */
 @Component({
   selector: "ct-contrast-type",
-  imports: [PairFields, PaletteChips, PairActions, ApcaRating, TypeControls, WebsitePreview, ColorVision],
+  imports: [PairFields, PaletteChips, PairActions, TypeRoles, ApcaRating, TypeControls, WebsitePreview, ColorVision],
   templateUrl: "./contrast-type.html",
   host: {
     "class": "grid gap-8 lg:grid-cols-[minmax(18rem,22rem)_minmax(24rem,1fr)] lg:items-start lg:gap-13"
