@@ -3,7 +3,7 @@ import {injectDispatch} from "@ngrx/signals/events";
 import {ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree} from "@angular/router";
 import {inject} from "@angular/core";
 import {CONTRAST_ID_LENGTH, generateRandomContrastColors} from "@engine/contrast/contrast-id.helper";
-import {isRestorable} from "@engine/helpers/validate-string-id.helper";
+import {isWellFormedId} from "@engine/helpers/validate-string-id.helper";
 
 
 /**
@@ -25,7 +25,7 @@ export const contrastGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boo
   const routeContrastId = route.params["contrastId"]
     ?? route.firstChild?.params["contrastId"];
 
-  const restorable = !!routeContrastId && isRestorable(routeContrastId, CONTRAST_ID_LENGTH);
+  const restorable = !!routeContrastId && isWellFormedId(routeContrastId, CONTRAST_ID_LENGTH);
 
   if (restorable) {
     dispatch.restoreContrastColors(routeContrastId);

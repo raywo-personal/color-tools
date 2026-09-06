@@ -8,7 +8,7 @@ import {Palette} from "@engine/palette/palette.model";
 import {PaletteStyle} from "@engine/palette/palette-style.model";
 import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
 import {AppState} from "@core/models/app-state.model";
-import {isRestorable} from "@engine/helpers/validate-string-id.helper";
+import {isWellFormedId} from "@engine/helpers/validate-string-id.helper";
 import {CONTRAST_ID_LENGTH, contrastColorsFromId} from "@engine/contrast/contrast-id.helper";
 import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 import {TypeSettings} from "@engine/contrast/type-settings.model";
@@ -32,7 +32,7 @@ export function loadAppStateReducer(
   const shadeColors = createShades(currentColor, state.useBezier, state.correctLightness);
 
   const paletteId = persistence.get("currentPaletteId") ?? "";
-  const restorableId = isRestorable(paletteId, PALETTE_ID_BASE62_LENGTH);
+  const restorableId = isWellFormedId(paletteId, PALETTE_ID_BASE62_LENGTH);
   const style = state.paletteStyle;
 
   // The id carries the style, so the restored palette says which chip is
@@ -42,7 +42,7 @@ export function loadAppStateReducer(
   const currentPalette = restorePalette(paletteId, restorableId, currentColor, style, paletteSeed);
 
   const contrastId = persistence.get("contrastId") ?? "";
-  const contrastRestorableId = isRestorable(contrastId, CONTRAST_ID_LENGTH);
+  const contrastRestorableId = isWellFormedId(contrastId, CONTRAST_ID_LENGTH);
   // The stored pair, or one out of the palette that was just restored - see
   // `contrastPairFromPalette()`. A rolled pair would leave a first-time
   // visitor with a page unrelated to the color beside it.

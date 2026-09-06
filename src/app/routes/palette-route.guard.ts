@@ -1,7 +1,7 @@
 import {injectDispatch} from "@ngrx/signals/events";
 import {ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree} from "@angular/router";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {isRestorable} from "@engine/helpers/validate-string-id.helper";
+import {isWellFormedId} from "@engine/helpers/validate-string-id.helper";
 import {PALETTE_ID_BASE62_LENGTH} from "@engine/palette/palette-id.helper";
 import {inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
@@ -27,7 +27,7 @@ export const paletteGuard: CanActivateFn = (route: ActivatedRouteSnapshot): bool
 
   const routePaletteId = route.params["paletteId"]
     ?? route.firstChild?.params["paletteId"];
-  const restorable = !!routePaletteId && isRestorable(routePaletteId, PALETTE_ID_BASE62_LENGTH);
+  const restorable = !!routePaletteId && isWellFormedId(routePaletteId, PALETTE_ID_BASE62_LENGTH);
 
   if (restorable) {
     dispatch.restorePalette(routePaletteId);
