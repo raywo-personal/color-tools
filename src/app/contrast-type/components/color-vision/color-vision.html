@@ -9,17 +9,18 @@
      with VoiceOver then stops treating the element as a list. -->
 <ul role="list"
     aria-label="Color vision"
-    class="mt-4 grid gap-3">
+    class="mt-4 grid gap-5">
   @for (row of rows(); track row.vision) {
-    <!-- Two columns rather than a fixed width on the name: the widest of the
-         five sets the column, so `Achromatopsia` never has to fit a guess and
-         the chips still line up across the rows. -->
-    <li class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
+    <!-- The name sits above its palette rather than beside it, so every row
+         spends the full column on colour. A name column would take the width
+         the widest of the five needs, and `Achromatopsia` is wide enough to
+         cost the chips a third of a narrow screen. -->
+    <li>
       <p class="text-sm text-dim">{{ row.caption }}</p>
 
       <ul role="list"
           [attr.aria-label]="row.caption"
-          class="grid grid-cols-5 gap-0.5">
+          class="mt-1.5 grid grid-cols-5 gap-0.5">
         @for (chip of row.chips; track chip.slot) {
           <!-- The name is text inside the chip rather than an `aria-label` on
                it: a bare `<span>` carries no role for a label to attach to,
@@ -32,10 +33,10 @@
       </ul>
 
       @if (row.collapse) {
-        <!-- Under the chips, not under the name: it is a reading of the row
-             above it. In `text` rather than `dim`, because it is the one
+        <!-- Under the palette and as wide as it, because it is a reading of
+             the row above it. In `text` rather than `dim`: it is the one
              sentence in the block that carries a finding. -->
-        <p class="col-start-2 text-sm text-pretty">{{ row.collapse }}</p>
+        <p class="mt-1.5 text-sm text-pretty">{{ row.collapse }}</p>
       }
     </li>
   }
