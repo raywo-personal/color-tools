@@ -69,9 +69,9 @@ including this one, and code comments.
 
 ## Map
 
-- `src/engine/` – the colour engine: `color/`, `contrast/`, `palette/`, and
-  `helpers/` for what serves all three, each model beside the code that uses
-  it. Plain TypeScript on chroma-js and color-namer's lists
+- `src/engine/` – the colour engine: `color/`, `contrast/`, `palette/`,
+  `vision/`, and `helpers/` for what serves all three, each model beside the
+  code that uses it. Plain TypeScript on chroma-js and color-namer's lists
 - `src/app/core/` – the store: `app-state.store.ts`, the state shape in
   `models/app-state.model.ts`, and per domain (`converter`, `palettes`,
   `contrast`, `common`) an `*.events.ts`, `*.reducers.ts` and `*.effects.ts`.
@@ -115,6 +115,16 @@ through them, never through relative `../../` paths.
 - A generator draws its jitter through `randomBetween()`, never `Math.random`
   or `chroma.random()`: the roll is a seed in the state, and a draw outside
   the seed makes the palette flicker while a color is dragged
+- **Colour-vision simulation runs in linear light.** `simulateVision()`
+  applies the sRGB transfer function before its matrix and undoes it after.
+  `chroma.gl()` is not that step: it hands back the encoded bytes over 255,
+  and a matrix applied to those returns a colour visibly too light. Every
+  matrix is a projection – row sums of one, squaring to itself – and
+  `simulate-vision.helper.spec.ts` pins both, which is what catches a
+  mistyped coefficient
+- A collapse is what a vision model *cost*, not what sits close: a group of
+  palette members counts only where normal vision did not already show it as
+  one band
 
 ### Shareable Ids
 
