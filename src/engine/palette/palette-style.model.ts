@@ -27,7 +27,8 @@ export type PaletteStyle = typeof PaletteStyles[number];
  * palette rolled in the app carries the style `random` into its id, so
  * anything restoring a palette declares `PaletteStyles`.
  */
-export const PaletteStylesWithoutRandom = PaletteStyles.filter(s => s !== "random");
+export const PaletteStylesWithoutRandom = PaletteStyles
+  .filter((style): style is Exclude<PaletteStyle, "random"> => style !== "random");
 export type PaletteStyleWithoutRandom = typeof PaletteStylesWithoutRandom[number];
 
 
