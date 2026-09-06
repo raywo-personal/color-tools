@@ -257,8 +257,15 @@ export class FontPicker {
    * to the family already there - "Lobster" plus an "m" matches nothing, and
    * the visitor has to empty the field by hand before they can look for their
    * second typeface.
+   *
+   * Only while the field still holds that family. `openList()` runs on every
+   * click, not only on the way in, so a select-all without this would fire
+   * again on a field the visitor is already typing in - and take the caret
+   * away from the typo they clicked to fix.
    */
   protected selectQuery(): void {
+    if (this.query() !== (this.font()?.family ?? "")) return;
+
     this.field().nativeElement.select();
   }
 

@@ -383,6 +383,22 @@ describe("FontPicker", () => {
   });
 
 
+  it("leaves the caret where a click put it while a query is being typed", async () => {
+    // The select-all belongs to the way into the field, not to every click in
+    // it: a visitor who clicks between two letters to fix a typo would
+    // otherwise lose the whole query on their next keystroke.
+    const {type, focus, field, click} = await picker();
+
+    await focus();
+    await type("roboo");
+    field().setSelectionRange(3, 3);
+    await click(field());
+
+    expect(field().selectionStart).toBe(3);
+    expect(field().selectionEnd).toBe(3);
+  });
+
+
   it("says so when nothing matches, and claims no list while there is none", async () => {
     // The popup simply stays away, so without the message a visitor is left
     // waiting for a list that is never coming.
