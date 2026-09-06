@@ -17,6 +17,21 @@ export const PaletteStyles = [
 export type PaletteStyle = typeof PaletteStyles[number];
 
 
+/**
+ * The styles worth offering to a caller who does not see the result. `random`
+ * keeps the base color and rolls the other four independently of it, so it
+ * relates nothing to the color it was given - in the app that is a gesture,
+ * rolled again until it fits, and there the list stays `PaletteStyles`.
+ *
+ * It is the list a caller may *ask* for, not the list that may come back: a
+ * palette rolled in the app carries the style `random` into its id, so
+ * anything restoring a palette declares `PaletteStyles`.
+ */
+export const PaletteStylesWithoutRandom = PaletteStyles
+  .filter((style): style is Exclude<PaletteStyle, "random"> => style !== "random");
+export type PaletteStyleWithoutRandom = typeof PaletteStylesWithoutRandom[number];
+
+
 export function randomStyle(): PaletteStyle {
   const randomIndex = Math.floor(randomBetween(0, PaletteStyles.length));
 

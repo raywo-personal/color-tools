@@ -1,6 +1,6 @@
 import chroma, {Color} from "chroma-js";
 import {PALETTE_ID_BASE62_LENGTH, paletteFromId} from "./palette-id.helper";
-import {isRestorable} from "@engine/helpers/validate-string-id.helper";
+import {isWellFormedId} from "@engine/helpers/validate-string-id.helper";
 import {Palette, PALETTE_SLOTS, PaletteColors} from "@engine/palette/palette.model";
 import {paletteColorFrom} from "@engine/palette/palette-color.model";
 import {PaletteStyle, PaletteStyles} from "@engine/palette/palette-style.model";
@@ -302,7 +302,7 @@ describe("Palette ID Helper", () => {
 
       // ID should have fixed length
       expect(id.length).toBe(43);
-      expect(isRestorable(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
+      expect(isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
 
       const restoredPalette = paletteFromId(id);
 
@@ -377,29 +377,29 @@ describe("Palette ID Helper", () => {
       const palette = createTestPalette(colors, colors, "analogous");
       const id = palette.id;
 
-      expect(isRestorable(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
+      expect(isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
     });
 
     it("should return false for IDs that are too short", () => {
       const invalidId = "0123456789"; // Only 10 characters (expected: 43)
 
-      expect(isRestorable(invalidId, PALETTE_ID_BASE62_LENGTH)).toBe(false);
+      expect(isWellFormedId(invalidId, PALETTE_ID_BASE62_LENGTH)).toBe(false);
     });
 
     it("should return false for IDs that are too long", () => {
       const invalidId = "0" + "a".repeat(50); // 51 characters (expected: 43)
 
-      expect(isRestorable(invalidId, PALETTE_ID_BASE62_LENGTH)).toBe(false);
+      expect(isWellFormedId(invalidId, PALETTE_ID_BASE62_LENGTH)).toBe(false);
     });
 
     it("should return false for IDs with incorrect length", () => {
       const invalidId = "0" + "a".repeat(41); // 42 characters (expected: 43)
 
-      expect(isRestorable(invalidId, PALETTE_ID_BASE62_LENGTH)).toBe(false);
+      expect(isWellFormedId(invalidId, PALETTE_ID_BASE62_LENGTH)).toBe(false);
     });
 
     it("should return false for empty string", () => {
-      expect(isRestorable("", PALETTE_ID_BASE62_LENGTH)).toBe(false);
+      expect(isWellFormedId("", PALETTE_ID_BASE62_LENGTH)).toBe(false);
     });
 
     it("should validate all generated IDs from all styles", () => {
@@ -415,7 +415,7 @@ describe("Palette ID Helper", () => {
         const palette = createTestPalette(colors, colors, style);
         const id = palette.id;
 
-        expect(isRestorable(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
+        expect(isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
       });
     });
 
@@ -508,7 +508,7 @@ describe("Palette ID Helper", () => {
 
       // ID should always be exactly 43 characters with leading zero padding
       expect(id.length).toBe(43);
-      expect(isRestorable(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
+      expect(isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
 
       // Should be able to restore the palette
       const restored = paletteFromId(id);
@@ -537,7 +537,7 @@ describe("Palette ID Helper", () => {
       const palette = createTestPalette(brightColors, brightColors, "vibrant-balanced");
       const id = palette.id;
 
-      expect(isRestorable(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
+      expect(isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
 
       const restored = paletteFromId(id);
       PALETTE_SLOTS.forEach((slot, index) => {
@@ -561,7 +561,7 @@ describe("Palette ID Helper", () => {
       const palette = createTestPalette(extremeColors, extremeColors, "high-contrast");
       const id = palette.id;
 
-      expect(isRestorable(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
+      expect(isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
 
       const restored = paletteFromId(id);
       expect(restored.style).toBe("high-contrast");

@@ -4,7 +4,7 @@ import {PaletteStyle, PaletteStyles, randomStyle} from "@engine/palette/palette-
 import {Palette, PALETTE_SLOTS, PaletteColors} from "@engine/palette/palette.model";
 import {paletteName} from "@engine/palette/palette-name.helper";
 import {paletteColorFrom} from "@engine/palette/palette-color.model";
-import {isRestorable, validateId} from "@engine/helpers/validate-string-id.helper";
+import {isWellFormedId, validateIdLength} from "@engine/helpers/validate-string-id.helper";
 
 
 /**
@@ -56,7 +56,7 @@ export function paletteIdFrom(paletteColors: PaletteColors,
  * @throws {Error} If the provided palette ID is not restorable.
  */
 export function paletteFromId(id: string): Palette {
-  if (!isRestorable(id, PALETTE_ID_BASE62_LENGTH)) {
+  if (!isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)) {
     throw new Error("Palette ID is not restorable");
   }
 
@@ -175,7 +175,7 @@ function pinnedMaskFromId(id: string): number {
  *                        palette ID or a random style if the ID is invalid.
  */
 function styleFromPaletteId(id: string): PaletteStyle {
-  validateId(id, PALETTE_ID_BASE62_LENGTH);
+  validateIdLength(id, PALETTE_ID_BASE62_LENGTH);
 
   // Erste Stelle ist der Style-Index
   const styleIndex = parseInt(id[0], 10);
@@ -200,7 +200,7 @@ function styleFromPaletteId(id: string): PaletteStyle {
  *                    (30 for RGB values + 1 for pinned mask).
  */
 function getBytesFromPaletteId(id: string, expectedLength: number): number[] {
-  validateId(id, expectedLength);
+  validateIdLength(id, expectedLength);
 
   // Omit style index
   const colorData = id.substring(1);

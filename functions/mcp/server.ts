@@ -3,13 +3,23 @@ import {WebStandardStreamableHTTPServerTransport} from "@modelcontextprotocol/sd
 import {registerDescribeColor} from "./tools/describe-color";
 import {registerCheckContrast} from "./tools/check-contrast";
 import {registerFindTextColor} from "./tools/find-text-color";
+import {registerGeneratePalette} from "./tools/generate-palette";
+import {registerReadPalette} from "./tools/read-palette";
+import {registerPaletteStyles} from "./resources/palette-styles";
 
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({name: "colortools", version: "0.0.1"});
+
+  // Tools
   registerDescribeColor(server);
   registerCheckContrast(server);
   registerFindTextColor(server);
+  registerGeneratePalette(server);
+  registerReadPalette(server);
+
+  // Resources
+  registerPaletteStyles(server);
 
   return server;
 }

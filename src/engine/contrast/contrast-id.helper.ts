@@ -1,6 +1,6 @@
 import chroma from "chroma-js";
 import {base62ToBigInt, bigIntToBase62} from "@engine/helpers/base62.helper";
-import {isRestorable, validateId} from "@engine/helpers/validate-string-id.helper";
+import {isWellFormedId, validateIdLength} from "@engine/helpers/validate-string-id.helper";
 import {findTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 
@@ -49,7 +49,7 @@ export function contrastIdFromColors(
  *                 the required colors.
  */
 export function contrastColorsFromId(id: string): ContrastColors {
-  if (!isRestorable(id, CONTRAST_ID_LENGTH)) {
+  if (!isWellFormedId(id, CONTRAST_ID_LENGTH)) {
     throw new Error("Invalid contrast ID");
   }
 
@@ -91,7 +91,7 @@ export function generateRandomContrastColors(): ContrastColors {
  * @param expectedLength - Expected string length of the ID.
  */
 function getBytesFromContrastId(id: string, expectedLength: number): number[] {
-  validateId(id, expectedLength);
+  validateIdLength(id, expectedLength);
 
   const bigNumber = base62ToBigInt(id);
   const bytes: number[] = [];

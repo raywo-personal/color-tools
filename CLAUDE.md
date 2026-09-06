@@ -128,8 +128,8 @@ through them, never through relative `../../` paths.
 
 ### Shareable Ids
 
-`paletteIdFromPalette()` and `contrastIdFromColors()` encode a palette and a
-contrast pair into fixed-length base62 ids; their helpers document the layout.
+`paletteIdFrom()` and `contrastIdFromColors()` encode a palette and a contrast
+pair into fixed-length base62 ids; their helpers document the layout.
 The ids are generated and persisted, but no route takes one until the new
 screens have shareable urls of their own. The guards in `src/app/routes/` and
 the navigation effects in `core/common/navigation.effects.ts` wait for that and
@@ -253,10 +253,14 @@ served under `/mcp` on the app's origin, preview branches included.
 - `functions/mcp/[[path]].ts` is the entry and knows only Pages: it hands the
   request to `handleMcpRequest()`. Swapping the host means replacing this file
 - `functions/mcp/server.ts` holds `createMcpServer()`, which registers every
-  tool, and `handleMcpRequest()`, which wraps it in the HTTP transport. Keep
-  them separate: the tests connect the server to an in-memory transport
+  tool and resource, and `handleMcpRequest()`, which wraps it in the HTTP
+  transport. Keep them separate: the tests connect the server to an in-memory
+  transport
 - One file per tool under `functions/mcp/tools/`, exporting
   `register<Tool>(server)`
+- One file per resource under `functions/mcp/resources/`, exporting
+  `register<Resource>(server)`. `server.ts` registers the resources after the
+  tools
 - `functions/mcp/helper/` holds what more than one tool asks for: the hex
   input with its one wording, the font size and weight inputs. A schema one
   tool uses stays in that tool's file

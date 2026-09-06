@@ -5,6 +5,7 @@ import chroma from "chroma-js";
 import {formatColor} from "@engine/color/color-format.helper";
 import {maxChroma, usableLightness} from "@engine/color/oklch.helper";
 import {opaqueHexColor} from "../helper/tool-schemas.helper";
+import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 
 
 const inputSchema = {
@@ -63,7 +64,7 @@ export function registerDescribeColor(server: McpServer): void {
       description: "Describe a color in a human readable format",
       inputSchema,
       outputSchema,
-      annotations: {readOnlyHint: true, idempotentHint: true, openWorldHint: false}
+      annotations: TOOL_ANNOTATION
     },
     callback
   );
