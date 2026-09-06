@@ -174,6 +174,21 @@ describe("GoogleFontLoaderService", () => {
   });
 
 
+  it("brings a standing link up to the weights the roles now ask for", () => {
+    // The id keys the family alone while the url carries the weight axis. A
+    // selection stored before the weights existed asks for none, so a second
+    // role in that family would otherwise stand on a weight the head never
+    // loaded, in the browser's synthesised face, with the rating measuring it.
+    const service = loader();
+
+    service.loadFonts([selection("Lobster", [])]);
+    service.loadFonts([selection("Lobster", []), selection("Lobster", [400, 700])]);
+
+    expect(hrefs()).toHaveLength(1);
+    expect(hrefs()[0]).toContain("family=Lobster:wght@400;700");
+  });
+
+
   it("leaves the document alone when nothing is chosen", () => {
     loader().loadFonts([null, null, null, null]);
 

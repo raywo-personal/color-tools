@@ -39,9 +39,13 @@ export class GoogleFontLoaderService {
    * set by construction. A selection that carries no weights asks for none,
    * which gets the family's default.
    *
-   * **A family already in the head is left alone.** Replacing its link would
-   * make the browser fetch the stylesheet again, and the preview would flash
-   * through the fallback while it does.
+   * **A family already in the head is left alone while its url still holds.**
+   * Replacing the link makes the browser fetch the stylesheet again and the
+   * preview flashes through its fallback, so what decides is the url and not
+   * the id: the id keys the family alone, and a selection stored before the
+   * weights existed asks for none - without the comparison a second role in
+   * that family would stand on a weight the head never loaded, in the
+   * browser's synthesised face, with the rating measuring it.
    *
    * @param fonts - The faces the roles are set in; nulls are skipped
    */
@@ -52,19 +56,27 @@ export class GoogleFontLoaderService {
       if (font) wanted.set(linkIdFor(font), font);
     }
 
-    for (const link of this.#ownLinks()) {
-      if (!wanted.has(link.id)) link.remove();
+    const standing = new Map(this.#ownLinks().map(link => [link.id, link] as const));
+
+    for (const [id, link] of standing) {
+      if (!wanted.has(id)) link.remove();
     }
 
     for (const [id, font] of wanted) {
-      if (this.#document.getElementById(id)) continue;
+      const href = fontStylesheetUrl(font);
+      const link = standing.get(id);
 
-      const link = this.#document.createElement("link");
-      link.id = id;
-      link.rel = "stylesheet";
-      link.href = fontStylesheetUrl(font);
+      if (link) {
+        if (link.href !== href) link.href = href;
+        continue;
+      }
 
-      this.#document.head.appendChild(link);
+      const added = this.#document.createElement("link");
+      added.id = id;
+      added.rel = "stylesheet";
+      added.href = href;
+
+      this.#document.head.appendChild(added);
     }
   }
 
