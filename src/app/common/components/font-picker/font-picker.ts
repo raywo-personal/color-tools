@@ -346,10 +346,13 @@ export class FontPicker {
 
 
   /**
-   * Keeps the field focused while an option is being clicked.
+   * Keeps the field focused while the list is being pressed.
    *
    * `mousedown` blurs the field before the click lands, and the blur closes
    * the list - so without this the option is gone by the time it is clicked.
+   * Bound on the list rather than on each option, because the scrollbar is
+   * not an option either: it belongs to the list element, and a press on it
+   * would otherwise take the list away mid-drag.
    */
   protected keepFocus(event: MouseEvent): void {
     event.preventDefault();

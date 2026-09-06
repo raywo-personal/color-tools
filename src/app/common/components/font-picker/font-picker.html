@@ -38,10 +38,15 @@
   </button>
 
   @if (listOpen()) {
+    <!-- The press is caught on the list rather than on the rows: the scrollbar
+         belongs to this element, and it is not an option - without the handler
+         here, grabbing it blurs the field and the list closes from under the
+         cursor mid-drag. A press on a row bubbles up to the same handler. -->
     <ul role="listbox"
         aria-label="Font families"
         class="absolute top-full left-0 z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-xs border border-line bg-panel"
-        [id]="listId">
+        [id]="listId"
+        (mousedown)="keepFocus($event)">
       @for (option of options(); track option.family; let index = $index) {
         <!-- The options carry no key handler and no focus on purpose: this is
              the combobox pattern, where the field keeps focus and the arrow
@@ -62,7 +67,6 @@
             [class.border-l-text]="index === activeIndex()"
             [class.bg-field]="index === activeIndex()"
             [class.border-l-transparent]="index !== activeIndex()"
-            (mousedown)="keepFocus($event)"
             (click)="select(option)">
           <span class="min-w-0 truncate font-sans text-base">{{ option.family }}</span>
           <span class="shrink-0 font-mono text-sm text-dim">{{ option.category }}</span>
