@@ -3,6 +3,7 @@ import {TestBed} from "@angular/core/testing";
 import {beforeEach, describe, expect, it} from "vitest";
 import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {provideFakeGoogleFonts} from "@testing/google-fonts.fake";
+import {provideSilentFontLoader} from "@testing/font-loader.fake";
 import {ContrastType} from "@contrast-type/components/contrast-type/contrast-type";
 
 
@@ -15,7 +16,8 @@ describe("ContrastType", () => {
         provideFakeLiveAnnouncer(),
         // The typeface control reaches the font catalog, so without the fake
         // every fixture here would wait on a request that never answers.
-        provideFakeGoogleFonts()
+        provideFakeGoogleFonts(),
+        provideSilentFontLoader()
       ]
     });
   });
@@ -29,15 +31,27 @@ describe("ContrastType", () => {
   }
 
 
-  it("holds the pair, the palette chips, the two gestures, the rating, the type controls and the vision block", async () => {
+  it("holds the pair, the palette chips, the two gestures, the type roles, the rating, the type controls and the vision block", async () => {
     const host = await contrastType();
 
     expect(host.querySelector("ct-pair-fields")).not.toBeNull();
     expect(host.querySelector("ct-palette-chips")).not.toBeNull();
     expect(host.querySelector("ct-pair-actions")).not.toBeNull();
+    expect(host.querySelector("ct-type-roles")).not.toBeNull();
     expect(host.querySelector("ct-apca-rating")).not.toBeNull();
     expect(host.querySelector("ct-type-controls")).not.toBeNull();
     expect(host.querySelector("ct-color-vision")).not.toBeNull();
+  });
+
+
+  it("puts the rating directly under the type roles, and the type controls after it", async () => {
+    // The figure answers about the role the segments select, so it follows
+    // them; the sliders that tune that role come after.
+    const host = await contrastType();
+    const order = Array.from(host.querySelectorAll("ct-type-roles, ct-apca-rating, ct-type-controls"))
+      .map(element => element.tagName.toLowerCase());
+
+    expect(order).toEqual(["ct-type-roles", "ct-apca-rating", "ct-type-controls"]);
   });
 
 

@@ -1,0 +1,28 @@
+<p class="mb-2 font-sans text-sm tracking-widest text-dim">TYPE ROLE</p>
+
+<!-- `divide-x` draws the hairlines between the segments; the group's own
+     border closes the box. `overflow-hidden` clips the pressed segment's
+     fill to the rounded corners. -->
+<div role="group"
+     aria-label="Type role"
+     class="grid grid-cols-4 divide-x divide-line overflow-hidden rounded-xs border border-line">
+  @for (segment of segments(); track segment.role) {
+    <button type="button"
+            class="flex h-14 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 px-1 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+            [class.bg-text]="selected() === segment.role"
+            [class.text-bg]="selected() === segment.role"
+            [class.text-dim]="selected() !== segment.role"
+            [class.hover:text-text]="selected() !== segment.role"
+            [attr.aria-pressed]="selected() === segment.role"
+            (click)="select(segment.role)">
+      <!-- The specimen shows the role's face; it says nothing a screen reader
+           needs, so it stays out of the button's name. -->
+      <span aria-hidden="true"
+            class="text-xl leading-none"
+            [style.font-family]="segment.fontFamily"
+            [style.font-weight]="segment.fontWeight">Aa</span>
+
+      <span class="font-sans text-sm tracking-wide">{{ segment.caption }}</span>
+    </button>
+  }
+</div>
