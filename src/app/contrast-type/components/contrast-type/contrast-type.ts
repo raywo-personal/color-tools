@@ -25,11 +25,15 @@ import {ColorVision} from "@contrast-type/components/color-vision/color-vision";
  * role the segments select, so it sits directly under them; the picker and the
  * sliders that tune that role come after, in a block of their own.
  *
- * **The left column is sized by the rating's row.** `SMALL PRINT 13px / 400`
- * and `Needs Lc 100` beside it need about 19rem, and a column narrower than
- * that wraps the verdict onto a line of its own - which reads as a second
- * badge rather than as the verdict of the row above it. The preview keeps well
- * over its own minimum at every width the two columns appear at.
+ * **The left column is sized by the rating's row.** The row holds its caption,
+ * its spec and its verdict on one line; narrower, the verdict wraps onto a
+ * line of its own and reads as a second badge rather than as the verdict of
+ * the row above it. The rating draws one row per role - the `figure` elements
+ * of `SAMPLE_ELEMENTS` - and the widest of the four is the UI role's,
+ * `FILLED BUTTON 15px / 600` with `Needs Lc 75` beside it. That is the row a
+ * narrower `minmax()` has to be measured against; the rest of the page's
+ * elements never reach the rating. The preview keeps well over its own minimum
+ * at every width the two columns appear at.
  */
 @Component({
   selector: "ct-contrast-type",
