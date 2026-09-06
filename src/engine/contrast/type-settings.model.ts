@@ -37,13 +37,19 @@ export const FONT_SIZE_RANGE: TypeSettingRange = {min: 11, max: 34, step: 1};
  */
 export const FONT_WEIGHT_RANGE: TypeSettingRange = {min: 300, max: 700, step: 100};
 
-/** 0.05, so every stop is a value `toFixed(2)` writes without rounding. */
-export const LINE_HEIGHT_RANGE: TypeSettingRange = {min: 1.2, max: 2, step: 0.05};
+/**
+ * 0.05, so every stop is a value `toFixed(2)` writes without rounding.
+ *
+ * The floor is 1.0 rather than a comfortable reading value: a display line
+ * is set at 1.1 and a button label at 1.2, and one range serves every role.
+ */
+export const LINE_HEIGHT_RANGE: TypeSettingRange = {min: 1, max: 2, step: 0.05};
 
 /**
- * What the preview opens on, and what a value outside the ranges falls back
- * to. Here rather than in `initialState`, which takes it from here, so the
- * default sits beside the ranges it has to fit into.
+ * What body text opens on, and what a value outside the ranges falls back to.
+ * Here rather than in `initialState`, which takes it from here, so the default
+ * sits beside the ranges it has to fit into. The other roles' defaults are in
+ * `type-role.model.ts`, next to the ranges that differ per role.
  */
 export const DEFAULT_TYPE_SETTINGS: TypeSettings = {
   fontSize: 18,
@@ -78,15 +84,22 @@ export const WEIGHT_STOPS: readonly number[] = FONT_WEIGHTS
  * the same normalization also keeps the weight off a synthesised one. Left
  * out, the whole grid stands - which is what a preview on the app's own type
  * stack needs.
+ *
+ * `sizeRange` and `defaults` are the role's: a display line moves over other
+ * sizes than body text does, and a value that is not a number has to land on
+ * that role's default rather than on body text's. `normalizedTypeSettingsFor()`
+ * in `type-role.model.ts` fills both in from the role.
  */
 export function normalizedTypeSettings(
   settings: TypeSettings,
-  weightStops: readonly number[] = WEIGHT_STOPS
+  weightStops: readonly number[] = WEIGHT_STOPS,
+  sizeRange: TypeSettingRange = FONT_SIZE_RANGE,
+  defaults: TypeSettings = DEFAULT_TYPE_SETTINGS
 ): TypeSettings {
   return {
-    fontSize: snapped(settings.fontSize, FONT_SIZE_RANGE, DEFAULT_TYPE_SETTINGS.fontSize),
-    fontWeight: nearestStop(settings.fontWeight, weightStops, DEFAULT_TYPE_SETTINGS.fontWeight),
-    lineHeight: snapped(settings.lineHeight, LINE_HEIGHT_RANGE, DEFAULT_TYPE_SETTINGS.lineHeight)
+    fontSize: snapped(settings.fontSize, sizeRange, defaults.fontSize),
+    fontWeight: nearestStop(settings.fontWeight, weightStops, defaults.fontWeight),
+    lineHeight: snapped(settings.lineHeight, LINE_HEIGHT_RANGE, defaults.lineHeight)
   };
 }
 
