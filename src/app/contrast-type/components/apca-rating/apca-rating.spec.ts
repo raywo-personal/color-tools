@@ -190,6 +190,18 @@ describe("ApcaRating", () => {
   });
 
 
+  it("does not name the element the figure reads as its own ground", async () => {
+    // The filled button is the one element that sits on its own fill, and a
+    // ground named after the button would read `Filled button on the filled
+    // button`. Only the requirement is pinned: what carries it depends on the
+    // accent the palette hands the button.
+    const {note} = await rating(DARK_ON_LIGHT, "ui");
+
+    expect(note()).toContain("Filled button on its own background at 15px / 600 needs Lc 75.");
+    expect(note()).not.toContain("on the filled button");
+  });
+
+
   it("says so where no size or weight in the table carries the element", async () => {
     // Two identical colors clear no cell of the table, so there is nothing to
     // name as a way out.

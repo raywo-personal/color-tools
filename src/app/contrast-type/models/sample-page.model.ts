@@ -110,12 +110,18 @@ export function roleOf(key: string): TypeRole {
 }
 
 
-/** The ground in a sentence - `on the card`. */
+/**
+ * The ground in a sentence - `on the card`.
+ *
+ * The accent ground is the filled button's own fill, and the only text on it
+ * is the button's label - so a name taken from the button would have the
+ * rating's sentence read `Filled button on the filled button`.
+ */
 const GROUND_NAMES: Record<SampleGround, string> = {
   page: "the page",
   card: "the card",
   nav: "the nav bar",
-  accent: "the filled button"
+  accent: "its own background"
 };
 
 
