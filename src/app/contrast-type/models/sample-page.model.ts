@@ -7,10 +7,10 @@ import {Palette, PALETTE_SLOTS} from "@engine/palette/palette.model";
 
 
 /** The inks the sample page writes with, named after the surface they come from. */
-export type SampleInk = "text" | "dim" | "accent" | "accentSoft" | "onAccent";
+export type SampleInk = "text" | "dim" | "accent" | "accentSoft" | "onAccent" | "onMuted" | "danger";
 
 /** The grounds the sample page's text sits on. */
-export type SampleGround = "page" | "card" | "nav" | "accent";
+export type SampleGround = "page" | "card" | "nav" | "accent" | "muted" | "field";
 
 
 /**
@@ -54,8 +54,16 @@ export interface SampleElement {
  * print 13px, which is the caption size the draft names as where pairings fail
  * first. The nav items sit below the button size the same way a real nav
  * sits below a call to action.
+ *
+ * **The second half of the list is where a palette fails**, which is what the
+ * page's own closing paragraph has always claimed and only now shows: a label
+ * nobody can press, an error the reader has to be able to find, a caption
+ * under a picture, a column of figures. They are the smallest and the weakest
+ * text on the page on purpose - the disabled label is set lighter than the
+ * dim ink, and the caption sits at the small print's size.
  */
 export const SAMPLE_ELEMENTS: readonly SampleElement[] = [
+  {key: "navActive", caption: "ACTIVE NAV ITEM", role: "ui", sizeRatio: 0.87, ink: "text", ground: "nav", figure: false},
   {key: "navItems", caption: "NAV ITEMS", role: "ui", sizeRatio: 0.87, ink: "dim", ground: "nav", figure: false},
   {key: "signIn", caption: "SIGN IN", role: "ui", sizeRatio: 0.87, ink: "accent", ground: "nav", figure: false},
   {key: "eyebrow", caption: "EYEBROW", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: true},
@@ -63,7 +71,17 @@ export const SAMPLE_ELEMENTS: readonly SampleElement[] = [
   {key: "lead", caption: "LEAD", role: "body", sizeRatio: 1.22, ink: "text", ground: "page", figure: false},
   {key: "filledButton", caption: "FILLED BUTTON", role: "ui", sizeRatio: 1, ink: "onAccent", ground: "accent", figure: true},
   {key: "ghostButton", caption: "GHOST BUTTON", role: "ui", sizeRatio: 1, ink: "text", ground: "page", figure: false},
+  {key: "disabledButton", caption: "DISABLED BUTTON", role: "ui", sizeRatio: 1, ink: "onMuted", ground: "muted", figure: false},
   {key: "bodyText", caption: "BODY TEXT", role: "body", sizeRatio: 1, ink: "text", ground: "page", figure: true},
+  {key: "bodyLink", caption: "LINK IN TEXT", role: "body", sizeRatio: 1, ink: "accent", ground: "page", figure: false},
+  {key: "fieldLabel", caption: "FIELD LABEL", role: "ui", sizeRatio: 0.8, ink: "accentSoft", ground: "page", figure: false},
+  {key: "fieldText", caption: "FIELD TEXT", role: "body", sizeRatio: 0.89, ink: "text", ground: "field", figure: false},
+  {key: "errorLine", caption: "ERROR LINE", role: "body", sizeRatio: 0.78, ink: "danger", ground: "page", figure: false},
+  {key: "imageLabel", caption: "IMAGE LABEL", role: "mono", sizeRatio: 1, ink: "dim", ground: "muted", figure: false},
+  {key: "imageCaption", caption: "CAPTION", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false},
+  {key: "tableHeader", caption: "TABLE HEADER", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: false},
+  {key: "tableCell", caption: "TABLE CELL", role: "body", sizeRatio: 0.83, ink: "text", ground: "page", figure: false},
+  {key: "tableNumber", caption: "TABLE NUMBER", role: "ui", sizeRatio: 0.87, ink: "text", ground: "page", figure: false},
   {key: "cardLabel", caption: "CARD LABEL", role: "mono", sizeRatio: 0.9, ink: "dim", ground: "card", figure: false},
   {key: "quote", caption: "PULL QUOTE", role: "body", sizeRatio: 1.3, ink: "text", ground: "card", figure: false},
   {key: "smallPrint", caption: "SMALL PRINT", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false}
@@ -121,7 +139,9 @@ const GROUND_NAMES: Record<SampleGround, string> = {
   page: "the page",
   card: "the card",
   nav: "the nav bar",
-  accent: "its own background"
+  accent: "its own background",
+  muted: "the disabled surface",
+  field: "the form field"
 };
 
 
@@ -138,14 +158,43 @@ const NAV_TINT = 0.05;
 const CARD_TINT = 0.09;
 const DIM_MIX = 0.4;
 const NAV_BORDER_MIX = 0.12;
-const FOOTER_BORDER_MIX = 0.14;
+const RULE_MIX = 0.14;
+const MUTED_TINT = 0.1;
+const FIELD_TINT = 0.09;
+
+/**
+ * The disabled label, as a mix from the text color towards the page - the same
+ * derivation as `dim` and weaker than it, because a control nobody can press
+ * is the one place a page is meant to be hard to read. It is the weakest text
+ * the page carries, which is what makes it worth showing.
+ */
+const DISABLED_MIX = 0.55;
 
 /**
  * Above this WCAG relative luminance the nav bar is tinted towards black, below
  * it towards white - so the bar lifts off the page in either direction rather
- * than always in one.
+ * than always in one. The form field takes the same target one step further,
+ * and the error line picks its red by the same split.
  */
 const LIGHT_BACKGROUND_LUMINANCE = 0.4;
+
+/**
+ * The two reds the error line is written in, one per direction of page.
+ *
+ * **The error line is not a palette member and not derived from the pair.** A
+ * red is a semantic colour: it is the one thing on the page whose meaning is
+ * fixed before the visitor picks anything, so a slot would read it as
+ * decoration and a mix out of the pair would stop it being red. What it *is*
+ * is a colour a real design system ships in two versions, one for light
+ * surfaces and one for dark, which is why there are two here and why the
+ * choice runs on the ground rather than on a measurement.
+ *
+ * **Neither of them corrects itself against the ground.** The split says which
+ * red a designer would reach for, not whether it works - a mid-lightness page
+ * still gets an error line that fails, and the page is meant to show that.
+ */
+const DANGER_ON_LIGHT = "#A0402C";
+const DANGER_ON_DARK = "#FF9E8E";
 
 const BLACK = chroma("#000000");
 const WHITE = chroma("#FFFFFF");
@@ -171,7 +220,13 @@ export interface SamplePageColors {
   readonly onAccent: Color;
   readonly card: Color;
   readonly ghostBorder: Color;
-  readonly footerBorder: Color;
+  /** The hairline under the footer and between the table's rows. */
+  readonly rule: Color;
+  /** The disabled surface: the button nobody can press, and the picture. */
+  readonly muted: Color;
+  readonly onMuted: Color;
+  readonly field: Color;
+  readonly danger: Color;
 
 }
 
@@ -188,10 +243,17 @@ export interface SamplePageColors {
  * nothing about the pairing and only looks broken.
  *
  * **The palette is read in fixed roles, not through a control.** The accent -
- * wordmark, `Sign in`, the filled button, the card's edge - the ghost button's
- * outline, the eyebrow and the card's tint are the four roles, and they take
- * their colors from `PALETTE_SLOTS` in order, skipping whichever slot is also
- * the pair's ground - see `roleColorsFrom()`.
+ * wordmark, `Sign in`, the active nav item's underline, the filled button, the
+ * card's edge, the link in the running text - the ghost button's outline, the
+ * eyebrow with the form label and the table's header row, and the card's tint
+ * are the four roles, and they take their colors from `PALETTE_SLOTS` in
+ * order, skipping whichever slot is also the pair's ground - see
+ * `roleColorsFrom()`.
+ *
+ * **The disabled surface and the error line are neither.** A control nobody
+ * can press has no brand colour, and a red means what it means before the
+ * visitor picks anything: the first is mixed out of the pair like `dim`, the
+ * second is one of two fixed reds - `DANGER_ON_LIGHT` says why.
  */
 export function samplePageColors(pair: ContrastColors, palette: Palette): SamplePageColors {
   const {text, background} = pair;
@@ -217,7 +279,15 @@ export function samplePageColors(pair: ContrastColors, palette: Palette): Sample
     // sits at the page's lightness would cost the box, not the words - and
     // `roleColorsFrom()` is what keeps it off the ground in the first place.
     ghostBorder,
-    footerBorder: mixColors(background, text, FOOTER_BORDER_MIX)
+    rule: mixColors(background, text, RULE_MIX),
+    muted: mixColors(background, text, MUTED_TINT),
+    onMuted: mixColors(text, background, DISABLED_MIX),
+    // The nav's target one step further: the bar recedes and the field sinks
+    // with it, so a page reads as one surface with two wells in it rather
+    // than as a light bar over a dark field on one visitor's colours and the
+    // other way round on the next one's.
+    field: mixColors(background, navTarget, FIELD_TINT),
+    danger: chroma(background.luminance() > LIGHT_BACKGROUND_LUMINANCE ? DANGER_ON_LIGHT : DANGER_ON_DARK)
   };
 }
 

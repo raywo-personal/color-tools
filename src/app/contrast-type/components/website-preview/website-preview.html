@@ -25,6 +25,17 @@
           [style.color]="style().accent">Meridian</span>
 
     <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <!-- The page a visitor is on. Two carriers, not one: the accent sits
+           under the word as a rule and the word itself keeps the page's text
+           colour while the others are dim - so the state survives an accent
+           that lands at the page's own lightness. -->
+      <span class="border-b-2 pb-0.5"
+            [style.font-family]="style().navActive.fontFamily"
+            [style.font-size]="style().navActive.fontSize"
+            [style.font-weight]="style().navActive.fontWeight"
+            [style.line-height]="style().navActive.lineHeight"
+            [style.border-bottom-color]="style().accent">Notes</span>
+
       @for (item of navItems; track item) {
         <span [style.font-family]="style().navItems.fontFamily"
               [style.font-size]="style().navItems.fontSize"
@@ -87,17 +98,147 @@
             [style.font-weight]="style().ghostButton.fontWeight"
             [style.line-height]="style().ghostButton.lineHeight"
             [style.border-color]="style().ghostBorder">Browse palettes</span>
+
+      <!-- The word says it, not the grey: a disabled control told by colour
+           alone is the first thing a low-contrast pairing hides, which is
+           what this button is on the page to show. -->
+      <span class="rounded-xs px-5 py-3"
+            [style.font-family]="style().disabledButton.fontFamily"
+            [style.font-size]="style().disabledButton.fontSize"
+            [style.font-weight]="style().disabledButton.fontWeight"
+            [style.line-height]="style().disabledButton.lineHeight"
+            [style.background-color]="style().mutedBackground"
+            [style.color]="style().onMuted">Export (disabled)</span>
     </div>
 
     <p class="mb-[1.1em] max-w-[66ch] text-pretty"
        [style.font-size]="style().bodyText.fontSize"
        [style.font-weight]="style().bodyText.fontWeight"
-       [style.line-height]="style().bodyText.lineHeight">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you actually plan to ship, then read this the way a reader would: quickly, at arm's length, without looking for problems.</p>
+       [style.line-height]="style().bodyText.lineHeight">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you actually plan to ship, then <span class="underline underline-offset-4"
+             [style.color]="style().accent">read this the way a reader would</span>: quickly, at arm's length, without looking for problems.</p>
 
     <p class="mb-[1.1em] max-w-[66ch] text-pretty"
        [style.font-size]="style().bodyText.fontSize"
        [style.font-weight]="style().bodyText.fontWeight"
        [style.line-height]="style().bodyText.lineHeight">Watch the line endings and the gaps between words. If your eye keeps returning to the same line, the issue is usually spacing or weight rather than color. If the text seems to vibrate against its background, the two colors are close in lightness but far apart in hue, and no amount of extra size will fix it. Long passages punish decisions that look fine in a headline: thin weights lose their stems, saturated backgrounds bleed into the letterforms, and near-black on near-white can read as cold rather than clear.</p>
+
+    <!-- The parts nobody photographs, which the closing paragraph below has
+         always named and the page did not show: a control nobody can press, a
+         message the reader has to find, a caption under a picture, a column of
+         figures.
+
+         One column at the narrow end and two from `sm:` up, so the field and
+         the picture sit side by side only where both still have a line to
+         themselves. -->
+    <div class="my-8 grid gap-7 sm:grid-cols-2 sm:items-start">
+      <div>
+        <span class="mb-2 block tracking-[0.16em]"
+              [style.font-family]="style().fieldLabel.fontFamily"
+              [style.font-size]="style().fieldLabel.fontSize"
+              [style.font-weight]="style().fieldLabel.fontWeight"
+              [style.line-height]="style().fieldLabel.lineHeight"
+              [style.color]="style().accentSoft">EMAIL</span>
+
+        <!-- A div holding text, not an input: nothing in the preview is
+             focusable, and a field that takes a caret would swallow keystrokes
+             meant for the app. The focus state is drawn rather than reached -
+             an outline in the page's text colour, offset so the page shows
+             through the gap, which is the one ring that works on any pair. -->
+        <div class="flex min-h-11 items-center rounded-xs border px-3 outline-2 outline-offset-2"
+             [style.font-size]="style().fieldText.fontSize"
+             [style.font-weight]="style().fieldText.fontWeight"
+             [style.line-height]="style().fieldText.lineHeight"
+             [style.background-color]="style().fieldBackground"
+             [style.border-color]="style().pageColor"
+             [style.outline-color]="style().pageColor">reader&#64;meridian</div>
+
+        <!-- The sign carries the message beside the red, drawn as a stroke for
+             the reason `copy-confirmation.ts` gives for its own: a glyph is at
+             the mercy of whichever family the visitor picked, and a family
+             without it renders a box. -->
+        <p class="mt-2 flex items-start gap-2"
+           [style.font-size]="style().errorLine.fontSize"
+           [style.font-weight]="style().errorLine.fontWeight"
+           [style.line-height]="style().errorLine.lineHeight"
+           [style.color]="style().danger">
+          <svg class="mt-1 size-3.5 shrink-0"
+               viewBox="0 0 16 16" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M4 4l8 8M12 4l-8 8"/>
+          </svg>
+          <span>This address is already on the list.</span>
+        </p>
+      </div>
+
+      <div>
+        <!-- An aspect ratio rather than a height: the placeholder holds one
+             word, and a picture on a real page is a shape, not a number of
+             pixels. -->
+        <div class="flex aspect-video items-center justify-center rounded-xs"
+             [style.background-color]="style().mutedBackground">
+          <span class="tracking-[0.12em]"
+                [style.font-family]="style().imageLabel.fontFamily"
+                [style.font-size]="style().imageLabel.fontSize"
+                [style.font-weight]="style().imageLabel.fontWeight"
+                [style.line-height]="style().imageLabel.lineHeight"
+                [style.color]="style().dimColor">IMAGE</span>
+        </div>
+
+        <p class="mt-2 text-pretty"
+           [style.font-size]="style().imageCaption.fontSize"
+           [style.font-weight]="style().imageCaption.fontWeight"
+           [style.line-height]="style().imageCaption.lineHeight"
+           [style.color]="style().dimColor">Fig. 1 &ndash; The caption under a picture is where most pairings fail first.</p>
+      </div>
+    </div>
+
+    <!-- The numbers are this page's own, not sample figures: the table reports
+         what the sliders hold, so a visitor who sets the display role to 96
+         does not read a table still claiming 44. A row of small right-aligned
+         figures is the point of it either way.
+
+         `wrap-anywhere` and not the headline's `wrap-break-word`: a table is
+         laid out from the min-content width of its cells, and `break-word`
+         leaves that width alone by definition - so at the top of the mono
+         range the unbreakable `ELEMENT` would push the table past the column
+         and the panel's `overflow-hidden` would cut the last column off
+         without a scrollbar to say so. `anywhere` is the one that counts
+         towards min-content, and it only breaks where a cell has no room. -->
+    <table class="mb-8 w-full border-collapse text-left wrap-anywhere">
+      <thead>
+        <tr class="border-b" [style.border-bottom-color]="style().pageColor">
+          @for (column of tableColumns; track column.caption) {
+            <th class="py-2 font-normal tracking-[0.14em]"
+                [class.text-right]="column.number"
+                [style.font-family]="style().tableHeader.fontFamily"
+                [style.font-size]="style().tableHeader.fontSize"
+                [style.font-weight]="style().tableHeader.fontWeight"
+                [style.line-height]="style().tableHeader.lineHeight"
+                [style.color]="style().accentSoft">{{ column.caption }}</th>
+          }
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (row of tableRows(); track row.element) {
+          <tr class="border-b last:border-b-0" [style.border-bottom-color]="style().rule">
+            <td class="py-2.5"
+                [style.font-size]="style().tableCell.fontSize"
+                [style.font-weight]="style().tableCell.fontWeight"
+                [style.line-height]="style().tableCell.lineHeight">{{ row.element }}</td>
+
+            @for (value of row.values; track $index) {
+              <td class="py-2.5 text-right tabular-nums"
+                  [style.font-family]="style().tableNumber.fontFamily"
+                  [style.font-size]="style().tableNumber.fontSize"
+                  [style.font-weight]="style().tableNumber.fontWeight"
+                  [style.line-height]="style().tableNumber.lineHeight">{{ value }}</td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
 
     <div class="my-8 rounded-xs border-l-2 px-6 py-5"
          [style.background-color]="style().cardBackground"
@@ -121,7 +262,7 @@
        [style.line-height]="style().bodyText.lineHeight">Where a palette earns its keep is in the parts nobody photographs: the disabled button, the error line, the caption under an image, the row of small numbers in a table. Those are the places to look before signing off on a color.</p>
 
     <div class="mt-9 flex flex-wrap justify-between gap-5 border-t pt-4"
-         [style.border-top-color]="style().footerBorder">
+         [style.border-top-color]="style().rule">
       <span class="max-w-[52ch] text-pretty"
             [style.font-size]="style().smallPrint.fontSize"
             [style.font-weight]="style().smallPrint.fontWeight"
