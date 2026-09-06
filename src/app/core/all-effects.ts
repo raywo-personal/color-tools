@@ -13,7 +13,7 @@ import {colorChangedEffect, randomColorAnnouncedEffect, useAsBackgroundChangedEf
 import {newPaletteAnnouncedEffect} from "@core/palettes/palettes.effects";
 import {contrastPairAnnouncedEffect} from "@core/contrast/contrast.effects";
 import {map} from "rxjs";
-import {saveStateEffect} from "@core/common/persistence.effects";
+import {restoreFontEffect, saveStateEffect} from "@core/common/persistence.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {transferEvents} from "@core/common/transfer.events";
 
@@ -33,6 +33,8 @@ export function allEffects(
     setColorTheme$: colorThemeChangeEffect(events, themeService),
 
     loadFont$: fontSelectedEffect(events, fontLoaderService),
+
+    restoreFont$: restoreFontEffect(events, fontLoaderService, store),
 
     fontAnnounced$: fontAnnouncedEffect(events, announcer, store),
 
