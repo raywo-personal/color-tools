@@ -1,14 +1,13 @@
 import {PaletteStylesWithoutRandom} from "@engine/palette/palette-style.model";
-import {PALETTE_SLOTS, PaletteColors} from "@engine/palette/palette.model";
+import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 import {opaqueHexColor} from "../helper/tool-schemas.helper";
 import {z} from "zod";
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
-import {generatePalette} from "@engine/palette/palette.helper";
-import {paletteColorFrom} from "@engine/palette/palette-color.model";
+import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import chroma from "chroma-js";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
 import {colorName} from "@engine/color/color-name.helper";
-import {randomBetween} from "@engine/helpers/random.helper";
+import {randomSeed} from "@engine/helpers/random.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 
 
@@ -51,10 +50,8 @@ const outputSchema = {
 const callback: ToolCallback<typeof inputSchema> =
   ({baseColor, style, seed}) => {
     const base = chroma(baseColor);
-    const effectiveSeed = seed ?? randomBetween(0, 360);
-    const color0 = paletteColorFrom(base, "color0");
-    const paletteColors: Partial<PaletteColors> = {color0};
-    const palette = generatePalette(style, paletteColors, effectiveSeed);
+    const effectiveSeed = seed ?? randomSeed();
+    const palette = generatePaletteFrom(base, style, effectiveSeed);
     const colors = PALETTE_SLOTS.map(slot => {
       const paletteColor = palette[slot].color;
 
