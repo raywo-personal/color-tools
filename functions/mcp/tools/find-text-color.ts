@@ -7,6 +7,7 @@ import chroma from "chroma-js";
 import {findTextColor, MODES} from "@engine/contrast/optimal-text-color.helper";
 import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
 import {opaqueHexColor, fontSizeInput, fontWeightInput} from "../helper/tool-schemas.helper";
+import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 
 
 const inputSchema = {
@@ -44,7 +45,7 @@ export function registerFindTextColor(server: McpServer) {
       description: "Find the text color for a given background color according to the selected mode.",
       inputSchema,
       outputSchema,
-      annotations: {readOnlyHint: true, idempotentHint: true, openWorldHint: false}
+      annotations: TOOL_ANNOTATION
     },
     callback
   );
