@@ -5,6 +5,7 @@ import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 import {paletteFromId} from "@engine/palette/palette-id.helper";
 import {colorName} from "@engine/color/color-name.helper";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
+import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 
 
 const inputSchema = {
@@ -105,7 +106,8 @@ export function registerReadPalette(server: McpServer) {
       title: "Read Palette",
       description: "Generates a palette from a given ID identical to the one 'generate_palette' would have generated.",
       inputSchema,
-      outputSchema
+      outputSchema,
+      annotations: TOOL_ANNOTATION
     },
     callback
   );
