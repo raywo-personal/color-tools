@@ -87,6 +87,7 @@ export class FontPicker {
 
   readonly #fonts = inject(GoogleFontsService);
   private readonly field = viewChild.required<ElementRef<HTMLInputElement>>("field");
+  private readonly retryButton = viewChild<ElementRef<HTMLButtonElement>>("retryButton");
   private readonly optionElements = viewChildren<ElementRef<HTMLElement>>("option");
 
   /** The caption above the field, and what the field is announced by. */
@@ -360,13 +361,28 @@ export class FontPicker {
 
 
   /**
-   * Drops the selection and hands focus back to the field, which is where the
-   * next family is chosen - the button the visitor pressed does nothing more.
+   * Drops the selection and hands focus to something the visitor can act from.
+   *
+   * The field, which is where the next family is chosen - the button the
+   * visitor pressed does nothing more. But only while the field can take
+   * focus: a typeface restored before the catalog answers leaves an enabled
+   * CLEAR over a disabled field, `focus()` on a disabled input does nothing,
+   * and CLEAR disables itself on the same change - so the focus that pressed
+   * it would land on `<body>`. TRY AGAIN is what is left to act from once the
+   * catalog has failed.
+   *
+   * While it is still loading there is neither, and the drop stands. Nothing
+   * on screen can take focus then, and the state passes on its own.
    */
   protected clear(): void {
     this.font.set(null);
     this.open.set(false);
-    this.field().nativeElement.focus();
+
+    const target = this.ready()
+      ? this.field().nativeElement
+      : this.retryButton()?.nativeElement;
+
+    target?.focus();
   }
 
 

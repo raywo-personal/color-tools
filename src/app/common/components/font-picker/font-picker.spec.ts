@@ -447,6 +447,31 @@ describe("FontPicker", () => {
   });
 
 
+  it("hands focus to TRY AGAIN when CLEAR is pressed over a disabled field", async () => {
+    // A typeface that came back before the catalog did leaves an enabled CLEAR
+    // over a disabled field. `focus()` on a disabled input does nothing, and
+    // CLEAR disables itself on the same change - so without a second target
+    // the focus that pressed it lands on the document.
+    const {catalog, settle, type, press, button, field, click} = await picker();
+
+    await type("lobster");
+    await press("Enter");
+
+    catalog.fail();
+    await settle();
+
+    expect(field().disabled).toBe(true);
+
+    const clear = button("CLEAR") as HTMLButtonElement;
+    expect(clear.disabled).toBe(false);
+
+    clear.focus();
+    await click(clear);
+
+    expect(document.activeElement).toBe(button("TRY AGAIN"));
+  });
+
+
   it("says so when the catalog does not answer, and stops taking input", async () => {
     const {catalog, settle, field, status} = await picker();
 

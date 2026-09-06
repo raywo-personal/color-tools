@@ -93,7 +93,8 @@
   <!-- Stays while the request it started is out, disabled: removing it would
        drop the focus of the visitor who just pressed it onto the document. -->
   @if (failed() || retrying()) {
-    <button type="button"
+    <button #retryButton
+            type="button"
             class="h-11 shrink-0 cursor-pointer rounded-xs border border-line px-3 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed"
             [disabled]="loading()"
             (click)="retry()">TRY AGAIN
