@@ -11,8 +11,10 @@ import {AppState} from "@core/models/app-state.model";
 import {isRestorable} from "@engine/helpers/validate-string-id.helper";
 import {CONTRAST_ID_LENGTH, contrastColorsFromId} from "@engine/contrast/contrast-id.helper";
 import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
-import {normalizedTypeSettings} from "@engine/contrast/type-settings.model";
-import {SelectedFont, weightStopsFor} from "@common/models/google-font.model";
+import {TypeSettings} from "@engine/contrast/type-settings.model";
+import {normalizedTypeSettingsFor, TYPE_ROLES, TypeRole} from "@engine/contrast/type-role.model";
+import {SelectedFont} from "@common/models/google-font.model";
+import {TypeRoleSettings, TypeRolesMap, weightStopsForRole} from "@common/models/type-role-settings.model";
 
 
 export function loadAppStateReducer(
@@ -48,17 +50,17 @@ export function loadAppStateReducer(
     ? contrastColorsFromId(contrastId)
     : contrastPairFromPalette(currentPalette);
 
-  const selectedFont = restoreFont(persistence.getOrDefault("selectedFont", null));
-
-  // Normalized rather than taken as read: the three keys carry plain numbers,
-  // and a weight off the `FONT_WEIGHTS` grid has no row in `apcaLookup` to be
-  // rated against. Against the restored family's own weights, so a reload
-  // lands on the same weight the picker would have allowed.
-  const typeSettings = normalizedTypeSettings({
-    fontSize: persistence.getOrDefault("fontSize", state.typeSettings.fontSize),
-    fontWeight: persistence.getOrDefault("fontWeight", state.typeSettings.fontWeight),
-    lineHeight: persistence.getOrDefault("lineHeight", state.typeSettings.lineHeight)
-  }, weightStopsFor(selectedFont));
+  // Body text falls back to the single typeface and its three axes from
+  // before the roles, so a visitor who set their type then keeps it.
+  const legacyBody: Partial<TypeRoleSettings> = {
+    font: persistence.get("selectedFont") ?? undefined,
+    settings: legacySettings(
+      persistence.get("fontSize") ?? null,
+      persistence.get("fontWeight") ?? null,
+      persistence.get("lineHeight") ?? null
+    )
+  };
+  const typeRoles = restoreTypeRoles(persistence.get("typeRoles"), legacyBody, state.typeRoles);
 
   return {
     colorTheme: persistence.getOrDefault("colorTheme", state.colorTheme),
@@ -68,10 +70,56 @@ export function loadAppStateReducer(
     currentPalette,
     paletteStyle: currentPalette.style,
     paletteSeed,
-    selectedFont,
     contrastColors,
-    typeSettings
+    typeRoles
   };
+}
+
+
+/**
+ * The three legacy keys as one settings object, or nothing where none of them
+ * is stored. Partial values are filled in from the role's defaults by the
+ * normalization, the same way a half-written entry would be.
+ */
+function legacySettings(fontSize: number | null,
+                        fontWeight: number | null,
+                        lineHeight: number | null): TypeSettings | undefined {
+  if (fontSize === null && fontWeight === null && lineHeight === null) return undefined;
+
+  return {
+    fontSize: fontSize ?? Number.NaN,
+    fontWeight: fontWeight ?? Number.NaN,
+    lineHeight: lineHeight ?? Number.NaN
+  };
+}
+
+
+/**
+ * The stored roles, every one of them made usable.
+ *
+ * Normalized rather than taken as read: the entry carries plain numbers, and a
+ * weight off the `FONT_WEIGHTS` grid has no row in `apcaLookup` to be rated
+ * against. Against the restored face's own weights, so a reload lands on the
+ * same weight the picker would have allowed. A role the entry does not carry
+ * - the storage predates the role, or was edited by hand - opens at the
+ * role's defaults, and body text tries the legacy keys first.
+ */
+function restoreTypeRoles(stored: Partial<Record<TypeRole, Partial<TypeRoleSettings>>> | null,
+                          legacyBody: Partial<TypeRoleSettings>,
+                          fallback: TypeRolesMap): TypeRolesMap {
+  const entries = TYPE_ROLES.map(role => {
+    const entry = stored?.[role] ?? (role === "body" ? legacyBody : undefined);
+    const font = restoreFont(entry?.font ?? null);
+    const settings = normalizedTypeSettingsFor(
+      role,
+      entry?.settings ?? fallback[role].settings,
+      weightStopsForRole(role, font)
+    );
+
+    return [role, {font, settings}];
+  });
+
+  return Object.fromEntries(entries) as Record<TypeRole, TypeRoleSettings>;
 }
 
 
@@ -83,8 +131,8 @@ export function loadAppStateReducer(
  * list. Empty rather than guessed: the catalog is the only place the family's
  * weights come from, and it may not answer at all.
  */
-function restoreFont(stored: SelectedFont | null): SelectedFont | null {
-  if (!stored) return null;
+function restoreFont(stored: SelectedFont | null | undefined): SelectedFont | null {
+  if (!stored || typeof stored.family !== "string") return null;
 
   const weights = Array.isArray(stored.weights)
     ? stored.weights.filter(weight => Number.isFinite(weight))

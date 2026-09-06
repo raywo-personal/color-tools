@@ -1,4 +1,5 @@
 import {Component, computed, inject} from "@angular/core";
+import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {FontSize, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {
@@ -7,83 +8,77 @@ import {
   lightestPassingFontWeight,
   smallestPassingFontSize
 } from "@engine/contrast/apca-rating.helper";
+import {typeRoleCaption} from "@engine/contrast/type-role.model";
 import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
+import {
+  figureElementOf,
+  groundName,
+  groundOf,
+  inkOf,
+  SampleElement,
+  samplePageColors
+} from "@contrast-type/models/sample-page.model";
 
 
 type RowState = "pass" | "fail" | "unrated";
 
 
-interface RatingRow {
+/** The selected role's element, measured on the page as it is drawn. */
+interface Measured {
 
-  readonly key: string;
-  /** The word that says what the row is for - `YOUR TYPE`, `BODY`. */
+  readonly element: SampleElement;
+  /** The element's size in pixels: the role's size at the element's share. */
+  readonly fontSize: number;
+  readonly fontWeight: FontWeight;
+  /** Signed, as `chroma.contrastAPCA()` reports it. */
+  readonly contrast: number;
+
+}
+
+
+/** The row under the figure: the element it reads, and its verdict. */
+interface WeakestRow {
+
   readonly caption: string;
-  /** The type the row rates, as the visitor reads it - `16px / 400`. */
+  /** The type the element is set in, as the visitor reads it - `13px / 400`. */
   readonly spec: string;
   readonly verdict: string;
   readonly state: RowState;
-  /** Set on the first reference row, which is where the list changes register. */
-  readonly startsReference: boolean;
-
-}
-
-
-interface ReferenceRow {
-
-  readonly caption: string;
-  readonly fontSizeKey: FontSize;
-  readonly fontWeight: FontWeight;
 
 }
 
 
 /**
- * The rows that stand whatever the controls are set to.
+ * The Lc of the selected role's text, and its verdict.
  *
- * `SMALLEST` is 14px because that is the smallest size `apcaLookup` rates at
- * all: every cell of the 12px row is null, and at weight 400 the table starts
- * at 14px. A row below it would read `Not rated` for every pair ever shown and
- * say nothing about this one.
+ * **The figure answers about the role, not about the pair.** The pair is an
+ * input now: its two colors reach the page as inks and grounds, mixed and
+ * placed, and what a visitor wants to know is how the text in the role they
+ * are setting fares. So the role's element - the headline, the body text, the
+ * eyebrow, the label on the filled button - is measured at its own size and
+ * the role's weight, its Lc heads the block, and the row beneath names it with
+ * its verdict. The pair's own Lc is a one-line footnote, with the polarity
+ * that used to be a sentence under the figure. Switching roles is what walks
+ * the page through its sizes, which is what the four threshold rows used to
+ * answer.
  *
- * All three sit at weight 400 so the set is a scale of sizes rather than a
- * mixture; the visitor's own weight is in the row above them.
- */
-const REFERENCE_ROWS: readonly ReferenceRow[] = [
-  {caption: "BODY", fontSizeKey: "16px", fontWeight: "400"},
-  {caption: "LARGE", fontSizeKey: "24px", fontWeight: "400"},
-  {caption: "SMALLEST", fontSizeKey: "14px", fontWeight: "400"}
-];
-
-
-/**
- * The Lc of the pair, and what it is worth at four sizes.
+ * **One element per role, not the weakest.** The role's weakest element was
+ * the first answer, and it answered nothing: the small print in the dim ink
+ * fails at Lc 100 whatever the pair is. `SampleElement.figure` in
+ * `sample-page.model.ts` says which element stands for its role, next to the
+ * list the preview draws from - so what is measured is what is shown.
  *
- * **The figure is the absolute Lc, and the polarity is a sentence.** The draft
- * shows a WCAG ratio with `: 1` beside it; `contrastColors.contrast` is a
- * signed Lc instead, and the sign is a polarity rather than a magnitude - every
- * verdict below is reached through `Math.abs()`, so a minus on the hero figure
- * would suggest a deficit it never causes. The information the sign carries -
- * that swapping the pair is not a cosmetic choice - is what the sentence under
- * the figure says, in words a visitor can act on.
- *
- * **The badge list has no AA/AAA rows.** `getRequiredLc()` answers for one size
- * and one weight, so the draft's fixed four of AA/AAA x normal/large has no
- * APCA counterpart. The rows are the size and weight the type controls hold -
- * the verdict that is actually about the visitor's page - over three fixed
- * references, so the figure means something before a slider is touched. The
- * references are a fixed set rather than a deduplicated one on purpose: a row
- * that disappears when the size slider passes 16px moves the whole list under
- * the thumb mid-drag, and `YOUR TYPE 16px / 400 - Pass` above `BODY 16px / 400
- * - Pass` reads as the answer to "is my type body text", not as a repeat.
+ * **The figure is the absolute Lc.** `contrastAPCA()` is signed, and the sign
+ * is a polarity rather than a magnitude - the verdict is reached through
+ * `Math.abs()`, so a minus on the hero figure would suggest a deficit it never
+ * causes. Whole numbers, like the table's own requirements, and rounded down
+ * rather than to the nearest: the verdict beside it compares the exact value,
+ * so a figure rounded up would cross a requirement the element has not reached
+ * - Lc 74.76 would head a row reading `Needs Lc 75` with `Lc 75`.
  *
  * **A fail is not told by colour.** `CLAUDE.md` keeps `danger` for the failed
  * copy, so the carriers here are the marker's shape - a tick, a cross, a dash
- * - the wording, which names the Lc the table asked for, and the neutral
- * token. A pass carries its marker and its caption in `text`, every other row
- * carries them in `dim`: the list answers "where does this pair work", so what
- * it carries is what should read first, and a page of crossed-out rows shouted
- * at the visitor would be the loudest where there is least to do. The spec and
- * the verdict stand in `text` whatever the row's state - the template says why.
+ * - and the wording, which names the Lc the table asked for.
  *
  * **Nothing here is a live region.** The Lc changes on every frame of a slider
  * drag and on every move of the colour picker, so a polite region would queue
@@ -101,131 +96,83 @@ export class ApcaRating {
 
   readonly #stateStore = inject(AppStateStore);
 
-  readonly #contrast = computed(() => this.#stateStore.contrastColors().contrast);
+  readonly #role = this.#stateStore.typeRole;
 
-  /** The table row the visitor's size is rated on, which is not always its own. */
-  readonly #fontSizeKey = computed(() => fontSizeKeyFrom(this.#stateStore.typeSettings().fontSize));
+  readonly #measured = computed<Measured>(() => {
+    const colors = samplePageColors(this.#stateStore.contrastColors(), this.#stateStore.currentPalette());
+    const {settings} = this.#stateStore.typeRoles()[this.#role()];
+    const element = figureElementOf(this.#role());
 
-  readonly #fontWeight = computed<FontWeight>(
-    () => String(this.#stateStore.typeSettings().fontWeight) as FontWeight
-  );
-
-  /**
-   * Whole numbers, like the table's own requirements: `apcaLookup` is written
-   * in Lc 90, Lc 75, Lc 60, and a figure with a decimal would invite a
-   * comparison the rows do not make.
-   *
-   * **Rounded down rather than to the nearest.** The rows below do make that
-   * comparison, against the exact value, so a figure rounded up crosses a
-   * requirement the pair has not reached: `#6f6f6f` on white is Lc 74.76 and
-   * would head a row reading `Needs Lc 75` with `Lc 75`. Against an integer
-   * requirement a floored figure cannot contradict its own verdict - it
-   * reaches the requirement exactly when the pair does - at the price of
-   * writing the strongest pair there is as 107 rather than 108.
-   */
-  protected readonly figure = computed(() => String(Math.floor(Math.abs(this.#contrast()))));
-
-  /**
-   * What the sign says, in words.
-   *
-   * At a figure of 0 there is no polarity to name - the two colors are at the
-   * same perceived lightness, which `getAPCAPolarity()` still reports as
-   * `dark-on-light` because it splits at zero.
-   */
-  protected readonly polarityText = computed(() => {
-    if (this.figure() === "0") return "Too close to tell text from background.";
-
-    return getAPCAPolarity(this.#contrast()) === "light-on-dark"
-      ? "Light text on a dark background."
-      : "Dark text on a light background.";
+    return {
+      element,
+      fontSize: Math.round(settings.fontSize * element.sizeRatio),
+      fontWeight: String(settings.fontWeight) as FontWeight,
+      contrast: chroma.contrastAPCA(inkOf(element, colors), groundOf(element, colors))
+    };
   });
 
-  protected readonly rows = computed<RatingRow[]>(() => {
-    const settings = this.#stateStore.typeSettings();
-    const ownRow: RatingRow = this.#rowFor(
-      "own",
-      "YOUR TYPE",
-      // The visitor's own size, not the row it is rated on: the slider says
-      // 17px, and a caption saying 18px would contradict the control that set
-      // it. Which row the table used is in the note under the list.
-      `${settings.fontSize}px / ${settings.fontWeight}`,
-      this.#fontSizeKey(),
-      this.#fontWeight(),
-      false
-    );
+  /** The table row the element's size is rated on, which is not always its own. */
+  readonly #fontSizeKey = computed(() => fontSizeKeyFrom(this.#measured().fontSize));
 
-    const references = REFERENCE_ROWS.map((row, index) => this.#rowFor(
-      row.caption,
-      row.caption,
-      `${row.fontSizeKey} / ${row.fontWeight}`,
-      row.fontSizeKey,
-      row.fontWeight,
-      index === 0
-    ));
+  protected readonly caption = computed(() => typeRoleCaption(this.#role()));
 
-    return [ownRow, ...references];
+  protected readonly figure = computed(() => String(Math.floor(Math.abs(this.#measured().contrast))));
+
+  protected readonly row = computed<WeakestRow>(() => {
+    const {element, fontSize, fontWeight, contrast} = this.#measured();
+    const requiredLc = getRequiredLc(this.#fontSizeKey(), fontWeight);
+    const state = rowState(Math.abs(contrast), requiredLc);
+
+    return {
+      caption: element.caption,
+      // The element's own size, not the row it is rated on: the slider says
+      // 13px, and a spec saying 14px would contradict the control that set
+      // it. Which row the table used is in the note under the row.
+      spec: `${fontSize}px / ${fontWeight}`,
+      verdict: verdictFor(state, requiredLc),
+      state
+    };
   });
 
   /**
-   * The sentence that explains why the same pair passes at one size and fails
-   * at another - the draft's `sizeNote`, carried over.
-   *
-   * Where the pair fails it says what would carry it, through
-   * `smallestPassingFontSize()` and `lightestPassingFontWeight()`. The weight
-   * those name can sit above what the `WEIGHT` slider reaches: the note is
-   * about the visitor's page, not about the preview's controls.
+   * The sentence that explains the verdict: what the element sits on, what
+   * the table asks of text that size, and - where it fails - what would carry
+   * it, through `smallestPassingFontSize()` and `lightestPassingFontWeight()`.
+   * The weight those name can sit above what the `WEIGHT` slider reaches: the
+   * note is about the visitor's page, not about the preview's controls.
    */
-  protected readonly sizeNote = computed(() => {
-    const settings = this.#stateStore.typeSettings();
+  protected readonly note = computed(() => {
+    const {element, fontSize, fontWeight, contrast} = this.#measured();
     const sizeKey = this.#fontSizeKey();
-    const weight = this.#fontWeight();
-    const requiredLc = getRequiredLc(sizeKey, weight);
-    const ratedOn = sizeKey === `${settings.fontSize}px`
-      ? `At ${settings.fontSize}px / ${weight}`
-      : `At ${settings.fontSize}px / ${weight}, which the table rates on its ${sizeKey} row,`;
+    const requiredLc = getRequiredLc(sizeKey, fontWeight);
+    const where = `${sentenceCase(element.caption)} on ${groundName(element.ground)} at ${fontSize}px / ${fontWeight}`;
+    const ratedOn = sizeKey === `${fontSize}px` ? "" : `, which the table rates on its ${sizeKey} row,`;
 
     const requirement = requiredLc === null
-      ? `${ratedOn} the table sets no requirement.`
-      : `${ratedOn} the requirement is Lc ${requiredLc}.`;
+      ? `${where}${ratedOn} has no requirement in the table.`
+      : `${where}${ratedOn} needs Lc ${requiredLc}.`;
 
-    return `${requirement} ${this.#consequence(requiredLc, sizeKey, weight)}`;
+    return `${requirement} ${consequence(contrast, requiredLc, sizeKey, fontWeight)}`;
   });
 
+  /**
+   * The pair itself, in one line: its Lc and which way round it is. At a
+   * figure of 0 there is no polarity to name - the two colors are at the same
+   * perceived lightness, which `getAPCAPolarity()` still reports as
+   * `dark-on-light` because it splits at zero.
+   */
+  protected readonly pairNote = computed(() => {
+    const contrast = this.#stateStore.contrastColors().contrast;
+    const figure = Math.floor(Math.abs(contrast));
 
-  #rowFor(key: string,
-          caption: string,
-          spec: string,
-          fontSizeKey: FontSize,
-          fontWeight: FontWeight,
-          startsReference: boolean): RatingRow {
-    const requiredLc = getRequiredLc(fontSizeKey, fontWeight);
-    const state = rowState(Math.abs(this.#contrast()), requiredLc);
+    if (figure === 0) return "The pair itself: Lc 0, too close to tell text from background.";
 
-    return {key, caption, spec, state, startsReference, verdict: verdictFor(state, requiredLc)};
-  }
+    const polarity = getAPCAPolarity(contrast) === "light-on-dark"
+      ? "light text on a dark background"
+      : "dark text on a light background";
 
-
-  #consequence(requiredLc: number | null,
-               fontSizeKey: FontSize,
-               fontWeight: FontWeight): string {
-    const contrast = this.#contrast();
-
-    if (rowState(Math.abs(contrast), requiredLc) === "pass") {
-      return "A smaller size or a lighter weight asks for more.";
-    }
-
-    const size = smallestPassingFontSize(contrast, fontWeight);
-    const weight = lightestPassingFontWeight(contrast, fontSizeKey);
-
-    if (size !== null && weight !== null) {
-      return `This pair first passes at ${size} on this weight, or at weight ${weight} at this size.`;
-    }
-
-    if (size !== null) return `This pair first passes at ${size} on this weight.`;
-    if (weight !== null) return `This pair first passes at weight ${weight} at this size.`;
-
-    return "No size or weight in the table carries this pair.";
-  }
+    return `The pair itself: Lc ${figure}, ${polarity}.`;
+  });
 
 }
 
@@ -250,4 +197,34 @@ function verdictFor(state: RowState, requiredLc: number | null): string {
   if (state === "fail") return `Needs Lc ${requiredLc}`;
 
   return "Not rated";
+}
+
+
+function consequence(contrast: number,
+                     requiredLc: number | null,
+                     fontSizeKey: FontSize,
+                     fontWeight: FontWeight): string {
+  if (rowState(Math.abs(contrast), requiredLc) === "pass") {
+    return "A smaller size or a lighter weight asks for more.";
+  }
+
+  const size = smallestPassingFontSize(contrast, fontWeight);
+  const weight = lightestPassingFontWeight(contrast, fontSizeKey);
+
+  if (size !== null && weight !== null) {
+    return `It first passes at ${size} on this weight, or at weight ${weight} at this size.`;
+  }
+
+  if (size !== null) return `It first passes at ${size} on this weight.`;
+  if (weight !== null) return `It first passes at weight ${weight} at this size.`;
+
+  return "No size or weight in the table carries it.";
+}
+
+
+/** `SMALL PRINT` as `Small print`, for the start of a sentence. */
+function sentenceCase(caption: string): string {
+  const lower = caption.toLowerCase();
+
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
 }

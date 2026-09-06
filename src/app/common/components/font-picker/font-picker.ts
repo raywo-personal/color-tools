@@ -1,6 +1,7 @@
 import {afterRenderEffect, Component, computed, effect, ElementRef, inject, input, linkedSignal, model, signal, viewChild, viewChildren} from "@angular/core";
 import {FormsModule} from "@angular/forms";
 import {getRegularFont, GoogleFont, SelectedFont} from "@common/models/google-font.model";
+import {APP_TYPE_FAMILY} from "@common/models/type-role-settings.model";
 import {GoogleFontsService} from "@common/services/google-fonts.service";
 
 
@@ -16,17 +17,6 @@ let nextInstance = 0;
  * visitor scans rather than reads.
  */
 const RESULT_LIMIT = 20;
-
-/**
- * The family the app sets itself in, and the one the preview falls back to.
- *
- * A copy of the first name in `--font-sans` in `src/styles.css`, which no
- * compiler compares against this. `font-picker.spec.ts` reads the stylesheet
- * and pins the two together - the field can be empty, and a visitor is then
- * owed the name of the type they are actually looking at.
- */
-const APP_TYPE_FAMILY = "IBM Plex Sans";
-
 
 /** One row of the listbox, with the id its `aria-activedescendant` needs. */
 interface FontOption {
@@ -92,6 +82,16 @@ export class FontPicker {
 
   /** The caption above the field, and what the field is announced by. */
   readonly label = input("TYPEFACE");
+
+  /**
+   * The family in use while nothing is chosen, named under the field.
+   *
+   * The app's sans by default; the host passes the mono face for a role that
+   * falls back to it. The field can be empty, and a visitor is then owed the
+   * name of the type they are actually looking at - `font-picker.spec.ts`
+   * pins the default against the stylesheet.
+   */
+  readonly fallbackFamily = input(APP_TYPE_FAMILY);
 
   readonly font = model<SelectedFont | null>(null);
 
@@ -202,7 +202,7 @@ export class FontPicker {
 
     return family
       ? `Set in ${family}.`
-      : `Set in ${APP_TYPE_FAMILY}, the app's own type.`;
+      : `Set in ${this.fallbackFamily()}, the app's own type.`;
   });
 
   protected readonly statusText = computed(() => {

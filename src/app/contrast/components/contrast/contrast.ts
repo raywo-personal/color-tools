@@ -32,7 +32,7 @@ export class Contrast {
 
 
   protected onFontSelected(font: SelectedFont | null) {
-    this.#dispatch.fontSelected(font);
+    this.#dispatch.fontSelected({role: "body", font});
   }
 
 }

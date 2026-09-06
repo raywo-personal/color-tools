@@ -8,6 +8,7 @@ import {LOCAL_STORAGE_KEY} from "@common/models/local-storage.model";
 import {generatePalette, generatePaletteFrom} from "@engine/palette/palette.helper";
 import {EventInstance} from "@ngrx/signals/events";
 import {FONT_SIZE_RANGE, LINE_HEIGHT_RANGE} from "@engine/contrast/type-settings.model";
+import {DISPLAY_FONT_SIZE_RANGE} from "@engine/contrast/type-role.model";
 import {contrastIdFromColors} from "@engine/contrast/contrast-id.helper";
 import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 
@@ -203,39 +204,43 @@ describe("loadAppStateReducer", () => {
   });
 
 
-  it("keeps the initial type settings for a visitor who has none stored", () => {
+  it("keeps the initial type roles for a visitor who has none stored", () => {
     // They are deliberately absent from `EMPTY_SETTINGS`, so this fallback is
     // reachable - see the note there.
-    expect(loaded().typeSettings).toEqual(initialState.typeSettings);
+    expect(loaded().typeRoles).toEqual(initialState.typeRoles);
   });
 
 
-  it("reports stored type settings as they are", () => {
+  it("reports stored type roles as they are", () => {
+    const display = {font: null, settings: {fontSize: 60, fontWeight: 700, lineHeight: 1.05}};
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({typeRoles: {display}}));
+
+    expect(loaded().typeRoles.display).toEqual(display);
+  });
+
+
+  it("opens a role the storage does not carry at the role's defaults", () => {
+    // Storage written while the page had fewer roles, or edited by hand.
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      fontSize: 14,
-      fontWeight: 500,
-      lineHeight: 1.35
+      typeRoles: {display: {font: null, settings: {fontSize: 60, fontWeight: 700, lineHeight: 1.05}}}
     }));
 
-    expect(loaded().typeSettings).toEqual({
-      fontSize: 14,
-      fontWeight: 500,
-      lineHeight: 1.35
-    });
+    const {typeRoles} = loaded();
+
+    expect(typeRoles.ui).toEqual(initialState.typeRoles.ui);
+    expect(typeRoles.mono).toEqual(initialState.typeRoles.mono);
   });
 
 
   it("repairs stored type settings the controls could not have produced", () => {
-    // The three keys carry plain numbers and localStorage is editable by hand.
-    // A weight off the `FONT_WEIGHTS` grid has no row in `apcaLookup`, so the
+    // The entry carries plain numbers and localStorage is editable by hand. A
+    // weight off the `FONT_WEIGHTS` grid has no row in `apcaLookup`, so the
     // rating would read `.contrast` off nothing at all.
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      fontSize: 400,
-      fontWeight: 437,
-      lineHeight: 0
+      typeRoles: {body: {font: null, settings: {fontSize: 400, fontWeight: 437, lineHeight: 0}}}
     }));
 
-    expect(loaded().typeSettings).toEqual({
+    expect(loaded().typeRoles.body.settings).toEqual({
       fontSize: FONT_SIZE_RANGE.max,
       fontWeight: 400,
       lineHeight: LINE_HEIGHT_RANGE.min
@@ -243,29 +248,43 @@ describe("loadAppStateReducer", () => {
   });
 
 
-  it("restores the chosen typeface with the weights it was stored with", () => {
+  it("repairs a display size against the display range, not body text's", () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      selectedFont: {
-        family: "Merriweather",
-        category: "serif",
-        variant: "regular",
-        weights: [300, 400, 700, 900]
+      typeRoles: {display: {font: null, settings: {fontSize: 400, fontWeight: 500, lineHeight: 1.1}}}
+    }));
+
+    expect(loaded().typeRoles.display.settings.fontSize).toBe(DISPLAY_FONT_SIZE_RANGE.max);
+  });
+
+
+  it("restores a role's typeface with the weights it was stored with", () => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      typeRoles: {
+        display: {
+          font: {family: "Merriweather", category: "serif", variant: "regular", weights: [300, 400, 700, 900]},
+          settings: {fontSize: 44, fontWeight: 700, lineHeight: 1.1}
+        }
       }
     }));
 
-    expect(loaded().selectedFont?.weights).toEqual([300, 400, 700, 900]);
+    expect(loaded().typeRoles.display.font?.weights).toEqual([300, 400, 700, 900]);
   });
 
 
   it("gives a typeface stored before the weights existed an empty list", () => {
     // Both readers of the field fall back on an empty list - the slider to the
-    // whole grid, the loader to the family's default weight - and neither
-    // survives an `undefined`.
+    // app's own weights, the loader to the family's default weight - and
+    // neither survives an `undefined`.
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      selectedFont: {family: "Lobster", category: "display", variant: "regular"}
+      typeRoles: {
+        body: {
+          font: {family: "Lobster", category: "display", variant: "regular"},
+          settings: {fontSize: 18, fontWeight: 400, lineHeight: 1.6}
+        }
+      }
     }));
 
-    expect(loaded().selectedFont?.weights).toEqual([]);
+    expect(loaded().typeRoles.body.font?.weights).toEqual([]);
   });
 
 
@@ -273,16 +292,54 @@ describe("loadAppStateReducer", () => {
     // A reload has to land where the picker would have left the visitor, not
     // on a weight the browser would synthesise.
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      fontWeight: 500,
-      selectedFont: {
-        family: "Merriweather",
-        category: "serif",
-        variant: "regular",
-        weights: [300, 400, 700, 900]
+      typeRoles: {
+        body: {
+          font: {family: "Merriweather", category: "serif", variant: "regular", weights: [300, 400, 700, 900]},
+          settings: {fontSize: 18, fontWeight: 500, lineHeight: 1.6}
+        }
       }
     }));
 
-    expect(loaded().typeSettings.fontWeight).toBe(400);
+    expect(loaded().typeRoles.body.settings.fontWeight).toBe(400);
+  });
+
+
+  it("reads the single typeface and its axes from before the roles as body text", () => {
+    // A visitor who set their type before the roles keeps it; the other roles
+    // open at their defaults.
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      selectedFont: {family: "Merriweather", category: "serif", variant: "regular", weights: [300, 400, 700, 900]},
+      fontSize: 14,
+      fontWeight: 700,
+      lineHeight: 1.35
+    }));
+
+    const {typeRoles} = loaded();
+
+    expect(typeRoles.body).toEqual({
+      font: {family: "Merriweather", category: "serif", variant: "regular", weights: [300, 400, 700, 900]},
+      settings: {fontSize: 14, fontWeight: 700, lineHeight: 1.35}
+    });
+    expect(typeRoles.display).toEqual(initialState.typeRoles.display);
+  });
+
+
+  it("fills a half-written legacy entry from body text's defaults", () => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({fontSize: 14}));
+
+    expect(loaded().typeRoles.body.settings).toEqual({...initialState.typeRoles.body.settings, fontSize: 14});
+  });
+
+
+  it("lets a stored body role win over the legacy keys", () => {
+    // Both may be present in a storage written across the change; the newer
+    // shape is the one the app wrote last.
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      fontSize: 14,
+      typeRoles: {body: {font: null, settings: {fontSize: 21, fontWeight: 400, lineHeight: 1.6}}}
+    }));
+
+    expect(loaded().typeRoles.body.settings.fontSize).toBe(21);
   });
 
 });

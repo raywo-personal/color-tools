@@ -1,14 +1,17 @@
 <!-- One-way in, an event out, like the sliders below: the selection lives in the
-     store, and nothing two-way can bind to a signal read out of it. -->
+     store, and nothing two-way can bind to a signal read out of it. The
+     fallback is the role's: a mono role without a face is set in the app's
+     mono, and the line under the field has to say so. -->
 <ct-font-picker [font]="selectedFont()"
+                [fallbackFamily]="fallbackFamily()"
                 (fontChange)="fontPicked($event)"/>
 
 <!-- No `track` on any of the three: a size, a weight and a leading pass through
      no colors, so the slider draws the plain `field` strip instead of a ramp. -->
 <ct-slider label="SIZE"
-           [min]="sizeRange.min"
-           [max]="sizeRange.max"
-           [step]="sizeRange.step"
+           [min]="sizeRange().min"
+           [max]="sizeRange().max"
+           [step]="sizeRange().step"
            [value]="settings().fontSize"
            [valueText]="sizeText()"
            (valueChange)="sizeChanged($event)"
@@ -35,3 +38,21 @@
            [valueText]="leadingText()"
            (valueChange)="leadingChanged($event)"
            (commit)="commit()"/>
+
+<!-- The roles the controls are not acting on. One line where it fits, wrapping
+     between roles where it does not. `role="list"` because Preflight removes
+     the list style, and Safari with VoiceOver then stops treating the element
+     as a list. -->
+<ul role="list"
+    aria-label="The other type roles"
+    class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-dim">
+  @for (other of others(); track other.role) {
+    <!-- The dot is text, not a gap: Angular drops the whitespace between the
+         two spans, and a screen reader would otherwise run the caption into
+         the family name. -->
+    <li>
+      <span class="font-sans tracking-widest">{{ other.caption }}</span> ·
+      <span class="font-mono text-text">{{ other.text }}</span>
+    </li>
+  }
+</ul>

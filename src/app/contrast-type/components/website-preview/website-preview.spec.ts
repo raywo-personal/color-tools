@@ -7,10 +7,13 @@ import {AppStateStore} from "@core/app-state.store";
 import {commonEvents} from "@core/common/common.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {converterEvents} from "@core/converter/converter.events";
-import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
 import {mixColors} from "@engine/color/mix-color.helper";
 import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
+import {DEFAULT_TYPE_SETTINGS_BY_ROLE, TypeRole} from "@engine/contrast/type-role.model";
+import {SelectedFont} from "@common/models/google-font.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
+import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
+import {provideSilentFontLoader} from "@testing/font-loader.fake";
 import {WebsitePreview} from "@contrast-type/components/website-preview/website-preview";
 
 
@@ -29,27 +32,6 @@ const WORDMARK = "Meridian";
 const DIM_MIX = 0.4;
 
 
-/**
- * A font loader that loads nothing.
- *
- * The real one appends a `<link>` to Google Fonts, and happy-dom fetches it -
- * so `commonEvents.fontSelected` would put this spec on the network for a
- * property about a `font-family` string. Local rather than in `src/testing`
- * until a second spec needs it.
- */
-class SilentFontLoader {
-
-  public loadFont(): void {
-    // Intentionally empty.
-  }
-
-  public setFontFamily(): void {
-    // Intentionally empty.
-  }
-
-}
-
-
 describe("WebsitePreview", () => {
 
   beforeEach(() => {
@@ -57,7 +39,9 @@ describe("WebsitePreview", () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        {provide: GoogleFontLoaderService, useClass: SilentFontLoader}
+        // Picking a face raises an announcement and a font request.
+        provideFakeLiveAnnouncer(),
+        provideSilentFontLoader()
       ]
     });
   });
@@ -84,7 +68,7 @@ describe("WebsitePreview", () => {
     dispatcher.dispatch(converterEvents.colorChanged(chroma(base)));
     dispatcher.dispatch(contrastEvents.textColorChanged(chroma(text)));
     dispatcher.dispatch(contrastEvents.backgroundColorChanged(chroma(background)));
-    dispatcher.dispatch(commonEvents.typeSettingsChanged(settings));
+    dispatcher.dispatch(commonEvents.typeSettingsChanged({role: "body", settings}));
 
     const fixture = TestBed.createComponent(WebsitePreview);
     await fixture.whenStable();
@@ -113,11 +97,24 @@ describe("WebsitePreview", () => {
     }
 
     async function setSize(fontSize: number) {
-      dispatcher.dispatch(commonEvents.typeSettingsChanged({...settings, fontSize}));
+      dispatcher.dispatch(commonEvents.typeSettingsChanged({role: "body", settings: {...settings, fontSize}}));
       await fixture.whenStable();
     }
 
-    return {fixture, store, host, page, copy, paint, setBackground, setSize};
+    async function setRole(role: TypeRole, roleSettings: Partial<TypeSettings>) {
+      dispatcher.dispatch(commonEvents.typeSettingsChanged({
+        role,
+        settings: {...DEFAULT_TYPE_SETTINGS_BY_ROLE[role], ...roleSettings}
+      }));
+      await fixture.whenStable();
+    }
+
+    async function pickFace(role: TypeRole, font: SelectedFont | null) {
+      dispatcher.dispatch(commonEvents.fontSelected({role, font}));
+      await fixture.whenStable();
+    }
+
+    return {fixture, store, host, page, copy, paint, setBackground, setSize, setRole, pickFace};
   }
 
 
@@ -177,17 +174,45 @@ describe("WebsitePreview", () => {
   });
 
 
-  it("scales the headline and the small print with the size", async () => {
+  it("scales the small print with body text's size, and not the headline", async () => {
+    // The small print is body text at a share of its size; the headline is
+    // the display role's and does not follow.
     const {copy} = await preview({settings: {...DEFAULT_TYPE_SETTINGS, fontSize: 20}});
 
-    expect(copy(HEADLINE).style.fontSize).toBe("50px");
     expect(copy(SMALL_PRINT).style.fontSize).toBe("14px");
+    expect(copy(HEADLINE).style.fontSize).toBe(`${DEFAULT_TYPE_SETTINGS_BY_ROLE.display.fontSize}px`);
   });
 
 
-  it("leaves the fake site's own chrome at a fixed size", async () => {
-    // A wordmark does not track the body size of the article below it, in the
-    // draft or on a real site. What `SIZE` governs is the reading content.
+  it("sets the headline at the display role's size, weight and leading", async () => {
+    const {copy, setRole} = await preview();
+
+    await setRole("display", {fontSize: 60, fontWeight: 700, lineHeight: 1.05});
+
+    expect(copy(HEADLINE).style.fontSize).toBe("60px");
+    expect(copy(HEADLINE).style.fontWeight).toBe("700");
+    expect(copy(HEADLINE).style.lineHeight).toBe("1.05");
+  });
+
+
+  it("sets the buttons and the nav in the UI role, the eyebrow in the mono role", async () => {
+    const {copy, setRole} = await preview();
+
+    await setRole("ui", {fontSize: 20, fontWeight: 700});
+    await setRole("mono", {fontSize: 14, fontWeight: 500});
+
+    expect(copy(ACCENT_BUTTON).style.fontSize).toBe("20px");
+    expect(copy(ACCENT_BUTTON).style.fontWeight).toBe("700");
+    expect(copy(GHOST_BUTTON).style.fontWeight).toBe("700");
+    expect(copy("Notes").style.fontWeight).toBe("700");
+    expect(copy(EYEBROW).style.fontSize).toBe("14px");
+    expect(copy(EYEBROW).style.fontWeight).toBe("500");
+  });
+
+
+  it("leaves the fake site's wordmark at a fixed size", async () => {
+    // A wordmark does not track the type of the article below it, in the
+    // draft or on a real site. It is the one text outside the four roles.
     //
     // One fixture, not two: every fixture in this spec reads the same root
     // store, so a second `preview()` would move the first one's DOM too.
@@ -205,10 +230,18 @@ describe("WebsitePreview", () => {
   });
 
 
-  it("never sets the headline lighter than a headline is set", async () => {
-    const {copy} = await preview({settings: {...DEFAULT_TYPE_SETTINGS, fontWeight: 300}});
+  it("sets a single-weight display face in that weight, not in a synthesised semibold", async () => {
+    // The headline's weight used to be derived from body text's and floored
+    // at 500. A family that ships one weight would then be faux-bolded, and
+    // the rating would judge a weight the browser made up.
+    const {copy, pickFace} = await preview();
 
-    expect(copy(HEADLINE).style.fontWeight).toBe("500");
+    await pickFace("display", {family: "Lobster", category: "display", variant: "regular", weights: [400]});
+
+    // happy-dom drops the quotes around a one-word family, so the face is
+    // matched by name rather than by the exact declaration.
+    expect(copy(HEADLINE).style.fontWeight).toBe("400");
+    expect(copy(HEADLINE).style.fontFamily).toMatch(/^"?Lobster"?, display$/);
   });
 
 
@@ -247,27 +280,25 @@ describe("WebsitePreview", () => {
   });
 
 
-  it("runs on the app's own stack until a typeface is picked", async () => {
+  it("runs every role on the app's own type until a face is picked for it", async () => {
     // Nothing chosen, on a first visit or after a clear. An empty font-family
-    // would be the alternative.
-    const {page} = await preview();
+    // would be the alternative; the mono role falls back to the app's mono.
+    const {page, copy} = await preview();
 
     expect(page.style.fontFamily).toBe("var(--font-sans)");
+    expect(copy(HEADLINE).style.fontFamily).toBe("var(--font-sans)");
+    expect(copy(EYEBROW).style.fontFamily).toBe("var(--font-mono)");
   });
 
 
-  it("follows a picked typeface once there is one", async () => {
-    const {fixture, page} = await preview();
+  it("follows a face picked for one role, and leaves the other roles where they were", async () => {
+    const {page, copy, pickFace} = await preview();
 
-    TestBed.inject(Dispatcher).dispatch(commonEvents.fontSelected({
-      family: "Source Serif 4",
-      category: "serif",
-      variant: "regular",
-      weights: [400, 600, 700]
-    }));
-    await fixture.whenStable();
+    await pickFace("body", {family: "Source Serif 4", category: "serif", variant: "regular", weights: [400, 600, 700]});
 
     expect(page.style.fontFamily).toBe('"Source Serif 4", serif');
+    expect(copy(HEADLINE).style.fontFamily).toBe("var(--font-sans)");
+    expect(copy(ACCENT_BUTTON).style.fontFamily).toBe("var(--font-sans)");
   });
 
 

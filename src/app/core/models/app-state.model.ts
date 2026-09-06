@@ -6,11 +6,11 @@ import {ColorTheme} from "@common/models/color-theme.model";
 import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
 import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import {contrastingColor} from "@engine/contrast/contrasting-color.helper";
-import {SelectedFont} from "@common/models/google-font.model";
+import {DEFAULT_TYPE_ROLES, TypeRolesMap} from "@common/models/type-role-settings.model";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 import {randomSeed} from "@engine/helpers/random.helper";
-import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
+import {TypeRole} from "@engine/contrast/type-role.model";
 
 
 export type AppState = {
@@ -40,21 +40,24 @@ export type AppState = {
 
   // Common
   colorTheme: ColorTheme;
-  selectedFont: SelectedFont | null;
   /**
-   * The type the website preview is set in - and, from the rating on, the size
-   * and weight the pair is judged at.
+   * The role the type controls act on and the rating answers about. Not
+   * persisted: a reload opens on body text, the role a first visit does.
+   */
+  typeRole: TypeRole;
+  /**
+   * The four kinds of type the website preview is set in - and, from the
+   * rating on, the faces, sizes and weights the page is judged at.
    *
    * In the state rather than in the preview's own signals, because the rating
-   * reads them from a component of its own, and because a visitor who set
-   * 14px/500 and comes back to 16px/400 is being shown a verdict about a page
-   * they are not building.
+   * reads them from a component of its own, and because a visitor who set a
+   * 14px/500 caption and comes back to 13px/400 is being shown a verdict
+   * about a page they are not building.
    *
-   * Here beside `selectedFont` rather than under Contrast: the typeface has
-   * always been a Common setting, and the other three axes of the same type
-   * stack belong with it.
+   * Under Common rather than under Contrast: the typeface has always been a
+   * Common setting, and the other axes of the same type stack belong with it.
    */
-  typeSettings: TypeSettings;
+  typeRoles: TypeRolesMap;
 };
 
 const initialColor = chroma.random();
@@ -83,6 +86,6 @@ export const initialState: AppState = {
   contrastColors: contrastPairFromPalette(initialPalette),
 
   colorTheme: "system",
-  selectedFont: null,
-  typeSettings: DEFAULT_TYPE_SETTINGS
+  typeRole: "body",
+  typeRoles: DEFAULT_TYPE_ROLES
 };
