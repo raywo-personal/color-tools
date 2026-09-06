@@ -30,11 +30,24 @@ const COLORS: readonly Color[] = [
   chroma.oklch(0.45, 0.14, 300)
 ];
 
+/**
+ * A palette that loses two differences in one row, which `COLORS` cannot show.
+ *
+ * Achromatopsia keeps luminance and nothing else, so members pair up on it:
+ * the first two share a luminance of 0.08, the next two one of 0.44, and the
+ * last sits between them, far enough from both that neither group takes it in.
+ *
+ * Written as hex rather than Oklch because luminance is what picks them and no
+ * Oklch coordinate is it - two members of one pair share no coordinate at all.
+ */
+const TWO_GROUP_COLORS: readonly Color[] =
+  ["#972527", "#004f9d", "#8ec053", "#e196f2", "#ac713e"].map(hex => chroma(hex));
+
 const ROWS = ["Normal", "Deuteranopia", "Protanopia", "Tritanopia", "Achromatopsia"];
 
 
-function testPalette(): Palette {
-  const [color0, color1, color2, color3, color4] = COLORS
+function testPalette(colors: readonly Color[]): Palette {
+  const [color0, color1, color2, color3, color4] = colors
     .map((color, index) => paletteColorFrom(color, PALETTE_SLOTS[index]));
 
   return {
@@ -55,11 +68,12 @@ describe("ColorVision", () => {
   });
 
 
-  async function block() {
+  async function block(colors: readonly Color[] = COLORS) {
     // The store registers its reducers when it is created, so a palette
     // dispatched before that is lost and the initial random one stands.
     TestBed.inject(AppStateStore);
-    TestBed.inject(Dispatcher).dispatch(palettesEvents.paletteChangedWithoutNav(testPalette()));
+    TestBed.inject(Dispatcher)
+      .dispatch(palettesEvents.paletteChangedWithoutNav(testPalette(colors)));
 
     const fixture = TestBed.createComponent(ColorVision);
     await fixture.whenStable();
@@ -94,13 +108,21 @@ describe("ColorVision", () => {
     }
 
 
-    function collapseLine(caption: string) {
-      const paragraphs = Array.from(row(caption).querySelectorAll("p"));
-
-      return paragraphs.length > 1 ? paragraphs[1].textContent?.trim() ?? null : null;
+    /**
+     * Every collapse sentence under the row, in the order it prints them. All
+     * of them, not the first: a row can lose two differences at once, and a
+     * helper that reads one paragraph would pass whether the second is there
+     * or not.
+     *
+     * The row's caption is the paragraph before them, so it is dropped.
+     */
+    function collapseLines(caption: string) {
+      return Array.from(row(caption).querySelectorAll("p"))
+        .slice(1)
+        .map(paragraph => paragraph.textContent?.trim() ?? "");
     }
 
-    return {fixture, host, outer, rows, row, chips, swatchColors, caretColumns, collapseLine};
+    return {fixture, host, outer, rows, row, chips, swatchColors, caretColumns, collapseLines};
   }
 
 
@@ -172,10 +194,10 @@ describe("ColorVision", () => {
   describe("the collapse under a row", () => {
 
     it("names the members the deficiency can no longer tell apart", async () => {
-      const {collapseLine} = await block();
+      const {collapseLines} = await block();
 
-      expect(collapseLine("Deuteranopia"))
-        .toBe(`${colorName(COLORS[0])} and ${colorName(COLORS[1])} become the same color.`);
+      expect(collapseLines("Deuteranopia"))
+        .toEqual([`${colorName(COLORS[0])} and ${colorName(COLORS[1])} become the same color.`]);
     });
 
 
@@ -190,12 +212,28 @@ describe("ColorVision", () => {
 
 
     it("stays silent where nothing was lost", async () => {
-      const {caretColumns, collapseLine} = await block();
+      const {caretColumns, collapseLines} = await block();
 
       for (const caption of ["Normal", "Protanopia", "Tritanopia", "Achromatopsia"]) {
-        expect(collapseLine(caption)).toBeNull();
+        expect(collapseLines(caption)).toEqual([]);
         expect(caretColumns(caption)).toEqual([]);
       }
+    });
+
+
+    it("gives a row that loses two differences two sentences and two strips", async () => {
+      // What pairs a sentence with its group is that the two touch, so a row
+      // with two groups is the case the pairing exists for. With one strip for
+      // both, the carets would say which chips collapsed and no longer which
+      // sentence says so.
+      const {caretColumns, collapseLines} = await block(TWO_GROUP_COLORS);
+      const names = TWO_GROUP_COLORS.map(color => colorName(color));
+
+      expect(collapseLines("Achromatopsia")).toEqual([
+        `${names[0]} and ${names[1]} become the same color.`,
+        `${names[2]} and ${names[3]} become the same color.`
+      ]);
+      expect(caretColumns("Achromatopsia")).toEqual([[0, 1], [2, 3]]);
     });
 
   });
