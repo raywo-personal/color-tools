@@ -8,6 +8,14 @@ import {roleCaptionFor} from "@engine/palette/palette-role.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 
 
+/**
+ * The id's shape is the whole guard. `paletteFromId()` restores any string of
+ * the right length and alphabet, and answers a leading digit it does not know
+ * with a random style rather than an error - a malformed id would decode into
+ * an invented palette, and the same id twice into two different ones. Rejected
+ * here, nothing reaches the decoder that it cannot restore, so the handler
+ * needs no try/catch: keep the pattern if the handler stays that way.
+ */
 const inputSchema = {
   id: z.string()
     .regex(/^[0-9][0-9A-Za-z]{42}$/,
@@ -15,13 +23,13 @@ const inputSchema = {
     )
 };
 
-const paletteOutputSchema = z.object({
+const outputSchema = {
   id: z.string()
     .describe("43 characters, decodes back to this palette."),
   name: z.string()
     .describe("The palette's name: style and base color, e.g. \"Triadic – Matisse\"."),
   style: z.enum(PaletteStyles)
-    .describe("Palette style. Read the palette-styles resource for what each one does."),
+    .describe("Palette style. Read the palette-styles resource for what each one does. A palette rolled in the app carries the style \"random\", which the resource does not list and generate_palette does not offer."),
   colors: z.array(z.object({
     slot: z.enum(PALETTE_SLOTS)
       .describe("color0 … color4"),
@@ -32,77 +40,46 @@ const paletteOutputSchema = z.object({
       .describe("This color's own name.")
   }))
     .length(5)
-});
-
-const outputSchema = {
-  ok: z.boolean()
-    .describe("Whether the palette id could be restored."),
-  error: z.string()
-    .nullable()
-    .describe("Why the palette could not be restored. Null when ok is true."),
-  palette: paletteOutputSchema
-    .nullable()
-    .describe("The restored palette. Null when ok is false.")
 };
+
 
 const callback: ToolCallback<typeof inputSchema> =
   ({id}) => {
-    try {
-      const palette = paletteFromId(id);
-      const colors = PALETTE_SLOTS.map(slot => {
-        const paletteColor = palette[slot].color;
+    const palette = paletteFromId(id);
+    const colors = PALETTE_SLOTS.map(slot => {
+      const paletteColor = palette[slot].color;
 
-        return {
-          slot,
-          role: roleCaptionFor(palette.style, slot),
-          hex: paletteColor.hex(),
-          name: colorName(paletteColor)
-        };
-      });
+      return {
+        slot,
+        role: roleCaptionFor(palette.style, slot),
+        hex: paletteColor.hex(),
+        name: colorName(paletteColor)
+      };
+    });
 
-      const structuredContent = {
-        ok: true,
-        error: null,
-        palette: {
-          id,
-          name: palette.name,
-          style: palette.style,
-          colors
+    const structuredContent = {
+      id,
+      name: palette.name,
+      style: palette.style,
+      colors
+    };
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `${palette.name} is a five-slot palette restored from its id.`
         }
-      };
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `${palette.name} is a five-slot palette restored from its id.`
-          }
-        ],
-        structuredContent
-      };
-    } catch (err: unknown) {
-      const error = err instanceof Error ? err : new Error("Unknown error");
-
-      const structuredContent = {
-        ok: false,
-        error: error.message,
-        palette: null
-      };
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "This is not a restorable palette id."
-          }
-        ],
-        structuredContent
-      };
-    }
+      ],
+      structuredContent
+    };
   };
 
+
 export function registerReadPalette(server: McpServer) {
-  server.registerTool("read_palette", {
+  server.registerTool(
+    "read_palette",
+    {
       title: "Read Palette",
       description: "Generates a palette from a given ID identical to the one 'generate_palette' would have generated.",
       inputSchema,
