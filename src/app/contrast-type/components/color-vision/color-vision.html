@@ -1,0 +1,42 @@
+<p class="font-sans text-sm tracking-widest text-dim">COLOR VISION</p>
+
+<p class="mt-2 text-sm text-dim text-pretty">The palette, not the pair: none of
+  these models moves lightness far, so the Lc above barely changes. What they
+  cost is the difference between two palette members, and a row that loses one
+  says so.</p>
+
+<!-- `role="list"` on both levels: Preflight removes the marker, and Safari
+     with VoiceOver then stops treating the element as a list. -->
+<ul role="list"
+    aria-label="Color vision"
+    class="mt-4 grid gap-3">
+  @for (row of rows(); track row.vision) {
+    <!-- Two columns rather than a fixed width on the name: the widest of the
+         five sets the column, so `Achromatopsia` never has to fit a guess and
+         the chips still line up across the rows. -->
+    <li class="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
+      <p class="text-sm text-dim">{{ row.caption }}</p>
+
+      <ul role="list"
+          [attr.aria-label]="row.caption"
+          class="grid grid-cols-5 gap-0.5">
+        @for (chip of row.chips; track chip.slot) {
+          <!-- The name is text inside the chip rather than an `aria-label` on
+               it: a bare `<span>` carries no role for a label to attach to,
+               and the list item reads its content without one. -->
+          <li class="h-6 rounded-xs"
+              [style.background-color]="chip.background">
+            <span class="sr-only">{{ chip.label }}</span>
+          </li>
+        }
+      </ul>
+
+      @if (row.collapse) {
+        <!-- Under the chips, not under the name: it is a reading of the row
+             above it. In `text` rather than `dim`, because it is the one
+             sentence in the block that carries a finding. -->
+        <p class="col-start-2 text-sm text-pretty">{{ row.collapse }}</p>
+      }
+    </li>
+  }
+</ul>
