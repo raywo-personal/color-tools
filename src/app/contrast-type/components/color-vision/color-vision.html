@@ -1,9 +1,10 @@
 <p class="font-sans text-sm tracking-widest text-dim">COLOR VISION</p>
 
-<p class="mt-2 text-sm text-dim text-pretty">The palette, not the pair: none of
-  these models moves lightness far, so the Lc above barely changes. What they
-  cost is the difference between two palette members, and a row that loses one
-  says so.</p>
+<p class="mt-2 text-sm text-dim text-pretty">How your palette looks to people
+  with a color vision deficiency. The contrast rating above stays the same:
+  contrast depends on brightness, and these conditions barely change it. What
+  can get lost is telling two palette colors apart. Where that happens, the
+  row tells you which ones.</p>
 
 <!-- `role="list"` on both levels: Preflight removes the marker, and Safari
      with VoiceOver then stops treating the element as a list. -->
@@ -32,11 +33,33 @@
         }
       </ul>
 
-      @if (row.collapse) {
-        <!-- Under the palette and as wide as it, because it is a reading of
-             the row above it. In `text` rather than `dim`: it is the one
+      @for (collapse of row.collapses; track $index) {
+        <!-- The carets share the palette's five columns, so each one sits
+             under the chip it points at. `aria-hidden`, because the sentence
+             below is the same statement in words - and they are drawn on the
+             page ground rather than on a chip, where a visitor colour would
+             decide whether they can be seen at all. -->
+        <div aria-hidden="true"
+             class="mt-1 grid grid-cols-5 gap-0.5">
+          @for (mark of collapse.marks; track $index) {
+            <span class="flex justify-center">
+              @if (mark) {
+                <svg data-marker="caret"
+                     class="size-3"
+                     viewBox="0 0 12 12" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 8.5 6 4l4 4.5"/>
+                </svg>
+              }
+            </span>
+          }
+        </div>
+
+        <!-- Directly under its own carets: a row can lose two differences at
+             once, and what pairs a sentence with its group is that the two
+             touch. In `text` rather than `dim`, because it is the one
              sentence in the block that carries a finding. -->
-        <p class="mt-1.5 text-sm text-pretty">{{ row.collapse }}</p>
+        <p class="mt-0.5 text-sm text-pretty">{{ collapse.sentence }}</p>
       }
     </li>
   }

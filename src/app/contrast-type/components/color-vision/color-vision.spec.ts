@@ -86,13 +86,21 @@ describe("ColorVision", () => {
         .map(chip => chroma(chip.style.backgroundColor).hex("rgb"));
     }
 
+    /** Per group, the column indices a caret points at. */
+    function caretColumns(caption: string) {
+      return Array.from(row(caption).querySelectorAll("div[aria-hidden=true]"))
+        .map(strip => Array.from(strip.children)
+          .flatMap((cell, index) => cell.querySelector("[data-marker=caret]") ? [index] : []));
+    }
+
+
     function collapseLine(caption: string) {
       const paragraphs = Array.from(row(caption).querySelectorAll("p"));
 
       return paragraphs.length > 1 ? paragraphs[1].textContent?.trim() ?? null : null;
     }
 
-    return {fixture, host, outer, rows, row, chips, swatchColors, collapseLine};
+    return {fixture, host, outer, rows, row, chips, swatchColors, caretColumns, collapseLine};
   }
 
 
@@ -171,11 +179,22 @@ describe("ColorVision", () => {
     });
 
 
+    it("points a caret at each member of the group", async () => {
+      // What makes the sentence answerable: it names colours, and no palette
+      // member is labelled anywhere a visitor can read it. The caret is the
+      // only thing tying `Cerise` to a chip.
+      const {caretColumns} = await block();
+
+      expect(caretColumns("Deuteranopia")).toEqual([[0, 1]]);
+    });
+
+
     it("stays silent where nothing was lost", async () => {
-      const {collapseLine} = await block();
+      const {caretColumns, collapseLine} = await block();
 
       for (const caption of ["Normal", "Protanopia", "Tritanopia", "Achromatopsia"]) {
         expect(collapseLine(caption)).toBeNull();
+        expect(caretColumns(caption)).toEqual([]);
       }
     });
 

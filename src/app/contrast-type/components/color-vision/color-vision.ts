@@ -16,11 +16,21 @@ interface Chip {
 }
 
 
+/**
+ * One group of members a vision model can no longer tell apart: which slots
+ * it covers, and the sentence that names them.
+ */
+interface Collapse {
+  readonly marks: readonly boolean[];
+  readonly sentence: string;
+}
+
+
 interface Row {
   readonly vision: VisionModel;
   readonly caption: string;
   readonly chips: readonly Chip[];
-  readonly collapse: string | null;
+  readonly collapses: readonly Collapse[];
 }
 
 
@@ -45,6 +55,18 @@ interface Row {
  * members landing on one colour is what a visitor comes here to find out, and
  * leaving it to the eye leaves out everyone reading by ear. A row without one
  * lost nothing, which is what the caption's last clause defines.
+ *
+ * **The line names colours, so something has to point at them.** `Cerise and
+ * Sunglo become the same color` is unanswerable on this screen alone - the
+ * names live in the chips' own text, which is for speech, and no palette
+ * member is labelled where a visitor can read it. A caret under each member
+ * of the group carries that: the sentence says which colours, the carets say
+ * which chips. They are `aria-hidden`, because the sentence is already the
+ * spoken form of the same thing.
+ *
+ * A row can lose two differences at once, and two groups under one row make
+ * a single strip of carets ambiguous. So a group brings its own strip and its
+ * own sentence, and the two sit together.
  */
 @Component({
   selector: "ct-color-vision",
@@ -78,7 +100,7 @@ export class ColorVision {
             ? `${roles[index]}, ${names[index]}`
             : `${roles[index]}, ${names[index]} appears as ${colorName(simulated[index])}`
         })),
-        collapse: collapseText(colors, names, vision)
+        collapses: collapsesIn(colors, names, vision)
       };
     });
   });
@@ -86,18 +108,14 @@ export class ColorVision {
 }
 
 
-function collapseText(this: void,
-                      colors: readonly Color[],
-                      names: readonly string[],
-                      vision: VisionModel): string | null {
-  const groups = collapsedGroups(colors, vision);
-
-  if (groups.length === 0) return null;
-
-  const sentences = groups
-    .map(group => `${joinNames(group.map(index => names[index]))} become the same color`);
-
-  return `${sentences.join("; ")}.`;
+function collapsesIn(this: void,
+                     colors: readonly Color[],
+                     names: readonly string[],
+                     vision: VisionModel): Collapse[] {
+  return collapsedGroups(colors, vision).map(group => ({
+    marks: PALETTE_SLOTS.map((_, index) => group.includes(index)),
+    sentence: `${joinNames(group.map(index => names[index]))} become the same color.`
+  }));
 }
 
 
