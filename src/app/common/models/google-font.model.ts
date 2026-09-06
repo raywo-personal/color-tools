@@ -115,7 +115,15 @@ export function fontWeightsOf(font: GoogleFont): number[] {
  * existed - falls back to the whole grid, which is what the app's own type
  * stack offers. So does a family that ships nothing inside the range at all:
  * a slider with no stop would be worse than one whose ends the browser has to
- * synthesise, and no family in the catalog is in that position.
+ * synthesise.
+ *
+ * **The fallback is the one place the loader and this function disagree.**
+ * `fontWeightsOf()` leaves the italics out, so an italic-only family arrives
+ * here empty; the loader asks for no `wght` axis in that case and gets the
+ * family's default alone, while the slider offers the whole grid. Moving it
+ * then rates a weight the browser synthesised. Narrowing the grid instead
+ * would leave the slider standing on a single weight and say the family ships
+ * one, which is no truer.
  */
 export function weightStopsFor(font: SelectedFont | null): readonly number[] {
   const stops = (font?.weights ?? []).filter(
