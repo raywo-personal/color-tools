@@ -20,14 +20,16 @@
 
   <span class="font-sans text-sm tracking-widest">{{ row().caption }}</span>
 
-  <!-- The spec and the verdict carry `text-text` themselves rather than
-       taking the row's colour: `dim` reaches Lc 68.4 against `bg` in the
-       light theme and 50.9 in the dark one, and this very row can ask Lc 100
-       at 14px - a row saying `Needs Lc 100` would sit below the bar it
-       announces. The caption keeps the row's colour, as the all-caps label
-       does in `palette-swatches` and `conversion-list`. -->
-  <span class="font-mono text-sm text-text">{{ row().spec }}</span>
+  <!-- The verdict carries `text-text` itself rather than taking the row's
+       colour: `dim` reaches Lc 68.4 against `bg` in the light theme and 50.9
+       in the dark one, and this very row can ask Lc 100 at 14px - a row saying
+       `Needs Lc 100` would sit below the bar it announces. The caption keeps
+       the row's colour, as the all-caps label does in `palette-swatches` and
+       `conversion-list`.
 
+       The size and the weight the element is set in used to stand between the
+       two. They are on the sliders below and in the opened verdict, and a
+       third copy was what pushed those sliders off the screen. -->
   <span class="ml-auto text-sm text-text">{{ row().verdict }}</span>
 </p>
 

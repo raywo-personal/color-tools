@@ -70,11 +70,10 @@ describe("ApcaRating", () => {
 
       return {
         caption: spans[0].textContent?.trim() ?? "",
-        spec: spans[1].textContent?.trim() ?? "",
-        verdict: spans[2].textContent?.trim() ?? "",
+        verdict: spans[1].textContent?.trim() ?? "",
         marker: paragraphs()[2].querySelector("[data-marker]")?.getAttribute("data-marker") ?? "",
-        /** Whether the spec and the verdict stand in `text`, whatever the row's colour. */
-        carries: [spans[1], spans[2]].map(span => span.classList.contains("text-text"))
+        /** Whether the verdict stands in `text`, whatever the row's colour. */
+        carries: spans[1].classList.contains("text-text")
       };
     }
 
@@ -139,13 +138,24 @@ describe("ApcaRating", () => {
   });
 
 
-  it("names the element the figure reads, at its own size and the role's weight", async () => {
+  it("names the element the figure reads, and its verdict", async () => {
+    // The size and the weight it is set in are not repeated here: they are on
+    // the sliders below and in the verdict the mark opens.
     const {row} = await rating(DARK_ON_LIGHT, "display");
 
     expect(row().caption).toBe("HEADLINE");
-    expect(row().spec).toBe("44px / 500");
     expect(row().verdict).toBe("Pass");
     expect(row().marker).toBe("tick");
+  });
+
+
+  it("says nothing about the size and the weight the element is set in", async () => {
+    // Three copies of `44px / 500` - the row, the two sliders, the opened
+    // verdict - and the one that cost the sliders their room was this one.
+    const {host} = await rating(DARK_ON_LIGHT, "display");
+
+    expect(host.textContent).not.toContain("44px");
+    expect(host.textContent).not.toContain("/ 500");
   });
 
 
@@ -156,21 +166,25 @@ describe("ApcaRating", () => {
     const {row, figureParts} = await rating(DARK_ON_LIGHT, "body");
 
     expect(row().caption).toBe("BODY TEXT");
-    expect(row().spec).toBe("18px / 400");
     expect(row().verdict).toBe("Pass");
     expect(figureParts()).toEqual(["Lc", "106"]);
   });
 
 
   it("moves the figure with the role, so switching roles walks the page through its sizes", async () => {
-    const {row, selectRole} = await rating(DARK_ON_LIGHT, "display");
+    // The headline at 44px and the running text at 18px are two different
+    // elements at two different sizes, and the figure follows the selection
+    // to each of them.
+    const {row, figureParts, selectRole} = await rating(JUST_UNDER_75, "display");
 
-    expect(row().spec).toBe("44px / 500");
+    expect(row().caption).toBe("HEADLINE");
+    expect(figureParts()).toEqual(["Lc", "74"]);
+    expect(row().verdict).toBe("Pass");
 
     await selectRole("body");
 
     expect(row().caption).toBe("BODY TEXT");
-    expect(row().spec).toBe("18px / 400");
+    expect(row().verdict).toBe("Needs Lc 75");
   });
 
 
@@ -262,13 +276,13 @@ describe("ApcaRating", () => {
   });
 
 
-  it("holds the spec and the verdict in `text`, whatever the row's state", async () => {
+  it("holds the verdict in `text`, whatever the row's state", async () => {
     // `dim` reaches Lc 68.4 against `bg` in the light theme and 50.9 in the
     // dark one, and the row can ask Lc 100 at the size it is set in: in the
     // row's own colour its wording would sit below the bar it announces.
     const {row} = await rating(JUST_UNDER_75, "body");
 
-    expect(row().carries).toEqual([true, true]);
+    expect(row().carries).toBe(true);
   });
 
 

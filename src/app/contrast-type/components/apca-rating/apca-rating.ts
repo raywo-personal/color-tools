@@ -18,13 +18,10 @@ import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shap
 interface FigureRow {
 
   readonly caption: string;
-  /** The type the element is set in, as the visitor reads it - `13px / 400`. */
-  readonly spec: string;
   readonly verdict: string;
   readonly state: VerdictState;
 
 }
-
 
 
 /**
@@ -101,12 +98,11 @@ export class ApcaRating {
   protected readonly row = computed<FigureRow>(() => {
     const verdict = this.#verdict();
 
+    // No size and no weight beside the caption: the two sliders below hold
+    // them and the opened verdict says them again as `Type`. Repeated here
+    // they were a third copy that only cost the sliders a line of room.
     return {
       caption: verdict.element.caption,
-      // The element's own size, not the row it is rated on: the slider says
-      // 13px, and a spec saying 14px would contradict the control that set
-      // it. Which row the table used is in the note under the row.
-      spec: `${verdict.fontSize}px / ${verdict.fontWeight}`,
       verdict: verdictLabel(verdict),
       state: verdict.state
     };
