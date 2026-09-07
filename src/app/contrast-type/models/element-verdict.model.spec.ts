@@ -334,6 +334,17 @@ describe("verdictFacts", () => {
   });
 
 
+  it("omits the suggestion where the ink is not a colour the visitor can move", () => {
+    // The filled button's label is whichever of black or white APCA puts
+    // further from the accent - taking a palette colour instead changes
+    // nothing on the button, because the ink is not the accent.
+    const failing = elementVerdict(sampleElement("filledButton"), colorsOf(), roles("ui", 14, 400));
+
+    expect(failing.state).toBe("largeOnly");
+    expect(verdictFacts(failing, PALETTE).map(fact => fact.label)).not.toContain("Nearest color");
+  });
+
+
   it("hands the suggestion its colour, so the row points at a chip", () => {
     // A name alone asks the visitor to recognise it in the chip row above.
     const failing = elementVerdict(

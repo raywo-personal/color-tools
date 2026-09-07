@@ -330,8 +330,26 @@ export function verdictFacts(verdict: ElementVerdict, palette: Palette): readonl
   facts.push({label: "Would pass at", value: carriedBy(verdict)});
 
   if (!missedRequirement(verdict)) return facts;
+  if (!inkIsMovable(element)) return facts;
 
   return [...facts, nearest(verdict, palette)];
+}
+
+
+/**
+ * Whether the element's ink is a colour the visitor could plausibly replace
+ * with a palette member - see `nearest()`.
+ *
+ * `onAccent`, `onMuted` and `danger` are computed by the app rather than set
+ * by the visitor or read from the palette: `onAccent` is whichever of black
+ * or white APCA puts further from the accent, `onMuted` is a fixed mix off
+ * the pair, and `danger` is one of two constants picked by the page's
+ * lightness. Taking the nearest palette colour changes none of them - the
+ * lever there is the ground, not the ink - so the row would suggest a fix
+ * that does not exist.
+ */
+function inkIsMovable(element: SampleElement): boolean {
+  return element.ink !== "onAccent" && element.ink !== "onMuted" && element.ink !== "danger";
 }
 
 
