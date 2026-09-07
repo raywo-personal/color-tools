@@ -70,8 +70,13 @@
      re-apportioned the columns. On the body it moves nothing, and the
      preview's `overflow-hidden` cannot clip it.
 
-     A transparent backdrop, so a click anywhere closes it without a scrim
-     dimming the page the visitor is judging. `detach` covers the case the
+     No backdrop: a full-viewport backdrop element would absorb the very
+     click meant for the next mark, so comparing two elements cost a dead
+     click to close the first popup before the second would open. Closing on
+     `overlayOutsideClick` instead reaches the same "a click anywhere closes
+     it without a scrim" - it fires from a `pointerdown` on the document,
+     ahead of the `click` that still reaches whatever sits underneath, so the
+     next mark opens in the same press. `detach` covers the case the
      strategy gives up - a mark scrolled out of view - and keeps the store
      from holding a verdict nobody can see. -->
 <ng-template cdkConnectedOverlay
@@ -79,9 +84,7 @@
              [cdkConnectedOverlayOpen]="open()"
              [cdkConnectedOverlayPositions]="positions"
              [cdkConnectedOverlayViewportMargin]="8"
-             cdkConnectedOverlayHasBackdrop
-             cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-             (backdropClick)="close()"
+             (overlayOutsideClick)="close()"
              (detach)="close()"
              (overlayKeydown)="onOverlayKeydown($event)">
   <ct-verdict-panel [id]="panelId()" [elementKey]="elementKey()"/>
