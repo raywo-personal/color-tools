@@ -1,0 +1,46 @@
+<!-- The app's own surface, deliberately: this is the app looking at the page
+     from outside, and in the page's colours it read as part of the sample
+     content. `panel` over `bg` because the preview sits on `bg`, and the
+     shadow lifts it off whatever the visitor coloured underneath. -->
+<!-- `w-96` because the rows do not wrap well: `Nearest color` beside a swatch
+     and a name with its Lc is the widest of them, and at the narrower width it
+     broke over two lines in a block that is four rows tall. The viewport cap
+     is what holds it inside a 320px screen. -->
+<div class="w-96 max-w-[calc(100vw-2rem)] rounded-xs border border-line bg-panel p-4 text-text shadow-lg">
+  <!-- The element, its shape and the shape in words. The word is what makes
+       the shape readable at all: a tick and a cross can be guessed, an arrow
+       cannot. -->
+  <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+    <ct-verdict-shape class="size-4" [state]="verdict().state"/>
+    <span class="font-mono text-sm tracking-widest">{{ verdict().element.caption }}</span>
+    <span class="ml-auto text-sm">{{ label() }}</span>
+  </p>
+
+  <!-- Label and value, not prose. Only what a visitor can already name: the
+       two Lc figures the screen is about, the size, weight and role they set,
+       and a palette colour they can see in the chip row. What the APCA table
+       did to get there is not on the page, so it is not in here.
+
+       `role="list"`, because Preflight strips the marker and Safari with
+       VoiceOver then stops announcing it as a list. -->
+  <ul role="list" class="mt-3 grid gap-1.5 border-t border-line pt-3">
+    @for (fact of facts(); track fact.label) {
+      <!-- No `flex-wrap`: a value too long for the row used to jump under its
+           own label, which is the ugly break rather than a break at all. The
+           label keeps its column and a long value wraps inside its own. -->
+      <li class="flex items-baseline gap-x-2 text-sm">
+        <span class="w-28 shrink-0 text-dim">{{ fact.label }}</span>
+
+        @if (fact.swatch) {
+          <!-- The colour itself beside its name, so the row points at a chip
+               rather than asking the visitor to recognise a name. -->
+          <span aria-hidden="true"
+                class="size-3.5 shrink-0 rounded-xs border border-line"
+                [style.background-color]="fact.swatch"></span>
+        }
+
+        <span class="min-w-0 font-mono">{{ fact.value }}</span>
+      </li>
+    }
+  </ul>
+</div>

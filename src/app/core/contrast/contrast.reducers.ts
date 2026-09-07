@@ -82,3 +82,21 @@ export function restoreContrastColorsReducer(
     return {};
   }
 }
+
+
+/**
+ * The verdict a mark opens, or closes.
+ *
+ * The same key twice closes: a mark is a disclosure, and a visitor who
+ * pressed it to read the verdict presses it again to get the page back. Any
+ * other key replaces the open one, so the page never carries two panels.
+ */
+export function verdictToggledReducer(
+  this: void,
+  event: EventInstance<"[Contrast] verdictToggled", string>,
+  state: AppState
+) {
+  return {
+    openVerdict: state.openVerdict === event.payload ? null : event.payload
+  };
+}

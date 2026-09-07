@@ -28,7 +28,8 @@ import {
   newRandomContrastColorsWithNavReducer,
   restoreContrastColorsReducer,
   switchColorsReducer,
-  textColorChangedReducer
+  textColorChangedReducer,
+  verdictToggledReducer
 } from "@core/contrast/contrast.reducers";
 import {transferEvents} from "@core/common/transfer.events";
 import {generatePaletteFromContrastReducer, sendColorToContrastReducer, sendPaletteToContrastReducer, useColorAsPaletteStarterReducer} from "@core/common/transfer.reducers";
@@ -79,7 +80,8 @@ export const AppStateStore = signalStore(
     on(contrastEvents.contrastColorsChangedWithoutNav, contrastColorsChangedWithoutNavReducer),
     on(contrastEvents.newRandomColorsWithNav, newRandomContrastColorsWithNavReducer),
     on(contrastEvents.switchColors, switchColorsReducer),
-    on(contrastEvents.restoreContrastColors, restoreContrastColorsReducer)
+    on(contrastEvents.restoreContrastColors, restoreContrastColorsReducer),
+    on(contrastEvents.verdictToggled, verdictToggledReducer)
   ),
   withEventHandlers(allEffects)
 );

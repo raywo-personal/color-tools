@@ -1,0 +1,91 @@
+<!-- The row: the mark's column, then the element. `items-start` rather than
+     `items-baseline`, and that is what makes the hit areas safe - the button is
+     centred 10px below the row's top edge in every row, so `min-h-11` puts two
+     consecutive centres at least a hit area apart. Aligned to the first line's
+     baseline instead, a 96px headline over an 18px lead would pull two 44px
+     buttons into each other.
+
+     Inline, none of it applies: a word inside a paragraph cannot indent, and a
+     44px inline box would open a gap in the line it sits in. -->
+<span class="gap-2"
+      [class.flex]="!inline()"
+      [class.min-h-11]="!inline()"
+      [class.items-start]="!inline()"
+      [class.inline]="inline()">
+  <!-- The badge's slot is `size-5` and costs 20px of layout; the button is
+       centred on it at the full `size-11`, out of flow, so the page indents by
+       one and three quarter rem while the control keeps the app's hit area. -->
+  <span class="relative size-5"
+        [class.shrink-0]="!inline()"
+        [class.inline-block]="inline()"
+        [class.mr-1]="inline()">
+    <!-- The button is the hit area and nothing else: transparent, out of flow,
+         and reaching past the badge on every side. What the visitor sees is
+         the badge inside it. -->
+    <button type="button"
+            cdkOverlayOrigin
+            #origin="cdkOverlayOrigin"
+            class="group absolute top-1/2 left-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
+            [style.outline-color]="inkHex()"
+            [attr.aria-label]="label()"
+            [attr.aria-expanded]="open()"
+            [attr.aria-describedby]="open() ? panelId() : null"
+            (click)="toggle()">
+      <!-- The badge is the app's surface, not the page's: `panel` and `text`
+           are an app pair, guaranteed against each other, and they say the
+           mark belongs to ColorTools rather than to the page it judges - the
+           same thing the popup it opens says, in the same colours. A bare
+           glyph in the page's ink was the page's own punctuation and nobody
+           took it for a control. `field` on hover is the app's own hover
+           surface; the badge changes under the pointer, which a glyph could
+           not.
+
+           Only the rim and the focus ring still come from APCA, because they
+           are the edge against the visitor's colour: `line` is guaranteed
+           against the six app surfaces and against none of theirs, so on a
+           page of the same lightness the badge would have no outline at all.
+           The ring's offset lands on that same page colour. -->
+      <span class="flex size-5 items-center justify-center rounded-full border bg-panel text-text shadow-sm group-hover:bg-field"
+            [style.border-color]="inkHex()">
+        <ct-verdict-shape class="size-3.5" [state]="verdict().state"/>
+      </span>
+    </button>
+  </span>
+
+  <!-- The dotted underline is the element's own carrier, beside the mark: a
+       shape in a gutter is not the line it judges. On the wrapper, because
+       text decoration propagates into everything in flow below it and the
+       element itself is the caller's markup. -->
+  <span data-content
+        [class.block]="!inline()"
+        [class.min-w-0]="!inline()"
+        [class.flex-1]="!inline()"
+        [class.underline]="missed()"
+        [class.decoration-dotted]="missed()"
+        [class.underline-offset-4]="missed()"><ng-content/></span>
+</span>
+
+<!-- The verdict as a popup rather than a block in the flow: in the flow it
+     pushed the page it was about downwards, and inside a table cell it
+     re-apportioned the columns. On the body it moves nothing, and the
+     preview's `overflow-hidden` cannot clip it.
+
+     No backdrop: a full-viewport backdrop element would absorb the very
+     click meant for the next mark, so comparing two elements cost a dead
+     click to close the first popup before the second would open. Closing on
+     `overlayOutsideClick` instead reaches the same "a click anywhere closes
+     it without a scrim" - it fires from a `pointerdown` on the document,
+     ahead of the `click` that still reaches whatever sits underneath, so the
+     next mark opens in the same press. `detach` covers the case the
+     strategy gives up - a mark scrolled out of view - and keeps the store
+     from holding a verdict nobody can see. -->
+<ng-template cdkConnectedOverlay
+             [cdkConnectedOverlayOrigin]="origin"
+             [cdkConnectedOverlayOpen]="open()"
+             [cdkConnectedOverlayPositions]="positions"
+             [cdkConnectedOverlayViewportMargin]="8"
+             (overlayOutsideClick)="close()"
+             (detach)="close()"
+             (overlayKeydown)="onOverlayKeydown($event)">
+  <ct-verdict-panel [id]="panelId()" [elementKey]="elementKey()"/>
+</ng-template>

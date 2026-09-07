@@ -1,0 +1,42 @@
+<!-- One `<svg>` per shape rather than one with a switched `<path>`, so the
+     `stroke-linejoin` the dash does not need stays off it: a rounded join on a
+     straight line is a no-op that reads as a copy-paste leftover. -->
+@switch (mark()) {
+  @case ("tick") {
+    <svg data-marker="tick"
+         class="size-full"
+         viewBox="0 0 16 16" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M3 8.5 6.5 12 13 4"/>
+    </svg>
+  }
+  @case ("arrow") {
+    <!-- Pointing up, because what would carry this element is a bigger size. -->
+    <svg data-marker="arrow"
+         class="size-full"
+         viewBox="0 0 16 16" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M8 13V4M4 8l4-4 4 4"/>
+    </svg>
+  }
+  @case ("dash") {
+    <svg data-marker="dash"
+         class="size-full"
+         viewBox="0 0 16 16" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round"
+         aria-hidden="true">
+      <path d="M4 8h8"/>
+    </svg>
+  }
+  @default {
+    <svg data-marker="cross"
+         class="size-full"
+         viewBox="0 0 16 16" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M4 4l8 8M12 4l-8 8"/>
+    </svg>
+  }
+}

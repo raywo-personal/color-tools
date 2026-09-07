@@ -1,4 +1,15 @@
-<p class="font-sans text-sm tracking-widest text-dim">PREVIEW</p>
+<!-- The caption, and beside it the one sentence that says the marks are
+     controls. Once above the page rather than on every mark: forty tooltips
+     say the same thing forty times and none of them is read until the visitor
+     already knows to hover.
+
+     `items-baseline` so the two sit on one line where there is room, and
+     `flex-wrap` so the hint drops under the caption where there is not. -->
+<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+  <p class="font-sans text-sm tracking-widest text-dim">PREVIEW</p>
+
+  <p class="text-sm text-dim">Select a mark for its verdict</p>
+</div>
 
 <!-- A named region, so a screen reader can tell the sample page from the app
      around it and jump past it. The visible caption above says PREVIEW; the
@@ -7,7 +18,9 @@
      Every *font size* inside is a style binding in pixels on purpose - the
      preview is the thing being measured and APCA is defined on pixel sizes, so
      the type floor stops at the caption above. Spacing is not measured, so it
-     stays on Tailwind's rem scale like everywhere else.
+     stays on Tailwind's rem scale like everywhere else. The one exception is a
+     verdict opened by a mark: that is the app talking about the page rather
+     than a part of it, and `verdict-mark.html` says so.
 
      The page's own `font-family` is body text's face; every element in another
      role binds its own. -->
@@ -22,45 +35,63 @@
        [style.border-bottom-color]="style().navBorder">
     <span class="font-semibold tracking-tight"
           [style.font-size]="style().wordmarkSize"
-          [style.color]="style().accent">Meridian</span>
+          [style.color]="style().accent">Kelvin</span>
 
-    <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+    <!-- `items-start`, not `items-center`: every child is a mark whose row is
+         a hit area tall already, so the two are the same at rest - and an
+         opened verdict grows one child, which a centred row would answer by
+         pushing its neighbours down. -->
+    <div class="flex flex-wrap items-start gap-x-5 gap-y-2">
       <!-- The page a visitor is on. Two carriers, not one: the accent sits
            under the word as a rule and the word itself keeps the page's text
            colour while the others are dim - so the state survives an accent
            that lands at the page's own lightness. -->
-      <span class="border-b-2 pb-0.5"
-            [style.font-family]="style().navActive.fontFamily"
-            [style.font-size]="style().navActive.fontSize"
-            [style.font-weight]="style().navActive.fontWeight"
-            [style.line-height]="style().navActive.lineHeight"
-            [style.border-bottom-color]="style().accent">Notes</span>
+      <ct-verdict-mark elementKey="navActive" surface="nav">
+        <span class="block border-b-2 pb-0.5"
+              [style.font-family]="style().navActive.fontFamily"
+              [style.font-size]="style().navActive.fontSize"
+              [style.font-weight]="style().navActive.fontWeight"
+              [style.line-height]="style().navActive.lineHeight"
+              [style.border-bottom-color]="style().accent">Notes</span>
+      </ct-verdict-mark>
 
-      @for (item of navItems; track item) {
-        <span [style.font-family]="style().navItems.fontFamily"
-              [style.font-size]="style().navItems.fontSize"
-              [style.font-weight]="style().navItems.fontWeight"
-              [style.line-height]="style().navItems.lineHeight"
-              [style.color]="style().dimColor">{{ item }}</span>
-      }
+      <!-- One mark for both items, because they are one element: same role,
+           same ink, same ground, so they are one verdict. The same holds for
+           the running text, the table's cells and the small print - a mark
+           per occurrence would count the page twice. -->
+      <ct-verdict-mark elementKey="navItems" surface="nav">
+        <span class="flex flex-wrap items-center gap-x-5 gap-y-2">
+          @for (item of navItems; track item) {
+            <span [style.font-family]="style().navItems.fontFamily"
+                  [style.font-size]="style().navItems.fontSize"
+                  [style.font-weight]="style().navItems.fontWeight"
+                  [style.line-height]="style().navItems.lineHeight"
+                  [style.color]="style().dimColor">{{ item }}</span>
+          }
+        </span>
+      </ct-verdict-mark>
 
-      <span class="rounded-xs border px-3 py-1.5"
-            [style.font-family]="style().signIn.fontFamily"
-            [style.font-size]="style().signIn.fontSize"
-            [style.font-weight]="style().signIn.fontWeight"
-            [style.line-height]="style().signIn.lineHeight"
-            [style.border-color]="style().accent"
-            [style.color]="style().accent">Sign in</span>
+      <ct-verdict-mark elementKey="signIn" surface="nav">
+        <span class="block rounded-xs border px-3 py-1.5"
+              [style.font-family]="style().signIn.fontFamily"
+              [style.font-size]="style().signIn.fontSize"
+              [style.font-weight]="style().signIn.fontWeight"
+              [style.line-height]="style().signIn.lineHeight"
+              [style.border-color]="style().accent"
+              [style.color]="style().accent">Sign in</span>
+      </ct-verdict-mark>
     </div>
   </div>
 
   <div class="px-5 pt-8 pb-8 sm:px-12 sm:pt-13 sm:pb-10">
-    <span class="mb-3 block tracking-[0.18em]"
-          [style.font-family]="style().eyebrow.fontFamily"
-          [style.font-size]="style().eyebrow.fontSize"
-          [style.font-weight]="style().eyebrow.fontWeight"
-          [style.line-height]="style().eyebrow.lineHeight"
-          [style.color]="style().accentSoft">Field notes</span>
+    <ct-verdict-mark elementKey="eyebrow">
+      <span class="mb-3 block tracking-[0.18em]"
+            [style.font-family]="style().eyebrow.fontFamily"
+            [style.font-size]="style().eyebrow.fontSize"
+            [style.font-weight]="style().eyebrow.fontWeight"
+            [style.line-height]="style().eyebrow.lineHeight"
+            [style.color]="style().accentSoft">Field notes</span>
+    </ct-verdict-mark>
 
     <!-- The headline is a paragraph, not a heading: it is sample copy, and an
          h2 here would put "Reading is a physical act" into this page's own
@@ -70,52 +101,72 @@
          the column: at the top of the display range a single word is wider
          than a phone, and the panel's `overflow-hidden` would cut it off
          without a scrollbar to say so. -->
-    <p class="mb-4 max-w-[24ch] tracking-tight wrap-break-word text-pretty"
-       [style.font-family]="style().headline.fontFamily"
-       [style.font-size]="style().headline.fontSize"
-       [style.font-weight]="style().headline.fontWeight"
-       [style.line-height]="style().headline.lineHeight">Reading is a physical act</p>
+    <ct-verdict-mark elementKey="headline">
+      <p class="mb-4 max-w-[24ch] tracking-tight wrap-break-word text-pretty"
+         [style.font-family]="style().headline.fontFamily"
+         [style.font-size]="style().headline.fontSize"
+         [style.font-weight]="style().headline.fontWeight"
+         [style.line-height]="style().headline.lineHeight">Reading is a physical act</p>
+    </ct-verdict-mark>
 
-    <p class="max-w-[52ch] text-pretty"
-       [style.font-size]="style().lead.fontSize"
-       [style.font-weight]="style().lead.fontWeight"
-       [style.line-height]="style().lead.lineHeight">A contrast ratio tells you whether two colors are far enough apart to be separated by the eye. It does not tell you whether the result is comfortable over a page of text.</p>
+    <ct-verdict-mark elementKey="lead">
+      <p class="max-w-[52ch] text-pretty"
+         [style.font-size]="style().lead.fontSize"
+         [style.font-weight]="style().lead.fontWeight"
+         [style.line-height]="style().lead.lineHeight">A contrast ratio tells you whether two colors are far enough apart to be separated by the eye. It does not tell you whether the result is comfortable over a page of text.</p>
+    </ct-verdict-mark>
 
-    <!-- Text, not buttons: nothing in the preview is focusable, so the fake
-         nav does not compete with the real one for the tab order. -->
-    <div class="mt-6 mb-10 flex flex-wrap items-center gap-3">
-      <span class="rounded-xs px-5 py-3"
-            [style.font-family]="style().filledButton.fontFamily"
-            [style.font-size]="style().filledButton.fontSize"
-            [style.font-weight]="style().filledButton.fontWeight"
-            [style.line-height]="style().filledButton.lineHeight"
-            [style.background-color]="style().accent"
-            [style.color]="style().onAccent">Read the notes</span>
+    <!-- Text, not buttons: the sample content is still not focusable, so the
+         fake nav does not compete with the real one for the tab order. What is
+         focusable inside the preview are the marks beside the elements, and
+         they are the first focus stops in it - a verdict a visitor cannot
+         reach is a verdict this app does not get to show. `verdict-mark.ts`
+         says how they are drawn on a colour the visitor picked. -->
+    <!-- `items-start` for the reason the nav row gives: an opened verdict must
+         not push the buttons beside it down. -->
+    <div class="mt-6 mb-10 flex flex-wrap items-start gap-3">
+      <!-- The mark sits beside the button, on the page - not on the accent the
+           label is measured against, which is why `surface` says so. -->
+      <ct-verdict-mark elementKey="filledButton" surface="page">
+        <span class="block rounded-xs px-5 py-3"
+              [style.font-family]="style().filledButton.fontFamily"
+              [style.font-size]="style().filledButton.fontSize"
+              [style.font-weight]="style().filledButton.fontWeight"
+              [style.line-height]="style().filledButton.lineHeight"
+              [style.background-color]="style().accent"
+              [style.color]="style().onAccent">Read the notes</span>
+      </ct-verdict-mark>
 
-      <span class="rounded-xs border px-5 py-3"
-            [style.font-family]="style().ghostButton.fontFamily"
-            [style.font-size]="style().ghostButton.fontSize"
-            [style.font-weight]="style().ghostButton.fontWeight"
-            [style.line-height]="style().ghostButton.lineHeight"
-            [style.border-color]="style().ghostBorder">Browse palettes</span>
+      <ct-verdict-mark elementKey="ghostButton">
+        <span class="block rounded-xs border px-5 py-3"
+              [style.font-family]="style().ghostButton.fontFamily"
+              [style.font-size]="style().ghostButton.fontSize"
+              [style.font-weight]="style().ghostButton.fontWeight"
+              [style.line-height]="style().ghostButton.lineHeight"
+              [style.border-color]="style().ghostBorder">Browse palettes</span>
+      </ct-verdict-mark>
 
       <!-- The word says it, not the grey: a disabled control told by colour
            alone is the first thing a low-contrast pairing hides, which is
            what this button is on the page to show. -->
-      <span class="rounded-xs px-5 py-3"
-            [style.font-family]="style().disabledButton.fontFamily"
-            [style.font-size]="style().disabledButton.fontSize"
-            [style.font-weight]="style().disabledButton.fontWeight"
-            [style.line-height]="style().disabledButton.lineHeight"
-            [style.background-color]="style().mutedBackground"
-            [style.color]="style().onMuted">Export (disabled)</span>
+      <ct-verdict-mark elementKey="disabledButton" surface="page">
+        <span class="block rounded-xs px-5 py-3"
+              [style.font-family]="style().disabledButton.fontFamily"
+              [style.font-size]="style().disabledButton.fontSize"
+              [style.font-weight]="style().disabledButton.fontWeight"
+              [style.line-height]="style().disabledButton.lineHeight"
+              [style.background-color]="style().mutedBackground"
+              [style.color]="style().onMuted">Export (disabled)</span>
+      </ct-verdict-mark>
     </div>
 
-    <p class="mb-[1.1em] max-w-[66ch] text-pretty"
-       [style.font-size]="style().bodyText.fontSize"
-       [style.font-weight]="style().bodyText.fontWeight"
-       [style.line-height]="style().bodyText.lineHeight">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you actually plan to ship, then <span class="underline underline-offset-4"
-             [style.color]="style().accent">read this the way a reader would</span>: quickly, at arm's length, without looking for problems.</p>
+    <ct-verdict-mark elementKey="bodyText">
+      <p class="mb-[1.1em] max-w-[66ch] text-pretty"
+         [style.font-size]="style().bodyText.fontSize"
+         [style.font-weight]="style().bodyText.fontWeight"
+         [style.line-height]="style().bodyText.lineHeight">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you actually plan to ship, then <ct-verdict-mark elementKey="bodyLink" [inline]="true"><span class="underline underline-offset-4"
+               [style.color]="style().accent">read this the way a reader would</span></ct-verdict-mark>: quickly, at arm's length, without looking for problems.</p>
+    </ct-verdict-mark>
 
     <p class="mb-[1.1em] max-w-[66ch] text-pretty"
        [style.font-size]="style().bodyText.fontSize"
@@ -132,43 +183,50 @@
          themselves. -->
     <div class="my-8 grid gap-7 sm:grid-cols-2 sm:items-start">
       <div>
-        <span class="mb-2 block tracking-[0.16em]"
-              [style.font-family]="style().fieldLabel.fontFamily"
-              [style.font-size]="style().fieldLabel.fontSize"
-              [style.font-weight]="style().fieldLabel.fontWeight"
-              [style.line-height]="style().fieldLabel.lineHeight"
-              [style.color]="style().accentSoft">EMAIL</span>
+        <ct-verdict-mark elementKey="fieldLabel">
+          <span class="mb-2 block tracking-[0.16em]"
+                [style.font-family]="style().fieldLabel.fontFamily"
+                [style.font-size]="style().fieldLabel.fontSize"
+                [style.font-weight]="style().fieldLabel.fontWeight"
+                [style.line-height]="style().fieldLabel.lineHeight"
+                [style.color]="style().accentSoft">EMAIL</span>
+        </ct-verdict-mark>
 
-        <!-- A div holding text, not an input: nothing in the preview is
-             focusable, and a field that takes a caret would swallow keystrokes
-             meant for the app. The focus state is drawn rather than reached -
-             an outline in the page's text colour, offset so the page shows
-             through the gap, which is the one ring that works on any pair. -->
-        <div class="flex min-h-11 items-center rounded-xs border px-3 outline-2 outline-offset-2"
-             [style.font-size]="style().fieldText.fontSize"
-             [style.font-weight]="style().fieldText.fontWeight"
-             [style.line-height]="style().fieldText.lineHeight"
-             [style.background-color]="style().fieldBackground"
-             [style.border-color]="style().pageColor"
-             [style.outline-color]="style().pageColor">reader&#64;meridian</div>
+        <!-- A div holding text, not an input: no sample content in the preview
+             is focusable, and a field that takes a caret would swallow
+             keystrokes meant for the app. The focus state is drawn rather than
+             reached - an outline in the page's text colour, offset so the page
+             shows through the gap, which is the one ring that works on any
+             pair. -->
+        <ct-verdict-mark elementKey="fieldText" surface="page">
+          <div class="flex min-h-11 items-center rounded-xs border px-3 outline-2 outline-offset-2"
+               [style.font-size]="style().fieldText.fontSize"
+               [style.font-weight]="style().fieldText.fontWeight"
+               [style.line-height]="style().fieldText.lineHeight"
+               [style.background-color]="style().fieldBackground"
+               [style.border-color]="style().pageColor"
+               [style.outline-color]="style().pageColor">reader&#64;kelvin</div>
+        </ct-verdict-mark>
 
         <!-- The sign carries the message beside the red, drawn as a stroke for
              the reason `copy-confirmation.ts` gives for its own: a glyph is at
              the mercy of whichever family the visitor picked, and a family
              without it renders a box. -->
-        <p class="mt-2 flex items-start gap-2"
-           [style.font-size]="style().errorLine.fontSize"
-           [style.font-weight]="style().errorLine.fontWeight"
-           [style.line-height]="style().errorLine.lineHeight"
-           [style.color]="style().danger">
-          <svg class="mt-[0.3em] size-[1em] shrink-0"
-               viewBox="0 0 16 16" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-               aria-hidden="true">
-            <path d="M4 4l8 8M12 4l-8 8"/>
-          </svg>
-          <span>This address is already on the list.</span>
-        </p>
+        <ct-verdict-mark elementKey="errorLine">
+          <p class="mt-2 flex items-start gap-2"
+             [style.font-size]="style().errorLine.fontSize"
+             [style.font-weight]="style().errorLine.fontWeight"
+             [style.line-height]="style().errorLine.lineHeight"
+             [style.color]="style().danger">
+            <svg class="mt-[0.3em] size-[1em] shrink-0"
+                 viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 aria-hidden="true">
+              <path d="M4 4l8 8M12 4l-8 8"/>
+            </svg>
+            <span>This address is already on the list.</span>
+          </p>
+        </ct-verdict-mark>
       </div>
 
       <div>
@@ -177,19 +235,23 @@
              pixels. -->
         <div class="flex aspect-video items-center justify-center rounded-xs"
              [style.background-color]="style().mutedBackground">
-          <span class="tracking-[0.12em]"
-                [style.font-family]="style().imageLabel.fontFamily"
-                [style.font-size]="style().imageLabel.fontSize"
-                [style.font-weight]="style().imageLabel.fontWeight"
-                [style.line-height]="style().imageLabel.lineHeight"
-                [style.color]="style().dimColor">IMAGE</span>
+          <ct-verdict-mark elementKey="imageLabel">
+            <span class="block tracking-[0.12em]"
+                  [style.font-family]="style().imageLabel.fontFamily"
+                  [style.font-size]="style().imageLabel.fontSize"
+                  [style.font-weight]="style().imageLabel.fontWeight"
+                  [style.line-height]="style().imageLabel.lineHeight"
+                  [style.color]="style().dimColor">IMAGE</span>
+          </ct-verdict-mark>
         </div>
 
-        <p class="mt-2 text-pretty"
-           [style.font-size]="style().imageCaption.fontSize"
-           [style.font-weight]="style().imageCaption.fontWeight"
-           [style.line-height]="style().imageCaption.lineHeight"
-           [style.color]="style().dimColor">Fig. 1 &ndash; The caption under a picture is where most pairings fail first.</p>
+        <ct-verdict-mark elementKey="imageCaption">
+          <p class="mt-2 text-pretty"
+             [style.font-size]="style().imageCaption.fontSize"
+             [style.font-weight]="style().imageCaption.fontWeight"
+             [style.line-height]="style().imageCaption.lineHeight"
+             [style.color]="style().dimColor">Fig. 1 &ndash; The caption under a picture is where most pairings fail first.</p>
+        </ct-verdict-mark>
       </div>
     </div>
 
@@ -204,7 +266,17 @@
          range the unbreakable `ELEMENT` would push the table past the column
          and the panel's `overflow-hidden` would cut the last column off
          without a scrollbar to say so. `anywhere` is the one that counts
-         towards min-content, and it only breaks where a cell has no room. -->
+         towards min-content, and it only breaks where a cell has no room.
+
+         **The table's three marks are inline, and they sit in three different
+         cells.** A block mark would put a 44px row into a table whose other
+         rows are half that, and the three would then stand in one column a
+         row apart - close enough for their hit areas to overlap. Inline they
+         cost 20px of a cell and nothing of its height, and the header's mark
+         goes in the last column, the cell's in the first and the number's one
+         row further down, so no two of them are within a hit area of each
+         other. Each still names the element it judges, and all three cells of
+         a row are one element. -->
     <table class="mb-8 w-full border-collapse text-left wrap-anywhere">
       <thead>
         <tr class="border-b" [style.border-bottom-color]="style().pageColor">
@@ -215,25 +287,25 @@
                 [style.font-size]="style().tableHeader.fontSize"
                 [style.font-weight]="style().tableHeader.fontWeight"
                 [style.line-height]="style().tableHeader.lineHeight"
-                [style.color]="style().accentSoft">{{ column.caption }}</th>
+                [style.color]="style().accentSoft">@if ($last) {<ct-verdict-mark elementKey="tableHeader" [inline]="true" />}{{ column.caption }}</th>
           }
         </tr>
       </thead>
 
       <tbody>
-        @for (row of tableRows(); track row.element) {
+        @for (row of tableRows(); track row.element; let rowIndex = $index) {
           <tr class="border-b last:border-b-0" [style.border-bottom-color]="style().rule">
             <td class="py-2.5"
                 [style.font-size]="style().tableCell.fontSize"
                 [style.font-weight]="style().tableCell.fontWeight"
-                [style.line-height]="style().tableCell.lineHeight">{{ row.element }}</td>
+                [style.line-height]="style().tableCell.lineHeight">@if (rowIndex === 0) {<ct-verdict-mark elementKey="tableCell" [inline]="true" />}{{ row.element }}</td>
 
             @for (value of row.values; track $index) {
               <td class="py-2.5 text-right tabular-nums"
                   [style.font-family]="style().tableNumber.fontFamily"
                   [style.font-size]="style().tableNumber.fontSize"
                   [style.font-weight]="style().tableNumber.fontWeight"
-                  [style.line-height]="style().tableNumber.lineHeight">{{ value }}</td>
+                  [style.line-height]="style().tableNumber.lineHeight">@if (rowIndex === 1 && $first) {<ct-verdict-mark elementKey="tableNumber" [inline]="true" />}{{ value }}</td>
             }
           </tr>
         }
@@ -243,17 +315,21 @@
     <div class="my-8 rounded-xs border-l-2 px-6 py-5"
          [style.background-color]="style().cardBackground"
          [style.border-left-color]="style().accent">
-      <span class="mb-2.5 block tracking-[0.18em]"
-            [style.font-family]="style().cardLabel.fontFamily"
-            [style.font-size]="style().cardLabel.fontSize"
-            [style.font-weight]="style().cardLabel.fontWeight"
-            [style.line-height]="style().cardLabel.lineHeight"
-            [style.color]="style().dimColor">Pull quote</span>
+      <ct-verdict-mark elementKey="cardLabel" surface="card">
+        <span class="mb-2.5 block tracking-[0.18em]"
+              [style.font-family]="style().cardLabel.fontFamily"
+              [style.font-size]="style().cardLabel.fontSize"
+              [style.font-weight]="style().cardLabel.fontWeight"
+              [style.line-height]="style().cardLabel.lineHeight"
+              [style.color]="style().dimColor">Pull quote</span>
+      </ct-verdict-mark>
 
-      <p class="max-w-[40ch] italic text-pretty"
-         [style.font-size]="style().quote.fontSize"
-         [style.font-weight]="style().quote.fontWeight"
-         [style.line-height]="style().quote.lineHeight">Adjust one variable at a time and keep the paragraph in view.</p>
+      <ct-verdict-mark elementKey="quote" surface="card">
+        <p class="max-w-[40ch] italic text-pretty"
+           [style.font-size]="style().quote.fontSize"
+           [style.font-weight]="style().quote.fontWeight"
+           [style.line-height]="style().quote.lineHeight">Adjust one variable at a time and keep the paragraph in view.</p>
+      </ct-verdict-mark>
     </div>
 
     <p class="max-w-[66ch] text-pretty"
@@ -263,16 +339,18 @@
 
     <div class="mt-9 flex flex-wrap justify-between gap-5 border-t pt-4"
          [style.border-top-color]="style().rule">
-      <span class="max-w-[52ch] text-pretty"
-            [style.font-size]="style().smallPrint.fontSize"
-            [style.font-weight]="style().smallPrint.fontWeight"
-            [style.line-height]="style().smallPrint.lineHeight"
-            [style.color]="style().dimColor">Small print, captions and legal notes. This is where most pairings fail first.</span>
+      <ct-verdict-mark elementKey="smallPrint">
+        <span class="block max-w-[52ch] text-pretty"
+              [style.font-size]="style().smallPrint.fontSize"
+              [style.font-weight]="style().smallPrint.fontWeight"
+              [style.line-height]="style().smallPrint.lineHeight"
+              [style.color]="style().dimColor">Small print, captions and legal notes. This is where most pairings fail first.</span>
+      </ct-verdict-mark>
 
       <span [style.font-size]="style().smallPrint.fontSize"
             [style.font-weight]="style().smallPrint.fontWeight"
             [style.line-height]="style().smallPrint.lineHeight"
-            [style.color]="style().dimColor">&copy; Meridian</span>
+            [style.color]="style().dimColor">&copy; Kelvin</span>
     </div>
   </div>
 </section>

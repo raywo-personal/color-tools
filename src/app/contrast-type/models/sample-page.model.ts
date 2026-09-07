@@ -145,28 +145,6 @@ export function roleOf(key: string): TypeRole {
 
 
 /**
- * The ground in a sentence - `on the card`.
- *
- * The accent ground is the filled button's own fill, and the only text on it
- * is the button's label - so a name taken from the button would have the
- * rating's sentence read `Filled button on the filled button`.
- */
-const GROUND_NAMES: Record<SampleGround, string> = {
-  page: "the page",
-  card: "the card",
-  nav: "the nav bar",
-  accent: "its own background",
-  muted: "the disabled surface",
-  field: "the form field"
-};
-
-
-export function groundName(ground: SampleGround): string {
-  return GROUND_NAMES[ground];
-}
-
-
-/**
  * How far each derived surface is mixed, and towards what. The draft's
  * fractions, mixed in OKLab - see `mixColors()`.
  */

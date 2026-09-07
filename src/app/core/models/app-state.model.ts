@@ -37,6 +37,16 @@ export type AppState = {
 
   // Contrast related
   contrastColors: ContrastColors;
+  /**
+   * The key of the sample-page element whose verdict is open beside the
+   * preview, or null while none is. One at a time, so the page grows by one
+   * panel rather than by twenty.
+   *
+   * In the store rather than in the preview, because the mark that opens it
+   * and the marks that have to close are separate component instances. Not
+   * persisted: it is a look at the page, not part of the result.
+   */
+  openVerdict: string | null;
 
   // Common
   colorTheme: ColorTheme;
@@ -84,6 +94,7 @@ export const initialState: AppState = {
   // with the color the visitor is working on, and nothing afterwards ever
   // brings the two together - `PALETTE PAIR` is a gesture, not a reaction.
   contrastColors: contrastPairFromPalette(initialPalette),
+  openVerdict: null,
 
   colorTheme: "system",
   typeRole: "body",

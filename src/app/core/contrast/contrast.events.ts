@@ -12,6 +12,14 @@ export const contrastEvents = eventGroup({
     contrastColorsChangedWithoutNav: type<ContrastColors>(),
     switchColors: type<void>(),
     newRandomColorsWithNav: type<void>(),
-    restoreContrastColors: type<string>()
+    restoreContrastColors: type<string>(),
+    /**
+     * A mark beside the preview was pressed: the key of the element whose
+     * verdict opens, or the one that closes because it was already open.
+     *
+     * Not persisted: an opened verdict is a look at the page, not part of the
+     * result the link and the reload carry.
+     */
+    verdictToggled: type<string>()
   }
 });

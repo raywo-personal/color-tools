@@ -3,6 +3,8 @@ import {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {fontFamilyFor, TypeRolesMap} from "@common/models/type-role-settings.model";
 import {sampleElement, samplePageColors} from "@contrast-type/models/sample-page.model";
+import {elementFontSize} from "@contrast-type/models/element-verdict.model";
+import {VerdictMark} from "@contrast-type/components/verdict-mark/verdict-mark";
 
 
 /**
@@ -138,16 +140,30 @@ interface PreviewStyle {
  * derivation keeps the two from drifting apart. Its comment says why the pair
  * is painted as it is and how the palette is read.
  *
- * **Nothing in here is focusable or announced as a control.** The nav links,
- * `Sign in`, the three buttons and the form field are text: a focusable button
- * that does nothing is worse than no button, a fake nav in the tab order
- * competes with the real one in the app header, and an input here would
- * swallow keystrokes meant for the app. The field's focus ring is drawn rather
- * than reached. The region carries a name instead, so a screen reader can tell
- * the sample page from the app around it and skip past it.
+ * **No sample content in here is focusable or announced as a control.** The
+ * nav links, `Sign in`, the three buttons and the form field are text: a
+ * focusable button that does nothing is worse than no button, a fake nav in
+ * the tab order competes with the real one in the app header, and an input
+ * here would swallow keystrokes meant for the app. The field's focus ring is
+ * drawn rather than reached. The region carries a name instead, so a screen
+ * reader can tell the sample page from the app around it and skip past it.
+ *
+ * **The marks are the exception, and they are the only one.** Every element
+ * carries a `ct-verdict-mark` in front of it - a control, focusable, named
+ * after the element and its verdict, opening the reasons in words. They are
+ * the first focus stops inside the preview because they are the only ones. An
+ * element that appears more than once - the running text, the nav items, the
+ * table's cells, the small print - gets one mark, because one ink on one
+ * ground at one size is one verdict.
+ *
+ * **A verdict opens as a popup on the body, so nothing here moves.** That is
+ * also what lets the table's three marks sit inside its cells: a block in a
+ * `<td>` re-apportioned the columns every time it opened. `VerdictMark` says
+ * the rest.
  */
 @Component({
   selector: "ct-website-preview",
+  imports: [VerdictMark],
   templateUrl: "./website-preview.html",
   host: {
     "class": "block min-w-0"
@@ -170,12 +186,11 @@ export class WebsitePreview {
     const roles = this.#stateStore.typeRoles();
 
     return TABLE_ELEMENTS.map(({key, element}) => {
-      const {role, sizeRatio} = sampleElement(key);
-      const {settings} = roles[role];
+      const sample = sampleElement(key);
 
       return {
         element,
-        values: [Math.round(settings.fontSize * sizeRatio), settings.fontWeight]
+        values: [elementFontSize(sample, roles), roles[sample.role].settings.fontWeight]
       };
     });
   });
@@ -242,7 +257,10 @@ function elementType(key: string, roles: TypeRolesMap, leadingFactor = 1): Eleme
 
   return {
     fontFamily: fontFamilyFor(element.role, font),
-    fontSize: px(Math.round(settings.fontSize * element.sizeRatio)),
+    // Through `elementFontSize()`, which is also what the verdict looks up in
+    // the APCA table: the mark beside an element has to be about the size the
+    // element is drawn at, and two roundings of the same product would drift.
+    fontSize: px(elementFontSize(element, roles)),
     fontWeight: settings.fontWeight,
     lineHeight: settings.lineHeight * leadingFactor
   };

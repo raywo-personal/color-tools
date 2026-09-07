@@ -152,9 +152,44 @@ digit; a style beyond that needs a wider index field first, or
   id, whose payload is full
 - Which preview element belongs to which type role, at what share of the
   role's size and in which ink on which ground, is `SAMPLE_ELEMENTS` in
-  `src/app/contrast-type/models/sample-page.model.ts`. The preview draws it
-  and the rating measures it; a new element goes into that list, never into
-  a component alone, or the figure stops being about the page
+  `src/app/contrast-type/models/sample-page.model.ts`. The preview draws it,
+  the rating measures it and the marks judge it; a new element goes into that
+  list, never into a component alone, or the figure stops being about the page
+- What the APCA table says about one element is `elementVerdict()` in
+  `models/element-verdict.model.ts`, and it is the only place that says it:
+  the marks beside the preview, the page's tally in `page-verdicts` and the
+  rating's own row all read it, so two of them cannot disagree about the same
+  element. A new state needs both a shape in `verdict-shape` and a word in
+  `verdictWord()`
+- **A shape is never the only carrier of a verdict.** A tick and a cross can
+  be read off a page; the arrow and the dash cannot, and a visitor asked. So
+  the word travels with the shape: in a mark's accessible name, in an opened
+  verdict's header, and in the page's tally, which is the one place all four
+  stand together and is why every state there keeps its word rather than
+  standing as the draft's bare row of glyphs
+- **A mark is a badge in the app's colours, not a glyph in the page's.** Drawn
+  in the page's own ink it was punctuation the visitor had apparently set and
+  nobody pressed it. Only the badge's rim and its focus ring are measured
+  against the page - they are the edge that meets the visitor's colour, and a
+  token is guaranteed against none of it
+- **A verdict is rows of label and value, never prose.** `verdictFacts()` is
+  the whole of it, and it carries only what a visitor can already name: the
+  two Lc figures, the role with the size and weight they set, and a palette
+  colour they can see in the chip row. Which row of the APCA table rated a
+  size, and what the inks and grounds are called, is true of the derivation
+  and not of the page - it read as an answer to a question nobody asked
+- **A verdict opens as a popup, in the app's colours.** A CDK overlay off
+  `verdict-mark.html`, so nothing in the preview moves and the preview's own
+  `overflow-hidden` cannot clip it; in the flow it pushed the page it was
+  about downwards, and inside a table cell it re-apportioned the columns. The
+  popup takes `panel`, `line`, `text` and `dim` - it is the app looking at the
+  visitor's page from outside, and in the page's own palette it read as part
+  of the sample content. The mark itself still takes its colour from APCA,
+  because it does sit on the page
+- One mark per named element, not per occurrence. The running text, the nav
+  items, the table's cells and the small print each appear more than once and
+  are one ink on one ground at one size – a mark per occurrence would count
+  the page twice
 - A role's face, size, weight and leading are `typeRoles[role]`; nothing
   derives one role's type from another's. The headline's weight is the display
   role's, not a step up from body text's – a display face that ships one
