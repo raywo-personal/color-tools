@@ -3,18 +3,18 @@ import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {AppStateStore} from "@core/app-state.store";
 import {getAPCAPolarity} from "@engine/contrast/apca-rating.helper";
 import {typeRoleCaption} from "@engine/contrast/type-role.model";
-import {figureElementOf, groundName, samplePageColors} from "@contrast-type/models/sample-page.model";
+import {figureElementOf, samplePageColors} from "@contrast-type/models/sample-page.model";
 import {
   ElementVerdict,
-  elementName,
+  VerdictFact,
   elementVerdict,
   pageVerdicts,
   VERDICT_STATES,
   VerdictState,
-  verdictConsequence,
   verdictCountSentence,
   verdictCountWord,
   verdictCounts,
+  verdictFacts,
   verdictLabel
 } from "@contrast-type/models/element-verdict.model";
 import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shape";
@@ -145,40 +145,45 @@ export class ApcaRating {
   });
 
   /**
-   * The sentence that explains the verdict: what the element sits on, what
-   * the table asks of text that size, and - where it does not pass - what
-   * would carry it. `verdictConsequence()` says how far that answer reaches.
+   * What the visitor can do about the row above, and what the pair itself
+   * reaches - two rows of label and value rather than two sentences.
+   *
+   * **Prose here said things only the code knows.** It named which row of the
+   * APCA table a size was rated on and which ground an element sat on, and
+   * buried the one number a visitor acts on - the size that would carry it -
+   * in the middle of a clause. The size and the weight are their own sliders,
+   * and the pair's Lc is what the screen is named after; nothing else in the
+   * derivation is theirs to read.
+   *
+   * `Passes at` is left out where the element already passes: what would
+   * carry something already carried is a question nobody asked.
    */
-  protected readonly note = computed(() => {
+  protected readonly facts = computed<readonly VerdictFact[]>(() => {
     const verdict = this.#verdict();
-    const {element, fontSize, sizeKey, fontWeight, requiredLc} = verdict;
-    const where = `${elementName(element)} on ${groundName(element.ground)} at ${fontSize}px / ${fontWeight}`;
-    const ratedOn = sizeKey === `${fontSize}px` ? "" : `, which the table rates on its ${sizeKey} row,`;
+    const rows = verdictFacts(verdict, this.#stateStore.currentPalette())
+      .filter(fact => fact.label === "Passes at");
 
-    const requirement = requiredLc === null
-      ? `${where}${ratedOn} has no requirement in the table.`
-      : `${where}${ratedOn} needs Lc ${requiredLc}.`;
-
-    return `${requirement} ${verdictConsequence(verdict)}`;
+    return [...rows, this.#pairFact()];
   });
 
   /**
-   * The pair itself, in one line: its Lc and which way round it is. At a
-   * figure of 0 there is no polarity to name - the two colors are at the same
-   * perceived lightness, which `getAPCAPolarity()` still reports as
+   * The pair's own Lc and which way round it is.
+   *
+   * At a figure of 0 there is no polarity to name - the two colors are at the
+   * same perceived lightness, which `getAPCAPolarity()` still reports as
    * `dark-on-light` because it splits at zero.
    */
-  protected readonly pairNote = computed(() => {
+  readonly #pairFact = computed<VerdictFact>(() => {
     const contrast = this.#stateStore.contrastColors().contrast;
     const figure = Math.floor(Math.abs(contrast));
 
-    if (figure === 0) return "The pair itself: Lc 0, too close to tell text from background.";
+    if (figure === 0) return {label: "Pair", value: "Lc 0 · too close to tell apart"};
 
     const polarity = getAPCAPolarity(contrast) === "light-on-dark"
-      ? "light text on a dark background"
-      : "dark text on a light background";
+      ? "light on dark"
+      : "dark on light";
 
-    return `The pair itself: Lc ${figure}, ${polarity}.`;
+    return {label: "Pair", value: `Lc ${figure} · ${polarity}`};
   });
 
   /** The tally as it was last spoken, so an unchanged one is not repeated. */

@@ -157,10 +157,22 @@ digit; a style beyond that needs a wider index field first, or
   list, never into a component alone, or the figure stops being about the page
 - What the APCA table says about one element is `elementVerdict()` in
   `models/element-verdict.model.ts`, and it is the only place that says it:
-  the marks beside the preview, the tally beside the Lc figure and the
+  the marks beside the preview, the legend beside the Lc figure and the
   rating's own row all read it, so two of them cannot disagree about the same
-  element. A new state needs a shape in `verdict-shape`, or it is told by
-  wording alone
+  element. A new state needs both a shape in `verdict-shape` and a word in
+  `verdictWord()`
+- **A shape is never the only carrier of a verdict.** A tick and a cross can
+  be read off a page; the arrow and the dash cannot, and a visitor asked. So
+  the word travels with the shape: in a mark's accessible name, in an opened
+  verdict's header, and in the legend under the Lc figure, which is the one
+  place all four stand together and is why it is a line per state rather than
+  the draft's single row of glyphs
+- **A verdict is rows of label and value, never prose.** `verdictFacts()` is
+  the whole of it, and it carries only what a visitor can already name: the
+  two Lc figures, the role with the size and weight they set, and a palette
+  colour they can see in the chip row. Which row of the APCA table rated a
+  size, and what the inks and grounds are called, is true of the derivation
+  and not of the page - it read as an answer to a question nobody asked
 - One mark per named element, not per occurrence. The running text, the nav
   items, the table's cells and the small print each appear more than once and
   are one ink on one ground at one size – a mark per occurrence would count

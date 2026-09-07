@@ -104,12 +104,14 @@ describe("VerdictMark", () => {
 
     const text = host.textContent ?? "";
 
-    // The element, the two colours, the role with its size and weight, and
-    // the Lc reached against the one asked for.
+    // The element, its verdict in words, and the rows: the two Lc figures and
+    // the type. No prose, and nothing about the APCA table's own rows.
     expect(text).toContain("CAPTION");
-    expect(text).toContain("the page's own colour.");
-    expect(text).toContain("Body type at ");
+    expect(text).toContain("Reached");
+    expect(text).toContain("Needed");
     expect(text).toMatch(/Lc \d+/);
+    expect(text).toContain("BODY · ");
+    expect(text).not.toContain("row");
 
     await press();
 
@@ -141,7 +143,7 @@ describe("VerdictMark", () => {
 
     const content = (host: HTMLElement) => host.querySelectorAll("span")[2];
 
-    expect(short.button().getAttribute("aria-label")).not.toContain("pass");
+    expect(short.button().getAttribute("aria-label")).not.toContain("passes");
     expect(content(short.host).className).toContain("decoration-dotted");
 
     expect(unrated.button().getAttribute("aria-label")).toContain("not rated");

@@ -16,7 +16,7 @@ import {
   verdictCounts,
   verdictLabel,
   verdictMark,
-  verdictSentences
+  verdictFacts
 } from "@contrast-type/models/element-verdict.model";
 
 
@@ -218,107 +218,115 @@ describe("verdictCountSentence", () => {
     // empty states would change length as a slider moves, and a count of
     // nothing is the answer to "how many failed".
     expect(verdictCountSentence(verdictCounts([])))
-      .toBe("0 pass, 0 only as large text, 0 not rated, 0 fail");
+      .toBe("0 pass, 0 larger size needed, 0 not rated, 0 fail");
   });
 
 });
 
 
-describe("verdictSentences", () => {
+describe("verdictFacts", () => {
 
-  it("says what sits where, in what type, what it reached and what would carry it", () => {
+  function valueOf(facts: readonly {label: string; value: string}[], label: string) {
+    return facts.find(fact => fact.label === label)?.value;
+  }
+
+
+  it("gives the two figures, the type, and what would carry it", () => {
+    // The two Lc figures are what the screen is about; the role, the size and
+    // the weight are values the visitor set. Nothing else is theirs to read.
     const verdict = elementVerdict(
       sampleElement("bodyText"),
       colorsOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
       roles("body", 18, 400)
     );
-    const sentences = verdictSentences(verdict, PALETTE);
+    const facts = verdictFacts(verdict, PALETTE);
 
-    expect(sentences[0]).toMatch(/^[A-Z].* on [A-Z].*, the page's own colour\.$/);
-    expect(sentences[1]).toBe("Body type at 18px / 400.");
-    expect(sentences[2]).toBe("Lc 74 against the Lc 75 this size and weight ask for.");
-    expect(sentences[3]).toBe("It first passes at 21px on this weight, or at weight 500 at this size.");
+    expect(valueOf(facts, "Reached")).toBe("Lc 74");
+    expect(valueOf(facts, "Needed")).toBe("Lc 75");
+    expect(valueOf(facts, "Type")).toBe("BODY · 18px · 400");
+    expect(valueOf(facts, "Passes at")).toBe("21px, or weight 500");
   });
 
 
-  it("tells an unrated element what would get it rated, without naming a bar", () => {
-    // The table starts rating at 14px, so the size is the useful answer even
-    // where nothing failed.
-    const verdict = elementVerdict(sampleElement("eyebrow"), colorsOf(), roles("mono", 12, 400));
-    const sentences = verdictSentences(verdict, PALETTE);
-
-    expect(sentences[2]).toContain("no requirement at this size");
-    expect(sentences[3]).toContain("It first passes at ");
-  });
-
-
-  it("names the ink, then the ground's colour, then which ground that is", () => {
-    // Written the other way round the sentence read `black on the page, which
-    // is Lavender`, where the apposition hangs off the place and reads as a
-    // claim that black is Lavender. The place goes last, so it qualifies the
-    // colour in front of it.
-    //
-    // Both names open with a capital. `colorName()` reads six lists and they
-    // do not agree - `basic`, `html` and `x11` are lower case, `ntc` and
-    // `pantone` are not - so one sentence could open with `black` and name
-    // `Lavender` in the same breath.
-    const onTheCard = elementVerdict(sampleElement("quote"), colorsOf(), DEFAULT_TYPE_ROLES);
-    const onItsOwnFill = elementVerdict(sampleElement("filledButton"), colorsOf(), DEFAULT_TYPE_ROLES);
-
-    expect(verdictSentences(onTheCard, PALETTE)[0]).toMatch(/^[A-Z].* on [A-Z].*, the card\.$/);
-
-    // The one ground a colour cannot be an apposition to: `Sea Green, its own
-    // background` refers to nothing in the sentence.
-    expect(verdictSentences(onItsOwnFill, PALETTE)[0])
-      .toMatch(/the button's own fill\.$/);
-  });
-
-
-  it("says which row the table rated the size on where it is not the element's own", () => {
-    // 13px is rated on the 14px row, and a sentence that hid that would
-    // contradict the requirement beside it.
+  it("names nothing the visitor cannot already read off the page", () => {
+    // Prose here said which row of the APCA table rated a size and that a
+    // page has an "own colour" - neither is on screen, and the second is not
+    // a distinction at all. The colours are left out too: they are in the
+    // element the panel is about, at full size.
     const verdict = elementVerdict(
       sampleElement("imageCaption"),
       colorsOf(),
       roles("body", 18, 400)
     );
+    const written = verdictFacts(verdict, PALETTE)
+      .map(fact => `${fact.label} ${fact.value}`)
+      .join(" ");
 
-    expect(verdict.fontSize).toBe(13);
-    expect(verdictSentences(verdict, PALETTE)[1])
-      .toBe("Body type at 13px / 400, which the table rates on its 14px row.");
+    expect(verdict.sizeKey).not.toBe(`${verdict.fontSize}px`);
+    expect(written).not.toContain("row");
+    expect(written).not.toContain("table");
+    expect(written).not.toContain("own colour");
+
+    // And no sentence: nothing in a value ends in a full stop.
+    for (const fact of verdictFacts(verdict, PALETTE)) {
+      expect(fact.value, fact.label).not.toContain(".");
+    }
   });
 
 
-  it("names no requirement where the table has none", () => {
+  it("sets no bar where the table rates the size at all", () => {
+    // Not "Lc null" and not "Lc 0" - a figure here would read as a bar the
+    // element cleared.
     const verdict = elementVerdict(sampleElement("eyebrow"), colorsOf(), roles("mono", 12, 400));
 
-    expect(verdictSentences(verdict, PALETTE)[2])
-      .toBe(`Lc ${verdict.lc}, and the table has no requirement at this size.`);
+    expect(valueOf(verdictFacts(verdict, PALETTE), "Needed")).toBe("not rated at this size");
+  });
+
+
+  it("carries three rows for a pass and no way out", () => {
+    // What would carry something already carried is a question nobody asked,
+    // and a nearest-pass row under a tick reads as a correction.
+    const passing = elementVerdict(sampleElement("bodyText"), colorsOf(), roles("body", 18, 400));
+
+    expect(passing.state).toBe("pass");
+    expect(verdictFacts(passing, PALETTE).map(fact => fact.label))
+      .toEqual(["Reached", "Needed", "Type"]);
   });
 
 
   it("suggests a colour only where something came up short", () => {
-    // Under a tick a nearest-pass line reads as a correction of a verdict
-    // that found nothing wrong, and under an unrated element it would name a
-    // bar the table never set.
+    // An unrated element missed no bar, so a nearest-pass row would name one
+    // the table never set.
     const unrated = elementVerdict(sampleElement("eyebrow"), colorsOf(), roles("mono", 12, 400));
-
-    expect(unrated.state).toBe("unrated");
-    expect(verdictSentences(unrated, PALETTE)).toHaveLength(4);
-
-    const passing = elementVerdict(sampleElement("bodyText"), colorsOf(), roles("body", 18, 400));
     const failing = elementVerdict(
       sampleElement("bodyText"),
       colorsOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
       roles("body", 18, 400)
     );
 
-    expect(passing.state).toBe("pass");
-    expect(verdictSentences(passing, PALETTE)).toHaveLength(4);
+    expect(unrated.state).toBe("unrated");
+    expect(verdictFacts(unrated, PALETTE).map(fact => fact.label))
+      .toEqual(["Reached", "Needed", "Type", "Passes at"]);
 
-    const suggestion = verdictSentences(failing, PALETTE).at(-1) ?? "";
+    const nearest = verdictFacts(failing, PALETTE).at(-1);
 
-    expect(suggestion).toMatch(/^(Nearest pass in this palette: .+, Lc \d+\.|No color in this palette carries it here\.)$/);
+    expect(nearest?.label).toBe("Nearest");
+    expect(nearest?.value).toMatch(/^(.+ · Lc \d+|no colour in this palette)$/);
+  });
+
+
+  it("hands the suggestion its colour, so the row points at a chip", () => {
+    // A name alone asks the visitor to recognise it in the chip row above.
+    const failing = elementVerdict(
+      sampleElement("bodyText"),
+      colorsOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      roles("body", 18, 400)
+    );
+    const nearest = verdictFacts(failing, PALETTE).at(-1);
+
+    if (nearest?.value === "no colour in this palette") return;
+
+    expect(nearest?.swatch).toMatch(/^#[0-9a-f]{6}$/);
   });
 
 });

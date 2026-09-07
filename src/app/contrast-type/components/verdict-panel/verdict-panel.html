@@ -12,13 +12,42 @@
         [style.border-color]="inkHex()"
         [style.background-color]="surfaceHex()"
         [style.color]="inkHex()">
-    <span class="flex items-center gap-2">
+    <!-- The element, its shape and the shape in words. The word is what makes
+         the shape readable at all: a tick and a cross can be guessed, an arrow
+         cannot. -->
+    <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
       <ct-verdict-shape class="size-4" [state]="verdict().state"/>
       <span class="font-mono tracking-widest">{{ verdict().element.caption }}</span>
+      <span class="ml-auto">{{ label() }}</span>
     </span>
 
-    @for (sentence of sentences(); track $index) {
-      <span class="mt-1.5 block text-pretty">{{ sentence }}</span>
-    }
+    <!-- Label and value, not prose. Only what a visitor can already name: the
+         two Lc figures the screen is about, the size, weight and role they
+         set, and a palette colour they can see in the chip row. What the APCA
+         table did to get there is not on the page, so it is not in here.
+
+         `role="list"`, because Preflight strips the marker and Safari with
+         VoiceOver then stops announcing it as a list. -->
+    <span role="list" class="mt-2 block">
+      @for (fact of facts(); track fact.label) {
+        <span role="listitem" class="mt-1 flex flex-wrap items-baseline gap-x-2">
+          <!-- The label is told apart from the value by face, not by colour:
+               `dim` is guaranteed against the six app surfaces and against
+               none of the visitor's, and this panel sits on one of theirs. -->
+          <span class="w-24 shrink-0">{{ fact.label }}</span>
+
+          @if (fact.swatch) {
+            <!-- The colour itself beside its name, so the row points at a chip
+                 rather than asking the visitor to recognise a name. -->
+            <span aria-hidden="true"
+                  class="size-3.5 shrink-0 rounded-xs border"
+                  [style.background-color]="fact.swatch"
+                  [style.border-color]="inkHex()"></span>
+          }
+
+          <span class="min-w-0 font-mono">{{ fact.value }}</span>
+        </span>
+      }
+    </span>
   </span>
 }

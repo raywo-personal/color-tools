@@ -9,7 +9,7 @@ import {
   elementName,
   missedRequirement,
   verdictFor,
-  verdictLabel
+  verdictWord
 } from "@contrast-type/models/element-verdict.model";
 import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shape";
 import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-panel";
@@ -134,7 +134,10 @@ export class VerdictMark {
   protected readonly label = computed(() => {
     const verdict = this.verdict();
 
-    return `${elementName(verdict.element)}: ${verdictLabel(verdict).toLowerCase()}`;
+    // A colon rather than a space: three of the four words are verbs that
+    // agree with the element, but `not rated` is not - `Eyebrow not rated`
+    // reads as a missing `is`, and `Eyebrow: not rated` reads for all four.
+    return `${elementName(verdict.element)}: ${verdictWord(verdict.state)}`;
   });
 
   protected readonly missed = computed(() => missedRequirement(this.verdict()));

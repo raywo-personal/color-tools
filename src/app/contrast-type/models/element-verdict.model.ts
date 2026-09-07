@@ -6,13 +6,12 @@ import {
   smallestPassingFontSize
 } from "@engine/contrast/apca-rating.helper";
 import {nearestPassingPaletteColor} from "@engine/contrast/passing-palette-color.helper";
-import {typeRoleName} from "@engine/contrast/type-role.model";
+import {typeRoleCaption} from "@engine/contrast/type-role.model";
 import {colorName} from "@engine/color/color-name.helper";
 import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
 import {Palette} from "@engine/palette/palette.model";
 import {TypeRolesMap} from "@common/models/type-role-settings.model";
 import {
-  groundApposition,
   groundOf,
   inkOf,
   SampleElement,
@@ -164,15 +163,16 @@ export function verdictCounts(verdicts: readonly ElementVerdict[]): VerdictCount
 
 
 /**
- * What each state is called where a number stands beside it.
+ * What each state is called where a number stands in front of it - the legend
+ * beside the Lc figure.
  *
- * The words are the count's, not a row's: `largeOnly` reads as
- * `only as large text` after a figure and would read as a sentence fragment
- * on its own, which is why `verdictLabel()` says it differently.
+ * Phrased so one and twelve both read: `1 pass` and `12 pass`, never
+ * `1 passes`. `verdictWord()` is the same four states where the subject is one
+ * element, and there the verb agrees.
  */
 const COUNT_WORDS: Record<VerdictState, string> = {
   pass: "pass",
-  largeOnly: "only as large text",
+  largeOnly: "larger size needed",
   unrated: "not rated",
   fail: "fail"
 };
@@ -180,6 +180,29 @@ const COUNT_WORDS: Record<VerdictState, string> = {
 
 export function verdictCountWord(state: VerdictState): string {
   return COUNT_WORDS[state];
+}
+
+
+/**
+ * What each state says about one element.
+ *
+ * **The shapes cannot be read without it.** A tick and a cross carry
+ * themselves; an arrow does not - nobody guesses "a larger size would carry
+ * this" from an arrow, and a dash is a shrug either way. So the word travels
+ * with the shape everywhere it appears: in the mark's accessible name, in the
+ * opened panel's header, and in the legend under the figure, which is where
+ * all four stand together and the shapes get taught.
+ */
+const STATE_WORDS: Record<VerdictState, string> = {
+  pass: "passes",
+  largeOnly: "needs a larger size",
+  unrated: "not rated",
+  fail: "fails at any size"
+};
+
+
+export function verdictWord(state: VerdictState): string {
+  return STATE_WORDS[state];
 }
 
 
@@ -238,20 +261,6 @@ export function missedRequirement(verdict: ElementVerdict): boolean {
 }
 
 
-/**
- * A colour name with its first letter raised.
- *
- * `colorName()` reads six lists and they do not agree: `basic`, `html` and
- * `x11` are lower case, `ntc` and `pantone` are not - so one sentence could
- * open with `black` and name `Lavender` in the same breath. A name is a name,
- * and only the first letter moves: title case would turn `Sea Green` into
- * `Sea green`.
- */
-function capitalized(name: string): string {
-  return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
-
 /** `SMALL PRINT` as `Small print`, for the start of a sentence. */
 export function elementName(element: SampleElement): string {
   const lower = element.caption.toLowerCase();
@@ -261,83 +270,100 @@ export function elementName(element: SampleElement): string {
 
 
 /**
- * What would carry an element that does not pass: the smallest size at its
- * weight, the lightest weight at its size, or neither.
+ * One row of the opened verdict: a label and a value.
  *
- * The weight it names can sit above what the `WEIGHT` slider reaches - the
- * sentence is about the visitor's page, not about the preview's controls.
+ * Rows rather than prose. A visitor asked what a mark means, and prose
+ * answered with things only the code knows - which row of a lookup table
+ * rated a size, that a page has an "own colour" - while the two numbers they
+ * came for sat inside a sentence. A label and a value can be read at a
+ * glance and skipped just as fast.
  */
-export function verdictConsequence(verdict: ElementVerdict): string {
-  if (verdict.state === "pass") return "A smaller size or a lighter weight asks for more.";
+export interface VerdictFact {
 
-  const weight = lightestPassingFontWeight(verdict.contrast, verdict.sizeKey);
-  const size = verdict.carriesAt;
+  readonly label: string;
+  readonly value: string;
+  /** A hex the row shows as a swatch in front of its value. */
+  readonly swatch?: string;
 
-  if (size !== null && weight !== null) {
-    return `It first passes at ${size} on this weight, or at weight ${weight} at this size.`;
-  }
-
-  if (size !== null) return `It first passes at ${size} on this weight.`;
-  if (weight !== null) return `It first passes at weight ${weight} at this size.`;
-
-  return "No size or weight in the table carries it.";
 }
 
 
 /**
- * The opened verdict, one sentence per line: what is written where, in what
- * type, what it reached against what it needed, what would carry it, and the
- * nearest colour in the palette that would.
+ * The opened verdict as rows: what the element reached, what it needed, what
+ * it is set in, and - where it came up short - what would carry it.
  *
- * Sentences rather than a table, because the panel opens into the page's own
- * column: a four-column grid at 320px would wrap into something that reads
- * worse than prose. Both colours are named rather than written as hex - the
- * same names the palette chips carry, so a suggestion can be found in the row
- * above the preview.
+ * **Only what the visitor can already name.** The size, the weight and the
+ * role are values they set; the two Lc figures are what the screen is about;
+ * a palette colour is a chip above the preview. What is left out is
+ * everything that is true of the implementation rather than of the page: the
+ * APCA table, which of its rows a size is rated on, and the colours of ink
+ * and ground - those last two are on screen at full size, in the element the
+ * row is about.
  *
- * The first sentence names the ink, then the ground's colour, then which
- * ground that is - three answers in that order, with the place last so it
- * reads as an apposition to the colour rather than to the ink. Written the
- * other way round it said `black on the page, which is Lavender`, which reads
- * as a claim that black is Lavender.
- *
- * A colour is suggested only where one came up short. Under a tick it would
- * read as a correction of a verdict that found nothing wrong, and under an
- * unrated element it would name a bar the table never set.
+ * **A pass carries three rows, not five.** What would carry an element that
+ * is already carried is a question nobody asked, and a nearest-pass row under
+ * a tick reads as a correction.
  */
-export function verdictSentences(verdict: ElementVerdict, palette: Palette): readonly string[] {
-  const {element, ink, ground, fontSize, sizeKey, fontWeight, lc, requiredLc} = verdict;
-  const ratedOn = sizeKey === `${fontSize}px`
-    ? ""
-    : `, which the table rates on its ${sizeKey} row`;
+export function verdictFacts(verdict: ElementVerdict, palette: Palette): readonly VerdictFact[] {
+  const {element, fontSize, fontWeight, lc, requiredLc} = verdict;
 
-  const sentences = [
-    `${capitalized(colorName(ink))} on ${capitalized(colorName(ground))}, ${groundApposition(element.ground)}.`,
-    `${typeRoleName(element.role)} type at ${fontSize}px / ${fontWeight}${ratedOn}.`,
-    requiredLc === null
-      ? `Lc ${lc}, and the table has no requirement at this size.`
-      : `Lc ${lc} against the Lc ${requiredLc} this size and weight ask for.`,
-    verdictConsequence(verdict)
+  const facts: VerdictFact[] = [
+    {label: "Reached", value: `Lc ${lc}`},
+    {
+      label: "Needed",
+      // Not "Lc null" and not "Lc 0": APCA sets no requirement this small, and
+      // a figure here would read as a bar the element cleared.
+      value: requiredLc === null ? "not rated at this size" : `Lc ${requiredLc}`
+    },
+    {label: "Type", value: `${typeRoleCaption(element.role)} · ${fontSize}px · ${fontWeight}`}
   ];
 
-  if (!missedRequirement(verdict)) return sentences;
+  if (verdict.state === "pass") return facts;
 
-  return [...sentences, suggestion(verdict, palette)];
+  facts.push({label: "Passes at", value: carriedBy(verdict)});
+
+  if (!missedRequirement(verdict)) return facts;
+
+  return [...facts, nearest(verdict, palette)];
+}
+
+
+/**
+ * The smallest size and the lightest weight that carry the element, as a
+ * value rather than a sentence - `24px, or weight 700`.
+ *
+ * Both are the visitor's own sliders, which is why they are the answer here.
+ * The weight can sit above what the `WEIGHT` slider reaches: the row is about
+ * the page they are building, not about the preview's controls.
+ */
+function carriedBy(verdict: ElementVerdict): string {
+  const weight = lightestPassingFontWeight(verdict.contrast, verdict.sizeKey);
+  const size = verdict.carriesAt;
+
+  if (size !== null && weight !== null) return `${size}, or weight ${weight}`;
+  if (size !== null) return size;
+  if (weight !== null) return `weight ${weight}`;
+
+  return "no size or weight";
 }
 
 
 /** The nearest colour in the palette that would carry the element. */
-function suggestion(verdict: ElementVerdict, palette: Palette): string {
-  const nearest = nearestPassingPaletteColor(
+function nearest(verdict: ElementVerdict, palette: Palette): VerdictFact {
+  const passing = nearestPassingPaletteColor(
     verdict.ink,
     verdict.ground,
     verdict.requiredLc,
     palette
   );
 
-  if (!nearest) return "No color in this palette carries it here.";
+  if (!passing) return {label: "Nearest", value: "no colour in this palette"};
 
-  return `Nearest pass in this palette: ${colorName(nearest.color)}, Lc ${Math.floor(nearest.contrast)}.`;
+  return {
+    label: "Nearest",
+    value: `${colorName(passing.color)} · Lc ${Math.floor(passing.contrast)}`,
+    swatch: passing.color.hex("rgb")
+  };
 }
 
 

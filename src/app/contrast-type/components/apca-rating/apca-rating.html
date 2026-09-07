@@ -1,46 +1,41 @@
 <p class="font-sans text-sm tracking-widest text-dim">{{ caption() }}</p>
 
-<!-- The tally on the left, the figure on the right. The figure stays
-     right-aligned so it shares an edge with the verdict in the row below it:
-     the two are readings of the same number and line up as one column. The
-     unit leads, as it does in APCA's own notation, and is set at half the
-     figure rather than at the draft's caption size - at `text-sm` it read as
-     a label beside the number instead of as its unit.
-
-     `data-figure` and `data-counts` because both groups are spans of numbers
-     in one paragraph, and a spec reading them by position would swap them the
-     day a shape moves. -->
-<p class="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-3">
-  <!-- What the four numbers count. The shapes and the marks beside the
-       preview say it to an eye; read out under a caption naming a role, four
-       bare numbers would sound like that role's own. The announcement opens
-       with the same words. -->
-  <span class="sr-only">On the page:</span>
-
-  <!-- The four tallies of the whole page - the count of the marks beside the
-       preview. Each shape carries a word for a screen reader: the shape says
-       it to an eye, and `role`/`aria-label` have nothing to attach to on a
-       bare span. -->
-  <span data-counts class="flex flex-wrap items-center gap-x-3 gap-y-1">
-    @for (entry of counts(); track entry.state) {
-      <span class="flex items-center gap-1.5 font-sans text-sm text-dim">
-        <ct-verdict-shape class="size-4" [state]="entry.state"/>
-        <span>{{ entry.count }}</span>
-        <span class="sr-only">{{ entry.word }}</span>
-      </span>
-    }
-  </span>
-
-  <span data-figure class="flex items-baseline gap-2">
-    <span class="font-sans text-2xl tracking-widest text-dim">Lc</span>
-    <span class="font-serif text-5xl leading-none">{{ figure() }}</span>
-  </span>
+<!-- Right-aligned, so the figure shares an edge with the verdict in the row
+     below it: the two are readings of the same number and line up as one
+     column. The unit leads, as it does in APCA's own notation, and is set at
+     half the figure rather than at the draft's caption size - at `text-sm` it
+     read as a label beside the number instead of as its unit. -->
+<p data-figure class="mt-2 flex items-baseline justify-end gap-2">
+  <span class="font-sans text-2xl tracking-widest text-dim">Lc</span>
+  <span class="font-serif text-5xl leading-none">{{ figure() }}</span>
 </p>
+
+<!-- The whole page's tally, and the legend for the marks beside the preview in
+     one - which is why each state gets a line rather than the draft's single
+     row of glyphs. A tick and a cross can be read off a page; an arrow cannot,
+     and this is the one place all four shapes stand together, so it is where
+     they get their words.
+
+     `role="list"`, because Preflight strips the marker and Safari with
+     VoiceOver then stops announcing the element as a list. -->
+<ul role="list"
+    aria-label="Verdicts on the page"
+    class="mt-4 grid gap-1">
+  @for (entry of counts(); track entry.state) {
+    <li class="flex items-center gap-2 text-sm"
+        [class.text-text]="entry.count > 0"
+        [class.text-dim]="entry.count === 0">
+      <ct-verdict-shape class="size-4" [state]="entry.state"/>
+      <span class="w-6 font-mono tabular-nums">{{ entry.count }}</span>
+      <span>{{ entry.word }}</span>
+    </li>
+  }
+</ul>
 
 <!-- The element that sets the figure. The verdict is pushed right by `ml-auto`
      rather than by a column of a fixed width: at the narrow end of the column
      the row wraps instead of truncating. -->
-<p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1"
+<p class="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1"
    [class.text-text]="row().state === 'pass'"
    [class.text-dim]="row().state !== 'pass'">
   <ct-verdict-shape class="size-4" [state]="row().state"/>
@@ -58,6 +53,16 @@
   <span class="ml-auto text-sm text-text">{{ row().verdict }}</span>
 </p>
 
-<p class="mt-3 text-sm text-dim text-pretty">{{ note() }}</p>
+<!-- Label and value, the same shape the opened verdicts use: the size that
+     would carry the element, and what the pair itself reaches. Both are the
+     visitor's own - two sliders and the two colours the screen is named after.
 
-<p class="mt-3 text-sm text-dim">{{ pairNote() }}</p>
+     `role="list"` for the reason the legend above carries it. -->
+<ul role="list" class="mt-3 grid gap-1">
+  @for (fact of facts(); track fact.label) {
+    <li class="flex flex-wrap items-baseline gap-x-2 text-sm">
+      <span class="w-24 shrink-0 text-dim">{{ fact.label }}</span>
+      <span class="min-w-0 font-mono text-text">{{ fact.value }}</span>
+    </li>
+  }
+</ul>

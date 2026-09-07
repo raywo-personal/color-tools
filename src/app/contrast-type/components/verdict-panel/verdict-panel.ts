@@ -3,7 +3,7 @@ import {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {SampleGround, samplePageColors} from "@contrast-type/models/sample-page.model";
-import {verdictFor, verdictSentences} from "@contrast-type/models/element-verdict.model";
+import {verdictFacts, verdictFor, verdictWord} from "@contrast-type/models/element-verdict.model";
 import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shape";
 
 
@@ -69,9 +69,16 @@ export class VerdictPanel {
   /** Black or white, whichever APCA puts further from the surface it sits on. */
   protected readonly inkHex = computed(() => findOptimalTextColor(this.#surfaceColor()).color.hex("rgb"));
 
-  protected readonly sentences = computed(() => verdictSentences(
+  protected readonly facts = computed(() => verdictFacts(
     this.verdict(),
     this.#stateStore.currentPalette()
   ));
+
+  /**
+   * The verdict in words beside its shape. The shape alone is a guess - a
+   * tick and a cross can be read off, an arrow cannot - and the panel is
+   * where the word costs nothing.
+   */
+  protected readonly label = computed(() => verdictWord(this.verdict().state));
 
 }
