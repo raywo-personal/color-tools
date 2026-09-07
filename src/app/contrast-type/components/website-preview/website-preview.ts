@@ -29,8 +29,8 @@ const QUOTE_LEADING_FACTOR = 0.85;
 const WORDMARK_SIZE = 17;
 
 /**
- * The table's columns. `number` right-aligns the column and sets it in the UI
- * role, which is what makes a column of figures read as a column.
+ * The table's columns. `number` right-aligns the column, which is what makes
+ * a column of figures read as a column.
  */
 const TABLE_COLUMNS: readonly {readonly caption: string; readonly number: boolean}[] = [
   {caption: "ELEMENT", number: false},
