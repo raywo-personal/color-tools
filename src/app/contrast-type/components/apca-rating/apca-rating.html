@@ -1,13 +1,40 @@
 <p class="font-sans text-sm tracking-widest text-dim">{{ caption() }}</p>
 
-<!-- Right-aligned, so the figure shares an edge with the verdict in the row
-     below it: the two are readings of the same number and line up as one
-     column. The unit leads, as it does in APCA's own notation, and is set at
-     half the figure rather than at the draft's caption size - at `text-sm` it
-     read as a label beside the number instead of as its unit. -->
-<p class="mt-2 flex items-baseline justify-end gap-2">
-  <span class="font-sans text-2xl tracking-widest text-dim">Lc</span>
-  <span class="font-serif text-5xl leading-none">{{ figure() }}</span>
+<!-- The tally on the left, the figure on the right. The figure stays
+     right-aligned so it shares an edge with the verdict in the row below it:
+     the two are readings of the same number and line up as one column. The
+     unit leads, as it does in APCA's own notation, and is set at half the
+     figure rather than at the draft's caption size - at `text-sm` it read as
+     a label beside the number instead of as its unit.
+
+     `data-figure` and `data-counts` because both groups are spans of numbers
+     in one paragraph, and a spec reading them by position would swap them the
+     day a shape moves. -->
+<p class="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-3">
+  <!-- What the four numbers count. The shapes and the marks beside the
+       preview say it to an eye; read out under a caption naming a role, four
+       bare numbers would sound like that role's own. The announcement opens
+       with the same words. -->
+  <span class="sr-only">On the page:</span>
+
+  <!-- The four tallies of the whole page - the count of the marks beside the
+       preview. Each shape carries a word for a screen reader: the shape says
+       it to an eye, and `role`/`aria-label` have nothing to attach to on a
+       bare span. -->
+  <span data-counts class="flex flex-wrap items-center gap-x-3 gap-y-1">
+    @for (entry of counts(); track entry.state) {
+      <span class="flex items-center gap-1.5 font-sans text-sm text-dim">
+        <ct-verdict-shape class="size-4" [state]="entry.state"/>
+        <span>{{ entry.count }}</span>
+        <span class="sr-only">{{ entry.word }}</span>
+      </span>
+    }
+  </span>
+
+  <span data-figure class="flex items-baseline gap-2">
+    <span class="font-sans text-2xl tracking-widest text-dim">Lc</span>
+    <span class="font-serif text-5xl leading-none">{{ figure() }}</span>
+  </span>
 </p>
 
 <!-- The element that sets the figure. The verdict is pushed right by `ml-auto`
@@ -16,47 +43,7 @@
 <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1"
    [class.text-text]="row().state === 'pass'"
    [class.text-dim]="row().state !== 'pass'">
-  <!-- A tick, a cross, a dash. The three carry the verdict in shape rather
-       than in colour, which is what keeps `danger` out of here.
-
-       Drawn as strokes rather than as the `✓` and `✗` characters, for the
-       reason `copy-confirmation.ts` gives for its own sign: at text weight
-       in the sans face they thin out next to the row they belong to. A
-       stroked path holds its width at any size, and three of them are not
-       an icon set worth a font file.
-
-       `data-marker` is what the spec reads: the rule it pins - a pass
-       differs from a fail by more than its colour - is about the shape,
-       and a shape has no other stable handle in the DOM. -->
-  @switch (row().state) {
-    @case ("pass") {
-      <svg data-marker="tick"
-           class="size-4 shrink-0"
-           viewBox="0 0 16 16" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-           aria-hidden="true">
-        <path d="M3 8.5 6.5 12 13 4"/>
-      </svg>
-    }
-    @case ("fail") {
-      <svg data-marker="cross"
-           class="size-4 shrink-0"
-           viewBox="0 0 16 16" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-           aria-hidden="true">
-        <path d="M4 4l8 8M12 4l-8 8"/>
-      </svg>
-    }
-    @default {
-      <svg data-marker="dash"
-           class="size-4 shrink-0"
-           viewBox="0 0 16 16" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round"
-           aria-hidden="true">
-        <path d="M4 8h8"/>
-      </svg>
-    }
-  }
+  <ct-verdict-shape class="size-4" [state]="row().state"/>
 
   <span class="font-sans text-sm tracking-widest">{{ row().caption }}</span>
 

@@ -1,55 +1,51 @@
-import {Component, computed, inject} from "@angular/core";
-import chroma from "chroma-js";
+import {Component, computed, effect, inject} from "@angular/core";
+import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {AppStateStore} from "@core/app-state.store";
-import {FontSize, FontWeight} from "@engine/contrast/apca-lookup-table.model";
-import {
-  getAPCAPolarity,
-  getRequiredLc,
-  lightestPassingFontWeight,
-  smallestPassingFontSize
-} from "@engine/contrast/apca-rating.helper";
+import {getAPCAPolarity} from "@engine/contrast/apca-rating.helper";
 import {typeRoleCaption} from "@engine/contrast/type-role.model";
-import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
+import {figureElementOf, groundName, samplePageColors} from "@contrast-type/models/sample-page.model";
 import {
-  figureElementOf,
-  groundName,
-  groundOf,
-  inkOf,
-  SampleElement,
-  samplePageColors
-} from "@contrast-type/models/sample-page.model";
-
-
-type RowState = "pass" | "fail" | "unrated";
-
-
-/** The selected role's element, measured on the page as it is drawn. */
-interface Measured {
-
-  readonly element: SampleElement;
-  /** The element's size in pixels: the role's size at the element's share. */
-  readonly fontSize: number;
-  readonly fontWeight: FontWeight;
-  /** Signed, as `chroma.contrastAPCA()` reports it. */
-  readonly contrast: number;
-
-}
+  ElementVerdict,
+  elementName,
+  elementVerdict,
+  pageVerdicts,
+  VERDICT_STATES,
+  VerdictState,
+  verdictConsequence,
+  verdictCountSentence,
+  verdictCountWord,
+  verdictCounts,
+  verdictLabel
+} from "@contrast-type/models/element-verdict.model";
+import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shape";
 
 
 /** The row under the figure: the element it reads, and its verdict. */
-interface WeakestRow {
+interface FigureRow {
 
   readonly caption: string;
   /** The type the element is set in, as the visitor reads it - `13px / 400`. */
   readonly spec: string;
   readonly verdict: string;
-  readonly state: RowState;
+  readonly state: VerdictState;
+
+}
+
+
+/** One of the four tallies beside the figure. */
+interface CountEntry {
+
+  readonly state: VerdictState;
+  readonly count: number;
+  /** The state in words, for a screen reader beside the shape. */
+  readonly word: string;
 
 }
 
 
 /**
- * The Lc of the selected role's text, and its verdict.
+ * The Lc of the selected role's text, its verdict, and how the whole page
+ * fares.
  *
  * **The figure answers about the role, not about the pair.** The pair is an
  * input now: its two colors reach the page as inks and grounds, mixed and
@@ -68,25 +64,30 @@ interface WeakestRow {
  * `sample-page.model.ts` says which element stands for its role, next to the
  * list the preview draws from - so what is measured is what is shown.
  *
+ * **The four tallies are the whole page**, not the selected role: they are the
+ * count of the marks beside the preview, read off the same `elementVerdict()`
+ * the marks are, so the row and the page cannot disagree. The figure says how
+ * one role fares, the tallies say how much of the page does.
+ *
  * **The figure is the absolute Lc.** `contrastAPCA()` is signed, and the sign
  * is a polarity rather than a magnitude - the verdict is reached through
  * `Math.abs()`, so a minus on the hero figure would suggest a deficit it never
  * causes. Whole numbers, like the table's own requirements, and rounded down
- * rather than to the nearest: the verdict beside it compares the exact value,
- * so a figure rounded up would cross a requirement the element has not reached
- * - Lc 74.76 would head a row reading `Needs Lc 75` with `Lc 75`.
+ * rather than to the nearest - `elementVerdict()` says why.
  *
  * **A fail is not told by colour.** `CLAUDE.md` keeps `danger` for the failed
- * copy, so the carriers here are the marker's shape - a tick, a cross, a dash
- * - and the wording, which names the Lc the table asked for.
+ * copy, so the carriers here are the shape of the mark and the wording, which
+ * names the Lc the table asked for.
  *
  * **Nothing here is a live region.** The Lc changes on every frame of a slider
  * drag and on every move of the colour picker, so a polite region would queue
  * a hundred sentences and an assertive one would talk over the visitor. The
- * colour and type changes are announced by the controls that cause them.
+ * tally is announced instead, and only where it actually moved - see
+ * `#countsAnnounced`.
  */
 @Component({
   selector: "ct-apca-rating",
+  imports: [VerdictShape],
   templateUrl: "./apca-rating.html",
   host: {
     "class": "block"
@@ -95,64 +96,70 @@ interface WeakestRow {
 export class ApcaRating {
 
   readonly #stateStore = inject(AppStateStore);
+  readonly #announcer = inject(LiveAnnouncer);
 
   readonly #role = this.#stateStore.typeRole;
 
-  readonly #measured = computed<Measured>(() => {
-    const colors = samplePageColors(this.#stateStore.contrastColors(), this.#stateStore.currentPalette());
-    const {settings} = this.#stateStore.typeRoles()[this.#role()];
-    const element = figureElementOf(this.#role());
+  readonly #colors = computed(() => samplePageColors(
+    this.#stateStore.contrastColors(),
+    this.#stateStore.currentPalette()
+  ));
 
-    return {
-      element,
-      fontSize: Math.round(settings.fontSize * element.sizeRatio),
-      fontWeight: String(settings.fontWeight) as FontWeight,
-      contrast: chroma.contrastAPCA(inkOf(element, colors), groundOf(element, colors))
-    };
-  });
-
-  /** The table row the element's size is rated on, which is not always its own. */
-  readonly #fontSizeKey = computed(() => fontSizeKeyFrom(this.#measured().fontSize));
+  readonly #verdict = computed<ElementVerdict>(() => elementVerdict(
+    figureElementOf(this.#role()),
+    this.#colors(),
+    this.#stateStore.typeRoles()
+  ));
 
   protected readonly caption = computed(() => typeRoleCaption(this.#role()));
 
-  protected readonly figure = computed(() => String(Math.floor(Math.abs(this.#measured().contrast))));
+  protected readonly figure = computed(() => String(this.#verdict().lc));
 
-  protected readonly row = computed<WeakestRow>(() => {
-    const {element, fontSize, fontWeight, contrast} = this.#measured();
-    const requiredLc = getRequiredLc(this.#fontSizeKey(), fontWeight);
-    const state = rowState(Math.abs(contrast), requiredLc);
+  /** The whole page's tally, read by the row of shapes and by the announcement. */
+  readonly #pageCounts = computed(() => verdictCounts(
+    pageVerdicts(this.#colors(), this.#stateStore.typeRoles())
+  ));
+
+  protected readonly counts = computed<readonly CountEntry[]>(() => {
+    const counts = this.#pageCounts();
+
+    return VERDICT_STATES.map(state => ({
+      state,
+      count: counts[state],
+      word: verdictCountWord(state)
+    }));
+  });
+
+  protected readonly row = computed<FigureRow>(() => {
+    const verdict = this.#verdict();
 
     return {
-      caption: element.caption,
+      caption: verdict.element.caption,
       // The element's own size, not the row it is rated on: the slider says
       // 13px, and a spec saying 14px would contradict the control that set
       // it. Which row the table used is in the note under the row.
-      spec: `${fontSize}px / ${fontWeight}`,
-      verdict: verdictFor(state, requiredLc),
-      state
+      spec: `${verdict.fontSize}px / ${verdict.fontWeight}`,
+      verdict: verdictLabel(verdict),
+      state: verdict.state
     };
   });
 
   /**
    * The sentence that explains the verdict: what the element sits on, what
-   * the table asks of text that size, and - where it fails - what would carry
-   * it, through `smallestPassingFontSize()` and `lightestPassingFontWeight()`.
-   * The weight those name can sit above what the `WEIGHT` slider reaches: the
-   * note is about the visitor's page, not about the preview's controls.
+   * the table asks of text that size, and - where it does not pass - what
+   * would carry it. `verdictConsequence()` says how far that answer reaches.
    */
   protected readonly note = computed(() => {
-    const {element, fontSize, fontWeight, contrast} = this.#measured();
-    const sizeKey = this.#fontSizeKey();
-    const requiredLc = getRequiredLc(sizeKey, fontWeight);
-    const where = `${sentenceCase(element.caption)} on ${groundName(element.ground)} at ${fontSize}px / ${fontWeight}`;
+    const verdict = this.#verdict();
+    const {element, fontSize, sizeKey, fontWeight, requiredLc} = verdict;
+    const where = `${elementName(element)} on ${groundName(element.ground)} at ${fontSize}px / ${fontWeight}`;
     const ratedOn = sizeKey === `${fontSize}px` ? "" : `, which the table rates on its ${sizeKey} row,`;
 
     const requirement = requiredLc === null
       ? `${where}${ratedOn} has no requirement in the table.`
       : `${where}${ratedOn} needs Lc ${requiredLc}.`;
 
-    return `${requirement} ${consequence(contrast, requiredLc, sizeKey, fontWeight)}`;
+    return `${requirement} ${verdictConsequence(verdict)}`;
   });
 
   /**
@@ -174,57 +181,34 @@ export class ApcaRating {
     return `The pair itself: Lc ${figure}, ${polarity}.`;
   });
 
-}
+  /** The tally as it was last spoken, so an unchanged one is not repeated. */
+  #spoken: string | null = null;
 
+  /**
+   * The tally, announced when it moves.
+   *
+   * A colour change and a slider drag replace every mark beside the preview
+   * without moving focus, and no control says what came back. The count is
+   * the one sentence that covers the whole page, so it is what gets announced.
+   *
+   * **Only when it changed, and never on the first render.** The Lc moves on
+   * every frame of a drag while the tally usually stands still, which is what
+   * makes the tally announceable at all; the opening state is what the visitor
+   * arrived at, not something that just happened.
+   *
+   * Polite: the visitor is holding a slider or a picker, and there is nothing
+   * to interrupt.
+   */
+  readonly #countsAnnounced = effect(() => {
+    const sentence = verdictCountSentence(this.#pageCounts());
+    const first = this.#spoken === null;
+    const moved = this.#spoken !== sentence;
 
-/**
- * A cell without a requirement is a third state, not a fail.
- *
- * `meetsAPCARequirement()` answers `false` for both, which is the right answer
- * to its own question and the wrong one here: 12px is not a pairing that came
- * up short, it is a size APCA declines to rate, and a row saying `Needs Lc
- * null` or `Fail` would put the blame on the colors.
- */
-function rowState(absContrast: number, requiredLc: number | null): RowState {
-  if (requiredLc === null) return "unrated";
+    this.#spoken = sentence;
 
-  return absContrast >= requiredLc ? "pass" : "fail";
-}
+    if (first || !moved) return;
 
+    void this.#announcer.announce(`On the page: ${sentence}.`, "polite");
+  });
 
-function verdictFor(state: RowState, requiredLc: number | null): string {
-  if (state === "pass") return "Pass";
-  if (state === "fail") return `Needs Lc ${requiredLc}`;
-
-  return "Not rated";
-}
-
-
-function consequence(contrast: number,
-                     requiredLc: number | null,
-                     fontSizeKey: FontSize,
-                     fontWeight: FontWeight): string {
-  if (rowState(Math.abs(contrast), requiredLc) === "pass") {
-    return "A smaller size or a lighter weight asks for more.";
-  }
-
-  const size = smallestPassingFontSize(contrast, fontWeight);
-  const weight = lightestPassingFontWeight(contrast, fontSizeKey);
-
-  if (size !== null && weight !== null) {
-    return `It first passes at ${size} on this weight, or at weight ${weight} at this size.`;
-  }
-
-  if (size !== null) return `It first passes at ${size} on this weight.`;
-  if (weight !== null) return `It first passes at weight ${weight} at this size.`;
-
-  return "No size or weight in the table carries it.";
-}
-
-
-/** `SMALL PRINT` as `Small print`, for the start of a sentence. */
-function sentenceCase(caption: string): string {
-  const lower = caption.toLowerCase();
-
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
 }

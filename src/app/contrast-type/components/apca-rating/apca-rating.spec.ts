@@ -8,7 +8,9 @@ import {commonEvents} from "@core/common/common.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {createContrastColors} from "@engine/contrast/contrast-colors.model";
 import {TypeRole} from "@engine/contrast/type-role.model";
+import {SAMPLE_ELEMENTS} from "@contrast-type/models/sample-page.model";
 import {ApcaRating} from "@contrast-type/components/apca-rating/apca-rating";
+import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 
 
 /**
@@ -34,7 +36,7 @@ describe("ApcaRating", () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection()]
+      providers: [provideZonelessChangeDetection(), provideFakeLiveAnnouncer()]
     });
   });
 
@@ -60,8 +62,23 @@ describe("ApcaRating", () => {
 
     /** The unit and the figure. */
     function figureParts(): (string | undefined)[] {
-      return Array.from(paragraphs()[1].querySelectorAll("span"))
+      return Array.from(host.querySelectorAll("[data-figure] span"))
         .map(span => span.textContent?.trim());
+    }
+
+    /** The whole page's tally: one shape, one number and one word per state. */
+    function counts() {
+      return Array.from(host.querySelectorAll("[data-counts] > span"))
+        .map(entry => ({
+          marker: entry.querySelector("[data-marker]")?.getAttribute("data-marker") ?? "",
+          count: Number(entry.querySelector("span")?.textContent?.trim()),
+          word: entry.querySelector(".sr-only")?.textContent?.trim() ?? ""
+        }));
+    }
+
+    async function setPair(next: typeof colors) {
+      dispatcher.dispatch(contrastEvents.contrastColorsChangedWithoutNav(next));
+      await fixture.whenStable();
     }
 
     function row() {
@@ -90,7 +107,7 @@ describe("ApcaRating", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, host, caption, figureParts, row, note, pairNote, selectRole};
+    return {fixture, host, caption, figureParts, counts, row, note, pairNote, selectRole, setPair};
   }
 
 
@@ -122,7 +139,9 @@ describe("ApcaRating", () => {
 
     expect(figureParts()).toEqual(["Lc", "74"]);
     expect(row().verdict).toBe("Needs Lc 75");
-    expect(row().marker).toBe("cross");
+    // The 21px row asks 70, so a bigger size carries it: the arrow, not the
+    // cross, which is reserved for a pairing no size reaches.
+    expect(row().marker).toBe("arrow");
   });
 
 
@@ -207,7 +226,10 @@ describe("ApcaRating", () => {
     // name as a way out.
     const {note, row} = await rating(IDENTICAL, "display");
 
-    expect(row().verdict).toBe("Needs Lc 38");
+    // No bar is named: the requirement is real, but no size reaches it, so a
+    // row saying `Needs Lc 38` would suggest the sliders could fix it.
+    expect(row().verdict).toBe("Fails at any size");
+    expect(row().marker).toBe("cross");
     expect(note()).toContain("No size or weight in the table carries it.");
   });
 
@@ -253,6 +275,60 @@ describe("ApcaRating", () => {
     const {host} = await rating(JUST_UNDER_75, "body");
 
     expect(host.innerHTML).not.toContain("danger");
+  });
+
+
+  it("counts every element of the page into one of the four states", async () => {
+    // The tally is the count of the marks beside the preview, so it has to
+    // add up to the page - a state left out of the row would hide elements.
+    const {counts} = await rating();
+    const tally = counts();
+
+    expect(tally.map(entry => entry.marker)).toEqual(["tick", "arrow", "dash", "cross"]);
+    expect(tally.map(entry => entry.word))
+      .toEqual(["pass", "only as large text", "not rated", "fail"]);
+    expect(tally.reduce((total, entry) => total + entry.count, 0))
+      .toBe(SAMPLE_ELEMENTS.length);
+  });
+
+
+  it("says nothing about the tally the visitor arrived at", async () => {
+    // The opening state is not something that just happened.
+    const {fixture} = await rating();
+
+    await fixture.whenStable();
+
+    expect(fakeLiveAnnouncer().announcements).toEqual([]);
+  });
+
+
+  it("announces the tally when it moves", async () => {
+    // A colour change replaces every mark beside the preview without moving
+    // focus, and no control says what came back.
+    const {setPair, counts} = await rating(DARK_ON_LIGHT, "body");
+    const before = counts().map(entry => entry.count);
+
+    await setPair(IDENTICAL);
+
+    expect(counts().map(entry => entry.count)).not.toEqual(before);
+    expect(fakeLiveAnnouncer().last?.politeness).toBe("polite");
+    expect(fakeLiveAnnouncer().last?.message).toContain("On the page: ");
+    expect(fakeLiveAnnouncer().last?.message).toContain("only as large text");
+  });
+
+
+  it("does not repeat a tally that stood still", async () => {
+    // The Lc moves on every frame of a drag while the tally usually does not,
+    // which is what makes the tally announceable at all.
+    const {setPair} = await rating(DARK_ON_LIGHT, "body");
+
+    await setPair(IDENTICAL);
+
+    const spoken = fakeLiveAnnouncer().announcements.length;
+
+    await setPair(IDENTICAL);
+
+    expect(fakeLiveAnnouncer().announcements).toHaveLength(spoken);
   });
 
 
