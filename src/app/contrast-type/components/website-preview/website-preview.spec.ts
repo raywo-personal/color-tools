@@ -14,6 +14,8 @@ import {SelectedFont} from "@common/models/google-font.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {provideSilentFontLoader} from "@testing/font-loader.fake";
+import {SAMPLE_ELEMENTS} from "@contrast-type/models/sample-page.model";
+import {elementName} from "@contrast-type/models/element-verdict.model";
 import {WebsitePreview} from "@contrast-type/components/website-preview/website-preview";
 
 
@@ -88,13 +90,19 @@ describe("WebsitePreview", () => {
     }
 
     /**
-     * The copy's own element rather than the paragraph around it - a link
-     * inside running text is a `span` whose parent `p` carries the same text,
-     * and `copy()` finds the parent first.
+     * The copy's own element rather than a wrapper around it.
+     *
+     * The innermost match, not the first: a link inside running text is a
+     * `span` inside a `p` carrying the same text, and every element wrapped
+     * by `ct-verdict-mark` sits inside two spans of the mark's own layout
+     * that carry it too. The element that binds the type is the one with no
+     * matching descendant left.
      */
     function within(selector: string, snippet: string): HTMLElement {
-      const found = Array.from(page.querySelectorAll<HTMLElement>(selector))
-        .find(element => element.textContent?.includes(snippet));
+      const matches = Array.from(page.querySelectorAll<HTMLElement>(selector))
+        .filter(element => element.textContent?.includes(snippet));
+      const found = matches
+        .find(element => !matches.some(other => other !== element && element.contains(other)));
 
       if (!found) throw new Error(`no ${selector} carries "${snippet}"`);
 
@@ -146,13 +154,135 @@ describe("WebsitePreview", () => {
   });
 
 
-  it("holds nothing focusable, so the fake nav stays out of the tab order", async () => {
+  it("holds no focusable sample content, so the fake nav stays out of the tab order", async () => {
     // A button that does nothing is worse than no button, and a second nav in
-    // the tab order competes with the real one in the app header.
+    // the tab order competes with the real one in the app header. The verdict
+    // marks are the exception and the only one: they are controls, and a
+    // verdict a visitor cannot reach is a verdict this app does not get to
+    // show.
     const {page} = await preview();
+    const focusable = Array.from(
+      page.querySelectorAll("a, button, input, select, textarea, [tabindex]")
+    );
 
-    expect(page.querySelectorAll("a, button, input, select, textarea, [tabindex]"))
-      .toHaveLength(0);
+    expect(focusable.every(element => element.closest("ct-verdict-mark") !== null)).toBe(true);
+    expect(focusable).toHaveLength(SAMPLE_ELEMENTS.length);
+  });
+
+
+  it("gives every element exactly one mark, named after it and its verdict", async () => {
+    // One list, one mark each: an element that appears more than once - the
+    // running text, the nav items, the table's cells, the small print - is
+    // one ink on one ground at one size, so it is one verdict.
+    const {page} = await preview();
+    const marks = Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"));
+
+    expect(marks).toHaveLength(SAMPLE_ELEMENTS.length);
+
+    const names = marks.map(mark => mark.getAttribute("aria-label") ?? "");
+
+    for (const element of SAMPLE_ELEMENTS) {
+      const name = names.find(candidate => candidate.startsWith(`${elementName(element)}:`));
+
+      expect(name, element.key).toBeDefined();
+    }
+
+    // The name is sentence case, not the page's all-caps caption: a screen
+    // reader spells those out letter by letter.
+    expect(names.some(name => name === name.toUpperCase())).toBe(false);
+  });
+
+
+  it("opens a table element's verdict outside the table, not inside a cell", async () => {
+    // A paragraph of prose inside a `<td>` is what an auto-layout table
+    // apportions its columns around: opened in the cell, the header's verdict
+    // pushes all three columns into new widths and back out again on the way
+    // out.
+    const {page, fixture} = await preview();
+    const inTheTable = page.querySelector("table ct-verdict-mark button") as HTMLElement;
+
+    expect(inTheTable.getAttribute("aria-label")).toMatch(/^Table /);
+
+    inTheTable.click();
+    await fixture.whenStable();
+
+    expect(inTheTable.getAttribute("aria-expanded")).toBe("true");
+
+    // The panel is a sibling of the table, and there is exactly one of it.
+    const panels = Array.from(page.querySelectorAll("ct-verdict-panel"))
+      .filter(panel => (panel.textContent ?? "").length > 0);
+
+    expect(panels).toHaveLength(1);
+    expect(panels[0].closest("table")).toBeNull();
+    expect(panels[0].textContent).toContain("Lc ");
+  });
+
+
+  it("draws a mark in a colour APCA chose against the surface it sits on", async () => {
+    // A neutral token is guaranteed against the six app surfaces and against
+    // none of the visitor's, and the marks sit on the page's own colours.
+    //
+    // The eyebrow's mark, because the eyebrow sits on the page itself: the
+    // nav's and the card's marks are measured against a tint of it, which the
+    // sweep does not set. `surface` is what tells them apart, and the marks
+    // beside the buttons and the field name it explicitly.
+    const {page, setBackground} = await preview();
+
+    await expectApcaForeground(async background => {
+      await setBackground(background.hex("rgb"));
+
+      const mark = Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"))
+        .find(candidate => candidate.getAttribute("aria-label")?.startsWith("Eyebrow:"));
+
+      return mark?.style.color ?? "";
+    });
+  });
+
+
+  it("offsets the marks' focus ring, so it never sits on the colour it announces", async () => {
+    const {page} = await preview();
+    const marks = Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"));
+
+    for (const mark of marks) {
+      expect(mark.className, mark.getAttribute("aria-label") ?? "")
+        .toContain("outline-offset-2");
+      expect(mark.style.outlineColor).not.toBe("");
+    }
+  });
+
+
+  it("opens one verdict at a time, in words, under the element it is about", async () => {
+    const {page, fixture} = await preview();
+    const marks = () => Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"));
+
+    async function press(index: number) {
+      marks()[index].click();
+      await fixture.whenStable();
+    }
+
+    expect(marks().every(mark => mark.getAttribute("aria-expanded") === "false")).toBe(true);
+
+    await press(0);
+
+    const opened = marks().filter(mark => mark.getAttribute("aria-expanded") === "true");
+
+    expect(opened).toHaveLength(1);
+
+    const panel = opened[0].closest("ct-verdict-mark") as HTMLElement;
+
+    // The element, then the reasons: colours, type, the Lc reached against
+    // the one asked for, and what would carry it.
+    expect(panel.textContent).toContain("Lc ");
+
+    await press(5);
+
+    expect(marks().filter(mark => mark.getAttribute("aria-expanded") === "true"))
+      .toHaveLength(1);
+
+    // The same mark again closes it: a mark is a disclosure.
+    await press(5);
+
+    expect(marks().every(mark => mark.getAttribute("aria-expanded") === "false")).toBe(true);
   });
 
 
@@ -356,7 +486,9 @@ describe("WebsitePreview", () => {
     const {store, copy} = await preview();
     const palette = store.currentPalette();
     const background = store.contrastColors().background;
-    const card = copy(QUOTE).parentElement as HTMLElement;
+    // `closest`, not `parentElement`: the quote sits inside the two spans of
+    // its verdict mark's layout, and the card is the block outside them.
+    const card = copy(QUOTE).closest("div") as HTMLElement;
 
     expect(copy(ACCENT_BUTTON).style.backgroundColor)
       .toBe(palette.color0.color.hex("rgb"));
@@ -530,7 +662,7 @@ describe("WebsitePreview", () => {
     // decoration.
     const {store, copy, page} = await preview();
     const palette = store.currentPalette();
-    const footer = copy(SMALL_PRINT).parentElement as HTMLElement;
+    const footer = copy(SMALL_PRINT).closest("div") as HTMLElement;
     const nav = page.firstElementChild as HTMLElement;
 
     for (const rule of [nav.style.borderBottomColor, footer.style.borderTopColor]) {

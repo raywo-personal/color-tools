@@ -1,0 +1,56 @@
+<!-- The row: the mark's column, then the element. `items-start` rather than
+     `items-baseline`, and that is what makes the hit areas safe - the button is
+     centred 8px below the row's top edge in every row, so `min-h-11` puts two
+     consecutive centres at least a hit area apart. Aligned to the first line's
+     baseline instead, a 96px headline over an 18px lead would pull two 44px
+     buttons into each other.
+
+     Inline, none of it applies: a word inside a paragraph cannot indent, and a
+     44px inline box would open a gap in the line it sits in. -->
+<span class="gap-2"
+      [class.flex]="!inline()"
+      [class.min-h-11]="!inline()"
+      [class.items-start]="!inline()"
+      [class.inline]="inline()">
+  <!-- The glyph's slot is `size-4` and costs 16px of layout; the button is
+       centred on it at the full `size-11`, out of flow, so the page indents by
+       a rem and a half while the control keeps the app's hit area. -->
+  <span class="relative size-4"
+        [class.shrink-0]="!inline()"
+        [class.inline-block]="inline()"
+        [class.mr-1]="inline()">
+    <!-- Everything the button is drawn in comes from APCA against the surface
+         it sits on - the page's colours are the visitor's, so a token is
+         guaranteed against none of them. The ring is offset, and the offset
+         lands on that same surface. -->
+    <button type="button"
+            class="absolute top-1/2 left-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2"
+            [style.color]="inkHex()"
+            [style.outline-color]="inkHex()"
+            [attr.aria-label]="label()"
+            [attr.aria-expanded]="open()"
+            (click)="toggle()">
+      <ct-verdict-shape class="size-4" [state]="verdict().state"/>
+    </button>
+  </span>
+
+  <!-- The dotted underline is the element's own carrier, beside the mark: a
+       shape in a gutter is not the line it judges. On the wrapper, because
+       text decoration propagates into everything in flow below it and the
+       element itself is the caller's markup. -->
+  <span [class.block]="!inline()"
+        [class.min-w-0]="!inline()"
+        [class.flex-1]="!inline()"
+        [class.underline]="missed()"
+        [class.decoration-dotted]="missed()"
+        [class.underline-offset-4]="missed()"><ng-content/></span>
+</span>
+
+<!-- The panel, unless the caller places it itself - `panelBelow` says why the
+     table's three marks do. `ml-6` lines it up under the element rather than
+     under the gutter; inline there is no gutter to skip. -->
+@if (panelBelow()) {
+  <ct-verdict-panel [class.ml-6]="!inline()"
+                    [elementKey]="elementKey()"
+                    [surface]="surface()"/>
+}

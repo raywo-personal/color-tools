@@ -1,0 +1,24 @@
+@if (open()) {
+  <!-- The verdict in the page's own flow: an overlay would be clipped by the
+       preview's `overflow-hidden`, and at 320px there is no room beside an
+       element for a tablet of text.
+
+       Set in the app's sans face on Tailwind's scale, not in the page's type:
+       this is the app talking about the page, not a part of it, so it is the
+       one thing inside the preview that is not measured. `wrap-normal` for the
+       same reason - the table sets `wrap-anywhere` on its cells, and a
+       sentence is not a table cell. -->
+  <span class="mt-1 mb-3 block rounded-xs border p-3.5 font-sans text-sm wrap-normal"
+        [style.border-color]="inkHex()"
+        [style.background-color]="surfaceHex()"
+        [style.color]="inkHex()">
+    <span class="flex items-center gap-2">
+      <ct-verdict-shape class="size-4" [state]="verdict().state"/>
+      <span class="font-mono tracking-widest">{{ verdict().element.caption }}</span>
+    </span>
+
+    @for (sentence of sentences(); track $index) {
+      <span class="mt-1.5 block text-pretty">{{ sentence }}</span>
+    }
+  </span>
+}

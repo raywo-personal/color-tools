@@ -152,15 +152,19 @@ digit; a style beyond that needs a wider index field first, or
   id, whose payload is full
 - Which preview element belongs to which type role, at what share of the
   role's size and in which ink on which ground, is `SAMPLE_ELEMENTS` in
-  `src/app/contrast-type/models/sample-page.model.ts`. The preview draws it
-  and the rating measures it; a new element goes into that list, never into
-  a component alone, or the figure stops being about the page
+  `src/app/contrast-type/models/sample-page.model.ts`. The preview draws it,
+  the rating measures it and the marks judge it; a new element goes into that
+  list, never into a component alone, or the figure stops being about the page
 - What the APCA table says about one element is `elementVerdict()` in
   `models/element-verdict.model.ts`, and it is the only place that says it:
   the marks beside the preview, the tally beside the Lc figure and the
   rating's own row all read it, so two of them cannot disagree about the same
   element. A new state needs a shape in `verdict-shape`, or it is told by
   wording alone
+- One mark per named element, not per occurrence. The running text, the nav
+  items, the table's cells and the small print each appear more than once and
+  are one ink on one ground at one size – a mark per occurrence would count
+  the page twice
 - A role's face, size, weight and leading are `typeRoles[role]`; nothing
   derives one role's type from another's. The headline's weight is the display
   role's, not a step up from body text's – a display face that ships one
