@@ -350,7 +350,13 @@ function carriedBy(verdict: ElementVerdict): string {
 }
 
 
-/** The nearest colour in the palette that would carry the element. */
+/**
+ * The nearest colour in the palette that would carry the element.
+ *
+ * `Nearest color`, not `Nearest`: on its own the label asked "nearest what?".
+ * The spelling is the app's - `colour` is this codebase's comments, `color` is
+ * everything a visitor reads.
+ */
 function nearest(verdict: ElementVerdict, palette: Palette): VerdictFact {
   const passing = nearestPassingPaletteColor(
     verdict.ink,
@@ -359,10 +365,10 @@ function nearest(verdict: ElementVerdict, palette: Palette): VerdictFact {
     palette
   );
 
-  if (!passing) return {label: "Nearest", value: "no colour in this palette"};
+  if (!passing) return {label: "Nearest color", value: "none in this palette"};
 
   return {
-    label: "Nearest",
+    label: "Nearest color",
     value: `${colorName(passing.color)} · Lc ${Math.floor(passing.contrast)}`,
     swatch: passing.color.hex("rgb")
   };

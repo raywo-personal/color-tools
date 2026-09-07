@@ -310,8 +310,10 @@ describe("verdictFacts", () => {
 
     const nearest = verdictFacts(failing, PALETTE).at(-1);
 
-    expect(nearest?.label).toBe("Nearest");
-    expect(nearest?.value).toMatch(/^(.+ · Lc \d+|no colour in this palette)$/);
+    // `Nearest color`, not `Nearest`: on its own the label asked
+    // "nearest what?".
+    expect(nearest?.label).toBe("Nearest color");
+    expect(nearest?.value).toMatch(/^(.+ · Lc \d+|none in this palette)$/);
   });
 
 
@@ -324,7 +326,7 @@ describe("verdictFacts", () => {
     );
     const nearest = verdictFacts(failing, PALETTE).at(-1);
 
-    if (nearest?.value === "no colour in this palette") return;
+    if (nearest?.value === "none in this palette") return;
 
     expect(nearest?.swatch).toMatch(/^#[0-9a-f]{6}$/);
   });

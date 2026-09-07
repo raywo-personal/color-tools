@@ -60,8 +60,10 @@
      `role="list"` for the reason the legend above carries it. -->
 <ul role="list" class="mt-3 grid gap-1">
   @for (fact of facts(); track fact.label) {
-    <li class="flex flex-wrap items-baseline gap-x-2 text-sm">
-      <span class="w-24 shrink-0 text-dim">{{ fact.label }}</span>
+    <!-- No `flex-wrap`, as in the popup: a value too long for the row would
+         jump under its own label instead of wrapping in its own column. -->
+    <li class="flex items-baseline gap-x-2 text-sm">
+      <span class="w-28 shrink-0 text-dim">{{ fact.label }}</span>
       <span class="min-w-0 font-mono text-text">{{ fact.value }}</span>
     </li>
   }
