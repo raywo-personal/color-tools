@@ -29,12 +29,13 @@ import {
  * the table declines to rate is `unrated` - every cell of the 12px row is
  * null, and the mono role opens there, so the commonest case of "no verdict"
  * is not a pairing that came up short. `largeOnly` is a pairing that did come
- * up short at the size it is set in and that a larger size carries: the
- * colours work, the type does not, and that is the one the visitor can fix
- * with the slider they already have their hand on.
+ * up short at its own size and weight and that a larger size or a heavier
+ * weight carries: the colours work, the type does not, and that is the one
+ * the visitor can fix with a slider they already have their hand on - the
+ * size slider is not the only one, so this state cannot be about it alone.
  *
  * `fail` is what is left: no row of the table carries these two colours at
- * this weight, so only the colours can move.
+ * any size or weight, so only the colours can move.
  */
 export type VerdictState = "pass" | "largeOnly" | "unrated" | "fail";
 
@@ -47,7 +48,8 @@ export type VerdictMark = "tick" | "arrow" | "dash" | "cross";
  * Shape rather than colour, as in `apca-rating.html`: a verdict on a page the
  * visitor coloured cannot be told by a hue, and `danger` belongs to the failed
  * copy alone. The arrow points up because the thing that would fix a
- * `largeOnly` is a bigger size.
+ * `largeOnly` is a bigger number on one of the two sliders it still has - a
+ * larger size or a heavier weight.
  */
 const VERDICT_MARKS: Record<VerdictState, VerdictMark> = {
   pass: "tick",
@@ -114,10 +116,13 @@ export function elementVerdict(element: SampleElement,
   const contrast = chroma.contrastAPCA(ink, ground);
   const requiredLc = getRequiredLc(sizeKey, fontWeight);
   const carriesAt = smallestPassingFontSize(contrast, fontWeight);
+  // Not stored on the verdict: `carriedBy()` already looks this up again for
+  // the panel's own row, and a second field would only repeat it.
+  const weightCarries = lightestPassingFontWeight(contrast, sizeKey) !== null;
 
   return {
     element,
-    state: verdictState(Math.abs(contrast), requiredLc, carriesAt),
+    state: verdictState(Math.abs(contrast), requiredLc, carriesAt, weightCarries),
     ink,
     ground,
     fontSize,
@@ -387,12 +392,20 @@ function nearest(verdict: ElementVerdict, palette: Palette): VerdictFact {
  * size grows: a contrast that misses its own row and clears another clears a
  * larger one. `element-verdict.model.spec.ts` pins that, which is what would
  * catch a retuned table.
+ *
+ * **Both sliders decide it, not only the size's.** `carriesAt` alone once let
+ * an element that a heavier weight already carries read as `fail` - a cross
+ * and "Fails at any size" in the badge under a popup that named the very
+ * weight that would carry it, the mark and its own panel disagreeing about
+ * the same element. `weightCarries` closes that: either slider passing is
+ * what makes it `largeOnly`.
  */
 function verdictState(absContrast: number,
                       requiredLc: number | null,
-                      carriesAt: FontSize | null): VerdictState {
+                      carriesAt: FontSize | null,
+                      weightCarries: boolean): VerdictState {
   if (requiredLc === null) return "unrated";
   if (absContrast >= requiredLc) return "pass";
 
-  return carriesAt === null ? "fail" : "largeOnly";
+  return carriesAt === null && !weightCarries ? "fail" : "largeOnly";
 }

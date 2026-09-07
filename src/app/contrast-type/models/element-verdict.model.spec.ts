@@ -127,6 +127,23 @@ describe("elementVerdict", () => {
   });
 
 
+  it("calls it largeOnly, not fail, where only a heavier weight carries it", () => {
+    // The headline one slider step below the default: no size at weight 400
+    // clears Lc 33, but weight 500 does - `carriesAt` alone used to leave this
+    // reading `fail`, a cross under a popup naming the very weight that
+    // carries it.
+    const verdict = elementVerdict(
+      sampleElement("headline"),
+      colorsOf(createContrastColors(chroma("#c4c4c4"), chroma("#ffffff"))),
+      roles("display", 96, 400)
+    );
+
+    expect(verdict.carriesAt).toBeNull();
+    expect(verdict.state).toBe("largeOnly");
+    expect(verdictMark(verdict.state)).toBe("arrow");
+  });
+
+
   it("names a pass by its shape as well", () => {
     const verdict = elementVerdict(
       sampleElement("bodyText"),
