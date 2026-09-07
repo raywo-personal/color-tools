@@ -8,7 +8,6 @@ import {commonEvents} from "@core/common/common.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {createContrastColors} from "@engine/contrast/contrast-colors.model";
 import {TypeRole} from "@engine/contrast/type-role.model";
-import {SAMPLE_ELEMENTS} from "@contrast-type/models/sample-page.model";
 import {ApcaRating} from "@contrast-type/components/apca-rating/apca-rating";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 
@@ -66,25 +65,6 @@ describe("ApcaRating", () => {
         .map(span => span.textContent?.trim());
     }
 
-    /** The legend: one shape, one number and one word per state. */
-    function counts() {
-      return Array.from(host.querySelectorAll("[aria-label='Verdicts on the page'] li"))
-        .map(entry => {
-          const spans = entry.querySelectorAll("span");
-
-          return {
-            marker: entry.querySelector("[data-marker]")?.getAttribute("data-marker") ?? "",
-            count: Number(spans[0]?.textContent?.trim()),
-            word: spans[1]?.textContent?.trim() ?? ""
-          };
-        });
-    }
-
-    async function setPair(next: typeof colors) {
-      dispatcher.dispatch(contrastEvents.contrastColorsChangedWithoutNav(next));
-      await fixture.whenStable();
-    }
-
     function row() {
       const spans = Array.from(paragraphs()[2].querySelectorAll("span"));
 
@@ -121,7 +101,7 @@ describe("ApcaRating", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, host, caption, figureParts, counts, row, facts, factValue, selectRole, setPair};
+    return {fixture, host, caption, figureParts, row, facts, factValue, selectRole};
   }
 
 
@@ -262,14 +242,23 @@ describe("ApcaRating", () => {
 
 
   it("carries the four threshold rows no longer", async () => {
-    // Switching roles is what walks the pair through its sizes now. The lists
-    // that are here are the legend and the two rows under the element - none
-    // of them is a size and a requirement per row.
-    const {host, counts, facts} = await rating();
+    // Switching roles is what walks the pair through its sizes now. The one
+    // list left is the two rows under the element - not a size and a
+    // requirement per row.
+    const {host, facts} = await rating();
 
     expect(host.textContent).not.toContain("YOUR TYPE");
-    expect(host.querySelectorAll("li"))
-      .toHaveLength(counts().length + facts().length);
+    expect(host.querySelectorAll("li")).toHaveLength(facts().length);
+  });
+
+
+  it("leaves the page's tally to `PageVerdicts`", async () => {
+    // The tally counts every mark beside the preview and belongs to the pair
+    // that produced them; under the figure it read as a second answer about
+    // the selected role.
+    const {host} = await rating();
+
+    expect(host.querySelector("[aria-label='Verdicts on the page']")).toBeNull();
   });
 
 
@@ -290,67 +279,16 @@ describe("ApcaRating", () => {
   });
 
 
-  it("counts every element of the page into one of the four states", async () => {
-    // The tally is the count of the marks beside the preview, so it has to
-    // add up to the page - a state left out of the row would hide elements.
-    const {counts} = await rating();
-    const tally = counts();
-
-    expect(tally.map(entry => entry.marker)).toEqual(["tick", "arrow", "dash", "cross"]);
-    // The words are what make the shapes readable: a tick and a cross can be
-    // guessed off a page, an arrow cannot, and this is the one place all four
-    // stand together.
-    expect(tally.map(entry => entry.word))
-      .toEqual(["pass", "larger size needed", "not rated", "fail"]);
-    expect(tally.reduce((total, entry) => total + entry.count, 0))
-      .toBe(SAMPLE_ELEMENTS.length);
-  });
-
-
-  it("says nothing about the tally the visitor arrived at", async () => {
-    // The opening state is not something that just happened.
-    const {fixture} = await rating();
+  it("puts nothing in a live region, and announces nothing", async () => {
+    // The Lc changes on every frame of a slider drag and on every move of the
+    // colour picker; a polite region would queue a hundred sentences. What a
+    // screen reader hears when the page changes is the tally, which usually
+    // stands still - and it is announced by `PageVerdicts`.
+    const {fixture, host} = await rating();
 
     await fixture.whenStable();
 
     expect(fakeLiveAnnouncer().announcements).toEqual([]);
-  });
-
-
-  it("announces the tally when it moves", async () => {
-    // A colour change replaces every mark beside the preview without moving
-    // focus, and no control says what came back.
-    const {setPair, counts} = await rating(DARK_ON_LIGHT, "body");
-    const before = counts().map(entry => entry.count);
-
-    await setPair(IDENTICAL);
-
-    expect(counts().map(entry => entry.count)).not.toEqual(before);
-    expect(fakeLiveAnnouncer().last?.politeness).toBe("polite");
-    expect(fakeLiveAnnouncer().last?.message).toContain("On the page: ");
-    expect(fakeLiveAnnouncer().last?.message).toContain("larger size needed");
-  });
-
-
-  it("does not repeat a tally that stood still", async () => {
-    // The Lc moves on every frame of a drag while the tally usually does not,
-    // which is what makes the tally announceable at all.
-    const {setPair} = await rating(DARK_ON_LIGHT, "body");
-
-    await setPair(IDENTICAL);
-
-    const spoken = fakeLiveAnnouncer().announcements.length;
-
-    await setPair(IDENTICAL);
-
-    expect(fakeLiveAnnouncer().announcements).toHaveLength(spoken);
-  });
-
-
-  it("puts nothing in a live region", async () => {
-    // The Lc changes on every frame of a slider drag and on every move of the
-    // colour picker; a polite region would queue a hundred sentences.
-    const {host} = await rating();
 
     expect(host.querySelector("[aria-live]")).toBeNull();
     expect(host.querySelector("[role=alert]")).toBeNull();

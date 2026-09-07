@@ -157,16 +157,16 @@ digit; a style beyond that needs a wider index field first, or
   list, never into a component alone, or the figure stops being about the page
 - What the APCA table says about one element is `elementVerdict()` in
   `models/element-verdict.model.ts`, and it is the only place that says it:
-  the marks beside the preview, the legend beside the Lc figure and the
+  the marks beside the preview, the page's tally in `page-verdicts` and the
   rating's own row all read it, so two of them cannot disagree about the same
   element. A new state needs both a shape in `verdict-shape` and a word in
   `verdictWord()`
 - **A shape is never the only carrier of a verdict.** A tick and a cross can
   be read off a page; the arrow and the dash cannot, and a visitor asked. So
   the word travels with the shape: in a mark's accessible name, in an opened
-  verdict's header, and in the legend under the Lc figure, which is the one
-  place all four stand together and is why it is a line per state rather than
-  the draft's single row of glyphs
+  verdict's header, and in the page's tally, which is the one place all four
+  stand together and is why every state there keeps its word rather than
+  standing as the draft's bare row of glyphs
 - **A mark is a badge in the app's colours, not a glyph in the page's.** Drawn
   in the page's own ink it was punctuation the visitor had apparently set and
   nobody pressed it. Only the badge's rim and its focus ring are measured

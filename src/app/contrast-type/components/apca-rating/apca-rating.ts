@@ -1,5 +1,4 @@
-import {Component, computed, effect, inject} from "@angular/core";
-import {LiveAnnouncer} from "@angular/cdk/a11y";
+import {Component, computed, inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 import {getAPCAPolarity} from "@engine/contrast/apca-rating.helper";
 import {typeRoleCaption} from "@engine/contrast/type-role.model";
@@ -7,13 +6,8 @@ import {figureElementOf, samplePageColors} from "@contrast-type/models/sample-pa
 import {
   ElementVerdict,
   VerdictFact,
-  elementVerdict,
-  pageVerdicts,
-  VERDICT_STATES,
   VerdictState,
-  verdictCountSentence,
-  verdictCountWord,
-  verdictCounts,
+  elementVerdict,
   verdictFacts,
   verdictLabel
 } from "@contrast-type/models/element-verdict.model";
@@ -31,16 +25,6 @@ interface FigureRow {
 
 }
 
-
-/** One of the four tallies beside the figure. */
-interface CountEntry {
-
-  readonly state: VerdictState;
-  readonly count: number;
-  /** The state in words, for a screen reader beside the shape. */
-  readonly word: string;
-
-}
 
 
 /**
@@ -64,10 +48,10 @@ interface CountEntry {
  * `sample-page.model.ts` says which element stands for its role, next to the
  * list the preview draws from - so what is measured is what is shown.
  *
- * **The four tallies are the whole page**, not the selected role: they are the
- * count of the marks beside the preview, read off the same `elementVerdict()`
- * the marks are, so the row and the page cannot disagree. The figure says how
- * one role fares, the tallies say how much of the page does.
+ * **The page's own tally is not here.** It counts every mark beside the
+ * preview and belongs to the pair that produced them, so it stands above the
+ * type roles as `PageVerdicts` - under the figure it read as a second answer
+ * about the selected role.
  *
  * **The figure is the absolute Lc.** `contrastAPCA()` is signed, and the sign
  * is a polarity rather than a magnitude - the verdict is reached through
@@ -79,11 +63,11 @@ interface CountEntry {
  * copy, so the carriers here are the shape of the mark and the wording, which
  * names the Lc the table asked for.
  *
- * **Nothing here is a live region.** The Lc changes on every frame of a slider
- * drag and on every move of the colour picker, so a polite region would queue
- * a hundred sentences and an assertive one would talk over the visitor. The
- * tally is announced instead, and only where it actually moved - see
- * `#countsAnnounced`.
+ * **Nothing here is a live region, and nothing here is announced.** The Lc
+ * changes on every frame of a slider drag and on every move of the colour
+ * picker, so a polite region would queue a hundred sentences and an assertive
+ * one would talk over the visitor. What a screen reader hears when the page
+ * changes is the tally, from `PageVerdicts`, which usually stands still.
  */
 @Component({
   selector: "ct-apca-rating",
@@ -96,7 +80,6 @@ interface CountEntry {
 export class ApcaRating {
 
   readonly #stateStore = inject(AppStateStore);
-  readonly #announcer = inject(LiveAnnouncer);
 
   readonly #role = this.#stateStore.typeRole;
 
@@ -114,21 +97,6 @@ export class ApcaRating {
   protected readonly caption = computed(() => typeRoleCaption(this.#role()));
 
   protected readonly figure = computed(() => String(this.#verdict().lc));
-
-  /** The whole page's tally, read by the row of shapes and by the announcement. */
-  readonly #pageCounts = computed(() => verdictCounts(
-    pageVerdicts(this.#colors(), this.#stateStore.typeRoles())
-  ));
-
-  protected readonly counts = computed<readonly CountEntry[]>(() => {
-    const counts = this.#pageCounts();
-
-    return VERDICT_STATES.map(state => ({
-      state,
-      count: counts[state],
-      word: verdictCountWord(state)
-    }));
-  });
 
   protected readonly row = computed<FigureRow>(() => {
     const verdict = this.#verdict();
@@ -184,36 +152,6 @@ export class ApcaRating {
       : "dark on light";
 
     return {label: "Pair", value: `Lc ${figure} · ${polarity}`};
-  });
-
-  /** The tally as it was last spoken, so an unchanged one is not repeated. */
-  #spoken: string | null = null;
-
-  /**
-   * The tally, announced when it moves.
-   *
-   * A colour change and a slider drag replace every mark beside the preview
-   * without moving focus, and no control says what came back. The count is
-   * the one sentence that covers the whole page, so it is what gets announced.
-   *
-   * **Only when it changed, and never on the first render.** The Lc moves on
-   * every frame of a drag while the tally usually stands still, which is what
-   * makes the tally announceable at all; the opening state is what the visitor
-   * arrived at, not something that just happened.
-   *
-   * Polite: the visitor is holding a slider or a picker, and there is nothing
-   * to interrupt.
-   */
-  readonly #countsAnnounced = effect(() => {
-    const sentence = verdictCountSentence(this.#pageCounts());
-    const first = this.#spoken === null;
-    const moved = this.#spoken !== sentence;
-
-    this.#spoken = sentence;
-
-    if (first || !moved) return;
-
-    void this.#announcer.announce(`On the page: ${sentence}.`, "polite");
   });
 
 }
