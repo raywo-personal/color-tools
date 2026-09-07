@@ -220,9 +220,11 @@ describe("WebsitePreview", () => {
   });
 
 
-  it("draws a mark in a colour APCA chose against the surface it sits on", async () => {
-    // A neutral token is guaranteed against the six app surfaces and against
-    // none of the visitor's, and the marks sit on the page's own colours.
+  it("rims a mark in a colour APCA chose against the surface it sits on", async () => {
+    // The mark is a badge in the app's own surfaces, and its rim is the edge
+    // where that badge meets the page: a neutral token is guaranteed against
+    // the six app surfaces and against none of the visitor's, so on a page of
+    // the badge's own lightness the rim would vanish.
     //
     // The eyebrow's mark, because the eyebrow sits on the page itself: the
     // nav's and the card's marks are measured against a tint of it, which the
@@ -235,8 +237,9 @@ describe("WebsitePreview", () => {
 
       const mark = Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"))
         .find(candidate => candidate.getAttribute("aria-label")?.startsWith("Eyebrow:"));
+      const badge = mark?.firstElementChild as HTMLElement | undefined;
 
-      return mark?.style.color ?? "";
+      return badge?.style.borderColor ?? "";
     });
   });
 

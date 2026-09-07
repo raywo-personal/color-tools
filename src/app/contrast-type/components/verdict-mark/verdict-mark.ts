@@ -23,20 +23,27 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * **The mark is anchored to its element, not placed in a gutter.** It wraps
  * the element and sits in a column of its own in front of it, so the two move
  * together: the draft positions the marks absolutely at fixed offsets, which
- * survives exactly one change of a size slider. The column is the glyph's
- * `size-4` slot plus the row's `gap-2`, and the button reaches past it on both
+ * survives exactly one change of a size slider. The column is the badge's
+ * `size-5` slot plus the row's `gap-2`, and the button reaches past it on both
  * sides - the hit area is the full `size-11` the app asks of a control, while
- * the page only indents by a rem and a half.
+ * the page only indents by one and three quarter rem.
  * `min-h-11` on the row is what keeps two stacked hit areas from overlapping,
  * at the price of the page reading a little airier than the draft.
  *
- * **The mark is computed against the surface it sits on.** The page's colours
- * are the visitor's, so a neutral token is guaranteed against none of them:
- * the glyph and the focus ring take black or white, whichever APCA puts
- * further from that surface. `surface` is usually the element's own ground and
- * is given separately where it is not - the label on the filled button sits on
- * the accent while its mark sits beside the button, on the page. The popup it
- * opens needs none of this: it is drawn on the app's own surfaces.
+ * **The mark is a badge in the app's colours, and that is what makes it a
+ * control.** Drawn as a bare glyph in the page's own ink it was punctuation
+ * the visitor had apparently set, and nobody pressed it. The badge takes
+ * `panel`, `text` and `field` like the popup it opens: the app looking at the
+ * page from outside, in the app's surfaces, with a hover state a glyph could
+ * not have.
+ *
+ * **Its rim and its focus ring are still computed against the page.** They are
+ * the edge between the app's badge and the visitor's colour, and a neutral
+ * token is guaranteed against none of them - so both take black or white,
+ * whichever APCA puts further from that surface. `surface` is usually the
+ * element's own ground and is given separately where it is not - the label on
+ * the filled button sits on the accent while its mark sits beside the button,
+ * on the page.
  *
  * **The mark is a disclosure, and its name carries the verdict.** A screen
  * reader hears the element and how it fares before deciding whether to open
@@ -83,9 +90,9 @@ export class VerdictMark {
   readonly elementKey = input.required<string>();
 
   /**
-   * The page surface the mark itself sits on, which decides what it is drawn
-   * in. Defaults to nothing and falls back to the element's own ground - see
-   * `surfaceColor`.
+   * The page surface the mark itself sits on, which decides what its rim and
+   * its focus ring are drawn in. Defaults to nothing and falls back to the
+   * element's own ground - see `surfaceColor`.
    */
   readonly surface = input<SampleGround | null>(null);
 
@@ -118,12 +125,13 @@ export class VerdictMark {
   });
 
   /**
-   * Black or white, whichever APCA puts further from the surface.
+   * Black or white, whichever APCA puts further from the surface - the badge's
+   * rim and the focus ring, the two edges that meet the page.
    *
    * The maximum rather than a threshold: on a mid-lightness page neither
    * clears the table, and that is the colour the visitor picked rather than
-   * something this mark can fix. No size is passed - the glyph is a shape, and
-   * the table's rows are about text.
+   * something this mark can fix. No size is passed - a rim is a line, and the
+   * table's rows are about text.
    */
   protected readonly inkHex = computed(() => findOptimalTextColor(this.#surfaceColor()).color.hex("rgb"));
 

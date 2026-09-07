@@ -1,4 +1,15 @@
-<p class="font-sans text-sm tracking-widest text-dim">PREVIEW</p>
+<!-- The caption, and beside it the one sentence that says the marks are
+     controls. Once above the page rather than on every mark: forty tooltips
+     say the same thing forty times and none of them is read until the visitor
+     already knows to hover.
+
+     `items-baseline` so the two sit on one line where there is room, and
+     `flex-wrap` so the hint drops under the caption where there is not. -->
+<div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+  <p class="font-sans text-sm tracking-widest text-dim">PREVIEW</p>
+
+  <p class="text-sm text-dim">Select a mark for its verdict</p>
+</div>
 
 <!-- A named region, so a screen reader can tell the sample page from the app
      around it and jump past it. The visible caption above says PREVIEW; the

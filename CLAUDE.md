@@ -167,6 +167,11 @@ digit; a style beyond that needs a wider index field first, or
   verdict's header, and in the legend under the Lc figure, which is the one
   place all four stand together and is why it is a line per state rather than
   the draft's single row of glyphs
+- **A mark is a badge in the app's colours, not a glyph in the page's.** Drawn
+  in the page's own ink it was punctuation the visitor had apparently set and
+  nobody pressed it. Only the badge's rim and its focus ring are measured
+  against the page - they are the edge that meets the visitor's colour, and a
+  token is guaranteed against none of it
 - **A verdict is rows of label and value, never prose.** `verdictFacts()` is
   the whole of it, and it carries only what a visitor can already name: the
   two Lc figures, the role with the size and weight they set, and a palette

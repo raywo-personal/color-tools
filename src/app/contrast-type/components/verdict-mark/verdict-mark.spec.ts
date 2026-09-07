@@ -47,6 +47,16 @@ describe("VerdictMark", () => {
       return host.querySelector("button") as HTMLElement;
     }
 
+    /** The badge inside the button - the app's surface, with the APCA rim. */
+    function badge(): HTMLElement {
+      return button().firstElementChild as HTMLElement;
+    }
+
+    /** The element the mark wraps, which carries the dotted underline. */
+    function content(): HTMLElement {
+      return host.querySelector("[data-content]") as HTMLElement;
+    }
+
     /**
      * The open popup. A CDK overlay renders into a container on the body, not
      * into the fixture - which is the whole point of it: nothing in the
@@ -61,28 +71,43 @@ describe("VerdictMark", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, host, colors, button, panel, press};
+    return {fixture, host, colors, button, badge, content, panel, press};
   }
 
 
-  it("takes its colour from the surface it sits on, not from the element's ground", async () => {
-    // The label on the filled button is measured against the accent; its mark
-    // sits beside the button, on the page. A mark drawn against the accent
-    // would be a colour chosen for a surface it is not on.
+  it("draws itself as the app's badge, so it reads as a control", async () => {
+    // A bare glyph in the page's own ink was punctuation the visitor had
+    // apparently set, and nobody pressed it. The badge takes the app's
+    // surfaces, like the popup it opens.
+    const {badge} = await mark("headline");
+
+    expect(badge().className).toContain("bg-panel");
+    expect(badge().className).toContain("text-text");
+    // The badge changes under the pointer, which a glyph could not.
+    expect(badge().className).toContain("group-hover:bg-field");
+  });
+
+
+  it("takes its rim from the surface it sits on, not from the element's ground", async () => {
+    // The rim is the edge between the app's badge and the visitor's colour,
+    // and `line` is guaranteed against none of theirs. The label on the filled
+    // button is measured against the accent; its mark sits beside the button,
+    // on the page - a rim drawn against the accent would be a colour chosen
+    // for a surface it is not on.
     const beside = await mark("filledButton", {surface: "page"});
     const onTheGround = await mark("filledButton");
 
-    expect(beside.button().style.color)
+    expect(beside.badge().style.borderColor)
       .toBe(findOptimalTextColor(beside.colors.page).color.hex("rgb"));
-    expect(onTheGround.button().style.color)
+    expect(onTheGround.badge().style.borderColor)
       .toBe(findOptimalTextColor(onTheGround.colors.accent).color.hex("rgb"));
   });
 
 
   it("draws the focus ring in the same colour, offset off the surface", async () => {
-    const {button} = await mark("headline");
+    const {button, badge} = await mark("headline");
 
-    expect(button().style.outlineColor).toBe(button().style.color);
+    expect(button().style.outlineColor).toBe(badge().style.borderColor);
     expect(button().className).toContain("outline-offset-2");
   });
 
@@ -166,13 +191,11 @@ describe("VerdictMark", () => {
     const short = await mark("imageCaption");
     const unrated = await mark("eyebrow");
 
-    const content = (host: HTMLElement) => host.querySelectorAll("span")[2];
-
     expect(short.button().getAttribute("aria-label")).not.toContain("passes");
-    expect(content(short.host).className).toContain("decoration-dotted");
+    expect(short.content().className).toContain("decoration-dotted");
 
     expect(unrated.button().getAttribute("aria-label")).toContain("not rated");
-    expect(content(unrated.host).className).not.toContain("decoration-dotted");
+    expect(unrated.content().className).not.toContain("decoration-dotted");
   });
 
 
