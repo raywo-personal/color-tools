@@ -48,6 +48,22 @@ export interface SampleElement {
 
 
 /**
+ * `bodyText`'s role and size ratio, pulled out as a name rather than repeated
+ * as a literal.
+ *
+ * **`bodyLink` takes the same two values, and has to keep taking them.** The
+ * link is a word inside the body paragraph, not a distinct piece of text - the
+ * template lets it inherit the paragraph's type instead of binding one of its
+ * own, which `website-preview.spec.ts` pins. That means `bodyLink`'s entry
+ * here is not read by the template at all; it only exists for the rating,
+ * which does read `role` and `sizeRatio` per element. Two literal `1`s that
+ * happened to match would drift silently the day `bodyText`'s ratio changes
+ * for a reason of its own - one constant read by both entries can't.
+ */
+const BODY_TEXT_ROLE: TypeRole = "body";
+const BODY_TEXT_SIZE_RATIO = 1;
+
+/**
  * The elements of the page, in reading order.
  *
  * The size ratios are the draft's: at body 18px the lead is 22px and the small
@@ -72,8 +88,8 @@ export const SAMPLE_ELEMENTS: readonly SampleElement[] = [
   {key: "filledButton", caption: "FILLED BUTTON", role: "ui", sizeRatio: 1, ink: "onAccent", ground: "accent", figure: true},
   {key: "ghostButton", caption: "GHOST BUTTON", role: "ui", sizeRatio: 1, ink: "text", ground: "page", figure: false},
   {key: "disabledButton", caption: "DISABLED BUTTON", role: "ui", sizeRatio: 1, ink: "onMuted", ground: "muted", figure: false},
-  {key: "bodyText", caption: "BODY TEXT", role: "body", sizeRatio: 1, ink: "text", ground: "page", figure: true},
-  {key: "bodyLink", caption: "LINK IN TEXT", role: "body", sizeRatio: 1, ink: "accent", ground: "page", figure: false},
+  {key: "bodyText", caption: "BODY TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "text", ground: "page", figure: true},
+  {key: "bodyLink", caption: "LINK IN TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "accent", ground: "page", figure: false},
   {key: "fieldLabel", caption: "FIELD LABEL", role: "ui", sizeRatio: 0.8, ink: "accentSoft", ground: "page", figure: false},
   {key: "fieldText", caption: "FIELD TEXT", role: "body", sizeRatio: 0.89, ink: "text", ground: "field", figure: false},
   {key: "errorLine", caption: "ERROR LINE", role: "body", sizeRatio: 0.78, ink: "danger", ground: "page", figure: false},
