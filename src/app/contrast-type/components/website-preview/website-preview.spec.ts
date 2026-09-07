@@ -27,6 +27,12 @@ const ACCENT_BUTTON = "Read the notes";
 const GHOST_BUTTON = "Browse palettes";
 const EYEBROW = "Field notes";
 const WORDMARK = "Meridian";
+const DISABLED_BUTTON = "Export";
+const ERROR_LINE = "This address is already on the list";
+const IMAGE_CAPTION = "The caption under a picture";
+const LINK = "read this the way a reader would";
+const ACTIVE_NAV_ITEM = "Notes";
+const FIELD_LABEL = "EMAIL";
 
 /** The draft's fraction for the dim text, restated rather than imported. */
 const DIM_MIX = 0.4;
@@ -78,12 +84,27 @@ describe("WebsitePreview", () => {
 
     /** The element the given copy is set in. */
     function copy(snippet: string): HTMLElement {
-      const found = Array.from(page.querySelectorAll<HTMLElement>("p, span"))
+      return within("p, span", snippet);
+    }
+
+    /**
+     * The copy's own element rather than the paragraph around it - a link
+     * inside running text is a `span` whose parent `p` carries the same text,
+     * and `copy()` finds the parent first.
+     */
+    function within(selector: string, snippet: string): HTMLElement {
+      const found = Array.from(page.querySelectorAll<HTMLElement>(selector))
         .find(element => element.textContent?.includes(snippet));
 
-      if (!found) throw new Error(`no element carries "${snippet}"`);
+      if (!found) throw new Error(`no ${selector} carries "${snippet}"`);
 
       return found;
+    }
+
+    /** The table's body rows, cell by cell. */
+    function tableRows(): string[][] {
+      return Array.from(page.querySelectorAll("tbody tr"))
+        .map(row => Array.from(row.querySelectorAll("td")).map(cell => cell.textContent ?? ""));
     }
 
     async function paint(newBase: Color) {
@@ -114,7 +135,7 @@ describe("WebsitePreview", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, store, host, page, copy, paint, setBackground, setSize, setRole, pickFace};
+    return {fixture, store, host, page, copy, within, tableRows, paint, setBackground, setSize, setRole, pickFace};
   }
 
 
@@ -371,6 +392,135 @@ describe("WebsitePreview", () => {
     expect(copy(ACCENT_BUTTON).style.backgroundColor).not.toBe(ground);
     expect(copy(ACCENT_BUTTON).style.backgroundColor)
       .toBe(palette.color1.color.hex("rgb"));
+  });
+
+
+  it("shows the four elements the closing paragraph names", async () => {
+    // The page has always claimed that a palette is judged on the disabled
+    // button, the error line, the caption and the table. Until #146 it said so
+    // and showed none of them.
+    const {copy, within, tableRows} = await preview();
+
+    expect(copy(DISABLED_BUTTON).textContent).toContain("disabled");
+    expect(within("p", ERROR_LINE)).toBeTruthy();
+    expect(within("p", IMAGE_CAPTION)).toBeTruthy();
+    expect(tableRows().length).toBeGreaterThan(0);
+  });
+
+
+  it("tells the disabled button by its word, not by its grey alone", async () => {
+    // A control told by colour alone is the first thing a thin pairing hides,
+    // which is exactly the pairing this button is here to expose.
+    const {copy, store} = await preview();
+    const colors = store.contrastColors();
+    const disabled = copy(DISABLED_BUTTON);
+
+    expect(disabled.textContent?.toLowerCase()).toContain("disabled");
+    expect(disabled.style.backgroundColor).not.toBe(colors.background.hex("rgb"));
+    expect(disabled.style.color).not.toBe(colors.text.hex("rgb"));
+  });
+
+
+  it("writes the error line in the red, and turns the red with the page", async () => {
+    // Not a palette member and not a mix of the pair: repainting the palette
+    // leaves it where it is, and only the direction of the page moves it.
+    const {within, paint, setBackground} = await preview({background: "#FAF8F4"});
+
+    const onLight = within("p", ERROR_LINE).style.color;
+
+    await paint(chroma("#B02020"));
+    expect(within("p", ERROR_LINE).style.color, "the palette moved it").toBe(onLight);
+
+    await setBackground("#1B1917");
+    expect(within("p", ERROR_LINE).style.color, "the page's direction did not").not.toBe(onLight);
+  });
+
+
+  it("carries the error beside the red as a shape, so the message survives the pairing", async () => {
+    const {within} = await preview();
+
+    expect(within("p", ERROR_LINE).querySelector("svg")).toBeTruthy();
+  });
+
+
+  it("marks the active nav item with a second carrier beside the accent", async () => {
+    // An accent that lands at the page's own lightness would leave the visitor
+    // with three nav items and no current page.
+    const {copy, store} = await preview();
+    const active = copy(ACTIVE_NAV_ITEM);
+
+    expect(active.style.borderBottomColor).toBe(store.currentPalette().color0.color.hex("rgb"));
+    expect(active.style.color, "the active item is dimmed like the rest").toBe("");
+  });
+
+
+  it("sets the link inside the running text in the accent, at the paragraph's own type", async () => {
+    // The link takes its size from the paragraph it sits in - a size of its
+    // own would make it a different element rather than a word in a sentence.
+    const {within, store} = await preview();
+    const link = within("span", LINK);
+
+    expect(link.style.color).toBe(store.currentPalette().color0.color.hex("rgb"));
+    expect(link.style.fontSize).toBe("");
+  });
+
+
+  it("scales the caption with body text, at the size the draft calls the first to fail", async () => {
+    const {within} = await preview({settings: {...DEFAULT_TYPE_SETTINGS, fontSize: 25}});
+
+    expect(within("p", IMAGE_CAPTION).style.fontSize).toBe("18px");
+  });
+
+
+  it("reports this page's own type in the table, so the figures cannot contradict the sliders", async () => {
+    // Sample figures would read as a bug the moment a slider moved: a display
+    // role at 96 beside a table still saying 44.
+    const {tableRows, setRole} = await preview();
+
+    await setRole("display", {fontSize: 72, fontWeight: 700});
+    await setRole("body", {fontSize: 20, fontWeight: 500});
+
+    expect(tableRows()).toEqual([
+      ["Headline", "72", "700"],
+      ["Body", "20", "500"],
+      ["Caption", "14", "500"]
+    ]);
+  });
+
+
+  it("sets the disabled button, the field, the caption and the table in their own roles", async () => {
+    // The model pins which role each element takes; this pins that the page
+    // follows it. Without it the table's figures could be bound to the body
+    // role and only the BODY slider would move them, while the issue - and
+    // the rating beside the page - call them UI.
+    const {copy, within, page, setRole} = await preview();
+
+    await setRole("ui", {fontSize: 20, fontWeight: 700});
+    await setRole("mono", {fontSize: 14, fontWeight: 500});
+
+    const [cell, number] = Array.from(page.querySelectorAll<HTMLElement>("tbody tr td"));
+
+    expect(copy(DISABLED_BUTTON).style.fontSize, "disabled button").toBe("20px");
+    expect(copy(FIELD_LABEL).style.fontSize, "field label").toBe("16px");
+    expect(number.style.fontSize, "table number").toBe("17px");
+
+    expect(within("p", ERROR_LINE).style.fontSize, "error line").toBe("14px");
+    expect(within("p", IMAGE_CAPTION).style.fontSize, "caption").toBe("13px");
+    expect(cell.style.fontSize, "table cell").toBe("15px");
+
+    expect(within("th", "ELEMENT").style.fontSize, "table header").toBe("14px");
+  });
+
+
+  it("lets the table break rather than run past the column it sits in", async () => {
+    // A table is laid out from its cells' min-content width, so at the top of
+    // the mono range the unbreakable `ELEMENT` would push the last column out
+    // under the panel's `overflow-hidden`, with no scrollbar to say so. The
+    // headline's `wrap-break-word` does not answer this one - it leaves
+    // min-content alone by definition.
+    const {page} = await preview();
+
+    expect(page.querySelector("table")?.classList.contains("wrap-anywhere")).toBe(true);
   });
 
 

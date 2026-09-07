@@ -28,6 +28,39 @@ const QUOTE_LEADING_FACTOR = 0.85;
  */
 const WORDMARK_SIZE = 17;
 
+/**
+ * The table's columns. `number` right-aligns the column, which is what makes
+ * a column of figures read as a column.
+ */
+const TABLE_COLUMNS: readonly {readonly caption: string; readonly number: boolean}[] = [
+  {caption: "ELEMENT", number: false},
+  {caption: "SIZE", number: true},
+  {caption: "WEIGHT", number: true}
+];
+
+/**
+ * The elements the table reports on, and the names it calls them by.
+ *
+ * **The table is about this page.** Sample figures would contradict the
+ * sliders the moment one of them moved - a display role set to 96 beside a
+ * table still saying 44 reads as a bug, not as sample copy - so the numbers
+ * are the ones the page is actually set in.
+ */
+const TABLE_ELEMENTS: readonly {readonly key: string; readonly element: string}[] = [
+  {key: "headline", element: "Headline"},
+  {key: "bodyText", element: "Body"},
+  {key: "imageCaption", element: "Caption"}
+];
+
+
+/** One row of the table: the element it names, then its figures. */
+interface TableRow {
+
+  readonly element: string;
+  readonly values: readonly number[];
+
+}
+
 
 /** The type one element is set in, ready for the style bindings. */
 interface ElementType {
@@ -55,10 +88,15 @@ interface PreviewStyle {
   readonly onAccent: string;
   readonly cardBackground: string;
   readonly ghostBorder: string;
-  readonly footerBorder: string;
+  readonly rule: string;
+  readonly mutedBackground: string;
+  readonly onMuted: string;
+  readonly fieldBackground: string;
+  readonly danger: string;
 
   readonly wordmarkSize: string;
 
+  readonly navActive: ElementType;
   readonly navItems: ElementType;
   readonly signIn: ElementType;
   readonly eyebrow: ElementType;
@@ -66,7 +104,16 @@ interface PreviewStyle {
   readonly lead: ElementType;
   readonly filledButton: ElementType;
   readonly ghostButton: ElementType;
+  readonly disabledButton: ElementType;
   readonly bodyText: ElementType;
+  readonly fieldLabel: ElementType;
+  readonly fieldText: ElementType;
+  readonly errorLine: ElementType;
+  readonly imageLabel: ElementType;
+  readonly imageCaption: ElementType;
+  readonly tableHeader: ElementType;
+  readonly tableCell: ElementType;
+  readonly tableNumber: ElementType;
   readonly cardLabel: ElementType;
   readonly quote: ElementType;
   readonly smallPrint: ElementType;
@@ -92,10 +139,12 @@ interface PreviewStyle {
  * is painted as it is and how the palette is read.
  *
  * **Nothing in here is focusable or announced as a control.** The nav links,
- * `Sign in` and the two buttons are text: a focusable button that does nothing
- * is worse than no button, and a fake nav in the tab order competes with the
- * real one in the app header. The region carries a name instead, so a screen
- * reader can tell the sample page from the app around it and skip past it.
+ * `Sign in`, the three buttons and the form field are text: a focusable button
+ * that does nothing is worse than no button, a fake nav in the tab order
+ * competes with the real one in the app header, and an input here would
+ * swallow keystrokes meant for the app. The field's focus ring is drawn rather
+ * than reached. The region carries a name instead, so a screen reader can tell
+ * the sample page from the app around it and skip past it.
  */
 @Component({
   selector: "ct-website-preview",
@@ -108,7 +157,28 @@ export class WebsitePreview {
 
   readonly #stateStore = inject(AppStateStore);
 
-  protected readonly navItems = ["Notes", "Palettes", "About"];
+  /**
+   * The nav items after the active one. `Notes` is set apart in the template
+   * because it carries the accent underline and the page's own text colour -
+   * the state a nav has to show without relying on the colour alone.
+   */
+  protected readonly navItems = ["Palettes", "About"];
+
+  protected readonly tableColumns = TABLE_COLUMNS;
+
+  protected readonly tableRows = computed<readonly TableRow[]>(() => {
+    const roles = this.#stateStore.typeRoles();
+
+    return TABLE_ELEMENTS.map(({key, element}) => {
+      const {role, sizeRatio} = sampleElement(key);
+      const {settings} = roles[role];
+
+      return {
+        element,
+        values: [Math.round(settings.fontSize * sizeRatio), settings.fontWeight]
+      };
+    });
+  });
 
   protected readonly style = computed<PreviewStyle>(() => {
     const colors = samplePageColors(this.#stateStore.contrastColors(), this.#stateStore.currentPalette());
@@ -127,10 +197,15 @@ export class WebsitePreview {
       onAccent: hex(colors.onAccent),
       cardBackground: hex(colors.card),
       ghostBorder: hex(colors.ghostBorder),
-      footerBorder: hex(colors.footerBorder),
+      rule: hex(colors.rule),
+      mutedBackground: hex(colors.muted),
+      onMuted: hex(colors.onMuted),
+      fieldBackground: hex(colors.field),
+      danger: hex(colors.danger),
 
       wordmarkSize: px(WORDMARK_SIZE),
 
+      navActive: elementType("navActive", roles),
       navItems: elementType("navItems", roles),
       signIn: elementType("signIn", roles),
       eyebrow: elementType("eyebrow", roles),
@@ -138,7 +213,16 @@ export class WebsitePreview {
       lead: elementType("lead", roles, LEAD_LEADING_FACTOR),
       filledButton: elementType("filledButton", roles),
       ghostButton: elementType("ghostButton", roles),
+      disabledButton: elementType("disabledButton", roles),
       bodyText: elementType("bodyText", roles),
+      fieldLabel: elementType("fieldLabel", roles),
+      fieldText: elementType("fieldText", roles),
+      errorLine: elementType("errorLine", roles),
+      imageLabel: elementType("imageLabel", roles),
+      imageCaption: elementType("imageCaption", roles),
+      tableHeader: elementType("tableHeader", roles),
+      tableCell: elementType("tableCell", roles),
+      tableNumber: elementType("tableNumber", roles),
       cardLabel: elementType("cardLabel", roles),
       quote: elementType("quote", roles, QUOTE_LEADING_FACTOR),
       smallPrint: elementType("smallPrint", roles)
