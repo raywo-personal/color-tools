@@ -167,6 +167,31 @@ export function groundName(ground: SampleGround): string {
 
 
 /**
+ * The ground named after its own colour - `Lavender, the page's own colour`.
+ *
+ * A second wording rather than a reuse of `GROUND_NAMES`, because the two
+ * stand in different sentences. There the element comes first, so `its own
+ * background` has something to refer back to; here the subject is a colour,
+ * and `Sea Green, its own background` refers to nothing at all. The page also
+ * needs saying differently: `Lavender, the page` reads as a claim that the
+ * page is called Lavender.
+ */
+const GROUND_APPOSITIONS: Record<SampleGround, string> = {
+  page: "the page's own colour",
+  card: "the card",
+  nav: "the nav bar",
+  accent: "the button's own fill",
+  muted: "the disabled surface",
+  field: "the form field"
+};
+
+
+export function groundApposition(ground: SampleGround): string {
+  return GROUND_APPOSITIONS[ground];
+}
+
+
+/**
  * How far each derived surface is mixed, and towards what. The draft's
  * fractions, mixed in OKLab - see `mixColors()`.
  */

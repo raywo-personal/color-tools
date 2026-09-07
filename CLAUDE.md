@@ -155,6 +155,12 @@ digit; a style beyond that needs a wider index field first, or
   `src/app/contrast-type/models/sample-page.model.ts`. The preview draws it
   and the rating measures it; a new element goes into that list, never into
   a component alone, or the figure stops being about the page
+- What the APCA table says about one element is `elementVerdict()` in
+  `models/element-verdict.model.ts`, and it is the only place that says it:
+  the marks beside the preview, the tally beside the Lc figure and the
+  rating's own row all read it, so two of them cannot disagree about the same
+  element. A new state needs a shape in `verdict-shape`, or it is told by
+  wording alone
 - A role's face, size, weight and leading are `typeRoles[role]`; nothing
   derives one role's type from another's. The headline's weight is the display
   role's, not a step up from body text's – a display face that ships one
