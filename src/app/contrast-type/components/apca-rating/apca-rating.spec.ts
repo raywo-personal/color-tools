@@ -204,7 +204,7 @@ describe("ApcaRating", () => {
     expect(row().marker).toBe("dash");
     // A size the table declines to rate still has a size that would get it
     // rated, and that size is the useful answer.
-    expect(factValue("Passes at")).toBeDefined();
+    expect(factValue("Would pass at")).toBeDefined();
   });
 
 
@@ -215,8 +215,8 @@ describe("ApcaRating", () => {
     // named here.
     const {factValue, facts} = await rating(JUST_UNDER_75, "body");
 
-    expect(factValue("Passes at")).toBe("21px, or weight 500");
-    expect(facts().map(fact => fact.label)).toEqual(["Passes at", "Pair"]);
+    expect(factValue("Would pass at")).toBe("21px, or weight 500");
+    expect(facts().map(fact => fact.label)).toEqual(["Would pass at", "Pair"]);
   });
 
 
@@ -239,7 +239,7 @@ describe("ApcaRating", () => {
     // row saying `Needs Lc 38` would suggest the sliders could fix it.
     expect(row().verdict).toBe("Fails at any size");
     expect(row().marker).toBe("cross");
-    expect(factValue("Passes at")).toBe("no size or weight");
+    expect(factValue("Would pass at")).toBe("no size or weight");
   });
 
 

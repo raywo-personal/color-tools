@@ -5,7 +5,6 @@ import {fontFamilyFor, TypeRolesMap} from "@common/models/type-role-settings.mod
 import {sampleElement, samplePageColors} from "@contrast-type/models/sample-page.model";
 import {elementFontSize} from "@contrast-type/models/element-verdict.model";
 import {VerdictMark} from "@contrast-type/components/verdict-mark/verdict-mark";
-import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-panel";
 
 
 /**
@@ -157,15 +156,14 @@ interface PreviewStyle {
  * table's cells, the small print - gets one mark, because one ink on one
  * ground at one size is one verdict.
  *
- * **The table's three panels are placed here rather than by their marks.** A
- * paragraph of prose inside a `<td>` re-apportions the table's columns every
- * time it opens; `VerdictPanel` says the rest. They are the only three marks
- * carrying `[panelBelow]="false"`, and removing one of the panels below the
- * table leaves that mark opening nothing.
+ * **A verdict opens as a popup on the body, so nothing here moves.** That is
+ * also what lets the table's three marks sit inside its cells: a block in a
+ * `<td>` re-apportioned the columns every time it opened. `VerdictMark` says
+ * the rest.
  */
 @Component({
   selector: "ct-website-preview",
-  imports: [VerdictMark, VerdictPanel],
+  imports: [VerdictMark],
   templateUrl: "./website-preview.html",
   host: {
     "class": "block min-w-0"

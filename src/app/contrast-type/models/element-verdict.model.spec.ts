@@ -244,7 +244,7 @@ describe("verdictFacts", () => {
     expect(valueOf(facts, "Reached")).toBe("Lc 74");
     expect(valueOf(facts, "Needed")).toBe("Lc 75");
     expect(valueOf(facts, "Type")).toBe("BODY · 18px · 400");
-    expect(valueOf(facts, "Passes at")).toBe("21px, or weight 500");
+    expect(valueOf(facts, "Would pass at")).toBe("21px, or weight 500");
   });
 
 
@@ -306,7 +306,7 @@ describe("verdictFacts", () => {
 
     expect(unrated.state).toBe("unrated");
     expect(verdictFacts(unrated, PALETTE).map(fact => fact.label))
-      .toEqual(["Reached", "Needed", "Type", "Passes at"]);
+      .toEqual(["Reached", "Needed", "Type", "Would pass at"]);
 
     const nearest = verdictFacts(failing, PALETTE).at(-1);
 

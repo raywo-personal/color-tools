@@ -1,4 +1,5 @@
 import {Component, computed, inject, input} from "@angular/core";
+import {CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition} from "@angular/cdk/overlay";
 import {Color} from "chroma-js";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
@@ -29,13 +30,13 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * `min-h-11` on the row is what keeps two stacked hit areas from overlapping,
  * at the price of the page reading a little airier than the draft.
  *
- * **Everything it is drawn in is computed against the surface it sits on.**
- * The page's colours are the visitor's, so a neutral token is guaranteed
- * against none of them: the glyph, the focus ring and the opened panel take
- * black or white, whichever APCA puts further from that surface. `surface` is
- * usually the element's own ground and is given separately where it is not -
- * the label on the filled button sits on the accent while its mark sits
- * beside the button, on the page.
+ * **The mark is computed against the surface it sits on.** The page's colours
+ * are the visitor's, so a neutral token is guaranteed against none of them:
+ * the glyph and the focus ring take black or white, whichever APCA puts
+ * further from that surface. `surface` is usually the element's own ground and
+ * is given separately where it is not - the label on the filled button sits on
+ * the accent while its mark sits beside the button, on the page. The popup it
+ * opens needs none of this: it is drawn on the app's own surfaces.
  *
  * **The mark is a disclosure, and its name carries the verdict.** A screen
  * reader hears the element and how it fares before deciding whether to open
@@ -52,16 +53,21 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * its own underline keeps drawing it. `unrated` gets none: the table declined
  * to rate that size, which is not the same as the text falling short.
  *
- * **The panel opens into the page's flow, under the element.** An overlay
- * would be clipped by the preview's own `overflow-hidden`, and at 320px there
- * is no room beside an element for a tablet of text. The page moving down is
- * the price, and it keeps the verdict next to the thing it judges. The one
- * place that does not hold is a table cell - `panelBelow` and
- * `VerdictPanel`'s own comment say what happens there instead.
+ * **The verdict opens as a popup that moves nothing.** In the page's flow it
+ * pushed the elements below it down, so reading one verdict rearranged the
+ * page it was about - and inside a table cell it re-apportioned the columns.
+ * A CDK overlay renders into a container on the body instead: nothing in the
+ * preview moves, the preview's own `overflow-hidden` cannot clip it, and the
+ * position strategy finds room at the narrow end where a panel beside an
+ * element has none.
+ *
+ * **The popup is drawn in the app's colours, not the page's** - see
+ * `VerdictPanel`. It is the app looking at the visitor's page from outside,
+ * and it is meant to read as exactly that.
  */
 @Component({
   selector: "ct-verdict-mark",
-  imports: [VerdictShape, VerdictPanel],
+  imports: [VerdictShape, VerdictPanel, CdkOverlayOrigin, CdkConnectedOverlay],
   templateUrl: "./verdict-mark.html",
   host: {
     "[class.block]": "!inline()",
@@ -90,16 +96,6 @@ export class VerdictMark {
    * running text would open a gap in it.
    */
   readonly inline = input(false);
-
-  /**
-   * Whether this mark carries its own panel underneath it.
-   *
-   * False leaves the panel to the caller, which then has to place a
-   * `ct-verdict-panel` for the same element somewhere - otherwise the mark
-   * opens nothing and `aria-expanded` lies. The table's three marks are the
-   * reason it exists; `VerdictPanel` says why.
-   */
-  readonly panelBelow = input(true);
 
   readonly #colors = computed(() => samplePageColors(
     this.#stateStore.contrastColors(),
@@ -143,8 +139,48 @@ export class VerdictMark {
   protected readonly missed = computed(() => missedRequirement(this.verdict()));
 
 
+  /**
+   * Where the popup sits: under the mark and aligned to it, then above it, and
+   * flipped to the right edge where the left one has no room.
+   *
+   * Four fallbacks rather than one position plus `push`: pushing alone slides
+   * a popup until it fits and can end up covering the element it is about,
+   * which is the one thing it must not hide.
+   */
+  // Not `readonly ConnectedPosition[]`: `cdkConnectedOverlayPositions` takes a
+  // mutable array, and a readonly one fails the template type check.
+  protected readonly positions: ConnectedPosition[] = [
+    {originX: "start", originY: "bottom", overlayX: "start", overlayY: "top", offsetY: 8},
+    {originX: "start", originY: "top", overlayX: "start", overlayY: "bottom", offsetY: -8},
+    {originX: "end", originY: "bottom", overlayX: "end", overlayY: "top", offsetY: 8},
+    {originX: "end", originY: "top", overlayX: "end", overlayY: "bottom", offsetY: -8}
+  ];
+
+  /**
+   * The popup's id, so the mark can point `aria-describedby` at it while it is
+   * open.
+   *
+   * The overlay renders on the body, nowhere near the button in the DOM, so a
+   * screen reader would otherwise never reach the rows from the mark. The name
+   * still carries the verdict on its own - the description is the detail
+   * behind it.
+   */
+  protected readonly panelId = computed(() => `verdict-${this.elementKey()}`);
+
+
   protected toggle(): void {
     this.#dispatch.verdictToggled(this.elementKey());
+  }
+
+
+  /** Escape closes it, as it closes every popup. */
+  protected onOverlayKeydown(event: KeyboardEvent): void {
+    if (event.key === "Escape") this.close();
+  }
+
+
+  protected close(): void {
+    if (this.open()) this.#dispatch.verdictToggled(this.elementKey());
   }
 
 }

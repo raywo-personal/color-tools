@@ -173,6 +173,14 @@ digit; a style beyond that needs a wider index field first, or
   colour they can see in the chip row. Which row of the APCA table rated a
   size, and what the inks and grounds are called, is true of the derivation
   and not of the page - it read as an answer to a question nobody asked
+- **A verdict opens as a popup, in the app's colours.** A CDK overlay off
+  `verdict-mark.html`, so nothing in the preview moves and the preview's own
+  `overflow-hidden` cannot clip it; in the flow it pushed the page it was
+  about downwards, and inside a table cell it re-apportioned the columns. The
+  popup takes `panel`, `line`, `text` and `dim` - it is the app looking at the
+  visitor's page from outside, and in the page's own palette it read as part
+  of the sample content. The mark itself still takes its colour from APCA,
+  because it does sit on the page
 - One mark per named element, not per occurrence. The running text, the nav
   items, the table's cells and the small print each appear more than once and
   are one ink on one ground at one size – a mark per occurrence would count

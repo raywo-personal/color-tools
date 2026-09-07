@@ -265,15 +265,7 @@
          goes in the last column, the cell's in the first and the number's one
          row further down, so no two of them are within a hit area of each
          other. Each still names the element it judges, and all three cells of
-         a row are one element.
-
-         **Their panels open under the table, not in the cell.** A verdict is a
-         paragraph of prose, and an auto-layout table apportions its columns
-         around the widest thing in them: a panel inside a `<td>` pushes all
-         three columns into new widths on the way in and back out again on the
-         way out. Under the table it is still in the page's flow and still
-         next to what it judges, and it is the only place in the preview where
-         the panel is not directly under its element. -->
+         a row are one element. -->
     <table class="mb-8 w-full border-collapse text-left wrap-anywhere">
       <thead>
         <tr class="border-b" [style.border-bottom-color]="style().pageColor">
@@ -284,7 +276,7 @@
                 [style.font-size]="style().tableHeader.fontSize"
                 [style.font-weight]="style().tableHeader.fontWeight"
                 [style.line-height]="style().tableHeader.lineHeight"
-                [style.color]="style().accentSoft">@if ($last) {<ct-verdict-mark elementKey="tableHeader" [inline]="true" [panelBelow]="false"/>}{{ column.caption }}</th>
+                [style.color]="style().accentSoft">@if ($last) {<ct-verdict-mark elementKey="tableHeader" [inline]="true" />}{{ column.caption }}</th>
           }
         </tr>
       </thead>
@@ -295,26 +287,19 @@
             <td class="py-2.5"
                 [style.font-size]="style().tableCell.fontSize"
                 [style.font-weight]="style().tableCell.fontWeight"
-                [style.line-height]="style().tableCell.lineHeight">@if (rowIndex === 0) {<ct-verdict-mark elementKey="tableCell" [inline]="true" [panelBelow]="false"/>}{{ row.element }}</td>
+                [style.line-height]="style().tableCell.lineHeight">@if (rowIndex === 0) {<ct-verdict-mark elementKey="tableCell" [inline]="true" />}{{ row.element }}</td>
 
             @for (value of row.values; track $index) {
               <td class="py-2.5 text-right tabular-nums"
                   [style.font-family]="style().tableNumber.fontFamily"
                   [style.font-size]="style().tableNumber.fontSize"
                   [style.font-weight]="style().tableNumber.fontWeight"
-                  [style.line-height]="style().tableNumber.lineHeight">@if (rowIndex === 1 && $first) {<ct-verdict-mark elementKey="tableNumber" [inline]="true" [panelBelow]="false"/>}{{ value }}</td>
+                  [style.line-height]="style().tableNumber.lineHeight">@if (rowIndex === 1 && $first) {<ct-verdict-mark elementKey="tableNumber" [inline]="true" />}{{ value }}</td>
             }
           </tr>
         }
       </tbody>
     </table>
-
-    <!-- No margins out here: a closed panel is an empty block, and a margin on
-         it would leave three gaps under the table while nothing is open. The
-         open panel carries its own spacing. -->
-    <ct-verdict-panel elementKey="tableHeader"/>
-    <ct-verdict-panel elementKey="tableCell"/>
-    <ct-verdict-panel elementKey="tableNumber"/>
 
     <div class="my-8 rounded-xs border-l-2 px-6 py-5"
          [style.background-color]="style().cardBackground"

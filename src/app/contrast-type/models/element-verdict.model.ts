@@ -320,7 +320,9 @@ export function verdictFacts(verdict: ElementVerdict, palette: Palette): readonl
 
   if (verdict.state === "pass") return facts;
 
-  facts.push({label: "Passes at", value: carriedBy(verdict)});
+  // "Would pass at", not "Passes at": the element does not pass, and the
+  // indicative read as a claim that it does.
+  facts.push({label: "Would pass at", value: carriedBy(verdict)});
 
   if (!missedRequirement(verdict)) return facts;
 

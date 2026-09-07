@@ -9,6 +9,11 @@
    of the page. */
 @import "@angular/cdk/a11y-prebuilt.css";
 
+/* The verdict popups are CDK overlays, which render into a container appended
+   to the body. Without this stylesheet that container is unpositioned, so
+   every popup lands at the end of the document instead of beside its mark. */
+@import "@angular/cdk/overlay-prebuilt.css";
+
 @source "./app";
 @source "./index.html";
 

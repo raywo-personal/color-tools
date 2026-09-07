@@ -193,13 +193,14 @@ describe("WebsitePreview", () => {
   });
 
 
-  it("opens a table element's verdict outside the table, not inside a cell", async () => {
-    // A paragraph of prose inside a `<td>` is what an auto-layout table
-    // apportions its columns around: opened in the cell, the header's verdict
-    // pushes all three columns into new widths and back out again on the way
-    // out.
+  it("opens a verdict without moving anything in the page", async () => {
+    // In the flow the panel pushed the elements below it down, and inside a
+    // table cell it re-apportioned the columns - reading one verdict
+    // rearranged the page it was about. On the body it does neither, which is
+    // also what lets the table's marks sit inside its cells.
     const {page, fixture} = await preview();
     const inTheTable = page.querySelector("table ct-verdict-mark button") as HTMLElement;
+    const before = page.getBoundingClientRect().height;
 
     expect(inTheTable.getAttribute("aria-label")).toMatch(/^Table /);
 
@@ -207,14 +208,15 @@ describe("WebsitePreview", () => {
     await fixture.whenStable();
 
     expect(inTheTable.getAttribute("aria-expanded")).toBe("true");
+    expect(page.getBoundingClientRect().height).toBe(before);
 
-    // The panel is a sibling of the table, and there is exactly one of it.
-    const panels = Array.from(page.querySelectorAll("ct-verdict-panel"))
-      .filter(panel => (panel.textContent ?? "").length > 0);
+    // Nothing of it is inside the preview at all.
+    expect(page.querySelector("ct-verdict-panel")).toBeNull();
 
-    expect(panels).toHaveLength(1);
-    expect(panels[0].closest("table")).toBeNull();
-    expect(panels[0].textContent).toContain("Lc ");
+    const popups = document.querySelectorAll(".cdk-overlay-container ct-verdict-panel");
+
+    expect(popups).toHaveLength(1);
+    expect(popups[0].textContent).toContain("Lc ");
   });
 
 
@@ -268,11 +270,12 @@ describe("WebsitePreview", () => {
 
     expect(opened).toHaveLength(1);
 
-    const panel = opened[0].closest("ct-verdict-mark") as HTMLElement;
+    // The rows: the Lc reached, the Lc needed, the type, and what would carry
+    // it. The popup lives in the overlay container, not beside its mark.
+    const popup = document.querySelector(".cdk-overlay-container ct-verdict-panel");
 
-    // The element, then the reasons: colours, type, the Lc reached against
-    // the one asked for, and what would carry it.
-    expect(panel.textContent).toContain("Lc ");
+    expect(popup?.textContent).toContain("Lc ");
+    expect(opened[0].getAttribute("aria-describedby")).toBe(popup?.getAttribute("id"));
 
     await press(5);
 

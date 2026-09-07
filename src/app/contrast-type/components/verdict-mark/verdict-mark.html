@@ -24,11 +24,14 @@
          guaranteed against none of them. The ring is offset, and the offset
          lands on that same surface. -->
     <button type="button"
+            cdkOverlayOrigin
+            #origin="cdkOverlayOrigin"
             class="absolute top-1/2 left-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2"
             [style.color]="inkHex()"
             [style.outline-color]="inkHex()"
             [attr.aria-label]="label()"
             [attr.aria-expanded]="open()"
+            [attr.aria-describedby]="open() ? panelId() : null"
             (click)="toggle()">
       <ct-verdict-shape class="size-4" [state]="verdict().state"/>
     </button>
@@ -46,11 +49,24 @@
         [class.underline-offset-4]="missed()"><ng-content/></span>
 </span>
 
-<!-- The panel, unless the caller places it itself - `panelBelow` says why the
-     table's three marks do. `ml-6` lines it up under the element rather than
-     under the gutter; inline there is no gutter to skip. -->
-@if (panelBelow()) {
-  <ct-verdict-panel [class.ml-6]="!inline()"
-                    [elementKey]="elementKey()"
-                    [surface]="surface()"/>
-}
+<!-- The verdict as a popup rather than a block in the flow: in the flow it
+     pushed the page it was about downwards, and inside a table cell it
+     re-apportioned the columns. On the body it moves nothing, and the
+     preview's `overflow-hidden` cannot clip it.
+
+     A transparent backdrop, so a click anywhere closes it without a scrim
+     dimming the page the visitor is judging. `detach` covers the case the
+     strategy gives up - a mark scrolled out of view - and keeps the store
+     from holding a verdict nobody can see. -->
+<ng-template cdkConnectedOverlay
+             [cdkConnectedOverlayOrigin]="origin"
+             [cdkConnectedOverlayOpen]="open()"
+             [cdkConnectedOverlayPositions]="positions"
+             [cdkConnectedOverlayViewportMargin]="8"
+             cdkConnectedOverlayHasBackdrop
+             cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+             (backdropClick)="close()"
+             (detach)="close()"
+             (overlayKeydown)="onOverlayKeydown($event)">
+  <ct-verdict-panel [id]="panelId()" [elementKey]="elementKey()"/>
+</ng-template>

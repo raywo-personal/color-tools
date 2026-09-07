@@ -155,13 +155,13 @@ export class ApcaRating {
    * and the pair's Lc is what the screen is named after; nothing else in the
    * derivation is theirs to read.
    *
-   * `Passes at` is left out where the element already passes: what would
+   * `Would pass at` is left out where the element already passes: what would
    * carry something already carried is a question nobody asked.
    */
   protected readonly facts = computed<readonly VerdictFact[]>(() => {
     const verdict = this.#verdict();
     const rows = verdictFacts(verdict, this.#stateStore.currentPalette())
-      .filter(fact => fact.label === "Passes at");
+      .filter(fact => fact.label === "Would pass at");
 
     return [...rows, this.#pairFact()];
   });

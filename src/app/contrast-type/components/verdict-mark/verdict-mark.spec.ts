@@ -47,8 +47,13 @@ describe("VerdictMark", () => {
       return host.querySelector("button") as HTMLElement;
     }
 
+    /**
+     * The open popup. A CDK overlay renders into a container on the body, not
+     * into the fixture - which is the whole point of it: nothing in the
+     * preview moves and nothing clips it.
+     */
     function panel(): HTMLElement | null {
-      return host.querySelector("[style*='border-color']");
+      return document.querySelector(".cdk-overlay-container ct-verdict-panel");
     }
 
     async function press() {
@@ -93,7 +98,7 @@ describe("VerdictMark", () => {
 
 
   it("opens the reasons in words and closes on a second press", async () => {
-    const {button, panel, press, host} = await mark("imageCaption");
+    const {button, panel, press} = await mark("imageCaption");
 
     expect(panel()).toBeNull();
 
@@ -102,7 +107,7 @@ describe("VerdictMark", () => {
     expect(button().getAttribute("aria-expanded")).toBe("true");
     expect(panel()).not.toBeNull();
 
-    const text = host.textContent ?? "";
+    const text = panel()?.textContent ?? "";
 
     // The element, its verdict in words, and the rows: the two Lc figures and
     // the type. No prose, and nothing about the APCA table's own rows.
@@ -120,17 +125,37 @@ describe("VerdictMark", () => {
   });
 
 
-  it("paints the opened verdict on its own surface, in a colour APCA chose for it", async () => {
-    // The panel opens into the page, so a token would be guaranteed against
-    // none of the colours behind it.
+  it("paints the popup in the app's colours, not the page's", async () => {
+    // It is the app looking at the visitor's page from outside. In the page's
+    // own palette it read as part of the sample content - a box the visitor
+    // had somehow styled - which is the one thing it is not.
     const {panel, press, colors} = await mark("headline");
 
     await press();
 
     const opened = panel() as HTMLElement;
+    const surface = opened.firstElementChild as HTMLElement;
 
-    expect(opened.style.backgroundColor).toBe(colors.page.hex("rgb"));
-    expect(opened.style.color).toBe(findOptimalTextColor(colors.page).color.hex("rgb"));
+    expect(surface.className).toContain("bg-panel");
+    expect(surface.className).toContain("border-line");
+    expect(surface.className).toContain("text-text");
+
+    // No style binding hands it a page colour, so nothing in it needs
+    // measuring against one.
+    expect(opened.innerHTML).not.toContain(colors.page.hex("rgb"));
+  });
+
+
+  it("moves nothing in the page when it opens", async () => {
+    // In the flow the panel pushed the elements below it down, so reading one
+    // verdict rearranged the page it was about.
+    const {host, press} = await mark("headline");
+    const before = host.getBoundingClientRect().height;
+
+    await press();
+
+    expect(host.getBoundingClientRect().height).toBe(before);
+    expect(host.querySelector("ct-verdict-panel")).toBeNull();
   });
 
 
