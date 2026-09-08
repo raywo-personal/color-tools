@@ -11,12 +11,16 @@
     <!-- Shown only with something to clear: a control that resets nothing is a
          control that answers nothing. The name spells the effect out, as
          `PALETTE PAIR` does - `RESET PAGE` alone does not say what a page is
-         reset to - and it is in sentence case, because a screen reader spells
-         an all-caps name out letter by letter. The visible caption stays
-         all-caps: WCAG 2.5.3 matches label-in-name without regard to case. -->
+         reset to - and it opens with the visible caption **verbatim**, the
+         effect after a colon. WCAG 2.5.3 asks the name to contain the label,
+         so a rephrased caption leaves speech input with nothing to say: `Reset
+         the page` is not `RESET PAGE`. A screen reader does spell the all-caps
+         caption out letter by letter, and that is the price - the same one
+         `pair-actions` pays. The row's own reset shows no label at all and is
+         free to stay sentence case. -->
     <button type="button"
             class="flex h-11 cursor-pointer items-center gap-2 rounded-xs border border-line px-3 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
-            aria-label="Reset the page: every element back to its default color"
+            aria-label="RESET PAGE: every element back to its default color"
             (click)="resetPage()">
       <svg class="size-4 shrink-0"
            viewBox="0 0 16 16" fill="none" stroke="currentColor"

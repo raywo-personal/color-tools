@@ -78,8 +78,14 @@ describe("PlacedColors", () => {
         .map(row => row.querySelector("button") as HTMLButtonElement);
     }
 
-    function resetPage() {
-      return host.querySelector("button[aria-label^='Reset the page']") as HTMLButtonElement | null;
+    /**
+     * The page-wide reset: the one control outside the rows. Found by where it
+     * sits rather than by what it is called, so a change of wording is caught
+     * by the spec that pins the wording and not by every spec that presses it.
+     */
+    function resetPage(): HTMLButtonElement | null {
+      return Array.from(host.querySelectorAll("button"))
+        .find(button => button.closest("li") === null) ?? null;
     }
 
     async function press(button: HTMLButtonElement) {
@@ -295,18 +301,21 @@ describe("PlacedColors", () => {
     });
 
 
-    it("names the page-wide reset in sentence case, like the row's", async () => {
-      // The visible caption stays `RESET PAGE`; the name does not. A screen
-      // reader spells an all-caps name out letter by letter, and a visitor
-      // would hear `R-E-S-E-T P-A-G-E` from this control and `Reset` from
-      // every row reset beside it.
+    it("opens the page-wide reset's name with its visible caption", async () => {
+      // WCAG 2.5.3 asks the accessible name to contain the visible label, so
+      // the caption goes in verbatim and the effect follows it - a rephrased
+      // `Reset the page` leaves speech input with nothing that matches. The
+      // row's own reset carries no visible label and stays sentence case.
       const {place, resetPage} = await ledger();
 
       await place("headline", "color2");
 
-      expect(resetPage()!.getAttribute("aria-label"))
-        .toBe("Reset the page: every element back to its default color");
-      expect(resetPage()!.textContent?.trim()).toBe("RESET PAGE");
+      const label = resetPage()!.getAttribute("aria-label")!;
+      const caption = resetPage()!.textContent!.trim();
+
+      expect(label).toBe("RESET PAGE: every element back to its default color");
+      expect(caption).toBe("RESET PAGE");
+      expect(label).toContain(caption);
     });
 
 
