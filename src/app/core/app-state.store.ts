@@ -24,8 +24,13 @@ import {allEffects} from "@core/all-effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {
   backgroundColorChangedReducer,
+  chipPickedUpReducer,
+  chipPutDownReducer,
+  colorPlacedReducer,
   contrastColorsChangedWithoutNavReducer,
   newRandomContrastColorsWithNavReducer,
+  placementResetReducer,
+  placementsResetReducer,
   restoreContrastColorsReducer,
   switchColorsReducer,
   textColorChangedReducer,
@@ -81,7 +86,15 @@ export const AppStateStore = signalStore(
     on(contrastEvents.newRandomColorsWithNav, newRandomContrastColorsWithNavReducer),
     on(contrastEvents.switchColors, switchColorsReducer),
     on(contrastEvents.restoreContrastColors, restoreContrastColorsReducer),
-    on(contrastEvents.verdictToggled, verdictToggledReducer)
+    on(contrastEvents.verdictToggled, verdictToggledReducer),
+    // Last, and order-free: nothing else reads the placements or the carried
+    // chip, and these read nothing else. Keep them here rather than between
+    // reducers whose order is load-bearing.
+    on(contrastEvents.colorPlaced, colorPlacedReducer),
+    on(contrastEvents.chipPickedUp, chipPickedUpReducer),
+    on(contrastEvents.chipPutDown, chipPutDownReducer),
+    on(contrastEvents.placementReset, placementResetReducer),
+    on(contrastEvents.placementsReset, placementsResetReducer)
   ),
   withEventHandlers(allEffects)
 );

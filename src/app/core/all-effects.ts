@@ -4,14 +4,14 @@ import {commonEvents} from "@core/common/common.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {inject} from "@angular/core";
-import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {LocalStorage} from "@common/services/local-storage.service";
+import {AnnouncementService} from "@common/services/announcement.service";
 import {ColorThemeService} from "@common/services/color-theme.service";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
 import {colorThemeChangeEffect, fontAnnouncedEffect, loadFontsEffect} from "@core/common/common.effects";
 import {colorChangedEffect, randomColorAnnouncedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
 import {newPaletteAnnouncedEffect} from "@core/palettes/palettes.effects";
-import {contrastPairAnnouncedEffect} from "@core/contrast/contrast.effects";
+import {contrastPairAnnouncedEffect, placementAnnouncedEffect} from "@core/contrast/contrast.effects";
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
@@ -27,24 +27,32 @@ export function allEffects(
   localStorageService = inject(LocalStorage),
   themeService = inject(ColorThemeService),
   fontLoaderService = inject(GoogleFontLoaderService),
-  announcer = inject(LiveAnnouncer)
+  // Every polite sentence the effects raise goes through this one service,
+  // which decides between a gesture's own sentence and the page's tally -
+  // `AnnouncementService` says why. Do not inject `LiveAnnouncer` here.
+  announcements = inject(AnnouncementService)
 ) {
   return {
     setColorTheme$: colorThemeChangeEffect(events, themeService),
 
     loadFonts$: loadFontsEffect(events, fontLoaderService, store),
 
-    fontAnnounced$: fontAnnouncedEffect(events, announcer, store),
+    fontAnnounced$: fontAnnouncedEffect(events, announcements, store),
 
     setBackgroundColor$: useAsBackgroundChangedEffect(events, themeService, store),
 
     colorChanged$: colorChangedEffect(events, themeService, store),
 
-    randomColorAnnounced$: randomColorAnnouncedEffect(events, announcer, store),
+    randomColorAnnounced$: randomColorAnnouncedEffect(events, announcements, store),
 
-    newPaletteAnnounced$: newPaletteAnnouncedEffect(events, announcer, store),
+    newPaletteAnnounced$: newPaletteAnnouncedEffect(events, announcements, store),
 
-    contrastPairAnnounced$: contrastPairAnnouncedEffect(events, announcer, store),
+    contrastPairAnnounced$: contrastPairAnnouncedEffect(events, announcements, store),
+
+    // Announced, not persisted: the placements are part of the result, and
+    // carrying them across a reload is #68's - so none of the three events
+    // below joins the persistable list.
+    placementAnnounced$: placementAnnouncedEffect(events, announcements, store),
 
     anyPersistableEvents$: events
       .on(

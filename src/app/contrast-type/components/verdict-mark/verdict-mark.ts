@@ -1,24 +1,39 @@
-import {Component, computed, inject, input} from "@angular/core";
+import {Component, computed, ElementRef, inject, input, signal, viewChild} from "@angular/core";
+import {CdkTrapFocus} from "@angular/cdk/a11y";
 import {CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition} from "@angular/cdk/overlay";
 import {Color} from "chroma-js";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
-import {SampleGround, samplePageColors} from "@contrast-type/models/sample-page.model";
+import {SampleGround, samplePage} from "@contrast-type/models/sample-page.model";
 import {
   elementName,
   missedRequirement,
   verdictFor,
   verdictWord
 } from "@contrast-type/models/element-verdict.model";
+import {PlacementGesture} from "@contrast-type/services/placement-gesture.service";
+import {ColorChooser} from "@contrast-type/components/color-chooser/color-chooser";
 import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shape";
 import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-panel";
 
 
 /**
- * The verdict beside one element of the sample page: a mark that says how the
- * element fares, and opens the reasons in words.
+ * The app's handle on one element of the sample page: a mark that says how the
+ * element fares, opens the reasons in words, offers the palette, and answers a
+ * chip released on the element.
+ *
+ * **One handle per element, and it is this one.** The mark already existed
+ * once per named element, already carried the element's name, and was already
+ * the element's only stop in the tab order - so `Tab` to an element and press
+ * is a path the page had before a colour could be placed on it. A second
+ * control per element would have doubled the preview's tab stops and given one
+ * element two names to be reached by, which is the same drift the "one mark
+ * per named element" rule forbids. What grew is what the press opens, not how
+ * many things there are to press: the verdict rows, and under them the chips.
+ * The popup is what says both jobs - `dialogLabel` - because a name spoken on
+ * every pass through the page cannot carry an inventory.
  *
  * **The mark is anchored to its element, not placed in a gutter.** It wraps
  * the element and sits in a column of its own in front of it, so the two move
@@ -71,20 +86,44 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * **The popup is drawn in the app's colours, not the page's** - see
  * `VerdictPanel`. It is the app looking at the visitor's page from outside,
  * and it is meant to read as exactly that.
+ *
+ * **The whole mark is the element's drop target, badge included.** The
+ * attribute sits on the host rather than on the wrapped copy, so every element
+ * has at least the button's own hit area to release a chip on - three of the
+ * table's marks wrap a few characters and one wraps a word inside a line.
+ * `PlacementGesture` reads the attribute; do not move it onto the copy.
+ *
+ * **What is drawn while a chip is carried is the app's chrome on the visitor's
+ * page**, so the outline and the name take the same APCA foreground the rim
+ * takes, against the same `surface`. That is why `surface` has to be right on
+ * every mark and not only on the three whose ground is not what is behind
+ * them.
+ *
+ * **The popup is also the no-drag way to colour the element**, for a keyboard
+ * and for a finger alike: a drag cannot be performed from a keyboard, and
+ * below `lg` the preview is stacked under the whole control column, so a
+ * finger cannot practically drag to it either. Tab or tap to the mark, press,
+ * and the palette is there - `ColorChooser`.
  */
 @Component({
   selector: "ct-verdict-mark",
-  imports: [VerdictShape, VerdictPanel, CdkOverlayOrigin, CdkConnectedOverlay],
+  imports: [VerdictShape, VerdictPanel, ColorChooser, CdkOverlayOrigin, CdkConnectedOverlay, CdkTrapFocus],
   templateUrl: "./verdict-mark.html",
   host: {
     "[class.block]": "!inline()",
-    "[class.inline]": "inline()"
+    "[class.inline]": "inline()",
+    "[attr.data-place-target]": "elementKey()",
+    "(pointerenter)": "onHover(true)",
+    "(pointerleave)": "onHover(false)",
+    "(focusin)": "onFocusWithin(true)",
+    "(focusout)": "onFocusWithin(false)"
   }
 })
 export class VerdictMark {
 
   readonly #stateStore = inject(AppStateStore);
   readonly #dispatch = injectDispatch(contrastEvents);
+  readonly #gesture = inject(PlacementGesture);
 
   /** The `SAMPLE_ELEMENTS` key of the element this mark judges. */
   readonly elementKey = input.required<string>();
@@ -104,14 +143,15 @@ export class VerdictMark {
    */
   readonly inline = input(false);
 
-  readonly #colors = computed(() => samplePageColors(
+  readonly #page = computed(() => samplePage(
     this.#stateStore.contrastColors(),
-    this.#stateStore.currentPalette()
+    this.#stateStore.currentPalette(),
+    this.#stateStore.placements()
   ));
 
   protected readonly verdict = computed(() => verdictFor(
     this.elementKey(),
-    this.#colors(),
+    this.#page(),
     this.#stateStore.typeRoles()
   ));
 
@@ -121,7 +161,7 @@ export class VerdictMark {
   readonly #surfaceColor = computed<Color>(() => {
     const surface = this.surface();
 
-    return surface === null ? this.verdict().ground : this.#colors()[surface];
+    return surface === null ? this.verdict().ground : this.#page().colors[surface];
   });
 
   /**
@@ -145,6 +185,40 @@ export class VerdictMark {
   });
 
   protected readonly missed = computed(() => missedRequirement(this.verdict()));
+
+  /** The element's all-caps name, as the page's own badge shows it. */
+  protected readonly caption = computed(() => this.verdict().element.caption);
+
+  /**
+   * What the popup is, in both of its jobs. The mark's own name stays the
+   * verdict: it is what a screen reader needs before deciding whether to press
+   * anything, and it is spoken on every pass through the page.
+   */
+  protected readonly dialogLabel = computed(() =>
+    `${elementName(this.verdict().element)}: verdict and color`);
+
+  readonly #hovered = signal(false);
+  readonly #focusedWithin = signal(false);
+
+  protected readonly carrying = this.#gesture.carrying;
+
+  /** Whether the pointer carrying a chip is over this element. */
+  protected readonly over = computed(() => this.#gesture.over() === this.elementKey());
+
+  /**
+   * Whether the element shows its outline and its name.
+   *
+   * Every element at once while a chip is carried, so the visitor can see
+   * where a colour may go; at rest only the one under the pointer or holding
+   * focus, so nothing marks the page until it is asked.
+   */
+  protected readonly named = computed(() =>
+    this.carrying() || this.#hovered() || this.#focusedWithin());
+
+  /** Solid names the drop; dashed only offers it. */
+  protected readonly dashed = computed(() => this.named() && !this.over());
+
+  private readonly markButton = viewChild.required<ElementRef<HTMLElement>>("markButton");
 
 
   /**
@@ -176,14 +250,41 @@ export class VerdictMark {
   protected readonly panelId = computed(() => `verdict-${this.elementKey()}`);
 
 
+  protected onHover(over: boolean): void {
+    this.#hovered.set(over);
+  }
+
+
+  protected onFocusWithin(inside: boolean): void {
+    this.#focusedWithin.set(inside);
+  }
+
+
+  /**
+   * **No branch for a chip in hand, and that is a claim about the gesture.** A
+   * chip is only ever in hand while CDK holds a pointer down, and a drag's
+   * release lands on a different element than its press, so the click the
+   * browser then fires goes to the two targets' common ancestor and never to
+   * this button. Nothing can therefore press a mark while something is
+   * carried. Give a carry a way to survive a released pointer - a tap path,
+   * say - and this needs to place instead of opening, or a drop will open a
+   * verdict over the page it just changed.
+   */
   protected toggle(): void {
     this.#dispatch.verdictToggled(this.elementKey());
   }
 
 
-  /** Escape closes it, as it closes every popup. */
+  /**
+   * Escape closes it, as it closes every popup - and hands focus back to the
+   * mark, because the popup takes it when it opens and closing without it
+   * would drop the visitor at the top of the document.
+   */
   protected onOverlayKeydown(event: KeyboardEvent): void {
-    if (event.key === "Escape") this.close();
+    if (event.key !== "Escape") return;
+
+    this.markButton().nativeElement.focus();
+    this.close();
   }
 
 

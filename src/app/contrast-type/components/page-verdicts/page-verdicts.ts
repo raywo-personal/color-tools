@@ -1,7 +1,7 @@
 import {Component, computed, effect, inject} from "@angular/core";
-import {LiveAnnouncer} from "@angular/cdk/a11y";
+import {AnnouncementService} from "@common/services/announcement.service";
 import {AppStateStore} from "@core/app-state.store";
-import {samplePageColors} from "@contrast-type/models/sample-page.model";
+import {samplePage} from "@contrast-type/models/sample-page.model";
 import {
   pageVerdicts,
   VERDICT_STATES,
@@ -47,6 +47,11 @@ interface CountEntry {
  * on a slider drag without moving focus, so it is announced when it moves -
  * see `#countsAnnounced` - rather than held in a region that would queue a
  * sentence per frame.
+ *
+ * **The tally is the sentence of last resort.** Where the visitor's own
+ * gesture already has one - a swap, a roll, `PALETTE PAIR`, a placement - that
+ * one is what they hear and this one gives way. `AnnouncementService` is
+ * where the two meet; nothing here decides it.
  */
 @Component({
   selector: "ct-page-verdicts",
@@ -59,15 +64,16 @@ interface CountEntry {
 export class PageVerdicts {
 
   readonly #stateStore = inject(AppStateStore);
-  readonly #announcer = inject(LiveAnnouncer);
+  readonly #announcements = inject(AnnouncementService);
 
-  readonly #colors = computed(() => samplePageColors(
+  readonly #page = computed(() => samplePage(
     this.#stateStore.contrastColors(),
-    this.#stateStore.currentPalette()
+    this.#stateStore.currentPalette(),
+    this.#stateStore.placements()
   ));
 
   readonly #pageCounts = computed(() => verdictCounts(
-    pageVerdicts(this.#colors(), this.#stateStore.typeRoles())
+    pageVerdicts(this.#page(), this.#stateStore.typeRoles())
   ));
 
   protected readonly counts = computed<readonly CountEntry[]>(() => {
@@ -95,6 +101,11 @@ export class PageVerdicts {
    * makes the tally announceable at all; the opening state is what the visitor
    * arrived at, not something that just happened.
    *
+   * **`summarise()` is called on every run, `null` included.** It is not a
+   * guard the caller may skip: the call is also what releases a gesture's
+   * claim on the change - see `AnnouncementService.#gestureSpoke`. An early
+   * `return` here would cost the *next* change its summary.
+   *
    * Polite: the visitor is holding a slider or a picker, and there is nothing
    * to interrupt.
    */
@@ -105,9 +116,7 @@ export class PageVerdicts {
 
     this.#spoken = sentence;
 
-    if (first || !moved) return;
-
-    void this.#announcer.announce(`On the page: ${sentence}.`, "polite");
+    this.#announcements.summarise(first || !moved ? null : `On the page: ${sentence}.`);
   });
 
 }

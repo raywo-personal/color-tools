@@ -16,7 +16,7 @@ import {
   inkOf,
   SampleElement,
   SAMPLE_ELEMENTS,
-  SamplePageColors,
+  SamplePage,
   sampleElement
 } from "@contrast-type/models/sample-page.model";
 
@@ -106,10 +106,10 @@ export function elementFontSize(element: SampleElement, roles: TypeRolesMap): nu
  * own Lc never could. `sample-page.model.ts` holds which ground that is.
  */
 export function elementVerdict(element: SampleElement,
-                               colors: SamplePageColors,
+                               page: SamplePage,
                                roles: TypeRolesMap): ElementVerdict {
-  const ink = inkOf(element, colors);
-  const ground = groundOf(element, colors);
+  const ink = inkOf(element, page);
+  const ground = groundOf(element, page);
   const fontSize = elementFontSize(element, roles);
   const sizeKey = fontSizeKeyFrom(fontSize);
   const fontWeight = String(roles[element.role].settings.fontWeight) as FontWeight;
@@ -140,17 +140,17 @@ export function elementVerdict(element: SampleElement,
 
 
 /** Every element of the page, in reading order. */
-export function pageVerdicts(colors: SamplePageColors,
+export function pageVerdicts(page: SamplePage,
                              roles: TypeRolesMap): readonly ElementVerdict[] {
-  return SAMPLE_ELEMENTS.map(element => elementVerdict(element, colors, roles));
+  return SAMPLE_ELEMENTS.map(element => elementVerdict(element, page, roles));
 }
 
 
 /** The verdict for the element with the given key. */
 export function verdictFor(key: string,
-                           colors: SamplePageColors,
+                           page: SamplePage,
                            roles: TypeRolesMap): ElementVerdict {
-  return elementVerdict(sampleElement(key), colors, roles);
+  return elementVerdict(sampleElement(key), page, roles);
 }
 
 
@@ -330,26 +330,15 @@ export function verdictFacts(verdict: ElementVerdict, palette: Palette): readonl
   facts.push({label: "Would pass at", value: carriedBy(verdict)});
 
   if (!missedRequirement(verdict)) return facts;
-  if (!inkIsMovable(element)) return facts;
+  // Only where the ink is the visitor's to move. The three inks the app
+  // computes for itself take a colour on their ground instead, so the
+  // nearest palette colour changes none of them and the row would suggest a
+  // fix that does not exist. Which three, and why, is
+  // `SampleElement.placement` - the one list, read here rather than spelled
+  // out a second time.
+  if (element.placement !== "ink") return facts;
 
   return [...facts, nearest(verdict, palette)];
-}
-
-
-/**
- * Whether the element's ink is a colour the visitor could plausibly replace
- * with a palette member - see `nearest()`.
- *
- * `onAccent`, `onMuted` and `danger` are computed by the app rather than set
- * by the visitor or read from the palette: `onAccent` is whichever of black
- * or white APCA puts further from the accent, `onMuted` is a fixed mix off
- * the pair, and `danger` is one of two constants picked by the page's
- * lightness. Taking the nearest palette colour changes none of them - the
- * lever there is the ground, not the ink - so the row would suggest a fix
- * that does not exist.
- */
-function inkIsMovable(element: SampleElement): boolean {
-  return element.ink !== "onAccent" && element.ink !== "onMuted" && element.ink !== "danger";
 }
 
 

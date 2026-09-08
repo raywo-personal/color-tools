@@ -35,10 +35,31 @@
     class="grid grid-cols-5 gap-1">
   @for (chip of chips(); track chip.slot) {
     <li class="min-w-0">
+      <!-- One button, two gestures - the component says how they are kept
+           apart. `cdkDrag` with no drop list: the elements that answer a carry
+           live in the preview's own component tree, so the two halves talk
+           through `carriedSlot` in the store rather than through a connected
+           list that would have to cross both trees.
+
+           `pointerdown` and `keydown` both mark the start of a gesture, which
+           is where the drag flag is cleared. Neither may be folded into the
+           click: by the time a click arrives the browser has forgotten which
+           one produced it.
+
+           `pointer-events-none` while the chip is out is what makes a drop
+           land on the element under the pointer rather than on the chip
+           itself - see `dragging`. -->
       <button type="button"
+              cdkDrag
+              [cdkDragStartDelay]="dragStartDelay"
               class="block h-11 w-full cursor-pointer rounded-xs border border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+              [class.pointer-events-none]="dragging()"
               [style.background-color]="chip.background"
               [attr.aria-label]="chip.label"
+              (pointerdown)="onGestureStart()"
+              (keydown)="onGestureStart()"
+              (cdkDragStarted)="onDragStarted(chip)"
+              (cdkDragEnded)="onDragEnded($event)"
               (click)="apply(chip)"></button>
     </li>
   }

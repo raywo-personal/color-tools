@@ -3,14 +3,23 @@ import {mixColors} from "@engine/color/mix-color.helper";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {TypeRole} from "@engine/contrast/type-role.model";
-import {Palette, PALETTE_SLOTS} from "@engine/palette/palette.model";
+import {Palette, PALETTE_SLOTS, PaletteSlot} from "@engine/palette/palette.model";
 
 
-/** The inks the sample page writes with, named after the surface they come from. */
+/**
+ * The inks the sample page writes with, named after the surface they come
+ * from - all but `onAccent`, which names no surface: it is a foreground
+ * computed from whatever the element is written on, and `inkOf()` is where
+ * that happens. Do not put it back into `SamplePageColors`; a field there
+ * could only be right for one ground.
+ */
 export type SampleInk = "text" | "dim" | "accent" | "accentSoft" | "onAccent" | "onMuted" | "danger";
 
 /** The grounds the sample page's text sits on. */
 export type SampleGround = "page" | "card" | "nav" | "accent" | "muted" | "field";
+
+/** Which of an element's two colours a placed palette colour replaces. */
+export type SamplePlacement = "ink" | "ground";
 
 
 /**
@@ -43,6 +52,23 @@ export interface SampleElement {
    * marks beside the page.
    */
   readonly figure: boolean;
+  /**
+   * Which of the element's two colours a placed palette colour replaces.
+   *
+   * `ink` wherever the ink is the visitor's own. `ground` for the three inks
+   * the app computes for itself: `onAccent` is whichever of black or white
+   * APCA puts further from the accent, `onMuted` is a fixed mix off the pair,
+   * and `danger` is one of two constants picked by the page's lightness.
+   * Handing one of those three a palette colour would throw away a value the
+   * app derived for a reason, so on those elements the lever is the ground -
+   * the filled button takes a colour as its fill and keeps its computed
+   * label, the error line takes one as the surface it sits on.
+   *
+   * **This field is also what decides whether a nearest-colour row is worth
+   * offering** - see `verdictFacts()`. Do not spell the three computed inks
+   * out a second time anywhere: two lists drift the day a fourth is added.
+   */
+  readonly placement: SamplePlacement;
 
 }
 
@@ -79,28 +105,28 @@ const BODY_TEXT_SIZE_RATIO = 1;
  * dim ink, and the caption sits at the small print's size.
  */
 export const SAMPLE_ELEMENTS: readonly SampleElement[] = [
-  {key: "navActive", caption: "ACTIVE NAV ITEM", role: "ui", sizeRatio: 0.87, ink: "text", ground: "nav", figure: false},
-  {key: "navItems", caption: "NAV ITEMS", role: "ui", sizeRatio: 0.87, ink: "dim", ground: "nav", figure: false},
-  {key: "signIn", caption: "SIGN IN", role: "ui", sizeRatio: 0.87, ink: "accent", ground: "nav", figure: false},
-  {key: "eyebrow", caption: "EYEBROW", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: true},
-  {key: "headline", caption: "HEADLINE", role: "display", sizeRatio: 1, ink: "text", ground: "page", figure: true},
-  {key: "lead", caption: "LEAD", role: "body", sizeRatio: 1.22, ink: "text", ground: "page", figure: false},
-  {key: "filledButton", caption: "FILLED BUTTON", role: "ui", sizeRatio: 1, ink: "onAccent", ground: "accent", figure: true},
-  {key: "ghostButton", caption: "GHOST BUTTON", role: "ui", sizeRatio: 1, ink: "text", ground: "page", figure: false},
-  {key: "disabledButton", caption: "DISABLED BUTTON", role: "ui", sizeRatio: 1, ink: "onMuted", ground: "muted", figure: false},
-  {key: "bodyText", caption: "BODY TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "text", ground: "page", figure: true},
-  {key: "bodyLink", caption: "LINK IN TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "accent", ground: "page", figure: false},
-  {key: "fieldLabel", caption: "FIELD LABEL", role: "ui", sizeRatio: 0.8, ink: "accentSoft", ground: "page", figure: false},
-  {key: "fieldText", caption: "FIELD TEXT", role: "body", sizeRatio: 0.89, ink: "text", ground: "field", figure: false},
-  {key: "errorLine", caption: "ERROR LINE", role: "body", sizeRatio: 0.78, ink: "danger", ground: "page", figure: false},
-  {key: "imageLabel", caption: "IMAGE LABEL", role: "mono", sizeRatio: 1, ink: "dim", ground: "muted", figure: false},
-  {key: "imageCaption", caption: "CAPTION", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false},
-  {key: "tableHeader", caption: "TABLE HEADER", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: false},
-  {key: "tableCell", caption: "TABLE CELL", role: "body", sizeRatio: 0.83, ink: "text", ground: "page", figure: false},
-  {key: "tableNumber", caption: "TABLE NUMBER", role: "ui", sizeRatio: 0.87, ink: "text", ground: "page", figure: false},
-  {key: "cardLabel", caption: "CARD LABEL", role: "mono", sizeRatio: 0.9, ink: "dim", ground: "card", figure: false},
-  {key: "quote", caption: "PULL QUOTE", role: "body", sizeRatio: 1.3, ink: "text", ground: "card", figure: false},
-  {key: "smallPrint", caption: "SMALL PRINT", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false}
+  {key: "navActive", caption: "ACTIVE NAV ITEM", role: "ui", sizeRatio: 0.87, ink: "text", ground: "nav", figure: false, placement: "ink"},
+  {key: "navItems", caption: "NAV ITEMS", role: "ui", sizeRatio: 0.87, ink: "dim", ground: "nav", figure: false, placement: "ink"},
+  {key: "signIn", caption: "SIGN IN", role: "ui", sizeRatio: 0.87, ink: "accent", ground: "nav", figure: false, placement: "ink"},
+  {key: "eyebrow", caption: "EYEBROW", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: true, placement: "ink"},
+  {key: "headline", caption: "HEADLINE", role: "display", sizeRatio: 1, ink: "text", ground: "page", figure: true, placement: "ink"},
+  {key: "lead", caption: "LEAD", role: "body", sizeRatio: 1.22, ink: "text", ground: "page", figure: false, placement: "ink"},
+  {key: "filledButton", caption: "FILLED BUTTON", role: "ui", sizeRatio: 1, ink: "onAccent", ground: "accent", figure: true, placement: "ground"},
+  {key: "ghostButton", caption: "GHOST BUTTON", role: "ui", sizeRatio: 1, ink: "text", ground: "page", figure: false, placement: "ink"},
+  {key: "disabledButton", caption: "DISABLED BUTTON", role: "ui", sizeRatio: 1, ink: "onMuted", ground: "muted", figure: false, placement: "ground"},
+  {key: "bodyText", caption: "BODY TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "text", ground: "page", figure: true, placement: "ink"},
+  {key: "bodyLink", caption: "LINK IN TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "accent", ground: "page", figure: false, placement: "ink"},
+  {key: "fieldLabel", caption: "FIELD LABEL", role: "ui", sizeRatio: 0.8, ink: "accentSoft", ground: "page", figure: false, placement: "ink"},
+  {key: "fieldText", caption: "FIELD TEXT", role: "body", sizeRatio: 0.89, ink: "text", ground: "field", figure: false, placement: "ink"},
+  {key: "errorLine", caption: "ERROR LINE", role: "body", sizeRatio: 0.78, ink: "danger", ground: "page", figure: false, placement: "ground"},
+  {key: "imageLabel", caption: "IMAGE LABEL", role: "mono", sizeRatio: 1, ink: "dim", ground: "muted", figure: false, placement: "ink"},
+  {key: "imageCaption", caption: "CAPTION", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false, placement: "ink"},
+  {key: "tableHeader", caption: "TABLE HEADER", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: false, placement: "ink"},
+  {key: "tableCell", caption: "TABLE CELL", role: "body", sizeRatio: 0.83, ink: "text", ground: "page", figure: false, placement: "ink"},
+  {key: "tableNumber", caption: "TABLE NUMBER", role: "ui", sizeRatio: 0.87, ink: "text", ground: "page", figure: false, placement: "ink"},
+  {key: "cardLabel", caption: "CARD LABEL", role: "mono", sizeRatio: 0.9, ink: "dim", ground: "card", figure: false, placement: "ink"},
+  {key: "quote", caption: "PULL QUOTE", role: "body", sizeRatio: 1.3, ink: "text", ground: "card", figure: false, placement: "ink"},
+  {key: "smallPrint", caption: "SMALL PRINT", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false, placement: "ink"}
 ];
 
 
@@ -195,12 +221,17 @@ const WHITE = chroma("#FFFFFF");
 
 
 /**
- * Every color the sample page is drawn in, derived from the pair and the
+ * Every surface the sample page is drawn in, derived from the pair and the
  * palette.
  *
  * Inks and grounds are `Color`s rather than hex strings, because the rating
  * measures them and the preview paints them - one derivation for both, so the
  * figure is about the page the visitor sees.
+ *
+ * **Every field here is a colour of the page, not of one element.** `nav` is
+ * three elements, `muted` is the disabled button and the picture. What one
+ * element alone is written in belongs in `inkOf()`, which is also the only
+ * place that can see the ground the element ended up with.
  */
 export interface SamplePageColors {
 
@@ -211,7 +242,6 @@ export interface SamplePageColors {
   readonly navBorder: Color;
   readonly accent: Color;
   readonly accentSoft: Color;
-  readonly onAccent: Color;
   readonly card: Color;
   readonly ghostBorder: Color;
   /** The hairline under the footer and between the table's rows. */
@@ -231,10 +261,15 @@ export interface SamplePageColors {
  * **Nothing in here corrects its own contrast against the pair.** The text
  * takes the text color and the page takes the background, whatever those two
  * do to each other - a page that quietly picked a readable foreground would
- * answer the visitor's question for them. The one foreground that is chosen
- * rather than given is the label on the accent button, because the accent
- * comes from the palette and is not the pair: an unreadable label there says
- * nothing about the pairing and only looks broken.
+ * answer the visitor's question for them.
+ *
+ * **The one foreground that is chosen rather than given is not here.** The
+ * label on the filled button is computed in `inkOf()` instead, because it
+ * follows the ground the button actually has and this function cannot see
+ * which element it is deriving for. `onMuted` and `danger` stay here and stay
+ * uncorrected on purpose - see their own comments; do not "fix" those two the
+ * way the label is fixed, because a disabled control and a red are meant to
+ * fail where the page makes them fail.
  *
  * **The palette is read in fixed roles, not through a control.** The accent -
  * wordmark, `Sign in`, the active nav item's underline, the filled button, the
@@ -262,10 +297,6 @@ export function samplePageColors(pair: ContrastColors, palette: Palette): Sample
     navBorder: mixColors(background, text, NAV_BORDER_MIX),
     accent,
     accentSoft,
-    // Black or white, whichever APCA puts further from the accent. The choice
-    // does not depend on a size, so none is passed: the button label is set at
-    // a share of the UI size and has no fixed row in the table.
-    onAccent: findOptimalTextColor(accent).color,
     card: mixColors(background, cardTint, CARD_TINT),
     // A palette color rather than a mix out of the pair, so the secondary
     // action reads as a second colour of the visitor's own. Only the outline
@@ -286,15 +317,111 @@ export function samplePageColors(pair: ContrastColors, palette: Palette): Sample
 }
 
 
-/** The color an element is written in. */
-export function inkOf(element: SampleElement, colors: SamplePageColors): Color {
-  return colors[element.ink];
+/**
+ * The palette slot a visitor put on an element, per `SAMPLE_ELEMENTS` key. An
+ * element nobody has placed a colour on is absent.
+ *
+ * **A slot, never a hex.** The placement is about the palette member, not
+ * about the colour it happens to hold, so repainting the palette hands the
+ * element the new colour of the same slot for free. A stored hex would freeze
+ * the page at the palette it was placed in.
+ */
+export type ElementPlacements = Readonly<Record<string, PaletteSlot | undefined>>;
+
+
+/**
+ * The page as it is drawn and as it is measured: every derived surface, and
+ * the colour a placement put on an element.
+ *
+ * One value rather than two arguments, because every reader needs both - a
+ * reader handed only the surfaces would draw and measure a page the visitor
+ * is not looking at, and the preview, the rating, the tally and the marks all
+ * have to agree about the same page.
+ */
+export interface SamplePage {
+
+  readonly colors: SamplePageColors;
+  /** The placed colour per element key; absent where nothing was placed. */
+  readonly placed: Readonly<Record<string, Color | undefined>>;
+
+}
+
+
+/**
+ * The page from the pair, the palette and what the visitor placed.
+ *
+ * The slots are resolved against this palette here and nowhere else, which is
+ * what makes a palette change move every placed element at once. A placement
+ * is only ever read back out through `inkOf()` and `groundOf()`.
+ */
+export function samplePage(pair: ContrastColors,
+                           palette: Palette,
+                           placements: ElementPlacements): SamplePage {
+  const placed: Record<string, Color> = {};
+
+  for (const [key, slot] of Object.entries(placements)) {
+    if (slot) placed[key] = palette[slot].color;
+  }
+
+  return {colors: samplePageColors(pair, palette), placed};
+}
+
+
+/**
+ * The color an element is written in.
+ *
+ * **`onAccent` is measured against the ground the element ended up with, not
+ * against the accent surface.** It is the one foreground this page chooses
+ * rather than takes: black or white, whichever APCA puts further from what
+ * the button is filled with. Read off a surface it would stay the white that
+ * suited the accent while a visitor filled the button with gold, and the
+ * label would be unreadable through no choice of theirs that a nearest-colour
+ * row could undo - `verdictFacts()` offers none where the ink is not the
+ * visitor's. That is the guarantee this ink exists for, so it has to be
+ * computed where the element and its ground meet, which is here.
+ *
+ * The choice does not depend on a size, so none is passed: the button label
+ * is set at a share of the UI size and has no fixed row in the table.
+ *
+ * **`onMuted` and `danger` are not treated this way, and must not be.** Their
+ * comments in `samplePageColors()` declare the missing correction as the
+ * point: a control nobody can press and a red that means what it means are
+ * meant to fail where the page makes them fail.
+ */
+export function inkOf(element: SampleElement, page: SamplePage): Color {
+  const placed = placedOn(element, "ink", page);
+
+  if (placed) return placed;
+  if (element.ink === "onAccent") return findOptimalTextColor(groundOf(element, page)).color;
+
+  return page.colors[element.ink];
 }
 
 
 /** The color an element sits on. */
-export function groundOf(element: SampleElement, colors: SamplePageColors): Color {
-  return colors[element.ground];
+export function groundOf(element: SampleElement, page: SamplePage): Color {
+  return placedOn(element, "ground", page) ?? page.colors[element.ground];
+}
+
+
+/**
+ * The colour a placement put on this side of this element, or nothing.
+ *
+ * **This is the only place a placement is applied.** The preview paints it,
+ * the rating measures it, the tally counts it and the marks judge it, and all
+ * four reach it through `inkOf()` and `groundOf()` - a reader that resolved a
+ * slot of its own would be a second answer about the same element. Which side
+ * a placement lands on is `SampleElement.placement`.
+ *
+ * **A placement applies to its own element and to nothing else**, which is why
+ * it is not a field of `SamplePageColors`: `muted` is both the disabled button
+ * and the picture, `nav` is three elements, and a ground rewritten there would
+ * move all of them.
+ */
+function placedOn(element: SampleElement,
+                  side: SamplePlacement,
+                  page: SamplePage): Color | undefined {
+  return element.placement === side ? page.placed[element.key] : undefined;
 }
 
 

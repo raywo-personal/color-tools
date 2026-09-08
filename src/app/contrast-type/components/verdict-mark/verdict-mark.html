@@ -25,6 +25,8 @@
     <button type="button"
             cdkOverlayOrigin
             #origin="cdkOverlayOrigin"
+            #markButton
+            aria-haspopup="dialog"
             class="group absolute top-1/2 left-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
             [style.outline-color]="inkHex()"
             [attr.aria-label]="label()"
@@ -55,14 +57,47 @@
   <!-- The dotted underline is the element's own carrier, beside the mark: a
        shape in a gutter is not the line it judges. On the wrapper, because
        text decoration propagates into everything in flow below it and the
-       element itself is the caller's markup. -->
+       element itself is the caller's markup.
+
+       The outline is the same wrapper's: dashed while a colour may be put
+       here, solid on the one the pointer is on. It is drawn in the colour APCA
+       chose against the surface the element sits on, because `line` is
+       guaranteed against the app's six and against none of the visitor's.
+       `outline` rather than `border`, so nothing in the page moves when it
+       appears - the offset puts it clear of the words either way. -->
   <span data-content
+        class="relative outline-offset-4"
         [class.block]="!inline()"
         [class.min-w-0]="!inline()"
         [class.flex-1]="!inline()"
         [class.underline]="missed()"
         [class.decoration-dotted]="missed()"
-        [class.underline-offset-4]="missed()"><ng-content/></span>
+        [class.underline-offset-4]="missed()"
+        [class.outline-2]="named()"
+        [class.outline-dashed]="dashed()"
+        [style.outline-color]="inkHex()">
+    <!-- The element's name where the outline is, so the page says what the
+         chip would land on without the visitor reading the ledger. The app's
+         badge again, rimmed in the measured colour - a label in the page's own
+         ink would be text the visitor had apparently written.
+
+         Out of flow, for the popup's reason: a label in the flow would push
+         the page it names.
+
+         **Under the element, where the draft draws it over.** The page's own
+         `overflow-hidden` is what decides it: the nav's three elements sit one
+         rem below the top edge and a badge above them would be cut in half,
+         while every element has the rest of its own hit-area row underneath.
+         Do not move it back up without giving the page room at the top first.
+
+         `aria-hidden`, because the mark's own name already carries the
+         element and a screen reader would otherwise hear it twice. -->
+    @if (named()) {
+      <span data-element-name
+            aria-hidden="true"
+            class="absolute -bottom-7 left-0 z-10 rounded-xs border bg-panel px-1.5 py-0.5 font-mono text-sm tracking-widest whitespace-nowrap text-text"
+            [style.border-color]="inkHex()">{{ caption() }}</span>
+    }<ng-content/></span>
 </span>
 
 <!-- The verdict as a popup rather than a block in the flow: in the flow it
@@ -74,11 +109,23 @@
      click meant for the next mark, so comparing two elements cost a dead
      click to close the first popup before the second would open. Closing on
      `overlayOutsideClick` instead reaches the same "a click anywhere closes
-     it without a scrim" - it fires from a `pointerdown` on the document,
-     ahead of the `click` that still reaches whatever sits underneath, so the
-     next mark opens in the same press. `detach` covers the case the
-     strategy gives up - a mark scrolled out of view - and keeps the store
-     from holding a verdict nobody can see. -->
+     it without a scrim". The mechanism is a `click` listener on the body in
+     the capture phase, not the `pointerdown` - that one only records where
+     the press began - so the close runs before the click reaches whatever
+     sits underneath in the bubble phase, and the next mark opens in the same
+     press.
+
+     **A drop closes an open verdict through this same listener, so nothing may
+     stop that click any earlier.** A drag presses on a chip and releases on an
+     element, so the browser fires the click at the two targets' common
+     ancestor, which is outside the overlay - and that is what clears a popup
+     opened before the drop. Add a `click` handler on the document, or anywhere
+     in the capture phase ahead of the body's, and the verdict of whatever
+     element was open hangs over the page the visitor has just recoloured until
+     they press Escape.
+
+     `detach` covers the case the strategy gives up - a mark scrolled out of
+     view - and keeps the store from holding a verdict nobody can see. -->
 <ng-template cdkConnectedOverlay
              [cdkConnectedOverlayOrigin]="origin"
              [cdkConnectedOverlayOpen]="open()"
@@ -87,5 +134,22 @@
              (overlayOutsideClick)="close()"
              (detach)="close()"
              (overlayKeydown)="onOverlayKeydown($event)">
-  <ct-verdict-panel [id]="panelId()" [elementKey]="elementKey()"/>
+  <!-- One popup with two blocks, not two popups off one element: what the
+       element is now, and the colours it can be given. They are the same
+       question asked twice, and the draft's own chooser already carried a
+       verdict line. A dialog because it holds controls and takes focus; the
+       label is where the mark's two jobs are said, since a name spoken on
+       every pass through the page cannot carry them.
+
+       `cdkTrapFocus` without auto-capture: the chooser puts focus on a chip
+       itself, and the trap is only here so `Tab` cannot walk out of a popup
+       that renders at the end of the body. Escape hands focus back - see
+       `onOverlayKeydown`. -->
+  <div role="dialog"
+       cdkTrapFocus
+       class="grid gap-2"
+       [attr.aria-label]="dialogLabel()">
+    <ct-verdict-panel [id]="panelId()" [elementKey]="elementKey()"/>
+    <ct-color-chooser [elementKey]="elementKey()"/>
+  </div>
 </ng-template>

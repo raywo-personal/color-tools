@@ -1,6 +1,6 @@
 import {Component, computed, inject, input} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
-import {samplePageColors} from "@contrast-type/models/sample-page.model";
+import {samplePage} from "@contrast-type/models/sample-page.model";
 import {verdictFacts, verdictFor, verdictWord} from "@contrast-type/models/element-verdict.model";
 import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shape";
 
@@ -37,14 +37,15 @@ export class VerdictPanel {
   /** The `SAMPLE_ELEMENTS` key of the element this panel is about. */
   readonly elementKey = input.required<string>();
 
-  readonly #colors = computed(() => samplePageColors(
+  readonly #page = computed(() => samplePage(
     this.#stateStore.contrastColors(),
-    this.#stateStore.currentPalette()
+    this.#stateStore.currentPalette(),
+    this.#stateStore.placements()
   ));
 
   protected readonly verdict = computed(() => verdictFor(
     this.elementKey(),
-    this.#colors(),
+    this.#page(),
     this.#stateStore.typeRoles()
   ));
 

@@ -3,6 +3,8 @@ import chroma, {Color} from "chroma-js";
 import {createContrastColors} from "@engine/contrast/contrast-colors.model";
 import {TYPE_ROLES} from "@engine/contrast/type-role.model";
 import {generatePalette} from "@engine/palette/palette.helper";
+import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
+import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 import {PaletteStyle} from "@engine/palette/palette-style.model";
 import {
   elementsOf,
@@ -11,7 +13,9 @@ import {
   inkOf,
   roleOf,
   SAMPLE_ELEMENTS,
+  SampleInk,
   sampleElement,
+  samplePage,
   samplePageColors
 } from "@contrast-type/models/sample-page.model";
 
@@ -81,17 +85,18 @@ describe("sample page", () => {
 
   it("paints the pair as it is and measures the inks it derives", () => {
     const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
-    const colors = samplePageColors(pair, generatePalette("triadic"));
+    const page = samplePage(pair, generatePalette("triadic"), {});
+    const colors = page.colors;
 
     expect(colors.page.hex("rgb")).toBe("#eeeeee");
     expect(colors.text.hex("rgb")).toBe("#111111");
 
     // The body text is the pair; the small print is the dim ink on the page,
     // which is where the figure usually lands.
-    expect(inkOf(sampleElement("bodyText"), colors)).toBe(colors.text);
-    expect(groundOf(sampleElement("bodyText"), colors)).toBe(colors.page);
-    expect(inkOf(sampleElement("smallPrint"), colors)).toBe(colors.dim);
-    expect(groundOf(sampleElement("filledButton"), colors)).toBe(colors.accent);
+    expect(inkOf(sampleElement("bodyText"), page)).toBe(colors.text);
+    expect(groundOf(sampleElement("bodyText"), page)).toBe(colors.page);
+    expect(inkOf(sampleElement("smallPrint"), page)).toBe(colors.dim);
+    expect(groundOf(sampleElement("filledButton"), page)).toBe(colors.accent);
   });
 
 
@@ -139,6 +144,131 @@ describe("sample page", () => {
 
     expect(danger("#3D5A8C", "#FAF8F4", "complementary"), "the pair or the palette moved it").toBe(onLight);
     expect(danger("#F1EDE6", "#1B1917", "triadic"), "the page's direction did not").not.toBe(onLight);
+  });
+
+
+  it("gives every element a placement, and the computed inks the ground", () => {
+    // The three inks the app computes for itself cannot take a colour: the
+    // lever there is the ground. One list rather than two - `verdictFacts()`
+    // reads this same field to decide whether a nearest-colour row is worth
+    // offering, so a list edited without running this spec would move both
+    // answers at once.
+    const computed: readonly SampleInk[] = ["onAccent", "onMuted", "danger"];
+
+    for (const element of SAMPLE_ELEMENTS) {
+      expect(element.placement, element.key)
+        .toBe(computed.includes(element.ink) ? "ground" : "ink");
+    }
+  });
+
+
+  it("puts a placed colour on the side the element's placement names", () => {
+    // The headline takes a palette colour as its type; the filled button
+    // takes one as its fill and keeps the label the app computed for it.
+    const palette = generatePalette("triadic");
+    const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
+    const page = samplePage(pair, palette, {headline: "color2", filledButton: "color3"});
+
+    const headline = sampleElement("headline");
+    const button = sampleElement("filledButton");
+
+    expect(inkOf(headline, page)).toBe(palette.color2.color);
+    expect(groundOf(headline, page)).toBe(page.colors.page);
+
+    expect(groundOf(button, page)).toBe(palette.color3.color);
+    // The label is not the placed colour: `onAccent` is a foreground, and it
+    // is measured against the fill the button ended up with.
+    expect(inkOf(button, page).hex("rgb"))
+      .toBe(findOptimalTextColor(palette.color3.color).color.hex("rgb"));
+  });
+
+
+  it("measures the filled button's label against the fill it ended up with", () => {
+    // The guarantee `onAccent` exists for: black or white, whichever APCA
+    // puts further from what the button is actually filled with. Read off the
+    // accent surface it would keep the colour that suited a fill the visitor
+    // has replaced, and `verdictFacts()` offers no nearest-colour row on an
+    // ink the visitor cannot move.
+    const palette = generatePalette("harmonic");
+    const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
+    const button = sampleElement("filledButton");
+
+    for (const slot of PALETTE_SLOTS) {
+      const page = samplePage(pair, palette, {filledButton: slot});
+      const ink = inkOf(button, page);
+      const ground = groundOf(button, page);
+      const other = ink.hex("rgb") === "#000000" ? chroma("#ffffff") : chroma("#000000");
+
+      expect(ground).toBe(palette[slot].color);
+      expect(["#000000", "#ffffff"], slot).toContain(ink.hex("rgb"));
+      expect(Math.abs(chroma.contrastAPCA(ink, ground)), slot)
+        .toBeGreaterThanOrEqual(Math.abs(chroma.contrastAPCA(other, ground)));
+    }
+  });
+
+
+  it("leaves the disabled label and the red uncorrected, which is the point of them", () => {
+    // A control nobody can press and a red that means what it means are meant
+    // to fail where the page makes them fail. Only the filled button's label
+    // follows its ground.
+    const palette = generatePalette("harmonic");
+    const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
+    const unplaced = samplePage(pair, palette, {});
+    const placed = samplePage(pair, palette, {disabledButton: "color3", errorLine: "color3"});
+
+    for (const key of ["disabledButton", "errorLine"]) {
+      const element = sampleElement(key);
+
+      expect(inkOf(element, placed).hex("rgb"), key)
+        .toBe(inkOf(element, unplaced).hex("rgb"));
+    }
+  });
+
+
+  it("leaves every other element where the palette put it", () => {
+    // A placement applies to the element it was placed on and to nothing
+    // else, which is why it is not a field of the page's colours: `muted` is
+    // both the disabled button and the picture, `nav` is three elements.
+    const palette = generatePalette("triadic");
+    const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
+    const page = samplePage(pair, palette, {disabledButton: "color1"});
+
+    expect(groundOf(sampleElement("disabledButton"), page)).toBe(palette.color1.color);
+    expect(groundOf(sampleElement("imageLabel"), page)).toBe(page.colors.muted);
+    expect(inkOf(sampleElement("navItems"), page)).toBe(page.colors.dim);
+  });
+
+
+  it("keeps a placement through a repainted palette, on the same slot", () => {
+    // A slot and not a hex: the placement is about the palette member, so a
+    // new palette hands the element the new colour of the same slot rather
+    // than freezing the page at the one it was placed in.
+    const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
+    const placements = {headline: "color2"} as const;
+    const first = generatePalette("triadic");
+    const second = generatePalette("complementary");
+    const headline = sampleElement("headline");
+
+    expect(inkOf(headline, samplePage(pair, first, placements)))
+      .toBe(first.color2.color);
+    expect(inkOf(headline, samplePage(pair, second, placements)))
+      .toBe(second.color2.color);
+  });
+
+
+  it("draws a placed colour that matches the ground, and reports Lc 0 for it", () => {
+    // The page has to survive a placement nobody can read, and the verdict is
+    // what says so - nothing here corrects its own contrast, so an invisible
+    // element stays invisible and the mark beside it carries the answer.
+    const palette = generatePalette("triadic");
+    const ground = palette.color2.color;
+    const pair = createContrastColors(chroma("#111111"), ground);
+    const page = samplePage(pair, palette, {bodyText: "color2"});
+    const bodyText = sampleElement("bodyText");
+
+    expect(inkOf(bodyText, page).hex("rgb")).toBe(groundOf(bodyText, page).hex("rgb"));
+    expect(Math.abs(chroma.contrastAPCA(inkOf(bodyText, page), groundOf(bodyText, page))))
+      .toBe(0);
   });
 
 

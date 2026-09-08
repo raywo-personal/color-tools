@@ -7,7 +7,9 @@ import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
-import {SampleGround, samplePageColors} from "@contrast-type/models/sample-page.model";
+import {PaletteSlot} from "@engine/palette/palette.model";
+import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
+import {SampleGround, samplePage} from "@contrast-type/models/sample-page.model";
 import {VerdictMark} from "@contrast-type/components/verdict-mark/verdict-mark";
 
 
@@ -16,7 +18,12 @@ describe("VerdictMark", () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection()]
+      providers: [
+        provideZonelessChangeDetection(),
+        // Placing a colour raises the announcement that travels with the
+        // event; the real announcer would leave a live region behind.
+        provideFakeLiveAnnouncer()
+      ]
     });
   });
 
@@ -41,7 +48,7 @@ describe("VerdictMark", () => {
     await fixture.whenStable();
 
     const host = fixture.nativeElement as HTMLElement;
-    const colors = samplePageColors(store.contrastColors(), store.currentPalette());
+    const colors = samplePage(store.contrastColors(), store.currentPalette(), store.placements()).colors;
 
     function button(): HTMLElement {
       return host.querySelector("button") as HTMLElement;
@@ -55,6 +62,38 @@ describe("VerdictMark", () => {
     /** The element the mark wraps, which carries the dotted underline. */
     function content(): HTMLElement {
       return host.querySelector("[data-content]") as HTMLElement;
+    }
+
+    /** The badge that names the element while a colour may go on it. */
+    function elementName(): HTMLElement | null {
+      return host.querySelector("[data-element-name]");
+    }
+
+    /** The chooser inside the opened popup, which lives on the body. */
+    function chooser(): HTMLElement | null {
+      return document.querySelector(".cdk-overlay-container ct-color-chooser");
+    }
+
+    async function carry(slot: PaletteSlot) {
+      dispatcher.dispatch(contrastEvents.chipPickedUp(slot));
+      await fixture.whenStable();
+    }
+
+    /**
+     * A release on the given element. The listener is on the document and
+     * reads the event's own target, which is what a mouse drag delivers once
+     * the chip is transparent to pointers. A touch drag is the one that needs
+     * the point looked up instead, and a test DOM has no layout to look one up
+     * in - so these drive the mouse's path.
+     */
+    async function releaseOn(element: EventTarget) {
+      element.dispatchEvent(new PointerEvent("pointerup", {bubbles: true}));
+      await fixture.whenStable();
+    }
+
+    async function moveOver(element: EventTarget) {
+      element.dispatchEvent(new PointerEvent("pointermove", {bubbles: true}));
+      await fixture.whenStable();
     }
 
     /**
@@ -71,7 +110,11 @@ describe("VerdictMark", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, host, colors, button, badge, content, panel, press};
+    return {
+      fixture, store, host, colors,
+      button, badge, content, panel, press,
+      elementName, chooser, carry, releaseOn, moveOver
+    };
   }
 
 
@@ -221,6 +264,137 @@ describe("VerdictMark", () => {
     // The hit area survives either way: the button is out of flow and keeps
     // the app's minimum.
     expect(inline.button().className).toContain("size-11");
+  });
+
+
+  it("marks nothing at rest, and names the element the pointer is on", async () => {
+    // 1h: the page is the visitor's page until they ask it a question. Hover
+    // and focus are the two ways of asking, and the mark's own focus counts -
+    // it is the element's stop in the tab order.
+    const {host, content, elementName, fixture} = await mark("headline");
+
+    expect(content().className).not.toContain("outline-2");
+    expect(elementName()).toBeNull();
+
+    host.dispatchEvent(new PointerEvent("pointerenter"));
+    await fixture.whenStable();
+
+    expect(content().className).toContain("outline-2");
+    expect(content().className).toContain("outline-dashed");
+    expect(elementName()?.textContent).toBe("HEADLINE");
+
+    host.dispatchEvent(new PointerEvent("pointerleave"));
+    await fixture.whenStable();
+
+    expect(elementName()).toBeNull();
+  });
+
+
+  it("offers itself while a chip is carried, and names the drop under the pointer", async () => {
+    // 1i: every named element dashed and named, the one under the pointer
+    // solid. The offer has to be visible before the pointer reaches it, or the
+    // visitor is dragging at a page that says nothing.
+    const {content, elementName, carry, moveOver} = await mark("headline");
+
+    await carry("color2");
+
+    expect(content().className).toContain("outline-2");
+    expect(content().className).toContain("outline-dashed");
+    expect(elementName()?.textContent).toBe("HEADLINE");
+
+    await moveOver(content());
+
+    expect(content().className).toContain("outline-2");
+    expect(content().className, "the drop is still only offered").not.toContain("outline-dashed");
+  });
+
+
+  it("draws the outline and the name in a colour APCA chose, not in a token", async () => {
+    // Both sit on the surface the mark sits on, so they take the rim's colour:
+    // `line` and `text` are guaranteed against the app's six surfaces and
+    // against none of the visitor's.
+    const {badge, content, elementName, carry} = await mark("filledButton", {surface: "page"});
+
+    await carry("color2");
+
+    expect(content().style.outlineColor).toBe(badge().style.borderColor);
+    expect(elementName()?.style.borderColor).toBe(badge().style.borderColor);
+  });
+
+
+  it("places the dragged colour where the chip is released", async () => {
+    const {store, host, carry, releaseOn} = await mark("headline");
+
+    await carry("color2");
+    await releaseOn(host);
+
+    expect(store.placements()["headline"]).toBe("color2");
+    // The placement puts the chip down by itself; nothing is left in hand.
+    expect(store.carriedSlot()).toBeNull();
+  });
+
+
+  it("puts the chip down where it is released on nothing, without placing", async () => {
+    // A drag that ended over the app, or over the page's margin, is a gesture
+    // that ended - not a placement on whatever was nearest.
+    const {store, carry, releaseOn} = await mark("headline");
+
+    await carry("color3");
+    await releaseOn(document.body);
+
+    expect(store.carriedSlot()).toBeNull();
+    expect(store.placements()["headline"]).toBeUndefined();
+  });
+
+
+  it("colours the element from its own mark, which is the path without a drag", async () => {
+    // The one path a finger and a keyboard share. A drag is the mouse's
+    // shortcut: below `lg` the preview is stacked under the whole control
+    // column and a keyboard cannot drag at all - so a tap or a press on the
+    // mark opens the palette, and a tap or a press on a chip places.
+    const {store, chooser, press, fixture} = await mark("headline");
+
+    await press();
+
+    const chips = Array.from(
+      (chooser() as HTMLElement).querySelectorAll<HTMLButtonElement>("[role=toolbar] button")
+    );
+
+    expect(chips).toHaveLength(5);
+
+    chips[2].click();
+    await fixture.whenStable();
+
+    expect(store.placements()["headline"]).toBe("color2");
+
+    // The popup stays where it is, so the next colour is one press away and
+    // no focus moves while the placement is being announced.
+    expect(chooser()).not.toBeNull();
+  });
+
+
+  it("opens the palette beside the verdict, and Escape hands focus back", async () => {
+    // One popup with two blocks, because the element's mark is its one stop in
+    // the tab order: `Tab` to an element, press, and the colours are there.
+    const {button, panel, chooser, press, fixture} = await mark("headline");
+
+    await press();
+
+    expect(panel()).not.toBeNull();
+    expect(chooser()).not.toBeNull();
+
+    const dialog = document.querySelector(".cdk-overlay-container [role=dialog]");
+
+    // The popup's name is where the mark's two jobs are said - the mark's own
+    // name stays the verdict, which is what is worth hearing on every pass.
+    expect(dialog?.getAttribute("aria-label")).toBe("Headline: verdict and color");
+    expect(button().getAttribute("aria-haspopup")).toBe("dialog");
+
+    document.body.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true}));
+    await fixture.whenStable();
+
+    expect(chooser()).toBeNull();
+    expect(document.activeElement).toBe(button());
   });
 
 });

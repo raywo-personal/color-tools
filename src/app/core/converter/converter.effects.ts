@@ -1,6 +1,6 @@
 import {Events} from "@ngrx/signals/events";
-import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {ColorThemeService} from "@common/services/color-theme.service";
+import {AnnouncementService} from "@common/services/announcement.service";
 import {colorName} from "@engine/color/color-name.helper";
 import {tap} from "rxjs";
 import {converterEvents} from "./converter.events";
@@ -74,11 +74,16 @@ export function useAsBackgroundChangedEffect(
  * It sits in an effect rather than in the button, so the announcement travels
  * with the event and not with one caller of it. The reducer has run by the
  * time an effect sees the event, so the store already holds the new color.
+ *
+ * Through `AnnouncementService` like every other polite sentence in the app.
+ * `RND` is the studio's and the page's tally is the contrast screen's, so the
+ * two rarely meet - it goes through the service so that the rule holds without
+ * an exception to remember rather than because this path is the loud one.
  */
 export function randomColorAnnouncedEffect(
   this: void,
   events: Events,
-  announcer: LiveAnnouncer,
+  announcements: AnnouncementService,
   store: unknown
 ) {
   const typedStore = store as AppStateStore;
@@ -87,10 +92,7 @@ export function randomColorAnnouncedEffect(
     .on(converterEvents.newRandomColorWithNav)
     .pipe(
       tap(() => {
-        void announcer.announce(
-          `New color ${colorName(typedStore.currentColor())}`,
-          "polite"
-        );
+        announcements.announce(`New color ${colorName(typedStore.currentColor())}`);
       })
     );
 }
