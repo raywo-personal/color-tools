@@ -3,9 +3,10 @@ import chroma from "chroma-js";
 import {createContrastColors} from "@engine/contrast/contrast-colors.model";
 import {FONT_SIZES, FONT_WEIGHTS, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {getRequiredLc} from "@engine/contrast/apca-rating.helper";
+import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import {DEFAULT_TYPE_ROLES, TypeRolesMap} from "@common/models/type-role-settings.model";
-import {SAMPLE_ELEMENTS, sampleElement, samplePageColors} from "@contrast-type/models/sample-page.model";
+import {ElementPlacements, SAMPLE_ELEMENTS, sampleElement, samplePage} from "@contrast-type/models/sample-page.model";
 import {
   elementFontSize,
   elementName,
@@ -27,8 +28,8 @@ const ALMOST_ONE_COLOR = createContrastColors(chroma("#7f7f7f"), chroma("#808080
 const PALETTE = generatePaletteFrom(chroma("#3366CC"), "harmonic", 5);
 
 
-function colorsOf(pair = BLACK_ON_WHITE) {
-  return samplePageColors(pair, PALETTE);
+function pageOf(pair = BLACK_ON_WHITE, placements: ElementPlacements = {}) {
+  return samplePage(pair, PALETTE, placements);
 }
 
 
@@ -49,13 +50,15 @@ describe("elementVerdict", () => {
     // The filled button's label sits on the accent out of the palette, not on
     // the pair's background - which is the whole reason a page of verdicts
     // says more than the pair's own Lc.
-    const colors = colorsOf();
-    const verdict = elementVerdict(sampleElement("filledButton"), colors, DEFAULT_TYPE_ROLES);
+    const page = pageOf();
+    const {accent} = page.colors;
+    const label = findOptimalTextColor(accent).color;
+    const verdict = elementVerdict(sampleElement("filledButton"), page, DEFAULT_TYPE_ROLES);
 
-    expect(verdict.ground.hex("rgb")).toBe(colors.accent.hex("rgb"));
-    expect(verdict.ink.hex("rgb")).toBe(colors.onAccent.hex("rgb"));
+    expect(verdict.ground.hex("rgb")).toBe(accent.hex("rgb"));
+    expect(verdict.ink.hex("rgb")).toBe(label.hex("rgb"));
     expect(verdict.contrast)
-      .toBeCloseTo(chroma.contrastAPCA(colors.onAccent, colors.accent), 6);
+      .toBeCloseTo(chroma.contrastAPCA(label, accent), 6);
   });
 
 
@@ -66,7 +69,7 @@ describe("elementVerdict", () => {
     const caption = sampleElement("imageCaption");
 
     expect(elementFontSize(caption, set)).toBe(Math.round(18 * caption.sizeRatio));
-    expect(elementVerdict(caption, colorsOf(), set).fontSize).toBe(13);
+    expect(elementVerdict(caption, pageOf(), set).fontSize).toBe(13);
   });
 
 
@@ -76,7 +79,7 @@ describe("elementVerdict", () => {
     const justUnder = createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"));
     const verdict = elementVerdict(
       sampleElement("bodyText"),
-      colorsOf(justUnder),
+      pageOf(justUnder),
       roles("body", 18, 400)
     );
 
@@ -91,7 +94,7 @@ describe("elementVerdict", () => {
     // short, so it must not be counted as one.
     const verdict = elementVerdict(
       sampleElement("eyebrow"),
-      colorsOf(),
+      pageOf(),
       roles("mono", 12, 400)
     );
 
@@ -108,12 +111,12 @@ describe("elementVerdict", () => {
     // only the colours can move.
     const larger = elementVerdict(
       sampleElement("bodyText"),
-      colorsOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
       roles("body", 18, 400)
     );
     const hopeless = elementVerdict(
       sampleElement("bodyText"),
-      colorsOf(ALMOST_ONE_COLOR),
+      pageOf(ALMOST_ONE_COLOR),
       roles("body", 18, 400)
     );
 
@@ -134,7 +137,7 @@ describe("elementVerdict", () => {
     // carries it.
     const verdict = elementVerdict(
       sampleElement("headline"),
-      colorsOf(createContrastColors(chroma("#c4c4c4"), chroma("#ffffff"))),
+      pageOf(createContrastColors(chroma("#c4c4c4"), chroma("#ffffff"))),
       roles("display", 96, 400)
     );
 
@@ -147,7 +150,7 @@ describe("elementVerdict", () => {
   it("names a pass by its shape as well", () => {
     const verdict = elementVerdict(
       sampleElement("bodyText"),
-      colorsOf(),
+      pageOf(),
       roles("body", 18, 400)
     );
 
@@ -161,12 +164,12 @@ describe("elementVerdict", () => {
     // bar named under a verdict no size reaches would suggest one does.
     const larger = elementVerdict(
       sampleElement("bodyText"),
-      colorsOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
       roles("body", 18, 400)
     );
     const hopeless = elementVerdict(
       sampleElement("bodyText"),
-      colorsOf(ALMOST_ONE_COLOR),
+      pageOf(ALMOST_ONE_COLOR),
       roles("body", 18, 400)
     );
 
@@ -199,13 +202,57 @@ describe("apcaLookup as the verdict states read it", () => {
     }
   });
 
+
+  it("measures a placed colour rather than the one the palette gave the element", () => {
+    // The placement reaches the verdict through the same `inkOf()` the
+    // preview paints with, so the mark cannot disagree with the element
+    // beside it.
+    const placed = pageOf(BLACK_ON_WHITE, {headline: "color1"});
+    const headline = sampleElement("headline");
+    const verdict = elementVerdict(headline, placed, DEFAULT_TYPE_ROLES);
+
+    expect(verdict.ink.hex("rgb")).toBe(PALETTE.color1.color.hex("rgb"));
+    expect(verdict.ground.hex("rgb")).toBe(placed.colors.page.hex("rgb"));
+  });
+
+
+  it("judges the filled button's label against the fill a placement gave it", () => {
+    // The label follows its ground, so the mark and the popup are about the
+    // button the visitor is looking at rather than about the accent it was
+    // filled with before.
+    const placed = pageOf(BLACK_ON_WHITE, {filledButton: "color3"});
+    const verdict = elementVerdict(sampleElement("filledButton"), placed, DEFAULT_TYPE_ROLES);
+    const fill = PALETTE.color3.color;
+
+    expect(verdict.ground.hex("rgb")).toBe(fill.hex("rgb"));
+    expect(verdict.ink.hex("rgb")).toBe(findOptimalTextColor(fill).color.hex("rgb"));
+    expect(verdict.contrast).toBeCloseTo(chroma.contrastAPCA(verdict.ink, fill), 6);
+  });
+
+
+  it("fails a placed colour that matches its ground, and says Lc 0", () => {
+    // A colour placed on the page's own colour is invisible, and the honest
+    // answer is the verdict rather than a correction: no size and no weight
+    // carry two identical colours, so the state is a fail at a figure of 0.
+    const ground = PALETTE.color1.color;
+    const onItsOwnGround = pageOf(
+      createContrastColors(chroma("#111111"), ground),
+      {bodyText: "color1"}
+    );
+    const verdict = elementVerdict(sampleElement("bodyText"), onItsOwnGround, roles("body", 18, 400));
+
+    expect(verdict.lc).toBe(0);
+    expect(verdict.state).toBe("fail");
+    expect(verdict.carriesAt).toBeNull();
+  });
+
 });
 
 
 describe("pageVerdicts", () => {
 
   it("judges every element of the page, in reading order", () => {
-    const verdicts = pageVerdicts(colorsOf(), DEFAULT_TYPE_ROLES);
+    const verdicts = pageVerdicts(pageOf(), DEFAULT_TYPE_ROLES);
 
     expect(verdicts.map(verdict => verdict.element.key))
       .toEqual(SAMPLE_ELEMENTS.map(element => element.key));
@@ -213,7 +260,7 @@ describe("pageVerdicts", () => {
 
 
   it("counts every element into exactly one state", () => {
-    const verdicts = pageVerdicts(colorsOf(), DEFAULT_TYPE_ROLES);
+    const verdicts = pageVerdicts(pageOf(), DEFAULT_TYPE_ROLES);
     const counts = verdictCounts(verdicts);
 
     expect(VERDICT_STATES.reduce((total, state) => total + counts[state], 0))
@@ -253,7 +300,7 @@ describe("verdictFacts", () => {
     // the weight are values the visitor set. Nothing else is theirs to read.
     const verdict = elementVerdict(
       sampleElement("bodyText"),
-      colorsOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
       roles("body", 18, 400)
     );
     const facts = verdictFacts(verdict, PALETTE);
@@ -272,7 +319,7 @@ describe("verdictFacts", () => {
     // element the panel is about, at full size.
     const verdict = elementVerdict(
       sampleElement("imageCaption"),
-      colorsOf(),
+      pageOf(),
       roles("body", 18, 400)
     );
     const written = verdictFacts(verdict, PALETTE)
@@ -294,7 +341,7 @@ describe("verdictFacts", () => {
   it("sets no bar where the table rates the size at all", () => {
     // Not "Lc null" and not "Lc 0" - a figure here would read as a bar the
     // element cleared.
-    const verdict = elementVerdict(sampleElement("eyebrow"), colorsOf(), roles("mono", 12, 400));
+    const verdict = elementVerdict(sampleElement("eyebrow"), pageOf(), roles("mono", 12, 400));
 
     expect(valueOf(verdictFacts(verdict, PALETTE), "Needed")).toBe("not rated at this size");
   });
@@ -303,7 +350,7 @@ describe("verdictFacts", () => {
   it("carries three rows for a pass and no way out", () => {
     // What would carry something already carried is a question nobody asked,
     // and a nearest-pass row under a tick reads as a correction.
-    const passing = elementVerdict(sampleElement("bodyText"), colorsOf(), roles("body", 18, 400));
+    const passing = elementVerdict(sampleElement("bodyText"), pageOf(), roles("body", 18, 400));
 
     expect(passing.state).toBe("pass");
     expect(verdictFacts(passing, PALETTE).map(fact => fact.label))
@@ -314,10 +361,10 @@ describe("verdictFacts", () => {
   it("suggests a colour only where something came up short", () => {
     // An unrated element missed no bar, so a nearest-pass row would name one
     // the table never set.
-    const unrated = elementVerdict(sampleElement("eyebrow"), colorsOf(), roles("mono", 12, 400));
+    const unrated = elementVerdict(sampleElement("eyebrow"), pageOf(), roles("mono", 12, 400));
     const failing = elementVerdict(
       sampleElement("bodyText"),
-      colorsOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
       roles("body", 18, 400)
     );
 
@@ -338,7 +385,7 @@ describe("verdictFacts", () => {
     // The filled button's label is whichever of black or white APCA puts
     // further from the accent - taking a palette colour instead changes
     // nothing on the button, because the ink is not the accent.
-    const failing = elementVerdict(sampleElement("filledButton"), colorsOf(), roles("ui", 14, 400));
+    const failing = elementVerdict(sampleElement("filledButton"), pageOf(), roles("ui", 14, 400));
 
     expect(failing.state).toBe("largeOnly");
     expect(verdictFacts(failing, PALETTE).map(fact => fact.label)).not.toContain("Nearest color");
@@ -349,7 +396,7 @@ describe("verdictFacts", () => {
     // A name alone asks the visitor to recognise it in the chip row above.
     const failing = elementVerdict(
       sampleElement("bodyText"),
-      colorsOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
       roles("body", 18, 400)
     );
     const nearest = verdictFacts(failing, PALETTE).at(-1);

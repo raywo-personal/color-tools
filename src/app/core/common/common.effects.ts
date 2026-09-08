@@ -1,8 +1,8 @@
 import {Events} from "@ngrx/signals/events";
-import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {commonEvents} from "./common.events";
 import {persistenceEvents} from "./persistence.events";
 import {tap} from "rxjs";
+import {AnnouncementService} from "@common/services/announcement.service";
 import {ColorThemeService} from "@common/services/color-theme.service";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
 import {fontsOf, weightStopsForRole} from "@common/models/type-role-settings.model";
@@ -82,11 +82,16 @@ export function loadFontsEffect(
  * and is still standing on the field, and the announcement belongs to the
  * event rather than to one caller of it. The reducer has run by the time an
  * effect sees the event, so the store already holds the snapped weight.
+ *
+ * Through `AnnouncementService`: a face changes every element's size, so the
+ * page's tally moves on the very same event and the two sentences would
+ * otherwise cancel - the picker's field is right beside the tally on the
+ * contrast screen, which is where a visitor meets this.
  */
 export function fontAnnouncedEffect(
   this: void,
   events: Events,
-  announcer: LiveAnnouncer,
+  announcements: AnnouncementService,
   store: unknown
 ) {
   const typedStore = store as AppStateStore;
@@ -99,10 +104,7 @@ export function fontAnnouncedEffect(
         const name = typeRoleName(role);
 
         if (!font) {
-          void announcer.announce(
-            `${name} set in the app's own type again.`,
-            "polite"
-          );
+          announcements.announce(`${name} set in the app's own type again.`);
 
           return;
         }
@@ -110,10 +112,7 @@ export function fontAnnouncedEffect(
         const {fontWeight} = typedStore.typeRoles()[role].settings;
         const only = weightStopsForRole(role, font).length === 1 ? ", the only weight it ships" : "";
 
-        void announcer.announce(
-          `${name} set in ${font.family}, weight ${fontWeight}${only}`,
-          "polite"
-        );
+        announcements.announce(`${name} set in ${font.family}, weight ${fontWeight}${only}`);
       })
     );
 }

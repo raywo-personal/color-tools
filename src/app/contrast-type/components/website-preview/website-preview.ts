@@ -2,9 +2,10 @@ import {Component, computed, inject} from "@angular/core";
 import {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {fontFamilyFor, TypeRolesMap} from "@common/models/type-role-settings.model";
-import {sampleElement, samplePageColors} from "@contrast-type/models/sample-page.model";
+import {groundOf, inkOf, sampleElement, SamplePage, samplePage} from "@contrast-type/models/sample-page.model";
 import {elementFontSize} from "@contrast-type/models/element-verdict.model";
 import {VerdictMark} from "@contrast-type/components/verdict-mark/verdict-mark";
+import {PlaceTarget} from "@contrast-type/components/verdict-mark/place-target.directive";
 
 
 /**
@@ -64,13 +65,30 @@ interface TableRow {
 }
 
 
-/** The type one element is set in, ready for the style bindings. */
-interface ElementType {
+/**
+ * One element's own bindings: the type it is set in, and the two colours it is
+ * drawn in.
+ *
+ * **The colours are per element, not per surface.** A placed colour belongs to
+ * the one element it was placed on - `muted` is both the disabled button and
+ * the picture, `nav` is three elements - so a surface that is only ever one
+ * element's ink is no longer a field of `PreviewStyle`. Bind
+ * `style().eyebrow.ink`, never a surface of its own, or a placement stops
+ * reaching the page. `inkOf()` and `groundOf()` are where both come from, the
+ * same two functions the rating measures through.
+ *
+ * `ground` is bound only where a placement lands on it - see
+ * `SampleElement.placement`. The surfaces several elements share stay fields
+ * of `PreviewStyle`, because that is what they are.
+ */
+interface ElementStyle {
 
   readonly fontFamily: string;
   readonly fontSize: string;
   readonly fontWeight: number;
   readonly lineHeight: number;
+  readonly ink: string;
+  readonly ground: string;
 
 }
 
@@ -82,43 +100,52 @@ interface PreviewStyle {
 
   readonly pageBackground: string;
   readonly pageColor: string;
-  readonly dimColor: string;
   readonly navBackground: string;
   readonly navBorder: string;
   readonly accent: string;
-  readonly accentSoft: string;
-  readonly onAccent: string;
   readonly cardBackground: string;
+  /**
+   * The ghost button's outline, and it stays a shared surface although only
+   * one element draws it.
+   *
+   * **A border follows its element's ink only where the two are the same
+   * colour at rest.** On `signIn` they are, so words that moved without their
+   * box would read as half applied - which is why that one binds
+   * `signIn.ink`. Here they are not: the outline is a palette role against the
+   * pair's text colour, already two colours, so a placement moving the label
+   * alone reads as intended. `navActive`'s underline stays on `accent` for a
+   * third reason - it is the "you are here" carrier the item must keep
+   * whatever colour the item itself takes.
+   */
   readonly ghostBorder: string;
   readonly rule: string;
   readonly mutedBackground: string;
-  readonly onMuted: string;
   readonly fieldBackground: string;
-  readonly danger: string;
 
   readonly wordmarkSize: string;
 
-  readonly navActive: ElementType;
-  readonly navItems: ElementType;
-  readonly signIn: ElementType;
-  readonly eyebrow: ElementType;
-  readonly headline: ElementType;
-  readonly lead: ElementType;
-  readonly filledButton: ElementType;
-  readonly ghostButton: ElementType;
-  readonly disabledButton: ElementType;
-  readonly bodyText: ElementType;
-  readonly fieldLabel: ElementType;
-  readonly fieldText: ElementType;
-  readonly errorLine: ElementType;
-  readonly imageLabel: ElementType;
-  readonly imageCaption: ElementType;
-  readonly tableHeader: ElementType;
-  readonly tableCell: ElementType;
-  readonly tableNumber: ElementType;
-  readonly cardLabel: ElementType;
-  readonly quote: ElementType;
-  readonly smallPrint: ElementType;
+  readonly navActive: ElementStyle;
+  readonly navItems: ElementStyle;
+  readonly signIn: ElementStyle;
+  readonly eyebrow: ElementStyle;
+  readonly headline: ElementStyle;
+  readonly lead: ElementStyle;
+  readonly filledButton: ElementStyle;
+  readonly ghostButton: ElementStyle;
+  readonly disabledButton: ElementStyle;
+  readonly bodyText: ElementStyle;
+  readonly bodyLink: ElementStyle;
+  readonly fieldLabel: ElementStyle;
+  readonly fieldText: ElementStyle;
+  readonly errorLine: ElementStyle;
+  readonly imageLabel: ElementStyle;
+  readonly imageCaption: ElementStyle;
+  readonly tableHeader: ElementStyle;
+  readonly tableCell: ElementStyle;
+  readonly tableNumber: ElementStyle;
+  readonly cardLabel: ElementStyle;
+  readonly quote: ElementStyle;
+  readonly smallPrint: ElementStyle;
 
 }
 
@@ -135,26 +162,36 @@ interface PreviewStyle {
  * step up from body text's, so a display face that ships one weight is set in
  * that weight rather than in a synthesised semibold.
  *
- * **The colors come from `samplePageColors()`**, for the same reason: the
- * rating measures the inks and grounds the page is drawn in, and one
- * derivation keeps the two from drifting apart. Its comment says why the pair
- * is painted as it is and how the palette is read.
+ * **The colors come from `samplePage()`**, for the same reason: the rating
+ * measures the inks and grounds the page is drawn in, and one derivation
+ * keeps the two from drifting apart. `samplePageColors()` says why the pair
+ * is painted as it is and how the palette is read; a colour the visitor
+ * placed on one element reaches the page through the same two functions the
+ * rating measures with - see `ElementStyle`.
  *
- * **No sample content in here is focusable or announced as a control.** The
- * nav links, `Sign in`, the three buttons and the form field are text: a
- * focusable button that does nothing is worse than no button, a fake nav in
- * the tab order competes with the real one in the app header, and an input
- * here would swallow keystrokes meant for the app. The field's focus ring is
- * drawn rather than reached. The region carries a name instead, so a screen
- * reader can tell the sample page from the app around it and skip past it.
+ * **No sample content in here is focusable or announced as a control**, and
+ * placing a colour on it did not change that. The nav links, `Sign in`, the
+ * three buttons and the form field are text: a focusable button that does
+ * nothing is worse than no button, a fake nav in the tab order competes with
+ * the real one in the app header, and an input here would swallow keystrokes
+ * meant for the app - the arrow keys the chooser walks the palette with
+ * included. The field's focus ring is drawn rather than reached. The region
+ * carries a name instead, so a screen reader can tell the sample page from the
+ * app around it and skip past it.
  *
- * **The marks are the exception, and they are the only one.** Every element
- * carries a `ct-verdict-mark` in front of it - a control, focusable, named
- * after the element and its verdict, opening the reasons in words. They are
- * the first focus stops inside the preview because they are the only ones. An
- * element that appears more than once - the running text, the nav items, the
- * table's cells, the small print - gets one mark, because one ink on one
- * ground at one size is one verdict.
+ * **The marks are the exception, and they are still the only one.** Every
+ * element carries a `ct-verdict-mark` in front of it - a control, focusable,
+ * named after the element, opening its verdict and the palette that can
+ * recolour it. An element that appears more than once - the running text, the
+ * nav items, the table's cells, the small print - gets one mark, because one
+ * ink on one ground at one size is one verdict and one placement.
+ *
+ * **So `Tab` to an element and press is a path the page already had**, which
+ * is why the keyboard's way of placing a colour needed no second control per
+ * element. A second one would have put forty-four stops inside a page that is
+ * not the app, and given one element two names to be reached by. What a chip
+ * is released on is the mark's own box, badge included - `verdict-mark.ts`
+ * says how, and `PlacementGesture` decides what a release means.
  *
  * **A verdict opens as a popup on the body, so nothing here moves.** That is
  * also what lets the table's three marks sit inside its cells: a block in a
@@ -163,7 +200,7 @@ interface PreviewStyle {
  */
 @Component({
   selector: "ct-website-preview",
-  imports: [VerdictMark],
+  imports: [VerdictMark, PlaceTarget],
   templateUrl: "./website-preview.html",
   host: {
     "class": "block min-w-0"
@@ -196,51 +233,54 @@ export class WebsitePreview {
   });
 
   protected readonly style = computed<PreviewStyle>(() => {
-    const colors = samplePageColors(this.#stateStore.contrastColors(), this.#stateStore.currentPalette());
+    const page = samplePage(
+      this.#stateStore.contrastColors(),
+      this.#stateStore.currentPalette(),
+      this.#stateStore.placements()
+    );
+    const colors = page.colors;
     const roles = this.#stateStore.typeRoles();
+    const element = (key: string, leadingFactor?: number) =>
+      elementStyle(key, roles, page, leadingFactor);
 
     return {
       fontFamily: fontFamilyFor("body", roles.body.font),
 
       pageBackground: hex(colors.page),
       pageColor: hex(colors.text),
-      dimColor: hex(colors.dim),
       navBackground: hex(colors.nav),
       navBorder: hex(colors.navBorder),
       accent: hex(colors.accent),
-      accentSoft: hex(colors.accentSoft),
-      onAccent: hex(colors.onAccent),
       cardBackground: hex(colors.card),
       ghostBorder: hex(colors.ghostBorder),
       rule: hex(colors.rule),
       mutedBackground: hex(colors.muted),
-      onMuted: hex(colors.onMuted),
       fieldBackground: hex(colors.field),
-      danger: hex(colors.danger),
 
       wordmarkSize: px(WORDMARK_SIZE),
 
-      navActive: elementType("navActive", roles),
-      navItems: elementType("navItems", roles),
-      signIn: elementType("signIn", roles),
-      eyebrow: elementType("eyebrow", roles),
-      headline: elementType("headline", roles),
-      lead: elementType("lead", roles, LEAD_LEADING_FACTOR),
-      filledButton: elementType("filledButton", roles),
-      ghostButton: elementType("ghostButton", roles),
-      disabledButton: elementType("disabledButton", roles),
-      bodyText: elementType("bodyText", roles),
-      fieldLabel: elementType("fieldLabel", roles),
-      fieldText: elementType("fieldText", roles),
-      errorLine: elementType("errorLine", roles),
-      imageLabel: elementType("imageLabel", roles),
-      imageCaption: elementType("imageCaption", roles),
-      tableHeader: elementType("tableHeader", roles),
-      tableCell: elementType("tableCell", roles),
-      tableNumber: elementType("tableNumber", roles),
-      cardLabel: elementType("cardLabel", roles),
-      quote: elementType("quote", roles, QUOTE_LEADING_FACTOR),
-      smallPrint: elementType("smallPrint", roles)
+      navActive: element("navActive"),
+      navItems: element("navItems"),
+      signIn: element("signIn"),
+      eyebrow: element("eyebrow"),
+      headline: element("headline"),
+      lead: element("lead", LEAD_LEADING_FACTOR),
+      filledButton: element("filledButton"),
+      ghostButton: element("ghostButton"),
+      disabledButton: element("disabledButton"),
+      bodyText: element("bodyText"),
+      bodyLink: element("bodyLink"),
+      fieldLabel: element("fieldLabel"),
+      fieldText: element("fieldText"),
+      errorLine: element("errorLine"),
+      imageLabel: element("imageLabel"),
+      imageCaption: element("imageCaption"),
+      tableHeader: element("tableHeader"),
+      tableCell: element("tableCell"),
+      tableNumber: element("tableNumber"),
+      cardLabel: element("cardLabel"),
+      quote: element("quote", QUOTE_LEADING_FACTOR),
+      smallPrint: element("smallPrint")
     };
   });
 
@@ -248,10 +288,18 @@ export class WebsitePreview {
 
 
 /**
- * The type an element is set in: its role's face, weight and leading, and
- * the role's size at the element's share of it.
+ * One element's bindings: its role's face, weight and leading, the role's size
+ * at the element's share of it, and the two colours it is drawn in.
+ *
+ * The colours come through `inkOf()` and `groundOf()`, which is also what the
+ * rating measures and the marks judge - so a placed colour reaches the page
+ * without a second branch here, and the figure in the left column stays about
+ * the page on the right.
  */
-function elementType(key: string, roles: TypeRolesMap, leadingFactor = 1): ElementType {
+function elementStyle(key: string,
+                      roles: TypeRolesMap,
+                      page: SamplePage,
+                      leadingFactor = 1): ElementStyle {
   const element = sampleElement(key);
   const {font, settings} = roles[element.role];
 
@@ -262,7 +310,9 @@ function elementType(key: string, roles: TypeRolesMap, leadingFactor = 1): Eleme
     // element is drawn at, and two roundings of the same product would drift.
     fontSize: px(elementFontSize(element, roles)),
     fontWeight: settings.fontWeight,
-    lineHeight: settings.lineHeight * leadingFactor
+    lineHeight: settings.lineHeight * leadingFactor,
+    ink: hex(inkOf(element, page)),
+    ground: hex(groundOf(element, page))
   };
 }
 

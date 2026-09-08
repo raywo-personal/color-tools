@@ -31,7 +31,7 @@ describe("ContrastType", () => {
   }
 
 
-  it("holds the pair, the palette chips, the two gestures, the type roles, the rating, the type controls and the vision block", async () => {
+  it("holds the pair, the palette chips, the two gestures, the ledger, the type roles, the rating, the type controls and the vision block", async () => {
     const host = await contrastType();
 
     expect(host.querySelector("ct-pair-fields")).not.toBeNull();
@@ -40,7 +40,29 @@ describe("ContrastType", () => {
     expect(host.querySelector("ct-type-roles")).not.toBeNull();
     expect(host.querySelector("ct-apca-rating")).not.toBeNull();
     expect(host.querySelector("ct-type-controls")).not.toBeNull();
+    expect(host.querySelector("ct-placed-colors")).not.toBeNull();
     expect(host.querySelector("ct-color-vision")).not.toBeNull();
+  });
+
+
+  it("puts the ledger between the pair's tally and the type roles, with the same rule", async () => {
+    // The ledger asks about the same colours as the pair, so it stands with
+    // them and the type block follows: what is about the page's colours is in
+    // one run of the column. It is a block of that column rather than a
+    // further row of the one above it - which is what the rule and the
+    // spacing say.
+    const host = await contrastType();
+    const order = Array.from(host.querySelectorAll("ct-page-verdicts, ct-placed-colors, ct-type-roles"))
+      .map(element => element.tagName.toLowerCase());
+
+    expect(order).toEqual(["ct-page-verdicts", "ct-placed-colors", "ct-type-roles"]);
+
+    const ledger = host.querySelector("ct-placed-colors") as HTMLElement;
+
+    // The four the other blocks of the column carry, not the whole list: the
+    // component's own host class is the ledger's business, not this file's.
+    expect(Array.from(ledger.classList))
+      .toEqual(expect.arrayContaining(["mt-6", "border-t", "border-line", "pt-5"]));
   });
 
 

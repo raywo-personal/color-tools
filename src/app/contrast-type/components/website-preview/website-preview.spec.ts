@@ -10,6 +10,7 @@ import {converterEvents} from "@core/converter/converter.events";
 import {mixColors} from "@engine/color/mix-color.helper";
 import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
 import {DEFAULT_TYPE_SETTINGS_BY_ROLE, TypeRole} from "@engine/contrast/type-role.model";
+import {PaletteSlot} from "@engine/palette/palette.model";
 import {SelectedFont} from "@common/models/google-font.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
@@ -109,6 +110,19 @@ describe("WebsitePreview", () => {
       return found;
     }
 
+    /**
+     * How many drop targets the page offers for one element - the marked
+     * occurrence and every other one.
+     */
+    function targets(elementKey: string): number {
+      return page.querySelectorAll(`[data-place-target="${elementKey}"]`).length;
+    }
+
+    /** The occurrences that carry a target without carrying a mark. */
+    function repeats(): HTMLElement[] {
+      return Array.from(page.querySelectorAll<HTMLElement>("[ctPlaceTarget]"));
+    }
+
     /** The table's body rows, cell by cell. */
     function tableRows(): string[][] {
       return Array.from(page.querySelectorAll("tbody tr"))
@@ -143,7 +157,15 @@ describe("WebsitePreview", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, store, host, page, copy, within, tableRows, paint, setBackground, setSize, setRole, pickFace};
+    async function place(elementKey: string, slot: PaletteSlot) {
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, slot}));
+      await fixture.whenStable();
+    }
+
+    return {
+      fixture, store, host, page, copy, within, targets, repeats, tableRows, paint, place,
+      setBackground, setSize, setRole, pickFace
+    };
   }
 
 
@@ -154,12 +176,13 @@ describe("WebsitePreview", () => {
   });
 
 
-  it("holds no focusable sample content, so the fake nav stays out of the tab order", async () => {
+  it("gives each element one stop in the tab order, and it is the element's mark", async () => {
     // A button that does nothing is worse than no button, and a second nav in
-    // the tab order competes with the real one in the app header. The verdict
-    // marks are the exception and the only one: they are controls, and a
-    // verdict a visitor cannot reach is a verdict this app does not get to
-    // show.
+    // the tab order competes with the real one in the app header - so the
+    // sample content still takes no focus. What changed with the colouring is
+    // what the mark opens, not how many controls the page has: a second
+    // control per element would have made forty-four stops out of twenty-two
+    // and given one element two names to be reached by.
     const {page} = await preview();
     const focusable = Array.from(
       page.querySelectorAll("a, button, input, select, textarea, [tabindex]")
@@ -167,6 +190,128 @@ describe("WebsitePreview", () => {
 
     expect(focusable.every(element => element.closest("ct-verdict-mark") !== null)).toBe(true);
     expect(focusable).toHaveLength(SAMPLE_ELEMENTS.length);
+  });
+
+
+  it("reaches the palette from that one stop, so a colour can be placed without a drag", async () => {
+    // 1k's path: Tab to an element, press, and the chips are there. The
+    // chooser opens in the same popup as the verdict, because the element has
+    // one control and the two are the same question asked twice.
+    const {page, fixture} = await preview();
+    const marks = Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"));
+
+    marks[0].click();
+    await fixture.whenStable();
+
+    expect(document.querySelector(".cdk-overlay-container ct-color-chooser")).not.toBeNull();
+
+    // Still one stop per element: the chooser is in the overlay, not in the
+    // page.
+    expect(page.querySelectorAll("a, button, input, select, textarea, [tabindex]"))
+      .toHaveLength(SAMPLE_ELEMENTS.length);
+  });
+
+
+  it("marks every named element while a chip is carried, and none of them at rest", async () => {
+    // 1h and 1i. The offer has to be visible before the pointer reaches an
+    // element, or the visitor is dragging at a page that says nothing.
+    const {page, fixture} = await preview();
+    const dispatcher = TestBed.inject(Dispatcher);
+    const named = () => page.querySelectorAll("[data-element-name]");
+
+    expect(named()).toHaveLength(0);
+
+    dispatcher.dispatch(contrastEvents.chipPickedUp("color2"));
+    await fixture.whenStable();
+
+    expect(named()).toHaveLength(SAMPLE_ELEMENTS.length);
+
+    dispatcher.dispatch(contrastEvents.chipPutDown());
+    await fixture.whenStable();
+
+    expect(named()).toHaveLength(0);
+  });
+
+
+  it("answers a drop at every occurrence, not only where the mark is", async () => {
+    // A release resolves through `closest("[data-place-target]")`, and that
+    // attribute sits on a mark's host. Five elements appear more than once
+    // with a mark on one occurrence, so without a target on the rest a visitor
+    // dragging at the biggest block of text on the page got no outline and a
+    // cancel - and then watched that block recolour from a placement they had
+    // to make in the small first paragraph instead.
+    const {copy, targets} = await preview();
+
+    const resolves = (snippet: string) => copy(snippet)
+      .closest("[data-place-target]")
+      ?.getAttribute("data-place-target");
+
+    expect(resolves("Watch the line endings")).toBe("bodyText");
+    expect(resolves("Where a palette earns its keep")).toBe("bodyText");
+    expect(resolves("\u00A9 Kelvin")).toBe("smallPrint");
+    expect(resolves("WEIGHT")).toBe("tableHeader");
+    expect(resolves("Caption")).toBe("tableCell");
+
+    // Every occurrence, not one more: three paragraphs of running text, the
+    // copyright line beside the small print, and a cell per column and per row
+    // of the table.
+    expect(targets("bodyText")).toBe(3);
+    expect(targets("smallPrint")).toBe(2);
+    expect(targets("tableHeader")).toBe(3);
+    expect(targets("tableCell")).toBe(3);
+    expect(targets("tableNumber")).toBe(6);
+  });
+
+
+  it("offers the unmarked occurrences while a chip is carried, and none at rest", async () => {
+    // The outline is what says a release will land, so an occurrence that
+    // takes a drop has to draw it - otherwise the target is there and nothing
+    // on the page says so. Dashed until the pointer arrives, as on a mark.
+    const {page, fixture, repeats} = await preview();
+    const dispatcher = TestBed.inject(Dispatcher);
+    const outlined = () => repeats().filter(element => element.classList.contains("outline-2"));
+
+    expect(repeats().length).toBeGreaterThan(0);
+    expect(outlined()).toHaveLength(0);
+
+    dispatcher.dispatch(contrastEvents.chipPickedUp("color2"));
+    await fixture.whenStable();
+
+    expect(outlined()).toHaveLength(repeats().length);
+
+    for (const element of repeats()) {
+      expect(Array.from(element.classList), element.textContent ?? "")
+        .toContain("outline-dashed");
+      expect(element.style.outlineColor, element.textContent ?? "").not.toBe("");
+    }
+
+    // Nothing marks the page once the hand is empty.
+    dispatcher.dispatch(contrastEvents.chipPutDown());
+    await fixture.whenStable();
+
+    expect(outlined()).toHaveLength(0);
+    expect(page.querySelectorAll("[data-element-name]")).toHaveLength(0);
+  });
+
+
+  it("rims the error line's mark against the page, not against a colour placed on the line", async () => {
+    // The error line's red is computed, so a placement lands on the surface
+    // the line sits on - but the mark sits beside the line, on the page. Drawn
+    // against the placed colour its rim would be chosen for a surface it is
+    // not on and would vanish on the one it is.
+    const {page, place, setBackground} = await preview();
+
+    await place("errorLine", "color0");
+
+    await expectApcaForeground(async background => {
+      await setBackground(background.hex("rgb"));
+
+      const mark = Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"))
+        .find(candidate => candidate.getAttribute("aria-label")?.startsWith("Error line:"));
+      const badge = mark?.firstElementChild as HTMLElement | undefined;
+
+      return badge?.style.borderColor ?? "";
+    });
   });
 
 
@@ -310,10 +455,11 @@ describe("WebsitePreview", () => {
     expect(page.style.backgroundColor).toBe("#7a7a7a");
     expect(page.style.color).toBe("#808080");
 
-    // The reading content sets no color of its own: it inherits the pair, so
-    // there is nowhere for a correction to creep back in.
+    // The reading content binds the pair's own text color rather than
+    // inheriting it: every element carries its own ink so a placed colour has
+    // somewhere to land. What it must not carry is a corrected one.
     for (const snippet of [HEADLINE, LEAD, BODY, QUOTE]) {
-      expect(copy(snippet).style.color, `"${snippet}" overrides the pair`).toBe("");
+      expect(copy(snippet).style.color, `"${snippet}" overrides the pair`).toBe("#808080");
     }
   });
 
@@ -588,7 +734,10 @@ describe("WebsitePreview", () => {
     const active = copy(ACTIVE_NAV_ITEM);
 
     expect(active.style.borderBottomColor).toBe(store.currentPalette().color0.color.hex("rgb"));
-    expect(active.style.color, "the active item is dimmed like the rest").toBe("");
+    // The page's own text colour, not the dim ink the other two take: the
+    // second carrier is the item being undimmed, and the rule is the first.
+    expect(active.style.color, "the active item keeps the page's text colour while the others are dim")
+      .toBe(store.contrastColors().text.hex("rgb"));
   });
 
 

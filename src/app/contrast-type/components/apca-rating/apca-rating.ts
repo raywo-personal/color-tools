@@ -2,7 +2,7 @@ import {Component, computed, inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 import {getAPCAPolarity} from "@engine/contrast/apca-rating.helper";
 import {typeRoleCaption} from "@engine/contrast/type-role.model";
-import {figureElementOf, samplePageColors} from "@contrast-type/models/sample-page.model";
+import {figureElementOf, samplePage} from "@contrast-type/models/sample-page.model";
 import {
   ElementVerdict,
   VerdictFact,
@@ -80,14 +80,15 @@ export class ApcaRating {
 
   readonly #role = this.#stateStore.typeRole;
 
-  readonly #colors = computed(() => samplePageColors(
+  readonly #page = computed(() => samplePage(
     this.#stateStore.contrastColors(),
-    this.#stateStore.currentPalette()
+    this.#stateStore.currentPalette(),
+    this.#stateStore.placements()
   ));
 
   readonly #verdict = computed<ElementVerdict>(() => elementVerdict(
     figureElementOf(this.#role()),
-    this.#colors(),
+    this.#page(),
     this.#stateStore.typeRoles()
   ));
 

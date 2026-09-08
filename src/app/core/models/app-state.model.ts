@@ -11,6 +11,8 @@ import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 import {randomSeed} from "@engine/helpers/random.helper";
 import {TypeRole} from "@engine/contrast/type-role.model";
+import {PaletteSlot} from "@engine/palette/palette.model";
+import {ElementPlacements} from "@contrast-type/models/sample-page.model";
 
 
 export type AppState = {
@@ -47,6 +49,39 @@ export type AppState = {
    * persisted: it is a look at the page, not part of the result.
    */
   openVerdict: string | null;
+  /**
+   * The palette slot the visitor put on each element of the sample page,
+   * keyed by `SAMPLE_ELEMENTS` key - see `ElementPlacements` for why a slot
+   * and not a colour.
+   *
+   * Not persisted: the placements are part of the result, so carrying them
+   * across a reload and into a shared link is real work with a shape of its
+   * own, and it is #68's. Until then a reload opens on the default
+   * assignment, which is the page the palette alone produces.
+   */
+  placements: ElementPlacements;
+  /**
+   * The slot the visitor is carrying, or null while nothing is in hand. A
+   * drag of a chip sets it; the release clears it, either by placing the
+   * colour or by putting the chip down where it found no element.
+   *
+   * **A press must never arm this.** Only a drag can tell a cancel from an
+   * accident, because CDK holds the pointer down for its whole length. Below
+   * `lg` the preview is stacked under the control column, so a finger has to
+   * scroll from a chip to an element and the pan fires `pointercancel` - a
+   * carry armed by a press would be thrown away by the very scroll it was
+   * made for. A screen reader's activation arrives as a real touch as well,
+   * so it would arm one silently and turn the next verdict mark a visitor
+   * activates into a drop target instead of a disclosure. The no-drag path
+   * for touch, mouse and keyboard alike is the chooser on the element's own
+   * mark; `PlacementGesture` carries the rest of the reason.
+   *
+   * In the store rather than in a component, for `openVerdict`'s reason: the
+   * chip that is picked up and the elements that answer the carry are
+   * separate component instances, in two columns of the screen. Transient
+   * and not persisted - nothing is in hand across a reload.
+   */
+  carriedSlot: PaletteSlot | null;
 
   // Common
   colorTheme: ColorTheme;
@@ -95,6 +130,8 @@ export const initialState: AppState = {
   // brings the two together - `PALETTE PAIR` is a gesture, not a reaction.
   contrastColors: contrastPairFromPalette(initialPalette),
   openVerdict: null,
+  placements: {},
+  carriedSlot: null,
 
   colorTheme: "system",
   typeRole: "body",
