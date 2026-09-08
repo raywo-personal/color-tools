@@ -76,7 +76,7 @@
       <li class="border-b border-line py-1 last:border-b-0">
         <!-- Two lines rather than the draft's one row of seven columns. The
              left column is `minmax(18rem,22rem)` and the draft drew this block
-             at 400px: name, shape, word, swatch, slot, side, Lc and a button
+             at 400px: name, shape, word, swatch, handle, side, Lc and a button
              do not share 18rem, and a fixed-width column per field would
              truncate rather than wrap.
 
@@ -110,7 +110,7 @@
           </button>
         </div>
 
-        <!-- What the colour is, what the palette calls it, which side of the
+        <!-- What the colour is, which chip it came off, which side of the
              element it took, and what that pairing reaches.
 
              The swatch is rimmed in `line` rather than in a colour APCA picked
@@ -124,7 +124,9 @@
           <span class="size-4 shrink-0 rounded-xs border border-line"
                 [style.background-color]="row.swatch"></span>
           <span>{{ row.color }}</span>
-          <span class="font-sans tracking-widest">{{ row.slotCaption }}</span>
+          <!-- The handle, in mono like the chip's own label: it is a token to
+               match against the row above, not a word to read. -->
+          <span class="font-mono">{{ row.handle }}</span>
           <span>{{ row.side }}</span>
           <span class="font-mono tabular-nums text-text">Lc {{ row.lc }}</span>
         </div>

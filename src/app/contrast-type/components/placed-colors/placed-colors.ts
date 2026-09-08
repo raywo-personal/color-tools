@@ -3,7 +3,7 @@ import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {colorName} from "@engine/color/color-name.helper";
-import {roleCaptionFor} from "@engine/palette/palette-role.helper";
+import {chipLabelFor, colorOf} from "@contrast-type/models/chip-source.model";
 import {SAMPLE_ELEMENTS, samplePage} from "@contrast-type/models/sample-page.model";
 import {
   VerdictState,
@@ -26,8 +26,8 @@ interface PlacedRow {
   readonly word: string;
   readonly swatch: string;
   readonly color: string;
-  /** What the palette calls the slot, per `roleCaptionFor()`. */
-  readonly slotCaption: string;
+  /** The chip the colour came off: `P1` to `P5`, `T` or `BG`. */
+  readonly handle: string;
   /**
    * Which of the element's two colours the placement took, in the words the
    * chip's own name uses for the pair - see `PaletteChips`.
@@ -66,12 +66,15 @@ interface PlacedRow {
  * and it keeps the ledger in the order the marks and the tally are in, rather
  * than in the order the visitor happened to drop things.
  *
- * **A row shows both what the palette calls the colour and what the colour is
- * called.** `roleCaptionFor()` is this app's word for a slot and it is the
- * word the studio's swatches carry, but its captions are all-caps and a screen
- * reader spells those out letter by letter - `BASE`, `SPLIT A`, `−14`. So
- * `colorName()` stands beside it: the swatch is a colour, and a colour needs a
- * carrier that is not the colour itself.
+ * **A row names the chip the colour came off, and what the colour is called.**
+ * The handle - `P3`, `T`, `BG` - is the word on the chip the visitor pressed or
+ * dragged, so the row points at something they can still see; that is the
+ * whole of why it is here rather than `roleCaptionFor()`, which names a slot
+ * by what the generator did with it and is the Studio's question. One word per
+ * screen, as #134 asked: do not print both. `colorName()` stands beside the
+ * handle, because a handle identifies a chip without saying anything about it
+ * and a swatch is a colour that needs a carrier which is not the colour
+ * itself.
  *
  * **The side is the text color or the background, not the name of a ground.**
  * Which of the element's two colours a placement took is
@@ -113,18 +116,19 @@ export class PlacedColors {
 
   protected readonly rows = computed<readonly PlacedRow[]>(() => {
     const placements = this.#stateStore.placements();
+    const pair = this.#stateStore.contrastColors();
     const palette = this.#stateStore.currentPalette();
     const page = this.#page();
     const roles = this.#stateStore.typeRoles();
     const rows: PlacedRow[] = [];
 
     for (const element of SAMPLE_ELEMENTS) {
-      const slot = placements[element.key];
+      const source = placements[element.key];
 
-      if (!slot) continue;
+      if (!source) continue;
 
       const verdict = verdictFor(element.key, page, roles);
-      const color = palette[slot].color;
+      const color = colorOf(source, pair, palette);
       const name = elementName(element);
 
       rows.push({
@@ -134,7 +138,7 @@ export class PlacedColors {
         word: verdictWord(verdict.state),
         swatch: color.hex("rgb"),
         color: colorName(color),
-        slotCaption: roleCaptionFor(palette.style, slot),
+        handle: chipLabelFor(source),
         side: element.placement === "ink" ? "as the text color" : "as the background",
         lc: verdict.lc,
         // The same wording the announcement uses: six elements default to a

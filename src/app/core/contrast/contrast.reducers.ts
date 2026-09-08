@@ -4,7 +4,7 @@ import chroma, {Color} from "chroma-js";
 import {findTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {ContrastColors, createContrastColors} from "@engine/contrast/contrast-colors.model";
 import {contrastColorsFromId} from "@engine/contrast/contrast-id.helper";
-import {PaletteSlot} from "@engine/palette/palette.model";
+import {ChipSource} from "@contrast-type/models/chip-source.model";
 
 
 export function textColorChangedReducer(
@@ -104,7 +104,7 @@ export function verdictToggledReducer(
 
 
 /**
- * A palette colour on one element of the sample page.
+ * A chip's colour on one element of the sample page.
  *
  * **The placement puts the chip down.** A drag's release places the colour
  * and ends the carry in one gesture, and the chooser on an element's mark
@@ -122,35 +122,35 @@ export function verdictToggledReducer(
  */
 export function colorPlacedReducer(
   this: void,
-  event: EventInstance<"[Contrast] colorPlaced", {elementKey: string; slot: PaletteSlot}>,
+  event: EventInstance<"[Contrast] colorPlaced", {elementKey: string; source: ChipSource}>,
   state: AppState
 ) {
-  const {elementKey, slot} = event.payload;
+  const {elementKey, source} = event.payload;
 
   return {
-    placements: {...state.placements, [elementKey]: slot},
-    carriedSlot: null
+    placements: {...state.placements, [elementKey]: source},
+    carriedChip: null
   };
 }
 
 
 export function chipPickedUpReducer(
   this: void,
-  event: EventInstance<"[Contrast] chipPickedUp", PaletteSlot>
+  event: EventInstance<"[Contrast] chipPickedUp", ChipSource>
 ) {
-  return {carriedSlot: event.payload};
+  return {carriedChip: event.payload};
 }
 
 
 export function chipPutDownReducer(
   this: void
 ) {
-  return {carriedSlot: null};
+  return {carriedChip: null};
 }
 
 
 /**
- * One element back to the colour the palette alone gives it.
+ * One element back to the colour the page gives it by default.
  *
  * The key is dropped rather than set to null: an absent key is what
  * `samplePage()` reads as "nothing placed", so a null would be a second

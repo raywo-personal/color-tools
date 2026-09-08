@@ -22,15 +22,15 @@ const TARGET_SELECTOR = `[${TARGET_ATTRIBUTE}]`;
  * pointer is on, and what a release does.
  *
  * **This is a drag-only concern, and the listeners below depend on it.** A chip
- * is picked up by `cdkDragStarted` and by nothing else, so `carriedSlot` is
+ * is picked up by `cdkDragStarted` and by nothing else, so `carriedChip` is
  * only ever set while CDK holds a pointer down - which is what makes a
  * `pointercancel` a cancel here rather than an accident. **Do not hang a tap
  * path off these listeners.** Below `lg` the preview is stacked under the whole
  * control column, so a finger has to scroll between a chip and an element; a
  * pan fires `pointercancel`, and a carry that survived a press would be thrown
  * away by the very scroll it was made for. The no-drag path for touch, mouse
- * and keyboard alike is the element's own mark, which opens the palette in a
- * popup - see `ColorChooser`.
+ * and keyboard alike is the element's own mark, which opens the seven chips in
+ * a popup - see `ColorChooser`.
  *
  * **The release is decided here and nowhere else.** A chip can be released on
  * an element, on the rest of the app, or nowhere at all, and only one of the
@@ -42,15 +42,15 @@ const TARGET_SELECTOR = `[${TARGET_ATTRIBUTE}]`;
  * drag whose `chipPickedUp` has not yet reached the effect below - so leave it
  * where it is.
  *
- * **The slot is captured when the carry starts, not read at the release.** The
- * effect re-runs on every change of `carriedSlot`, so the closure always holds
+ * **The chip is captured when the carry starts, not read at the release.** The
+ * effect re-runs on every change of `carriedChip`, so the closure always holds
  * the current one; reading the store inside the handler would be reading it
  * after whatever else ran on the same event.
  *
  * **A service rather than component state**, because the elements that answer
  * a carry are twenty-two component instances and the pointer is one. It is not
  * app state either - nothing outside the page is about to ask which element a
- * finger is over - which is why it is not in the store beside `carriedSlot`.
+ * finger is over - which is why it is not in the store beside `carriedChip`.
  */
 @Service()
 export class PlacementGesture {
@@ -62,7 +62,7 @@ export class PlacementGesture {
   readonly #over = signal<string | null>(null);
 
   /** Whether a chip is in hand, which is to say: whether a drag is running. */
-  readonly carrying = computed(() => this.#stateStore.carriedSlot() !== null);
+  readonly carrying = computed(() => this.#stateStore.carriedChip() !== null);
 
   /**
    * The key of the element the pointer is over while a chip is carried, or
@@ -73,9 +73,9 @@ export class PlacementGesture {
 
   constructor() {
     effect(onCleanup => {
-      const slot = this.#stateStore.carriedSlot();
+      const source = this.#stateStore.carriedChip();
 
-      if (!slot) {
+      if (!source) {
         this.#over.set(null);
 
         return;
@@ -86,7 +86,7 @@ export class PlacementGesture {
         const elementKey = this.#targetOf(event as PointerEvent);
 
         if (elementKey) {
-          this.#dispatch.colorPlaced({elementKey, slot});
+          this.#dispatch.colorPlaced({elementKey, source});
         } else {
           this.#dispatch.chipPutDown();
         }

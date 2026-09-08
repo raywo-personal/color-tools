@@ -2,7 +2,7 @@ import {eventGroup} from "@ngrx/signals/events";
 import {type} from "@ngrx/signals";
 import {Color} from "chroma-js";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
-import {PaletteSlot} from "@engine/palette/palette.model";
+import {ChipSource} from "@contrast-type/models/chip-source.model";
 
 
 export const contrastEvents = eventGroup({
@@ -23,25 +23,25 @@ export const contrastEvents = eventGroup({
      */
     verdictToggled: type<string>(),
     /**
-     * A palette colour was put on one element of the sample page: the
-     * element's `SAMPLE_ELEMENTS` key and the slot it takes.
+     * A chip was put on one element of the sample page: the element's
+     * `SAMPLE_ELEMENTS` key and the chip it takes its colour from.
      *
-     * The slot rather than the colour, so repainting the palette keeps the
-     * placement and hands the element the new colour of the same slot -
-     * `ElementPlacements` says why.
+     * The source rather than the colour, so repainting the palette or typing
+     * a new pair keeps the placement and hands the element the new colour of
+     * the same chip - `ElementPlacements` says why.
      *
      * Not persisted: the placements are part of the result, and carrying
      * them across a reload is #68's.
      */
-    colorPlaced: type<{elementKey: string; slot: PaletteSlot}>(),
+    colorPlaced: type<{elementKey: string; source: ChipSource}>(),
     /**
-     * A drag of a chip started, and that slot is now in hand.
+     * A drag of a chip started, and that chip is now in hand.
      *
-     * A drag raises this and nothing else does - `AppState.carriedSlot` says
+     * A drag raises this and nothing else does - `AppState.carriedChip` says
      * why a press must not. The chooser on an element's mark places straight
      * away and never puts anything in hand.
      */
-    chipPickedUp: type<PaletteSlot>(),
+    chipPickedUp: type<ChipSource>(),
     /**
      * Nothing is in hand any more: a drag released where there was no
      * element, a pan or a zoom that took the pointer away, or Escape. A
@@ -49,7 +49,7 @@ export const contrastEvents = eventGroup({
      * ended without one.
      */
     chipPutDown: type<void>(),
-    /** One element goes back to the colour the palette alone gives it. */
+    /** One element goes back to the colour the page gives it by default. */
     placementReset: type<string>(),
     /** `RESET PAGE`: every element goes back to the default assignment. */
     placementsReset: type<void>()

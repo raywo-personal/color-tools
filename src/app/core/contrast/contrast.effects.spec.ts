@@ -34,7 +34,7 @@ describe("placementAnnouncedEffect", () => {
     // nothing on screen would say what happened.
     const {store, dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "smallPrint", slot: "color3"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "smallPrint", source: "color3"}));
 
     const name = elementName(sampleElement("smallPrint"));
     const colour = colorName(store.currentPalette().color3.color);
@@ -51,20 +51,34 @@ describe("placementAnnouncedEffect", () => {
     // all-caps caption is what a screen reader spells out letter by letter.
     const {dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "filledButton", slot: "color1"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "filledButton", source: "color1"}));
 
     expect(announcer.last?.message).toContain("Filled button");
   });
 
 
-  it("names no slot, because the captions are all-caps", () => {
-    // `roleCaptionFor()` is what the ledger's row shows; spoken it is spelled
-    // out letter by letter. The colour's own name is what the visitor acts on.
+  it("names no handle, because a handle says nothing about a colour", () => {
+    // `P1` is what the row and the ledger show, and spoken it identifies a
+    // chip without describing it. The colour's own name is what the visitor
+    // acts on.
     const {dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", slot: "color0"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color0"}));
 
-    expect(announcer.last?.message).not.toMatch(/SEED|BASE|RANDOM/);
+    expect(announcer.last?.message).not.toMatch(/\bP1\b/);
+  });
+
+
+  it("names the pair's own colour when T or G was placed", () => {
+    // The source is resolved through `colorOf()`, so a placement from the
+    // pair is announced by the colour it actually put on the element.
+    const {store, dispatcher, announcer} = setup();
+
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "background"}));
+
+    const colour = colorName(store.contrastColors.background());
+
+    expect(announcer.last?.message).toBe(`Headline takes ${colour}`);
   });
 
 
@@ -73,13 +87,13 @@ describe("placementAnnouncedEffect", () => {
     // page's own, so a sentence naming the page would be false for them.
     const {dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", slot: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", source: "color2"}));
     dispatcher.dispatch(contrastEvents.placementReset("quote"));
 
     expect(announcer.last?.message).toBe("Pull quote back to its default color");
     expect(announcer.last?.politeness).toBe("polite");
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "eyebrow", slot: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "eyebrow", source: "color2"}));
     dispatcher.dispatch(contrastEvents.placementReset("eyebrow"));
 
     expect(announcer.last?.message).not.toContain("the page");
@@ -91,7 +105,7 @@ describe("placementAnnouncedEffect", () => {
     // is one nobody hears the end of.
     const {dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", slot: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", source: "color2"}));
     dispatcher.dispatch(contrastEvents.placementsReset());
 
     expect(announcer.last?.message).toBe("Every placed color removed");

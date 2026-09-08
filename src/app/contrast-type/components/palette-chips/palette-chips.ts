@@ -5,14 +5,25 @@ import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {ContrastColorRole} from "@engine/contrast/contrast-color.model";
-import {PALETTE_SLOTS, PaletteSlot} from "@engine/palette/palette.model";
+import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {colorName} from "@engine/color/color-name.helper";
+import {
+  CHIP_SOURCES,
+  ChipSource,
+  chipLabelFor,
+  chipSourceName,
+  colorOf
+} from "@contrast-type/models/chip-source.model";
 
 
 interface Chip {
-  readonly slot: PaletteSlot;
+  readonly source: ChipSource;
   readonly color: Color;
   readonly background: string;
+  /** `P1` to `P5`, `T`, `BG` - the handle the ledger's rows use as well. */
+  readonly handle: string;
+  /** Black or white, whichever APCA puts further from the chip's own color. */
+  readonly ink: string;
   readonly label: string;
 }
 
@@ -42,15 +53,16 @@ const DRAG_START_DELAY: DragStartDelay = {touch: 300, mouse: 0};
 
 
 /**
- * The five colors of the current palette, each one a way into the pair and a
- * colour the visitor can put on one element of the preview.
+ * The seven colors a visitor can reach for: the palette's five, then the
+ * pair's own two. Each one is a way into the pair and a colour they can put on
+ * one element of the preview.
  *
  * The draft sets the background on a click and the text color on a
  * double-click. A double-click is not reachable from the keyboard, so it
  * cannot be the only way to set the text color, and the alternative here is a
- * target above the row rather than a second control per chip: five chips are
- * five focus stops instead of ten, every action stays one click, and the row
- * needs no overlay.
+ * target above the row rather than a second control per chip: seven chips are
+ * seven focus stops instead of fourteen, every action stays one click, and the
+ * row needs no overlay.
  *
  * The price of a target is a mode, and what pays for it is the chip's own
  * name: it says which half of the pair the click will set, so the outcome is
@@ -59,6 +71,43 @@ const DRAG_START_DELAY: DragStartDelay = {touch: 300, mouse: 0};
  *
  * The target is component state, not app state: it is how this row is being
  * used, not something the app has to remember or share.
+ *
+ * ## `T` and `BG` are chips like the other five
+ *
+ * **They carry the pair's two colours, and a click applies them the way any
+ * chip's does** - to the half named above the row. Two of the four
+ * combinations then change nothing, because the colour is already on that
+ * half; the row is not made honest by hiding that, and a chip that answered a
+ * press differently from its six neighbours would be the harder thing to
+ * learn. What they are for is the drop: the text colour onto a button, the
+ * background onto a card.
+ *
+ * **The pair is still set only from here and from the two fields.** A release
+ * over the preview places a colour on an element and never writes `T` or `BG` -
+ * `PlacementGesture` decides every release, and it dispatches `colorPlaced`
+ * and nothing else.
+ *
+ * ## What the chips say, and what they do not
+ *
+ * **A chip carries its handle, not the role the preview gives its colour.**
+ * The page's default assignment - accent, ghost border, eyebrow, card tint -
+ * is a starting point that any drop overrides, so a chip captioned `BUTTONS`
+ * would be wrong the moment a visitor colours the buttons from somewhere else.
+ * It would also move on its own: `roleColorsFrom()` skips whichever slot is
+ * the pair's ground, so the caption would shift as the pair moves and the
+ * visitor changed nothing. What the page does without them is one sentence
+ * that stays true either way, and it stands behind the `i` in `PLACED COLORS`.
+ * This is what closed #134.
+ *
+ * **The handle is this screen's one word for a chip.** `P3`, `T`, `BG` - the
+ * same word the ledger's rows carry, so a row points at a chip the visitor can
+ * see. `roleCaptionFor()` names a slot by what the generator did with it and
+ * stays in the Studio; `chipLabelFor()` says why the two are not printed
+ * together.
+ *
+ * **The label's colour comes from APCA, not from the draft's white.** It sits
+ * on a colour the visitor picked, so a token is guaranteed against none of it
+ * and a fixed white disappears on `BG` the moment the page is light.
  *
  * ## Two gestures on one button
  *
@@ -100,13 +149,14 @@ const DRAG_START_DELAY: DragStartDelay = {touch: 300, mouse: 0};
  *
  * **The no-drag path is not here.** It is the chooser on the element's own
  * mark - one press, on the thing being coloured, reachable by keyboard, mouse
- * and finger alike, with no state to carry across a scroll. Placing from this
- * row as well would be a second way to do one thing, and it is the way that
- * cannot say what it is doing.
+ * and finger alike, with no state to carry across a scroll. It holds the same
+ * seven chips, which is what keeps `T` and `BG` from being mouse-only. Placing
+ * from this row as well would be a second way to do one thing, and it is the
+ * way that cannot say what it is doing.
  *
  * **The carry is store state, not a signal here**: the chip that is picked up
  * and the elements that answer the carry are separate component trees, in two
- * columns of the screen - `AppState.carriedSlot` says so too.
+ * columns of the screen - `AppState.carriedChip` says so too.
  */
 @Component({
   selector: "ct-palette-chips",
@@ -132,22 +182,36 @@ export class PaletteChips {
   protected readonly target = signal<ContrastColorRole>("background");
 
   protected readonly chips = computed<Chip[]>(() => {
+    const pair = this.#stateStore.contrastColors();
     const palette = this.#stateStore.currentPalette();
     const target = this.target();
     const targetName = target === "text" ? "text color" : "background";
 
-    return PALETTE_SLOTS.map(slot => {
-      const color = palette[slot].color;
+    return CHIP_SOURCES.map(source => {
+      const color = colorOf(source, pair, palette);
+      const handle = chipLabelFor(source);
+      const sourceName = chipSourceName(source);
 
       return {
-        slot,
+        source,
         color,
         background: color.hex("rgb"),
+        handle,
+        ink: findOptimalTextColor(color).color.hex("rgb"),
         // What the click does, and it is the whole of what a press does. The
         // name is read out by the control the visitor is standing on, so a
         // second outcome it did not name would be a press that lied about
         // itself - which is why no press arms a carry.
-        label: `Use ${colorName(color)} as the ${targetName}`
+        //
+        // It opens with the handle **verbatim**, because the handle is visible
+        // text in the button and WCAG 2.5.3 asks the name to contain the label
+        // - the same rule `RESET PAGE` is held to. `T` and `BG` add what the
+        // letter stands for: a screen reader speaks them as letters and the
+        // adjacency to the two fields that carries it on screen is no help in
+        // speech.
+        label: sourceName === null
+          ? `${handle}: Use ${colorName(color)} as the ${targetName}`
+          : `${handle}, ${sourceName}: Use ${colorName(color)} as the ${targetName}`
       };
     });
   });
@@ -219,7 +283,7 @@ export class PaletteChips {
   protected onDragStarted(chip: Chip): void {
     this.#draggedFromPress = true;
     this.#dragging.set(true);
-    this.#dispatch.chipPickedUp(chip.slot);
+    this.#dispatch.chipPickedUp(chip.source);
   }
 
 
@@ -239,7 +303,7 @@ export class PaletteChips {
     // runs after the dispatch that picked the chip up. Keep the condition. An
     // unconditional `chipPutDown` here would cancel a placement the service had
     // just made, which is what its own comment warns about.
-    if (this.#stateStore.carriedSlot() !== null) this.#dispatch.chipPutDown();
+    if (this.#stateStore.carriedChip() !== null) this.#dispatch.chipPutDown();
   }
 
 

@@ -4,16 +4,23 @@ import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {colorName} from "@engine/color/color-name.helper";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
-import {PALETTE_SLOTS, PaletteSlot} from "@engine/palette/palette.model";
+import {
+  CHIP_SOURCES,
+  ChipSource,
+  chipLabelFor,
+  colorOf
+} from "@contrast-type/models/chip-source.model";
 import {sampleElement, samplePage} from "@contrast-type/models/sample-page.model";
 import {VerdictState, elementName, verdictFor, verdictWord} from "@contrast-type/models/element-verdict.model";
 import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shape";
 
 
-/** One palette member as this element would wear it. */
+/** One of the seven chips as this element would wear it. */
 interface ChipOption {
 
-  readonly slot: PaletteSlot;
+  readonly source: ChipSource;
+  /** `P1` to `P5`, `T`, `BG` - the row's handle, shown for the focused chip. */
+  readonly handle: string;
   readonly background: string;
   /** Black or white, whichever APCA puts further from the chip's own color. */
   readonly tick: string;
@@ -34,16 +41,21 @@ interface ChipOption {
 
 
 /**
- * The palette, as a way of colouring one element of the sample page without a
- * drag.
+ * The seven chips, as a way of colouring one element of the sample page
+ * without a drag.
  *
  * **It is the keyboard's half of the same gesture, not a second feature.** A
  * drag cannot be performed from a keyboard and a chip that only answers a
  * pointer would leave the page uncolourable, so the element's own control
- * opens this and the arrow keys walk the same five colours the chip row holds.
- * A press places, `Backspace` takes it back, `Escape` closes - see
- * `verdict-mark.ts` for why the element's control is its mark and not a
- * second stop in the tab order.
+ * opens this and the arrow keys walk the same seven colours the chip row
+ * holds - the palette's five and the pair's own two. A press places,
+ * `Backspace` takes it back, `Escape` closes - see `verdict-mark.ts` for why
+ * the element's control is its mark and not a second stop in the tab order.
+ *
+ * **All seven, in the row's order, or `T` and `BG` would be mouse-only.** They
+ * can be dropped on an element, so they have to be placeable without a drag
+ * as well; the order is the row's so that walking the two is the same walk in
+ * both places.
  *
  * **A toolbar of real buttons, not a listbox of divs.** Placing a colour is a
  * command rather than a selection that something else applies later: the press
@@ -56,12 +68,15 @@ interface ChipOption {
  * reads the verdict of the element *as if* the focused chip had been placed,
  * built through `samplePage()` with the one placement swapped in - so the
  * figure is the same derivation the page, the rating and the marks use rather
- * than a second opinion about the same element.
+ * than a second opinion about the same element. It opens with the chip's
+ * handle, which is the one thing here that says *which* of the seven the arrow
+ * keys are on: the chips themselves are seven swatches and two of them are the
+ * pair's, which no colour tells apart.
  *
  * **And every chip's own name carries that verdict, not the colour alone.**
  * The row is what a sighted visitor reads while arrowing the chips; it is not
  * a live region, and a name of `Lapis Blue` would let a screen-reader visitor
- * walk all five and never learn that one of them fails - leaving placing it
+ * walk all seven and never learn that one of them fails - leaving placing it
  * and resetting as the only way to find out. This is the path for keyboard and
  * touch alike, which makes it the one place the verdict has to travel. Same
  * rule as everywhere on this screen: a colour is never the only carrier.
@@ -121,7 +136,7 @@ export class ColorChooser {
     return `${side} for ${elementName(this.element())}`;
   });
 
-  protected readonly placedSlot = computed(() =>
+  protected readonly placedSource = computed(() =>
     this.#stateStore.placements()[this.elementKey()] ?? null);
 
   protected readonly chips = computed<readonly ChipOption[]>(() => {
@@ -132,26 +147,31 @@ export class ColorChooser {
     const roles = this.#stateStore.typeRoles();
     const placed = placements[key];
 
-    return PALETTE_SLOTS.map(slot => {
-      const color = palette[slot].color;
+    return CHIP_SOURCES.map(source => {
+      const color = colorOf(source, pair, palette);
       // The page this element would be on, not the one it is on: the swap goes
       // through `samplePage()` so the figure comes out of the same derivation
       // the preview paints with.
-      const verdict = verdictFor(key, samplePage(pair, palette, {...placements, [key]: slot}), roles);
+      const verdict = verdictFor(key, samplePage(pair, palette, {...placements, [key]: source}), roles);
 
       const name = colorName(color);
       const word = verdictWord(verdict.state);
 
       return {
-        slot,
+        source,
+        handle: chipLabelFor(source),
         background: color.hex("rgb"),
         tick: findOptimalTextColor(color).color.hex("rgb"),
         name,
         // A colon before the word, for `verdict-mark`'s reason: `not rated`
         // is not a verb and `Lapis Blue not rated` reads as a missing `is`.
         // The Lc after it, in the order the visible row below has them.
+        //
+        // The colour's name and not the handle: the handle identifies a chip
+        // and says nothing about it, and the visitor is choosing a colour
+        // here - `placementAnnouncedEffect` names one the same way.
         label: `${name}: ${word}, Lc ${verdict.lc}`,
-        placed: placed === slot,
+        placed: placed === source,
         state: verdict.state,
         lc: verdict.lc,
         word
@@ -169,9 +189,9 @@ export class ColorChooser {
     // wearing, and the focus lands there rather than on the popup's edge -
     // otherwise the first arrow press would be spent getting into the row.
     afterNextRender(() => {
-      const placed = this.placedSlot();
+      const placed = this.placedSource();
 
-      this.#focus(placed ? PALETTE_SLOTS.indexOf(placed) : 0);
+      this.#focus(placed ? CHIP_SOURCES.indexOf(placed) : 0);
     });
   }
 
@@ -181,13 +201,13 @@ export class ColorChooser {
   }
 
 
-  protected place(slot: PaletteSlot): void {
-    this.#dispatch.colorPlaced({elementKey: this.elementKey(), slot});
+  protected place(source: ChipSource): void {
+    this.#dispatch.colorPlaced({elementKey: this.elementKey(), source});
   }
 
 
   protected reset(): void {
-    if (this.placedSlot()) this.#dispatch.placementReset(this.elementKey());
+    if (this.placedSource()) this.#dispatch.placementReset(this.elementKey());
   }
 
 
@@ -209,7 +229,7 @@ export class ColorChooser {
         this.#focus(0);
         break;
       case "End":
-        this.#focus(PALETTE_SLOTS.length - 1);
+        this.#focus(CHIP_SOURCES.length - 1);
         break;
       case "Backspace":
       case "Delete":
@@ -225,7 +245,7 @@ export class ColorChooser {
 
   /** Wrapping, so the row has no dead end at either side. */
   #step(by: number): void {
-    const count = PALETTE_SLOTS.length;
+    const count = CHIP_SOURCES.length;
 
     this.#focus((this.#active() + by + count) % count);
   }
