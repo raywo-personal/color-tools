@@ -8,7 +8,12 @@ import {ThemeControl} from "@shell/components/theme-control/theme-control";
   imports: [RouterLink, ThemeControl],
   templateUrl: "./app-header.html",
   host: {
-    "class": "flex flex-col gap-4 border-b border-line pb-6 mb-6 sm:flex-row sm:flex-wrap sm:items-center sm:gap-7 sm:pb-8 sm:mb-8"
+    // The gap under the rule is the narrow layout's at every width. Widening
+    // it was room the wide screens had to spare while the shell was capped;
+    // uncapped, the screens spend their height on the columns instead, and on
+    // a laptop those eight pixels either side of the rule were the difference
+    // between the third slider standing above the fold and under it.
+    "class": "flex flex-col gap-4 border-b border-line pb-6 mb-6 sm:flex-row sm:flex-wrap sm:items-center sm:gap-7"
   }
 })
 export class AppHeader {

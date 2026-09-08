@@ -10,13 +10,27 @@ import {fontSizeRangeFor, TYPE_ROLES, TypeRole, typeRoleCaption} from "@engine/c
 import {LINE_HEIGHT_RANGE, TypeSettings} from "@engine/contrast/type-settings.model";
 
 
-/** One of the roles the controls are not acting on, summarised in a line. */
+/** One of the roles the controls are not acting on, summarised in a row. */
 interface RoleSummary {
 
   readonly role: TypeRole;
   readonly caption: string;
-  /** Face, then size / weight / leading - `IBM Plex Sans 18 / 400 / 1.60`. */
-  readonly text: string;
+  /** The face - `IBM Plex Sans`. */
+  readonly family: string;
+  /**
+   * Size / weight / leading - `18px / 400 / 1.60`.
+   *
+   * The size carries its unit and the other two do not, because the other two
+   * have none: a weight is a number and a leading is a multiple of the size.
+   * `SIZE` above says `18px` for the role being worked on, so a bare `18` here
+   * would read as a different quantity.
+   *
+   * Apart from the face because the two do not share a line: a family name
+   * plus the three figures runs past a side column at every width it has, and
+   * the row is read right to left off a shared edge. The template says the
+   * rest.
+   */
+  readonly spec: string;
 
 }
 
@@ -52,7 +66,11 @@ interface RoleSummary {
   imports: [FontPicker, Slider],
   templateUrl: "./type-controls.html",
   host: {
-    "class": "grid gap-4"
+    // `gap-3`, not `gap-4`: the picker, the three sliders and the roles below
+    // them have to fit above a laptop's fold together with the segments and
+    // the rating, and this is the one gap in the column that costs a visitor
+    // nothing - every control keeps its own hit area.
+    "class": "grid gap-3"
   }
 })
 export class TypeControls {
@@ -118,8 +136,8 @@ export class TypeControls {
    * The three roles the controls are not acting on, in role order.
    *
    * Under the sliders rather than nowhere: the segments say which role is
-   * being changed, this line says what the others stand at, so switching
-   * roles is never the only way to find out.
+   * being changed, these rows say what the others stand at, so switching roles
+   * is never the only way to find out.
    */
   protected readonly others = computed<RoleSummary[]>(() => {
     const roles = this.#stateStore.typeRoles();
@@ -128,9 +146,13 @@ export class TypeControls {
       .filter(role => role !== this.role())
       .map(role => {
         const {font, settings} = roles[role];
-        const spec = `${settings.fontSize} / ${settings.fontWeight} / ${settings.lineHeight.toFixed(2)}`;
 
-        return {role, caption: typeRoleCaption(role), text: `${familyNameFor(role, font)} ${spec}`};
+        return {
+          role,
+          caption: typeRoleCaption(role),
+          family: familyNameFor(role, font),
+          spec: `${settings.fontSize}px / ${settings.fontWeight} / ${settings.lineHeight.toFixed(2)}`
+        };
       });
   });
 

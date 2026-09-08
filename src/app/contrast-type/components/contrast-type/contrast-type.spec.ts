@@ -62,7 +62,7 @@ describe("ContrastType", () => {
     // The four the other blocks of the column carry, not the whole list: the
     // component's own host class is the ledger's business, not this file's.
     expect(Array.from(ledger.classList))
-      .toEqual(expect.arrayContaining(["mt-6", "border-t", "border-line", "pt-5"]));
+      .toEqual(expect.arrayContaining(["mt-5", "border-t", "border-line", "pt-4"]));
   });
 
 
@@ -86,7 +86,7 @@ describe("ContrastType", () => {
   });
 
 
-  it("puts the two columns behind lg:, so the narrow layout is the unprefixed one", async () => {
+  it("puts every column count behind a breakpoint, so the narrow layout is the unprefixed one", async () => {
     // The rule this pins is "Layouts Are Mobile-First". `pnpm lint` catches the
     // other half of it - a `max-*` variant walking a desktop layout back - but
     // an unprefixed `grid-cols-2` is a desktop-first layout no linter objects
@@ -96,7 +96,75 @@ describe("ContrastType", () => {
       .filter(name => name.includes("grid-cols-"));
 
     expect(columns.length, "the grid declares no columns at all").toBeGreaterThan(0);
-    expect(columns.filter(name => !name.startsWith("lg:"))).toEqual([]);
+    expect(columns.filter(name => !/^(lg|xl):/.test(name))).toEqual([]);
+  });
+
+
+  it("declares two columns at lg and three at xl", async () => {
+    const host = await contrastType();
+    const columns = Array.from(host.classList)
+      .filter(name => name.includes("grid-cols-"));
+
+    // The tracks, not their widths: what the layout promises is a count, and
+    // the widths are the doc comment's business.
+    const tracks = (prefix: string) => columns
+      .filter(name => name.startsWith(prefix))
+      .flatMap(name => name.split("_"));
+
+    expect(tracks("lg:").length).toBe(2);
+    expect(tracks("xl:").length).toBe(3);
+  });
+
+
+  it("lifts the type block into the third column at xl and leaves the preview in the middle", async () => {
+    // The preview is what the screen is about, so it keeps the column that
+    // grows and the two control columns flank it.
+    const host = await contrastType();
+    const type = host.querySelector("ct-type-roles")?.parentElement as HTMLElement;
+    const preview = host.querySelector("ct-website-preview") as HTMLElement;
+
+    expect(Array.from(type.classList))
+      .toEqual(expect.arrayContaining(["xl:col-start-3", "xl:row-start-1"]));
+    expect(Array.from(preview.classList))
+      .toEqual(expect.arrayContaining(["lg:col-start-2", "lg:row-start-1"]));
+  });
+
+
+  it("keeps the type block's rule to the widths where it is a block under the colours", async () => {
+    // A rule across the top of a column says nothing, and at `xl` that is what
+    // the type block is. Below it, it is the block under the colours and the
+    // rule is the draft's own.
+    const host = await contrastType();
+    const type = host.querySelector("ct-type-roles")?.parentElement as HTMLElement;
+
+    expect(Array.from(type.classList))
+      .toEqual(expect.arrayContaining(["mt-5", "border-t", "border-line", "pt-4"]));
+    expect(Array.from(type.classList))
+      .toEqual(expect.arrayContaining(["xl:mt-0", "xl:border-t-0", "xl:pt-0"]));
+  });
+
+
+  it("splits the controls into a colour column and a type column", async () => {
+    // Which column a block goes in is what the issue behind this screen is
+    // about: the pair and the ways to get one on one side, the role and the
+    // type it is set in on the other, and the tally with the colours because
+    // it judges the pair rather than the role.
+    const host = await contrastType();
+    const columnOf = (selector: string) =>
+      host.querySelector(selector)?.parentElement;
+    const colors = columnOf("ct-pair-fields");
+    const type = columnOf("ct-type-roles");
+
+    expect(colors).not.toBe(type);
+
+    for (const selector of ["ct-palette-chips", "ct-pair-actions", "ct-page-verdicts",
+      "ct-placed-colors", "ct-color-vision"]) {
+      expect(columnOf(selector), selector).toBe(colors);
+    }
+
+    for (const selector of ["ct-apca-rating", "ct-type-controls"]) {
+      expect(columnOf(selector), selector).toBe(type);
+    }
   });
 
 });

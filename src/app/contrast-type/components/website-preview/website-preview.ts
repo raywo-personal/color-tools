@@ -1,4 +1,5 @@
 import {Component, computed, inject} from "@angular/core";
+import {CdkScrollable} from "@angular/cdk/scrolling";
 import {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {fontFamilyFor, TypeRolesMap} from "@common/models/type-role-settings.model";
@@ -197,13 +198,29 @@ interface PreviewStyle {
  * also what lets the table's three marks sit inside its cells: a block in a
  * `<td>` re-apportioned the columns every time it opened. `VerdictMark` says
  * the rest.
+ *
+ * **From `lg` the preview keeps its place while the controls scroll.** It is
+ * `sticky` at the distance from the top that the app's own container already
+ * keeps, and the page inside it scrolls - see the template.
+ *
+ * **The cap on the height is what makes the sticky useful.** A sticky element
+ * taller than the viewport pins at the top and never moves again: its lower
+ * part sits below the fold and is out of reach until the control column has
+ * ended. So the host is held to the viewport less the gap it keeps at either
+ * end, and the overflow goes to the page rather than to the window. Do not
+ * drop the cap and keep the sticky.
+ *
+ * Both arrive with `lg:`, because that is where the preview first stands
+ * beside a column. Stacked under the controls it has nothing to stay level
+ * with, and a capped box scrolling inside a page that also scrolls is two
+ * scrollbars where the visitor wanted one.
  */
 @Component({
   selector: "ct-website-preview",
-  imports: [VerdictMark, PlaceTarget],
+  imports: [VerdictMark, PlaceTarget, CdkScrollable],
   templateUrl: "./website-preview.html",
   host: {
-    "class": "block min-w-0"
+    "class": "block min-w-0 lg:sticky lg:top-8 lg:flex lg:max-h-[calc(100dvh-4rem)] lg:flex-col"
   }
 })
 export class WebsitePreview {

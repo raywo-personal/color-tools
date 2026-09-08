@@ -124,13 +124,18 @@
      element was open hangs over the page the visitor has just recoloured until
      they press Escape.
 
-     `detach` covers the case the strategy gives up - a mark scrolled out of
-     view - and keeps the store from holding a verdict nobody can see. -->
+     `detach` is what carries the scroll strategy's own close back into the
+     store: scroll the app's page until the overlay has left the window and
+     `autoClose` disposes it, so without this the store would go on holding a
+     verdict nobody can see. Scrolling the *preview* is the other case, and
+     `VerdictMark` closes that one itself - the strategy cannot see the
+     container. -->
 <ng-template cdkConnectedOverlay
              [cdkConnectedOverlayOrigin]="origin"
              [cdkConnectedOverlayOpen]="open()"
              [cdkConnectedOverlayPositions]="positions"
              [cdkConnectedOverlayViewportMargin]="8"
+             [cdkConnectedOverlayScrollStrategy]="scrollStrategy"
              (overlayOutsideClick)="close()"
              (detach)="close()"
              (overlayKeydown)="onOverlayKeydown($event)">

@@ -28,8 +28,27 @@
      than a part of it, and `verdict-mark.html` says so.
 
      The page's own `font-family` is body text's face; every element in another
-     role binds its own. -->
-<section class="mt-3 overflow-hidden rounded-xs border border-line"
+     role binds its own.
+
+     **The page is what scrolls, not the block around it.** From `lg` the host
+     is capped at the viewport and the caption above stays put, so this is the
+     element that takes the overflow - and the drag hint is still readable
+     while the visitor is at the foot of the page.
+
+     `overflow-hidden` keeps standing on the horizontal axis, which
+     `lg:overflow-y-auto` leaves alone: the table is laid out from its cells'
+     min-content width and is meant to be clipped rather than to open a second
+     scrollbar. `lg:min-h-0` is what lets the section shrink inside the host's
+     column - a flex item's own content would otherwise hold it at full height
+     and push the cap out of effect.
+
+     **`cdkScrollable`, or an opened verdict stays where it was.** The popups
+     are `CdkConnectedOverlay`s and their position strategy follows the
+     scrolling of the containers the CDK's `ScrollDispatcher` knows about.
+     Nothing registers one but this directive, so without it a mark scrolls
+     away underneath its own verdict. -->
+<section cdkScrollable
+         class="mt-3 overflow-hidden rounded-xs border border-line lg:min-h-0 lg:overflow-y-auto"
          aria-label="Website preview"
          [style.background-color]="style().pageBackground"
          [style.color]="style().pageColor"

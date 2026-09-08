@@ -2,47 +2,70 @@
      `color` is everything a visitor reads.
 
      The count rides in the caption rather than in a column of its own, and
-     `flex-wrap` keeps `RESET PAGE` off the caption's line where the column is
-     at its narrowest. -->
+     `flex-wrap` keeps the controls off the caption's line where the column is
+     at its narrowest.
+
+     **The caption is on the left edge and the controls are on the right one.**
+     Everything else in the column - the fields, the chip row, the swatches,
+     the rows below - spans the full width, so a caption row that ends in the
+     middle was the one ragged edge in it. The controls travel as one group, or
+     `flex-wrap` would leave the `i` behind on the caption's line while
+     `RESET PAGE` dropped under it.
+
+     `ml-auto` is not `justify-between` said twice. A wrapped line holding one
+     item is laid out from `flex-start`, so the group drops back to the left
+     edge the moment the caption and the controls stop sharing a line - which
+     is the ragged edge this row exists to avoid. Remove either utility and the
+     alignment goes silently, and only at the widths where the row wraps. -->
 <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
   <p class="font-sans text-sm tracking-widest text-dim">{{ caption() }}</p>
 
-  @if (hasRows()) {
-    <!-- Shown only with something to clear: a control that resets nothing is a
-         control that answers nothing. The name spells the effect out, as
-         `PALETTE PAIR` does - `RESET PAGE` alone does not say what a page is
-         reset to - and it opens with the visible caption **verbatim**, the
-         effect after a colon. WCAG 2.5.3 asks the name to contain the label,
-         so a rephrased caption leaves speech input with nothing to say: `Reset
-         the page` is not `RESET PAGE`. A screen reader does spell the all-caps
-         caption out letter by letter, and that is the price - the same one
-         `pair-actions` pays. The row's own reset shows no label at all and is
-         free to stay sentence case. -->
-    <button type="button"
-            class="flex h-11 cursor-pointer items-center gap-2 rounded-xs border border-line px-3 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
-            aria-label="RESET PAGE: every element back to its default color"
-            (click)="resetPage()">
-      <svg class="size-4 shrink-0"
-           viewBox="0 0 16 16" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-           aria-hidden="true">
-        <path d="M3 6.5h6.5a3.5 3.5 0 0 1 0 7H6"/>
-        <path d="M5.5 4 3 6.5 5.5 9"/>
-      </svg>
-      RESET PAGE
-    </button>
-  }
+  <div class="ml-auto flex items-center gap-2">
+    @if (hasRows()) {
+      <!-- Shown only with something to clear: a control that resets nothing is
+           a control that answers nothing. The name spells the effect out, as
+           `PALETTE PAIR` does - `RESET PAGE` alone does not say what a page is
+           reset to - and it opens with the visible caption **verbatim**, the
+           effect after a colon. WCAG 2.5.3 asks the name to contain the label,
+           so a rephrased caption leaves speech input with nothing to say:
+           `Reset the page` is not `RESET PAGE`. A screen reader does spell the
+           all-caps caption out letter by letter, and that is the price - the
+           same one `pair-actions` pays. The row's own reset shows no label at
+           all and is free to stay sentence case. -->
+      <button type="button"
+              class="flex h-11 cursor-pointer items-center gap-2 rounded-xs border border-line px-3 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              aria-label="RESET PAGE: every element back to its default color"
+              (click)="resetPage()">
+        <svg class="size-4 shrink-0"
+             viewBox="0 0 16 16" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true">
+          <path d="M3 6.5h6.5a3.5 3.5 0 0 1 0 7H6"/>
+          <path d="M5.5 4 3 6.5 5.5 9"/>
+        </svg>
+        RESET PAGE
+      </button>
+    }
+
+    <!-- Which elements are coloured by something other than the pair is worth
+         reading once and then never again, so it sits behind the button while
+         the caption keeps the count. It is offered whether or not anything is
+         placed: it describes what the page does without the visitor, which is
+         still true after they have recoloured half of it. -->
+    <ct-info-button label="Where the page's default colors come from">
+      <p>The eyebrow, the field label, the table header, the link in the text
+        and Sign in take their color from the palette, the filled button takes
+        its fill from it, the error line has a red of its own, and everything
+        else follows the pair above.</p>
+    </ct-info-button>
+  </div>
 </div>
 
 @if (!hasRows()) {
-  <!-- One sentence, and it has to be true of all 22 elements: five take their
-       ink from the palette and the filled button its fill, so "the page's own
-       colors" would tell the visitor the opposite of what they see. -->
-  <p class="mt-2 text-sm text-dim text-pretty">Nothing is placed yet: the
-    eyebrow, the field label, the table header, the link in the text and
-    Sign in take their color from the palette, the filled button takes its
-    fill from it, the error line has a red of its own, and everything else
-    follows the pair above.</p>
+  <!-- The state, and nothing else. What the elements are coloured by instead
+       is behind the caption's `i`: it is the same sentence whether or not
+       anything is placed, so it does not belong to the empty state. -->
+  <p class="mt-2 text-sm text-dim">Nothing is placed yet.</p>
 } @else {
   <!-- `role="list"`, because Preflight strips the marker and Safari with
        VoiceOver then stops announcing the element as a list. -->

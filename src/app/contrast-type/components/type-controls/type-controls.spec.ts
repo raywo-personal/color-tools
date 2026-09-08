@@ -201,12 +201,16 @@ describe("TypeControls", () => {
 
   it("summarises the three other roles under the sliders, face and settings", async () => {
     // Nothing a visitor set is hidden while another role is being worked on.
+    // The role, its face and its figures are three boxes with no text between
+    // them - the caption on the row's left edge, the other two stacked and
+    // right-aligned on it - so `textContent` runs them together. It is the
+    // three parts this pins, not a separator.
     const {summary} = await controls();
 
     expect(summary()).toEqual([
-      "DISPLAY · IBM Plex Sans 44 / 500 / 1.10",
-      "MONO · IBM Plex Mono 12 / 400 / 1.50",
-      "UI · IBM Plex Sans 15 / 600 / 1.20"
+      "DISPLAYIBM Plex Sans44px / 500 / 1.10",
+      "MONOIBM Plex Mono12px / 400 / 1.50",
+      "UIIBM Plex Sans15px / 600 / 1.20"
     ]);
   });
 

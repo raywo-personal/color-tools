@@ -12,6 +12,7 @@ import {
   verdictWord
 } from "@contrast-type/models/element-verdict.model";
 import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shape";
+import {InfoButton} from "@common/components/info-button/info-button";
 
 
 /** One placement, as the ledger shows it. */
@@ -79,6 +80,12 @@ interface PlacedRow {
  * - `accentSoft`, `muted`, `field` - is true of the derivation and not of the
  * page, which is why `verdictFacts()` leaves it out as well.
  *
+ * **Empty, the block says only that nothing is placed.** What colours the
+ * elements instead is true whether or not the visitor has placed anything, so
+ * it stands behind the caption's `i` rather than in the empty state - see
+ * `InfoButton`. The caption keeps the count, which is what a visitor comes
+ * back to the block for.
+ *
  * **Nothing here announces.** A placement and both resets are announced by
  * `placementAnnouncedEffect`, so the sentence travels with the event rather
  * than with one of the three ways of raising it. Do not add a `LiveAnnouncer`
@@ -87,7 +94,7 @@ interface PlacedRow {
  */
 @Component({
   selector: "ct-placed-colors",
-  imports: [VerdictShape],
+  imports: [VerdictShape, InfoButton],
   templateUrl: "./placed-colors.html",
   host: {
     "class": "block"

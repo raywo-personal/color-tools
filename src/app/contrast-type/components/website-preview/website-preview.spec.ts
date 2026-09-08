@@ -1,5 +1,6 @@
 import {provideZonelessChangeDetection} from "@angular/core";
 import {TestBed} from "@angular/core/testing";
+import {ScrollDispatcher} from "@angular/cdk/scrolling";
 import {Dispatcher} from "@ngrx/signals/events";
 import {beforeEach, describe, expect, it} from "vitest";
 import chroma, {Color} from "chroma-js";
@@ -808,6 +809,82 @@ describe("WebsitePreview", () => {
     const {page} = await preview();
 
     expect(page.querySelector("table")?.classList.contains("wrap-anywhere")).toBe(true);
+  });
+
+
+  it("stays put beside the controls, capped at the viewport, with the page scrolling inside", async () => {
+    // Sticky and capped are one decision: a sticky element taller than the
+    // viewport pins at the top and never moves again, so its lower part sits
+    // below the fold until the control column has ended. Both arrive with
+    // `lg:`, because that is where the preview first stands beside a column.
+    const {host, page} = await preview();
+
+    expect(Array.from(host.classList))
+      .toEqual(expect.arrayContaining(["lg:sticky", "lg:top-8", "lg:flex", "lg:flex-col"]));
+    expect(Array.from(host.classList).some(name => /^lg:max-h-/.test(name)),
+      "no cap on the height, so the sticky pins and the lower part is out of reach")
+      .toBe(true);
+
+    // The page takes the overflow, not the block around it: the caption and
+    // the drag hint above it stay readable at the foot of the page.
+    expect(Array.from(page.classList))
+      .toEqual(expect.arrayContaining(["lg:overflow-y-auto", "lg:min-h-0"]));
+  });
+
+
+  it("registers the page as a scroll container, or an opened verdict stays where it was", async () => {
+    // The verdict popups are `CdkConnectedOverlay`s, and their position
+    // strategy follows only the containers the CDK's `ScrollDispatcher` knows
+    // about. Nothing registers one but `cdkScrollable` on the page.
+    const {page} = await preview();
+    const registered = Array.from(TestBed.inject(ScrollDispatcher).scrollContainers.keys())
+      .map(scrollable => scrollable.getElementRef().nativeElement);
+
+    expect(registered).toContain(page);
+  });
+
+
+  it("closes an opened verdict once its mark has scrolled off the visible page", async () => {
+    // The panel would otherwise stand over the app, in the app's colours,
+    // describing an element nobody can see: the overlay's own `autoClose`
+    // waits for the *overlay* to clear the window, which is most of the page's
+    // height later. `VerdictMark` says why the CDK cannot be asked to measure
+    // against the container instead.
+    //
+    // The two rects are stubbed, because a test renderer lays nothing out:
+    // every `getBoundingClientRect` is zeroes and no element is ever outside
+    // another.
+    const {page, fixture} = await preview();
+    const store = TestBed.inject(AppStateStore);
+    const mark = page.querySelector("ct-verdict-mark button") as HTMLElement;
+    const rect = (top: number, bottom: number) => () => ({
+      top, bottom, left: 0, right: 0, width: 0, height: bottom - top, x: 0, y: top,
+      toJSON: () => ({})
+    }) as DOMRect;
+
+    page.getBoundingClientRect = rect(100, 500);
+    mark.getBoundingClientRect = rect(120, 164);
+
+    mark.click();
+    await fixture.whenStable();
+
+    expect(store.openVerdict()).not.toBeNull();
+
+    // Half over the page's top edge: the visitor can still see what the popup
+    // belongs to, so taking it away mid-scroll would be the surprise.
+    mark.getBoundingClientRect = rect(80, 124);
+    page.dispatchEvent(new Event("scroll"));
+    await fixture.whenStable();
+
+    expect(store.openVerdict()).not.toBeNull();
+
+    // Above the page's top edge, and gone with it.
+    mark.getBoundingClientRect = rect(20, 64);
+    page.dispatchEvent(new Event("scroll"));
+    await fixture.whenStable();
+
+    expect(store.openVerdict()).toBeNull();
+    expect(document.querySelector(".cdk-overlay-container ct-verdict-panel")).toBeNull();
   });
 
 
