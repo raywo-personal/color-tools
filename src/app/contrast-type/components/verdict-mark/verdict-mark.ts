@@ -1,6 +1,21 @@
-import {Component, computed, ElementRef, inject, input, signal, viewChild} from "@angular/core";
+import {
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  input,
+  signal,
+  viewChild
+} from "@angular/core";
 import {CdkTrapFocus} from "@angular/cdk/a11y";
-import {CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition} from "@angular/cdk/overlay";
+import {
+  CdkConnectedOverlay,
+  CdkOverlayOrigin,
+  ConnectedPosition,
+  ScrollStrategyOptions
+} from "@angular/cdk/overlay";
+import {CdkScrollable} from "@angular/cdk/scrolling";
 import {Color} from "chroma-js";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
@@ -228,6 +243,62 @@ export class VerdictMark {
   protected readonly dashed = computed(() => this.named() && !this.over());
 
   private readonly markButton = viewChild.required<ElementRef<HTMLElement>>("markButton");
+
+  /**
+   * The popup follows its mark while anything scrolls, and goes away once it
+   * has itself left the window.
+   *
+   * The following is what `reposition` is for, and it needs the scroll
+   * container registered - `cdkScrollable` on the page in `WebsitePreview`.
+   * `autoClose` is the window's half only: it measures the **overlay** against
+   * the viewport and knows nothing about the container the mark sits in, so it
+   * is what closes a popup when the app's own page is scrolled. What closes it
+   * when the preview is scrolled is `#closesWithItsMark` below.
+   */
+  protected readonly scrollStrategy = inject(ScrollStrategyOptions)
+    .reposition({autoClose: true});
+
+  /**
+   * The scrolling page the mark sits on, where there is one: the preview
+   * registers its scroll container as `cdkScrollable`, and a mark rendered
+   * outside one - under a test renderer, say - has none.
+   */
+  readonly #pageScroll = inject(CdkScrollable, {optional: true});
+
+  /**
+   * Closes the popup once its mark has scrolled out of the visible page.
+   *
+   * The preview scrolls inside itself from `lg`, so a mark can leave the
+   * visible page while staying well inside the window - and the panel then
+   * stands over the app, in the app's colours, describing an element nobody
+   * can see. `autoClose` does not reach this: it waits for the overlay itself
+   * to clear the viewport, which is most of the page's height later. Nor can
+   * the CDK be told to measure against the container from here -
+   * `CdkConnectedOverlay` never hands its scrollables to the position
+   * strategy, so `positionChange`'s `scrollableViewProperties` are all false.
+   *
+   * Out of view, not merely clipped: a mark half over the page's top edge is
+   * still something the visitor can see the popup belongs to, and closing on
+   * the first pixel of overlap would take the verdict away mid-scroll.
+   *
+   * The vertical axis alone, because that is the only one the page scrolls on
+   * - `website-preview.html` says why it keeps `overflow-hidden` across.
+   */
+  readonly #closesWithItsMark = effect(onCleanup => {
+    if (!this.open() || !this.#pageScroll) return;
+
+    const pageScroll = this.#pageScroll;
+    const mark = this.markButton().nativeElement;
+
+    const subscription = pageScroll.elementScrolled().subscribe(() => {
+      const bounds = pageScroll.getElementRef().nativeElement.getBoundingClientRect();
+      const rect = mark.getBoundingClientRect();
+
+      if (rect.bottom < bounds.top || rect.top > bounds.bottom) this.close();
+    });
+
+    onCleanup(() => subscription.unsubscribe());
+  });
 
 
   /**

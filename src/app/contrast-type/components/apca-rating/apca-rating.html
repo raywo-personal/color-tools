@@ -13,7 +13,7 @@
 <!-- The element that sets the figure. The verdict is pushed right by `ml-auto`
      rather than by a column of a fixed width: at the narrow end of the column
      the row wraps instead of truncating. -->
-<p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1"
+<p class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1"
    [class.text-text]="row().state === 'pass'"
    [class.text-dim]="row().state !== 'pass'">
   <ct-verdict-shape class="size-4" [state]="row().state"/>
@@ -33,19 +33,27 @@
   <span class="ml-auto text-sm text-text">{{ row().verdict }}</span>
 </p>
 
-<!-- Label and value, the same shape the opened verdicts use: the size that
-     would carry the element, and what the pair itself reaches. Both are the
-     visitor's own - two sliders and the two colours the screen is named after.
+<!-- Label and value: the size that would carry the element, and what the pair
+     itself reaches. Both are the visitor's own - two sliders and the two
+     colours the screen is named after.
+
+     **The value ends on the column's right edge**, not in a column of its own
+     `28` wide. The figure above, the verdict beside the element and the three
+     sliders below all end there, and a pair of rows starting mid-column was
+     the one thing in the type column that did not. The popup keeps the fixed
+     label column instead - it is a box of its own with no edge to share.
+
+     No `flex-wrap`: a value too long for the row would jump under its own
+     label instead of wrapping inside its own half. `text-right` is what keeps
+     a wrapped value's last line on the edge with the others.
 
      `role="list"`, because Preflight strips the marker and Safari with
      VoiceOver then stops announcing the element as a list. -->
-<ul role="list" class="mt-3 grid gap-1">
+<ul role="list" class="mt-2 grid gap-1">
   @for (fact of facts(); track fact.label) {
-    <!-- No `flex-wrap`, as in the popup: a value too long for the row would
-         jump under its own label instead of wrapping in its own column. -->
-    <li class="flex items-baseline gap-x-2 text-sm">
-      <span class="w-28 shrink-0 text-dim">{{ fact.label }}</span>
-      <span class="min-w-0 font-mono text-text">{{ fact.value }}</span>
+    <li class="flex items-baseline justify-between gap-x-3 text-sm">
+      <span class="shrink-0 text-dim">{{ fact.label }}</span>
+      <span class="min-w-0 text-right font-mono text-text">{{ fact.value }}</span>
     </li>
   }
 </ul>

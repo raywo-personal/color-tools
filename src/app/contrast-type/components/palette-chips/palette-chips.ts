@@ -178,19 +178,22 @@ export class PaletteChips {
   /**
    * Whether this row has a chip under the pointer right now.
    *
-   * **The dragged chip stops taking pointer events while it is out**, which is
-   * what makes the drop land on the element the pointer is over. With no
-   * `cdkDropList` CDK builds no preview: `_pointerMove` translates the chip's
-   * own root element by the pointer displacement, so the chip stays under the
-   * pointer for the whole drag and would otherwise be both the `target` of
-   * every move and what `elementFromPoint()` returns. It only misses today
-   * because the preview's content and the marks' badges are `relative` and
-   * later in tree order, so they happen to paint above it.
+   * **The dragged chip stops taking pointer events while it is out**, and that
+   * alone is what makes the drop land on the element the pointer is over. With
+   * no `cdkDropList` CDK builds no preview: `_pointerMove` translates the
+   * chip's own root element by the pointer displacement, so the chip sits
+   * under the pointer for the whole drag and would otherwise be both the
+   * `target` of every move and what `elementFromPoint()` returns.
    *
-   * **Do not remove this because "the drag works anyway".** One `z-index`, one
-   * `isolate` or one dropped `relative` over in the preview would turn every
-   * drop into a cancel, and no spec would catch it: happy-dom has no layout, so
-   * a spec picks the release's target by hand.
+   * **Paint order has nothing to do with it.** A hit test skips an element
+   * with `pointer-events: none` however far in front it paints, which is why
+   * the carried chip can be lifted over the sticky preview with a `z-index` -
+   * `palette-chips.html` says why it has to be.
+   *
+   * **Do not remove this because "the drag works anyway".** Without it the
+   * chip is what the release lands on, so every drop reads as a cancel - and
+   * no spec would catch it: happy-dom has no layout, so a spec picks the
+   * release's target by hand.
    */
   protected readonly dragging = this.#dragging.asReadonly();
 

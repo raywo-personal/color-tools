@@ -2,7 +2,7 @@ import {provideZonelessChangeDetection} from "@angular/core";
 import {TestBed} from "@angular/core/testing";
 import {Dispatcher} from "@ngrx/signals/events";
 import chroma from "chroma-js";
-import {beforeEach, describe, expect, it} from "vitest";
+import {afterEach, beforeEach, describe, expect, it} from "vitest";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {palettesEvents} from "@core/palettes/palettes.events";
@@ -79,13 +79,25 @@ describe("PlacedColors", () => {
     }
 
     /**
-     * The page-wide reset: the one control outside the rows. Found by where it
-     * sits rather than by what it is called, so a change of wording is caught
-     * by the spec that pins the wording and not by every spec that presses it.
+     * The page-wide reset: the one control outside the rows that is not the
+     * caption's `i`. Found by where it sits rather than by what it is called,
+     * so a change of wording is caught by the spec that pins the wording and
+     * not by every spec that presses it.
      */
     function resetPage(): HTMLButtonElement | null {
       return Array.from(host.querySelectorAll("button"))
-        .find(button => button.closest("li") === null) ?? null;
+        .find(button => button.closest("li") === null
+          && button.closest("ct-info-button") === null) ?? null;
+    }
+
+    /** The caption's `i`, and the prose it opens on the body. */
+    function info(): HTMLButtonElement {
+      return host.querySelector("ct-info-button button") as HTMLButtonElement;
+    }
+
+    function infoProse(): string {
+      return document.querySelector(".cdk-overlay-container [role=dialog]")
+        ?.textContent?.replace(/\s+/g, " ").trim() ?? "";
     }
 
     async function press(button: HTMLButtonElement) {
@@ -93,23 +105,23 @@ describe("PlacedColors", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, host, store, place, pickStyle, rows, names, texts, resets, resetPage, press};
+    return {
+      fixture, host, store, place, pickStyle, rows, names, texts, resets, resetPage, press,
+      info, infoProse
+    };
   }
 
 
   describe("with nothing placed", () => {
 
-    it("explains the default assignment, and names the palette's share of it", async () => {
-      // The reset sentence and this one have to agree: five elements take
-      // their ink from the palette and the filled button its fill, so a
-      // sentence about "the page's own colors" would say the opposite of
-      // what the visitor sees.
+    it("says only that nothing is placed, and leaves the rest to the caption's i", async () => {
+      // The state on the page, the explanation behind the button: what colours
+      // the elements instead is the same sentence whether or not anything is
+      // placed, so it is not part of the empty state.
       const {host} = await ledger();
-      const sentence = host.querySelector("p:not([class*=tracking])")?.textContent ?? "";
+      const sentence = host.querySelector("p:not([class*=tracking])")?.textContent?.trim() ?? "";
 
-      expect(sentence).toContain("Nothing is placed yet");
-      expect(sentence).toContain("palette");
-      expect(sentence).toContain("the pair above");
+      expect(sentence).toBe("Nothing is placed yet.");
     });
 
 
@@ -351,6 +363,48 @@ describe("PlacedColors", () => {
       expect(store.placements()).toEqual({});
       expect(rows()).toEqual([]);
       expect(resetPage()).toBeNull();
+    });
+
+  });
+
+
+  describe("the caption's i", () => {
+
+    afterEach(() => {
+      // The panel renders into a container appended to the body, which
+      // outlives the fixture.
+      document.querySelector(".cdk-overlay-container")?.remove();
+    });
+
+
+    it("opens the sentence that names the palette's share of the page", async () => {
+      // The reset's wording and this sentence have to agree: five elements
+      // take their ink from the palette and the filled button its fill, so a
+      // sentence about "the page's own colors" would say the opposite of what
+      // the visitor sees.
+      const {fixture, info, infoProse} = await ledger();
+
+      info().click();
+      await fixture.whenStable();
+
+      const sentence = infoProse();
+
+      expect(sentence).toContain("palette");
+      expect(sentence).toContain("the pair above");
+      expect(sentence).not.toContain("Nothing is placed");
+    });
+
+
+    it("stands in the caption whether or not anything is placed", async () => {
+      // It describes what colours the page without the visitor, which is still
+      // true after they have recoloured half of it.
+      const {info, place} = await ledger();
+
+      expect(info()).not.toBeNull();
+
+      await place("headline", "color2");
+
+      expect(info()).not.toBeNull();
     });
 
   });

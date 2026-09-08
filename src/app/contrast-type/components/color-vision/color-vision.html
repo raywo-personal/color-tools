@@ -1,10 +1,22 @@
-<p class="font-sans text-sm tracking-widest text-dim">COLOR VISION</p>
+<!-- The introduction is behind the `i`, not over the rows. It answers two
+     questions a visitor asks once - what the rows are, and why the pair is not
+     among them - and the finding the block exists for is the collapse line
+     under a row, which stays on the page.
 
-<p class="mt-2 text-sm text-dim text-pretty">How your palette looks to people
-  with a color vision deficiency. The contrast rating above stays the same:
-  contrast depends on brightness, and these conditions barely change it. What
-  can get lost is telling two palette colors apart. Where that happens, the
-  row tells you which ones.</p>
+     The `i` sits on the column's right edge, where the ledger's does: every
+     chip row below spans the full width, and a caption row ending in the
+     middle was the one ragged edge in the column. -->
+<div class="flex items-center justify-between gap-x-4">
+  <p class="font-sans text-sm tracking-widest text-dim">COLOR VISION</p>
+
+  <ct-info-button label="What the color vision rows show">
+    <p>How your palette looks to people with a color vision deficiency. The
+      contrast rating above stays the same: contrast depends on brightness, and
+      these conditions barely change it. What can get lost is telling two
+      palette colors apart. Where that happens, the row tells you which
+      ones.</p>
+  </ct-info-button>
+</div>
 
 <!-- `role="list"` on both levels: Preflight removes the marker, and Safari
      with VoiceOver then stops treating the element as a list. -->

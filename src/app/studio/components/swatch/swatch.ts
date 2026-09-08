@@ -12,6 +12,10 @@ import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
  * the eye, and this is the app's first chrome sitting on a color the visitor
  * chose - so the foreground has to come from the app's own APCA calculation
  * instead of a neutral token.
+ *
+ * The height is set against the left column's width: the field is a surface
+ * being looked at, and at the column's maximum a flatter one reads as squashed
+ * rather than as a swatch.
  */
 @Component({
   selector: "ct-swatch",
@@ -19,7 +23,7 @@ import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
     <p class="text-base font-semibold" [style.color]="foreground()">{{ name() }}</p>
   `,
   host: {
-    "class": "flex h-48 flex-col justify-end rounded-xs border border-line p-4",
+    "class": "flex h-60 flex-col justify-end rounded-xs border border-line p-4",
     "[style.background-color]": "background()"
   }
 })

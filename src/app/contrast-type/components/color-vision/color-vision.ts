@@ -7,6 +7,7 @@ import {colorName} from "@engine/color/color-name.helper";
 import {VISION_MODELS, VisionModel, visionCaption} from "@engine/vision/vision.model";
 import {simulateVision} from "@engine/vision/simulate-vision.helper";
 import {collapsedGroups} from "@engine/vision/vision-collapse.helper";
+import {InfoButton} from "@common/components/info-button/info-button";
 
 
 interface Chip {
@@ -42,8 +43,14 @@ interface Row {
  * report an Lc within a point or two of the one above it and say nothing the
  * rating does not already say. What a deficiency does cost is the difference
  * between two palette members, and that is a finding the rest of the screen
- * has no way to reach. The caption says so, because a block that shows five
- * rows of the palette invites the question why the pair is not among them.
+ * has no way to reach.
+ *
+ * **The block says so behind the caption's `i`.** Five rows of the palette
+ * invite the question why the pair is not among them, and it has to be
+ * answerable - but it is asked once, and standing over the rows the paragraph
+ * cost the column four lines every time. `InfoButton` is where it lives now.
+ * What stays on the page is the finding: a row that lost a difference says so
+ * under itself.
  *
  * Nothing here is a control: no chip is focusable, so the hit area and the
  * ring offset that every visitor-colour surface otherwise carries do not
@@ -54,7 +61,7 @@ interface Row {
  * The collapse line under a row is the verdict the picture cannot give: two
  * members landing on one colour is what a visitor comes here to find out, and
  * leaving it to the eye leaves out everyone reading by ear. A row without one
- * lost nothing, which is what the caption's last clause defines.
+ * lost nothing, which is what the introduction's last clause defines.
  *
  * **The line names colours, so something has to point at them.** `Cerise and
  * Sunglo become the same color` is unanswerable on this screen alone - the
@@ -70,6 +77,7 @@ interface Row {
  */
 @Component({
   selector: "ct-color-vision",
+  imports: [InfoButton],
   templateUrl: "./color-vision.html",
   host: {
     "class": "block"

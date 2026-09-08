@@ -1,7 +1,7 @@
 import {TestBed} from "@angular/core/testing";
 import {provideZonelessChangeDetection} from "@angular/core";
 import {Dispatcher} from "@ngrx/signals/events";
-import {beforeEach, describe, expect, it} from "vitest";
+import {afterEach, beforeEach, describe, expect, it} from "vitest";
 import chroma, {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {palettesEvents} from "@core/palettes/palettes.events";
@@ -124,6 +124,41 @@ describe("ColorVision", () => {
 
     return {fixture, host, outer, rows, row, chips, swatchColors, caretColumns, collapseLines};
   }
+
+
+  describe("the caption's i", () => {
+
+    afterEach(() => {
+      // The panel renders into a container appended to the body, which
+      // outlives the fixture.
+      document.querySelector(".cdk-overlay-container")?.remove();
+    });
+
+
+    it("keeps the introduction off the page until it is asked for", async () => {
+      // Four lines saying what the rows are and why the pair is not among
+      // them. It is read once; the finding a visitor comes back for is the
+      // collapse line under a row, which stays.
+      const {host} = await block();
+
+      expect(host.textContent).not.toContain("color vision deficiency");
+    });
+
+
+    it("opens the introduction, and it still says why the rating does not move", async () => {
+      const {fixture, host} = await block();
+
+      (host.querySelector("ct-info-button button") as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      const panel = document.querySelector(".cdk-overlay-container [role=dialog]");
+      const prose = panel?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+
+      expect(prose).toContain("color vision deficiency");
+      expect(prose).toContain("contrast rating above stays the same");
+    });
+
+  });
 
 
   it("shows the five vision models in the order the block draws them", async () => {
@@ -269,13 +304,22 @@ describe("ColorVision", () => {
     });
 
 
-    it("holds no control, so it announces nothing", async () => {
-      // Nothing here is operated: the block reads the palette and the palette
-      // is changed elsewhere, where the change is already announced.
+    it("operates nothing on the palette, so it announces nothing", async () => {
+      // The block reads the palette and the palette is changed elsewhere,
+      // where the change is already announced. Its one control is the
+      // caption's `i`, which shows a paragraph and changes no state.
       const announcer = fakeLiveAnnouncer();
-      const {host} = await block();
+      const {host, fixture} = await block();
+      const controls = Array.from(host.querySelectorAll("button, a, input, [tabindex]"));
 
-      expect(host.querySelectorAll("button, a, input, [tabindex]").length).toBe(0);
+      // The count first: `every` is true of an empty list, so without it the
+      // block could lose its `i` and this would still pass.
+      expect(controls).toHaveLength(1);
+      expect(controls.every(control => control.closest("ct-info-button") !== null)).toBe(true);
+
+      (controls[0] as HTMLElement).click();
+      await fixture.whenStable();
+
       expect(announcer.announcements).toEqual([]);
     });
 

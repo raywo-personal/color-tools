@@ -39,20 +39,40 @@
            (valueChange)="leadingChanged($event)"
            (commit)="commit()"/>
 
-<!-- The roles the controls are not acting on. One line where it fits, wrapping
-     between roles where it does not. `role="list"` because Preflight removes
-     the list style, and Safari with VoiceOver then stops treating the element
-     as a list. -->
+<!-- The roles the controls are not acting on: a row each, the role on the left
+     edge and its type on the right one. The three sliders above end there and
+     so does the rating's pair of rows, so a run of `ROLE · Family 44 / 500 /
+     1.10` starting mid-column was the last ragged edge in the type column.
+
+     A row each rather than the draft's one wrapping line: the type column is
+     18rem at its narrowest and no two of these fit on a line at that width, so
+     the wrapping line was already a row each - with the ragged edge as its only
+     difference. That also retires the dot between the two spans. It was there
+     for speech - Angular drops the whitespace between adjacent elements - but
+     as flex items the spans are blockified and the accessibility tree carries
+     them as separate nodes, which is what every other label-and-value row in
+     this app already relies on. Do not put a separator back on a screen
+     reader's account.
+
+     **The face and its figures take a line each.** Together they run past the
+     column at every width it has - the draft's own line carried the face alone
+     - and a value that wraps against a shared right edge breaks mid-figure,
+     which is how `44 / 500 /` came to end a line. Two right-aligned lines read
+     as one value; do not put them back on one and rely on the wrap.
+
+     `role="list"` because Preflight removes the list style, and Safari with
+     VoiceOver then stops treating the element as a list. -->
 <ul role="list"
     aria-label="The other type roles"
-    class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-dim">
+    class="grid gap-2 text-sm text-dim">
   @for (other of others(); track other.role) {
-    <!-- The dot is text, not a gap: Angular drops the whitespace between the
-         two spans, and a screen reader would otherwise run the caption into
-         the family name. -->
-    <li>
-      <span class="font-sans tracking-widest">{{ other.caption }}</span> ·
-      <span class="font-mono text-text">{{ other.text }}</span>
+    <li class="flex items-baseline justify-between gap-x-3">
+      <span class="shrink-0 font-sans tracking-widest">{{ other.caption }}</span>
+
+      <span class="min-w-0 text-right font-mono">
+        <span class="block text-text">{{ other.family }}</span>
+        <span class="block tabular-nums">{{ other.spec }}</span>
+      </span>
     </li>
   }
 </ul>

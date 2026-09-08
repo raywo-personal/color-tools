@@ -1,4 +1,17 @@
-<div class="mx-auto max-w-7xl px-4 pt-6 pb-16 sm:px-8 sm:pt-8 sm:pb-24">
+<!-- No cap on the width, and no `mx-auto` to centre one. A capped shell left
+     the widest screens with two empty margins and paid for them out of the
+     column that needs the room: Contrast & Type's preview is a page being
+     looked at, and a page that cannot get wider than 76rem stops looking like
+     one. The screens divide the width themselves - the side columns of a grid
+     stop at their own maximum and the growing column takes the rest - and the
+     sample page's own copy is measured in `ch`, so the text stays readable at
+     any width the frame reaches.
+
+     The inset grows with the viewport instead. Uncapped, the phone's one rem
+     left the wide screens looking pasted to the glass: it is the margin that
+     has to widen once nothing else does, and it is the one part of the width
+     the content does not need. -->
+<div class="px-4 pt-6 pb-16 sm:px-8 sm:pt-8 sm:pb-24 lg:px-12 xl:px-24">
   @if (showsAppHeader()) {
     <header ct-app-header></header>
   }

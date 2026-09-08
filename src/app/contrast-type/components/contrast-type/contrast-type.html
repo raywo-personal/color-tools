@@ -1,3 +1,12 @@
+<!-- The colour column: the pair, the ways to get one, how the page stands with
+     it, what the visitor put on it, and what a colour-vision deficiency does
+     to the palette.
+
+     **A ruled break is `mt-5` over `pt-4`, an unruled one `mt-6`.** The type
+     column has to reach the third slider above a laptop's fold and the header
+     and the rating gave up the rest of what that took; the same rhythm runs
+     down this column because a rule four pixels tighter than the one across
+     the aisle is the kind of thing that reads as an accident. -->
 <div class="min-w-0">
   <ct-pair-fields/>
 
@@ -8,27 +17,37 @@
   <!-- How the page stands with this pair - the count of the marks beside the
        preview, and the legend that teaches their shapes. It closes the pair's
        block rather than opening one of its own: it is about the two colours
-       above it, not about the role selected below. -->
+       above it, not about the role selected in the type column. -->
   <ct-page-verdicts class="mt-6"/>
 
   <!-- The record of what the visitor put on the page, and the two resets that
        undo it. It asks about the same colours as the pair above it, so it
-       stands with them rather than after the type block: everything about the
-       page's colours is in one run of the column. -->
-  <ct-placed-colors class="mt-6 border-t border-line pt-5"/>
+       stands with them in this column rather than with the type: everything
+       about the page's colours is in one run. -->
+  <ct-placed-colors class="mt-5 border-t border-line pt-4"/>
 
-  <!-- A rule above each block, as the draft draws them: the type roles with
-       the rating under them, the type controls and the colour-vision block
-       are their own blocks under the pair, not further rows of it. The rating
-       sits directly under the segments without a rule of its own, because it
-       answers about the role they select. -->
-  <ct-type-roles class="mt-6 border-t border-line pt-5"/>
-
-  <ct-apca-rating class="mt-5"/>
-
-  <ct-type-controls class="mt-6 border-t border-line pt-5"/>
-
-  <ct-color-vision class="mt-6 border-t border-line pt-5"/>
+  <!-- Last in the column, because it is a thing to look up rather than a way
+       to get a pair: it reports on the palette the chips above are drawn
+       from. -->
+  <ct-color-vision class="mt-5 border-t border-line pt-4"/>
 </div>
 
-<ct-website-preview/>
+<!-- The type column: the role, how the page's elements in it fare, and the
+     type they are set in.
+
+     Its own rule and top margin belong to the narrow layouts, where it is the
+     block under the colours; from `xl` it is a column of its own and a rule
+     across the top of a column says nothing. -->
+<div class="mt-5 min-w-0 border-t border-line pt-4 xl:col-start-3 xl:row-start-1 xl:mt-0 xl:border-t-0 xl:pt-0">
+  <ct-type-roles/>
+
+  <!-- Directly under the segments and without a rule of its own, because it
+       answers about the role they select. -->
+  <ct-apca-rating class="mt-4"/>
+
+  <ct-type-controls class="mt-5 border-t border-line pt-4"/>
+</div>
+
+<!-- `mt-8` only while it is stacked under the controls: from `lg` it stands
+     beside them, at the top of a column of its own. -->
+<ct-website-preview class="mt-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 xl:row-span-1"/>
