@@ -29,13 +29,18 @@
            The ring is `text` on `panel` and needs no measuring - the offset
            puts it on the card, not on the chip - but it still carries the
            offset on the element itself, because the check reads one element
-           at a time. -->
+           at a time.
+
+           The name is the colour **and** the verdict it would reach: the row
+           under the toolbar shows that for the focused chip but is no live
+           region, so a chip walked past with the arrow keys would otherwise
+           be a colour name and nothing else. -->
       <button #chip
               type="button"
               class="flex h-11 flex-1 items-center justify-center rounded-xs border border-line outline-offset-2 focus-visible:outline-2 focus-visible:outline-text"
               [style.background-color]="chip.background"
               [attr.tabindex]="index === active() ? 0 : -1"
-              [attr.aria-label]="chip.name"
+              [attr.aria-label]="chip.label"
               [attr.aria-pressed]="chip.placed"
               (focus)="onFocus(index)"
               (keydown)="onKeydown($event)"

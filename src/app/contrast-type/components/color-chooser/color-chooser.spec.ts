@@ -8,6 +8,7 @@ import {contrastEvents} from "@core/contrast/contrast.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {colorName} from "@engine/color/color-name.helper";
 import {PALETTE_SLOTS} from "@engine/palette/palette.model";
+import {VERDICT_STATES, verdictWord} from "@contrast-type/models/element-verdict.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {ColorChooser} from "@contrast-type/components/color-chooser/color-chooser";
@@ -52,6 +53,12 @@ describe("ColorChooser", () => {
       return Array.from(toolbar().querySelectorAll("button"));
     }
 
+    /** The row under the toolbar: what the chip under the arrow keys reaches. */
+    function previewRow(): HTMLElement {
+      return Array.from(host.querySelectorAll("p"))
+        .find(paragraph => paragraph.querySelector("ct-verdict-shape")) as HTMLElement;
+    }
+
     function resetButton(): HTMLButtonElement {
       return Array.from(host.querySelectorAll("button"))
         .find(button => button.textContent?.includes("Reset")) as HTMLButtonElement;
@@ -75,28 +82,59 @@ describe("ColorChooser", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, store, dispatcher, host, toolbar, chips, resetButton, press, click, paint};
+    return {
+      fixture, store, dispatcher, host, toolbar, chips, previewRow, resetButton, press, click, paint
+    };
   }
 
 
-  it("offers the palette in slot order, each chip named by its colour", async () => {
-    // The names are `colorName()`'s, the same ones the chip row above the
-    // preview and the ledger use - a swatch a visitor can activate is named,
-    // and P-numbers name nothing.
+  it("offers the palette in slot order, each chip named by its colour and its verdict", async () => {
+    // The names open with `colorName()`'s, the same ones the chip row above
+    // the preview and the ledger use - a swatch a visitor can activate is
+    // named, and P-numbers name nothing. What follows is how the element would
+    // fare with that colour; the test below says why it has to be there.
     const {store, chips, toolbar} = await chooser();
     const palette = store.currentPalette();
+    const words = VERDICT_STATES.map(verdictWord);
 
     expect(chips()).toHaveLength(PALETTE_SLOTS.length);
 
     for (const [index, slot] of PALETTE_SLOTS.entries()) {
       const chip = chips()[index];
+      const [named, verdict] = chip.getAttribute("aria-label")!.split(": ");
+      const [word, lc] = verdict.split(", ");
 
       expect(chip.style.backgroundColor, slot).toBe(palette[slot].color.hex("rgb"));
-      expect(chip.getAttribute("aria-label"), slot).toBe(colorName(palette[slot].color));
+      expect(named, slot).toBe(colorName(palette[slot].color));
+      expect(words, slot).toContain(word);
+      expect(lc, slot).toMatch(/^Lc \d+$/);
     }
 
     // The row is what the arrow keys walk, and its label says what for.
     expect(toolbar().getAttribute("aria-label")).toBe("Color for Headline");
+  });
+
+
+  it("carries the verdict in every chip's own name, not only in the row", async () => {
+    // The row under the toolbar shows it for the focused chip and is no live
+    // region, so a name of the colour alone would let a screen-reader visitor
+    // walk all five and never learn that one of them fails - with placing it
+    // and resetting again as the only way to find out. This is the path for
+    // keyboard and touch alike, which makes it the one place it has to travel.
+    const {chips, previewRow, press} = await chooser();
+
+    const focused = () => chips().find(chip => chip.getAttribute("tabindex") === "0")!;
+
+    for (const slot of PALETTE_SLOTS) {
+      const label = focused().getAttribute("aria-label")!;
+      const [word, lc] = label.split(": ")[1].split(", ");
+
+      // The same word and the same figure the row beside it shows.
+      expect(previewRow().textContent, `${slot}: ${label}`).toContain(word);
+      expect(previewRow().textContent, `${slot}: ${label}`).toContain(lc);
+
+      await press("ArrowRight");
+    }
   });
 
 

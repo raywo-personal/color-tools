@@ -18,6 +18,13 @@ interface ChipOption {
   /** Black or white, whichever APCA puts further from the chip's own color. */
   readonly tick: string;
   readonly name: string;
+  /**
+   * The chip's accessible name: the colour, then how the element would fare
+   * with it. The row under the toolbar shows the same thing on screen for the
+   * focused chip - it is not a live region, so a chip walked past with the
+   * arrow keys has to carry the verdict itself.
+   */
+  readonly label: string;
   readonly placed: boolean;
   readonly state: VerdictState;
   readonly lc: number;
@@ -50,6 +57,14 @@ interface ChipOption {
  * built through `samplePage()` with the one placement swapped in - so the
  * figure is the same derivation the page, the rating and the marks use rather
  * than a second opinion about the same element.
+ *
+ * **And every chip's own name carries that verdict, not the colour alone.**
+ * The row is what a sighted visitor reads while arrowing the chips; it is not
+ * a live region, and a name of `Lapis Blue` would let a screen-reader visitor
+ * walk all five and never learn that one of them fails - leaving placing it
+ * and resetting as the only way to find out. This is the path for keyboard and
+ * touch alike, which makes it the one place the verdict has to travel. Same
+ * rule as everywhere on this screen: a colour is never the only carrier.
  *
  * **Nothing here announces.** A placement and a reset already travel with
  * their events, and two polite announcements inside the same hundred
@@ -124,15 +139,22 @@ export class ColorChooser {
       // the preview paints with.
       const verdict = verdictFor(key, samplePage(pair, palette, {...placements, [key]: slot}), roles);
 
+      const name = colorName(color);
+      const word = verdictWord(verdict.state);
+
       return {
         slot,
         background: color.hex("rgb"),
         tick: findOptimalTextColor(color).color.hex("rgb"),
-        name: colorName(color),
+        name,
+        // A colon before the word, for `verdict-mark`'s reason: `not rated`
+        // is not a verb and `Lapis Blue not rated` reads as a missing `is`.
+        // The Lc after it, in the order the visible row below has them.
+        label: `${name}: ${word}, Lc ${verdict.lc}`,
         placed: placed === slot,
         state: verdict.state,
         lc: verdict.lc,
-        word: verdictWord(verdict.state)
+        word
       };
     });
   });
