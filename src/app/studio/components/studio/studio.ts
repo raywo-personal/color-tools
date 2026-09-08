@@ -22,6 +22,11 @@ import {ExportPanel} from "@studio/components/export-panel/export-panel";
  * onto a second line at every window size. The right column keeps its own
  * minimum, so both still fit at the breakpoint.
  *
+ * The minimum is what the list needs. The maximum is proportion rather than
+ * need - it sets how the two columns sit against each other at the cap - so a
+ * change to it is a change to the palette's tiles, which take what it leaves,
+ * and to the swatch's proportion, whose height answers this width.
+ *
  * **Both columns stop and the grid centres what is left.** The shell puts no
  * cap on its width, and this column holds tiles that stretch rather than
  * reflow: the palette's five swatches and each ramp's eleven steps are
@@ -36,7 +41,7 @@ import {ExportPanel} from "@studio/components/export-panel/export-panel";
   imports: [Swatch, ColorControls, ConversionList, ColorSliders, StylePicker, PaletteSwatches, TintShadeRamps, ExportPanel],
   templateUrl: "./studio.html",
   host: {
-    "class": "grid gap-8 lg:mx-auto lg:max-w-[76rem] lg:grid-cols-[minmax(17rem,22rem)_minmax(22.5rem,1fr)] lg:items-start lg:gap-13"
+    "class": "grid gap-8 lg:mx-auto lg:max-w-[76rem] lg:grid-cols-[minmax(17rem,24rem)_minmax(22.5rem,1fr)] lg:items-start lg:gap-13"
   }
 })
 export class Studio {
