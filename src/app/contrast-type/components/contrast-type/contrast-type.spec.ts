@@ -31,7 +31,7 @@ describe("ContrastType", () => {
   }
 
 
-  it("holds the pair, the palette chips, the two gestures, the type roles, the rating, the type controls, the ledger and the vision block", async () => {
+  it("holds the pair, the palette chips, the two gestures, the ledger, the type roles, the rating, the type controls and the vision block", async () => {
     const host = await contrastType();
 
     expect(host.querySelector("ct-pair-fields")).not.toBeNull();
@@ -45,15 +45,17 @@ describe("ContrastType", () => {
   });
 
 
-  it("puts the ledger between the type controls and the vision block, with the same rule", async () => {
-    // The draft's 1a puts `PLACED COLOURS` after the whole type block, and it
-    // is a block of the column rather than a further row of the one above it -
-    // which is what the rule and the spacing say.
+  it("puts the ledger between the pair's tally and the type roles, with the same rule", async () => {
+    // The ledger asks about the same colours as the pair, so it stands with
+    // them and the type block follows: what is about the page's colours is in
+    // one run of the column. It is a block of that column rather than a
+    // further row of the one above it - which is what the rule and the
+    // spacing say.
     const host = await contrastType();
-    const order = Array.from(host.querySelectorAll("ct-type-controls, ct-placed-colors, ct-color-vision"))
+    const order = Array.from(host.querySelectorAll("ct-page-verdicts, ct-placed-colors, ct-type-roles"))
       .map(element => element.tagName.toLowerCase());
 
-    expect(order).toEqual(["ct-type-controls", "ct-placed-colors", "ct-color-vision"]);
+    expect(order).toEqual(["ct-page-verdicts", "ct-placed-colors", "ct-type-roles"]);
 
     const ledger = host.querySelector("ct-placed-colors") as HTMLElement;
 

@@ -19,8 +19,8 @@ import {ColorVision} from "@contrast-type/components/color-vision/color-vision";
  * describes and the breakpoint widens it.
  *
  * The left column is the whole control stack - the pair, the palette chips,
- * the two gestures, the page's tally, the type roles with the rating under
- * them, the type controls, the ledger of placed colours and the colour-vision
+ * the two gestures, the page's tally, the ledger of placed colours, the type
+ * roles with the rating under them, the type controls and the colour-vision
  * block. The right column is the website preview, which is why it is the one
  * that grows.
  *
