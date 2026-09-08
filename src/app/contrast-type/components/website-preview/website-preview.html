@@ -184,7 +184,13 @@
                [style.color]="style().bodyLink.ink">read this the way a reader would</span></ct-verdict-mark>: quickly, at arm's length, without looking for problems.</p>
     </ct-verdict-mark>
 
-    <p class="mb-[1.1em] max-w-[66ch] text-pretty"
+    <!-- `ctPlaceTarget`, not a second mark: this paragraph and the closing one
+         are the same element as the marked one above - same role, same ink,
+         same ground - so they take the same drop and draw the same outline
+         without adding a mark the tally and the ledger would count twice.
+         `PlaceTarget` says the rest. -->
+    <p ctPlaceTarget="bodyText"
+       class="mb-[1.1em] max-w-[66ch] text-pretty"
        [style.font-size]="style().bodyText.fontSize"
        [style.font-weight]="style().bodyText.fontWeight"
        [style.line-height]="style().bodyText.lineHeight"
@@ -310,8 +316,10 @@
          Each of the three wraps its cell's text rather than standing in front
          of it, so the outline a carried chip draws has the words to go round;
          a mark wrapping nothing would offer a drop target with nothing to
-         see. The `@else` keeps the text in a span of its own so the cell reads
-         the same either way. -->
+         see. **The cells without a mark carry `ctPlaceTarget` on that same
+         span**, so all three cells of a column take a drop and outline the
+         words the same way - three marks and one drop target between them left
+         a visitor aiming at a cell and getting a cancel. -->
     <table class="mb-8 w-full border-collapse text-left wrap-anywhere">
       <thead>
         <tr class="border-b" [style.border-bottom-color]="style().pageColor">
@@ -322,7 +330,7 @@
                 [style.font-size]="style().tableHeader.fontSize"
                 [style.font-weight]="style().tableHeader.fontWeight"
                 [style.line-height]="style().tableHeader.lineHeight"
-                [style.color]="style().tableHeader.ink">@if ($last) {<ct-verdict-mark elementKey="tableHeader" [inline]="true">{{ column.caption }}</ct-verdict-mark>} @else {<span>{{ column.caption }}</span>}</th>
+                [style.color]="style().tableHeader.ink">@if ($last) {<ct-verdict-mark elementKey="tableHeader" [inline]="true">{{ column.caption }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableHeader">{{ column.caption }}</span>}</th>
           }
         </tr>
       </thead>
@@ -334,7 +342,7 @@
                 [style.font-size]="style().tableCell.fontSize"
                 [style.font-weight]="style().tableCell.fontWeight"
                 [style.line-height]="style().tableCell.lineHeight"
-                [style.color]="style().tableCell.ink">@if (rowIndex === 0) {<ct-verdict-mark elementKey="tableCell" [inline]="true">{{ row.element }}</ct-verdict-mark>} @else {<span>{{ row.element }}</span>}</td>
+                [style.color]="style().tableCell.ink">@if (rowIndex === 0) {<ct-verdict-mark elementKey="tableCell" [inline]="true">{{ row.element }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableCell">{{ row.element }}</span>}</td>
 
             @for (value of row.values; track $index) {
               <td class="py-2.5 text-right tabular-nums"
@@ -342,7 +350,7 @@
                   [style.font-size]="style().tableNumber.fontSize"
                   [style.font-weight]="style().tableNumber.fontWeight"
                   [style.line-height]="style().tableNumber.lineHeight"
-                  [style.color]="style().tableNumber.ink">@if (rowIndex === 1 && $first) {<ct-verdict-mark elementKey="tableNumber" [inline]="true">{{ value }}</ct-verdict-mark>} @else {<span>{{ value }}</span>}</td>
+                  [style.color]="style().tableNumber.ink">@if (rowIndex === 1 && $first) {<ct-verdict-mark elementKey="tableNumber" [inline]="true">{{ value }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableNumber">{{ value }}</span>}</td>
             }
           </tr>
         }
@@ -370,7 +378,8 @@
       </ct-verdict-mark>
     </div>
 
-    <p class="max-w-[66ch] text-pretty"
+    <p ctPlaceTarget="bodyText"
+       class="max-w-[66ch] text-pretty"
        [style.font-size]="style().bodyText.fontSize"
        [style.font-weight]="style().bodyText.fontWeight"
        [style.line-height]="style().bodyText.lineHeight"
@@ -386,7 +395,8 @@
               [style.color]="style().smallPrint.ink">Small print, captions and legal notes. This is where most pairings fail first.</span>
       </ct-verdict-mark>
 
-      <span [style.font-size]="style().smallPrint.fontSize"
+      <span ctPlaceTarget="smallPrint"
+            [style.font-size]="style().smallPrint.fontSize"
             [style.font-weight]="style().smallPrint.fontWeight"
             [style.line-height]="style().smallPrint.lineHeight"
             [style.color]="style().smallPrint.ink">&copy; Kelvin</span>

@@ -93,6 +93,15 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * table's marks wrap a few characters and one wraps a word inside a line.
  * `PlacementGesture` reads the attribute; do not move it onto the copy.
  *
+ * **The mark is one occurrence of the element, and the others are
+ * `PlaceTarget`.** Five elements appear more than once, and a mark wraps one
+ * of them: the rest carry the directive, which draws this same outline and
+ * takes the same drop without adding a second mark, a second name or a second
+ * tab stop. The two are seen side by side on one element, so a change to what
+ * `dashed()` means here belongs there as well. `named()` does not port whole -
+ * an occurrence with no badge has no name to show, and `PlaceTarget` says why
+ * it therefore answers a carried chip only.
+ *
  * **What is drawn while a chip is carried is the app's chrome on the visitor's
  * page**, so the outline and the name take the same APCA foreground the rim
  * takes, against the same `surface`. That is why `surface` has to be right on

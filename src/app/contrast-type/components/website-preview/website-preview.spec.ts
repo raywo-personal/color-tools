@@ -110,6 +110,19 @@ describe("WebsitePreview", () => {
       return found;
     }
 
+    /**
+     * How many drop targets the page offers for one element - the marked
+     * occurrence and every other one.
+     */
+    function targets(elementKey: string): number {
+      return page.querySelectorAll(`[data-place-target="${elementKey}"]`).length;
+    }
+
+    /** The occurrences that carry a target without carrying a mark. */
+    function repeats(): HTMLElement[] {
+      return Array.from(page.querySelectorAll<HTMLElement>("[ctPlaceTarget]"));
+    }
+
     /** The table's body rows, cell by cell. */
     function tableRows(): string[][] {
       return Array.from(page.querySelectorAll("tbody tr"))
@@ -149,7 +162,10 @@ describe("WebsitePreview", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, store, host, page, copy, within, tableRows, paint, place, setBackground, setSize, setRole, pickFace};
+    return {
+      fixture, store, host, page, copy, within, targets, repeats, tableRows, paint, place,
+      setBackground, setSize, setRole, pickFace
+    };
   }
 
 
@@ -214,6 +230,67 @@ describe("WebsitePreview", () => {
     await fixture.whenStable();
 
     expect(named()).toHaveLength(0);
+  });
+
+
+  it("answers a drop at every occurrence, not only where the mark is", async () => {
+    // A release resolves through `closest("[data-place-target]")`, and that
+    // attribute sits on a mark's host. Five elements appear more than once
+    // with a mark on one occurrence, so without a target on the rest a visitor
+    // dragging at the biggest block of text on the page got no outline and a
+    // cancel - and then watched that block recolour from a placement they had
+    // to make in the small first paragraph instead.
+    const {copy, targets} = await preview();
+
+    const resolves = (snippet: string) => copy(snippet)
+      .closest("[data-place-target]")
+      ?.getAttribute("data-place-target");
+
+    expect(resolves("Watch the line endings")).toBe("bodyText");
+    expect(resolves("Where a palette earns its keep")).toBe("bodyText");
+    expect(resolves("\u00A9 Kelvin")).toBe("smallPrint");
+    expect(resolves("WEIGHT")).toBe("tableHeader");
+    expect(resolves("Caption")).toBe("tableCell");
+
+    // Every occurrence, not one more: three paragraphs of running text, the
+    // copyright line beside the small print, and a cell per column and per row
+    // of the table.
+    expect(targets("bodyText")).toBe(3);
+    expect(targets("smallPrint")).toBe(2);
+    expect(targets("tableHeader")).toBe(3);
+    expect(targets("tableCell")).toBe(3);
+    expect(targets("tableNumber")).toBe(6);
+  });
+
+
+  it("offers the unmarked occurrences while a chip is carried, and none at rest", async () => {
+    // The outline is what says a release will land, so an occurrence that
+    // takes a drop has to draw it - otherwise the target is there and nothing
+    // on the page says so. Dashed until the pointer arrives, as on a mark.
+    const {page, fixture, repeats} = await preview();
+    const dispatcher = TestBed.inject(Dispatcher);
+    const outlined = () => repeats().filter(element => element.classList.contains("outline-2"));
+
+    expect(repeats().length).toBeGreaterThan(0);
+    expect(outlined()).toHaveLength(0);
+
+    dispatcher.dispatch(contrastEvents.chipPickedUp("color2"));
+    await fixture.whenStable();
+
+    expect(outlined()).toHaveLength(repeats().length);
+
+    for (const element of repeats()) {
+      expect(Array.from(element.classList), element.textContent ?? "")
+        .toContain("outline-dashed");
+      expect(element.style.outlineColor, element.textContent ?? "").not.toBe("");
+    }
+
+    // Nothing marks the page once the hand is empty.
+    dispatcher.dispatch(contrastEvents.chipPutDown());
+    await fixture.whenStable();
+
+    expect(outlined()).toHaveLength(0);
+    expect(page.querySelectorAll("[data-element-name]")).toHaveLength(0);
   });
 
 

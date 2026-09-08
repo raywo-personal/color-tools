@@ -5,6 +5,7 @@ import {fontFamilyFor, TypeRolesMap} from "@common/models/type-role-settings.mod
 import {groundOf, inkOf, sampleElement, SamplePage, samplePage} from "@contrast-type/models/sample-page.model";
 import {elementFontSize} from "@contrast-type/models/element-verdict.model";
 import {VerdictMark} from "@contrast-type/components/verdict-mark/verdict-mark";
+import {PlaceTarget} from "@contrast-type/components/verdict-mark/place-target.directive";
 
 
 /**
@@ -199,7 +200,7 @@ interface PreviewStyle {
  */
 @Component({
   selector: "ct-website-preview",
-  imports: [VerdictMark],
+  imports: [VerdictMark, PlaceTarget],
   templateUrl: "./website-preview.html",
   host: {
     "class": "block min-w-0"
