@@ -71,10 +71,11 @@ import {ColorVision} from "@contrast-type/components/color-vision/color-vision";
  * one control column is drawn and it does stop at 22rem, because it holds the
  * rating's row and the ledger both.
  *
- * **The row gap is zero and the blocks bring their own.** A block under
- * another carries `mt-6 border-t border-line pt-5`, the rule the draft draws
- * above each; a grid row gap on top of that would space the type block twice
- * as far from the colours as the blocks inside a column are from each other.
+ * **The row gap is zero and the blocks bring their own.** A ruled break is
+ * `mt-5` over `pt-4`, an unruled one `mt-6`; `contrast-type.html` says why the
+ * same rhythm runs down both columns. A grid row gap on top of that would
+ * space the type block twice as far from the colours as the blocks inside a
+ * column are from each other.
  */
 @Component({
   selector: "ct-contrast-type",
