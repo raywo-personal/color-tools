@@ -71,7 +71,7 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
     "[class.outline-2]": "named()",
     "[class.outline-dashed]": "dashed()",
     "[attr.data-place-sides]": "named() ? '' : null",
-    "[style.--place-split-color]": "inkHex()",
+    "[style.--place-split-color]": "splitHex()",
     "[style.outline-color]": "inkHex()",
     "[class.underline]": "missed()",
     "[class.decoration-dotted]": "missed()",
@@ -119,6 +119,14 @@ export class PlaceTarget {
    */
   protected readonly inkHex = computed(() =>
     findOptimalTextColor(this.#surfaceColor()).color.hex("rgb"));
+
+  /**
+   * The hairline's own colour, measured against the element's ground rather
+   * than against the surface - `VerdictMark.splitHex` says why the one line
+   * drawn inside the box cannot take the colour the outline around it takes.
+   */
+  protected readonly splitHex = computed(() =>
+    findOptimalTextColor(this.#verdict().ground).color.hex("rgb"));
 
   protected readonly missed = computed(() => missedRequirement(this.#verdict()));
 

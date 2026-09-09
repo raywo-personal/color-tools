@@ -4,7 +4,7 @@ import {Dispatcher} from "@ngrx/signals/events";
 import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
-import {CHIP_SOURCES} from "@contrast-type/models/chip-source.model";
+import {CHIP_SOURCES, colorOf} from "@contrast-type/models/chip-source.model";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
@@ -370,6 +370,37 @@ describe("VerdictMark", () => {
     await releaseOn(host, 10);
 
     expect(store.placements()["headline"]).toEqual({ground: "color2", ink: "color3"});
+  });
+
+
+  it("draws the split line against the colour the element carries, not the surface", async () => {
+    // The rim and the outline sit outside the element and are measured against
+    // the surface behind it; the hairline is drawn inside the box, over
+    // whatever the element itself is painted in. Measured against the page,
+    // the line on the filled button is black on a dark accent - the one aiming
+    // aid gone on the element a visitor most wants to fill.
+    const {fixture, store, content, badge, carry, colors} = await mark("filledButton", {surface: "page"});
+    const dispatcher = TestBed.inject(Dispatcher);
+    const splitColor = () => content().style.getPropertyValue("--place-split-color");
+
+    await carry("color2");
+
+    expect(splitColor()).toBe(findOptimalTextColor(colors.accent).color.hex("rgb"));
+    expect(badge().style.borderColor)
+      .toBe(findOptimalTextColor(colors.page).color.hex("rgb"));
+
+    // And it follows the ground the visitor placed, which is the colour the
+    // element carries from then on.
+    dispatcher.dispatch(contrastEvents.colorPlaced({
+      elementKey: "filledButton",
+      side: "ground",
+      source: "color3"
+    }));
+    await fixture.whenStable();
+
+    const placed = colorOf("color3", store.contrastColors(), store.currentPalette());
+
+    expect(splitColor()).toBe(findOptimalTextColor(placed).color.hex("rgb"));
   });
 
 

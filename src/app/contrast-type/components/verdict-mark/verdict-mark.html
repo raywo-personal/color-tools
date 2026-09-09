@@ -71,7 +71,11 @@
        draws the hairline off it and `PlacementGesture` measures the release
        against the same box. On the outlined copy rather than on the host,
        because the host is the whole row and its midline is not the middle of
-       the words. -->
+       the words.
+
+       The line is the one piece of chrome that is not measured against the
+       surface: it is drawn inside the box, so it takes `splitHex()`, which
+       says why. -->
   <span data-content
         class="relative outline-offset-4"
         [class.block]="!inline()"
@@ -83,7 +87,7 @@
         [class.outline-2]="named()"
         [class.outline-dashed]="dashed()"
         [attr.data-place-sides]="carrying() ? '' : null"
-        [style.--place-split-color]="inkHex()"
+        [style.--place-split-color]="splitHex()"
         [style.outline-color]="inkHex()">
     <!-- The element's name where the outline is, so the page says what the
          chip would land on without the visitor reading the ledger, and - while

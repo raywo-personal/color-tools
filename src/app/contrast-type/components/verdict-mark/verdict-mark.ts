@@ -216,6 +216,22 @@ export class VerdictMark {
    */
   protected readonly inkHex = computed(() => findOptimalTextColor(this.#surfaceColor()).color.hex("rgb"));
 
+  /**
+   * The hairline that splits the box, measured against the element's own
+   * ground rather than against `surface`.
+   *
+   * **`inkHex()` is the wrong colour for this one line.** The rim, the outline
+   * and the name sit *outside* the element - `outline-offset-4` puts them on
+   * the surface behind it - while `src/styles.css` draws the hairline inside
+   * the box, over whatever the element itself is painted in. On the filled
+   * button that is the accent, and a colour measured against the page lands on
+   * a fill of its own lightness often enough: the one aiming aid gone on the
+   * element a visitor most wants to fill. The same would hold on every mark
+   * that names a `surface` once a ground is placed there.
+   */
+  protected readonly splitHex = computed(() =>
+    findOptimalTextColor(this.verdict().ground).color.hex("rgb"));
+
   protected readonly label = computed(() => {
     const verdict = this.verdict();
 
