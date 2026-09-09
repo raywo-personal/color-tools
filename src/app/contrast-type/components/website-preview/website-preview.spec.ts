@@ -271,7 +271,10 @@ describe("WebsitePreview", () => {
     // Every occurrence, not one more: three paragraphs of running text, the
     // copyright line beside the small print, and a cell per column and per row
     // of the table.
-    expect(targets("bodyText")).toBe(3);
+    // Two, not three: the two paragraphs that sit together are inside one
+    // mark - `website-preview.html` says why - and the closing one past the
+    // card carries the directive.
+    expect(targets("bodyText")).toBe(2);
     expect(targets("smallPrint")).toBe(2);
     expect(targets("tableHeader")).toBe(3);
     expect(targets("tableCell")).toBe(3);

@@ -213,6 +213,22 @@
       </ct-verdict-mark>
     </div>
 
+    <!-- Both paragraphs inside one mark, rather than a mark and a
+         `ctPlaceTarget` beside it: they are one element, and as two outlined
+         boxes they read as two - the marked one indented by the mark's gutter
+         and the other flush with the page, a release on either recolouring
+         both, and the first box's outline reaching down through its own
+         bottom margin into the second's. One box around the pair says what a
+         release does before it happens.
+
+         The price is the midline: the split falls in the gap between the two
+         paragraphs, so the upper half is the first paragraph rather than the
+         upper half of one block of text. The pair is what a release applies
+         to either way.
+
+         The closing paragraph sits past the card and cannot join them, so it
+         keeps the directive - and `ml-7` there is this mark's gutter written
+         out, because one element must not be indented two ways. -->
     <ct-verdict-mark elementKey="bodyText">
       <p class="mb-[1.1em] max-w-[66ch] text-pretty"
          [style.font-size]="style().bodyText.fontSize"
@@ -222,20 +238,18 @@
          [style.background-color]="style().bodyText.ground">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you actually plan to ship, then <ct-verdict-mark elementKey="bodyLink" [inline]="true"><span class="underline underline-offset-4"
                [style.color]="style().bodyLink.ink"
                [style.background-color]="style().bodyLink.ground">read this the way a reader would</span></ct-verdict-mark>: quickly, at arm's length, without looking for problems.</p>
-    </ct-verdict-mark>
 
-    <!-- `ctPlaceTarget`, not a second mark: this paragraph and the closing one
-         are the same element as the marked one above - same role, same ink,
-         same ground - so they take the same drop and draw the same outline
-         without adding a mark the tally and the ledger would count twice.
-         `PlaceTarget` says the rest. -->
-    <p ctPlaceTarget="bodyText"
-       class="mb-[1.1em] max-w-[66ch] text-pretty"
-       [style.font-size]="style().bodyText.fontSize"
-       [style.font-weight]="style().bodyText.fontWeight"
-       [style.line-height]="style().bodyText.lineHeight"
-       [style.color]="style().bodyText.ink"
-       [style.background-color]="style().bodyText.ground">Watch the line endings and the gaps between words. If your eye keeps returning to the same line, the issue is usually spacing or weight rather than color. If the text seems to vibrate against its background, the two colors are close in lightness but far apart in hue, and no amount of extra size will fix it. Long passages punish decisions that look fine in a headline: thin weights lose their stems, saturated backgrounds bleed into the letterforms, and near-black on near-white can read as cold rather than clear.</p>
+      <!-- No bottom margin on the last paragraph: a flex item encloses its
+           children's margins instead of collapsing them out, so the outline
+           would carry an empty strip below the words - and the block below
+           brings its own `my-8`. -->
+      <p class="max-w-[66ch] text-pretty"
+         [style.font-size]="style().bodyText.fontSize"
+         [style.font-weight]="style().bodyText.fontWeight"
+         [style.line-height]="style().bodyText.lineHeight"
+         [style.color]="style().bodyText.ink"
+         [style.background-color]="style().bodyText.ground">Watch the line endings and the gaps between words. If your eye keeps returning to the same line, the issue is usually spacing or weight rather than color. If the text seems to vibrate against its background, the two colors are close in lightness but far apart in hue, and no amount of extra size will fix it. Long passages punish decisions that look fine in a headline: thin weights lose their stems, saturated backgrounds bleed into the letterforms, and near-black on near-white can read as cold rather than clear.</p>
+    </ct-verdict-mark>
 
     <!-- The parts nobody photographs, which the closing paragraph below has
          always named and the page did not show: a control nobody can press, a
@@ -423,7 +437,7 @@
     </div>
 
     <p ctPlaceTarget="bodyText"
-       class="max-w-[66ch] text-pretty"
+       class="ml-7 max-w-[66ch] text-pretty"
        [style.font-size]="style().bodyText.fontSize"
        [style.font-weight]="style().bodyText.fontWeight"
        [style.line-height]="style().bodyText.lineHeight"

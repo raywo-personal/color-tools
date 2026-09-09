@@ -12,10 +12,13 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
  * chip released on it, and it draws the outline that says so.
  *
  * **One mark per named element, but a drop target per occurrence.** Five of the
- * page's elements appear more than once - the running text in three
- * paragraphs, the small print beside the copyright line, and each of the
- * table's three roles in a cell per column or per row - and a mark wraps
- * exactly one of them. Without this the biggest block of text on the page
+ * page's elements appear more than once - the running text in the closing
+ * paragraph past the card, the small print beside the copyright line, and each
+ * of the table's three roles in a cell per column or per row - and a mark
+ * wraps exactly one of them. The two paragraphs that sit together are inside
+ * one mark instead, because as two outlined boxes they read as two elements;
+ * `website-preview.html` says why that one could be done and the closing
+ * paragraph cannot. Without this the biggest block of text on the page
  * offered a visitor nothing and answered a release with a cancel, and the
  * block they had aimed at then recoloured from a placement made somewhere
  * else. A second mark would have been the other way out and is the wrong one:
