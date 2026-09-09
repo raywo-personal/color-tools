@@ -8,6 +8,7 @@ import {
   CHIP_SOURCES,
   ChipSource,
   chipLabelFor,
+  chipSourceName,
   colorOf
 } from "@contrast-type/models/chip-source.model";
 import {sampleElement, samplePage} from "@contrast-type/models/sample-page.model";
@@ -156,21 +157,29 @@ export class ColorChooser {
 
       const name = colorName(color);
       const word = verdictWord(verdict.state);
+      const handle = chipLabelFor(source);
+      const sourceName = chipSourceName(source);
 
       return {
         source,
-        handle: chipLabelFor(source),
+        handle,
         background: color.hex("rgb"),
         tick: findOptimalTextColor(color).color.hex("rgb"),
         name,
-        // A colon before the word, for `verdict-mark`'s reason: `not rated`
-        // is not a verb and `Lapis Blue not rated` reads as a missing `is`.
-        // The Lc after it, in the order the visible row below has them.
+        // The handle first, or two chips read out the same colour name and
+        // nothing tells a screen-reader visitor which of them the arrow keys
+        // are on - `T` and `P1` both hold `#111111` on the draft's pair, and
+        // `BG` collides with whichever palette slot the generator matched it
+        // to. `chipSourceName()` spells `T` and `BG` out for the same reason
+        // `palette-chips.ts` does: a listener hears a letter, not a word.
         //
-        // The colour's name and not the handle: the handle identifies a chip
-        // and says nothing about it, and the visitor is choosing a colour
-        // here - `placementAnnouncedEffect` names one the same way.
-        label: `${name}: ${word}, Lc ${verdict.lc}`,
+        // Then the colour and how the element would fare with it. A colon
+        // before the word, for `verdict-mark`'s reason: `not rated` is not a
+        // verb and `Lapis Blue not rated` reads as a missing `is`. The Lc
+        // after it, in the order the visible row below has them.
+        label: sourceName === null
+          ? `${handle}: ${name}: ${word}, Lc ${verdict.lc}`
+          : `${handle}, ${sourceName}: ${name}: ${word}, Lc ${verdict.lc}`,
         placed: placed === source,
         state: verdict.state,
         lc: verdict.lc,

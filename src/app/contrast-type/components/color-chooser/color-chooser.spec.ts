@@ -7,7 +7,7 @@ import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {colorName} from "@engine/color/color-name.helper";
-import {CHIP_SOURCES, chipLabelFor, colorOf} from "@contrast-type/models/chip-source.model";
+import {CHIP_SOURCES, chipLabelFor, chipSourceName, colorOf} from "@contrast-type/models/chip-source.model";
 import {VERDICT_STATES, verdictWord} from "@contrast-type/models/element-verdict.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
@@ -104,8 +104,11 @@ describe("ColorChooser", () => {
     for (const [index, source] of CHIP_SOURCES.entries()) {
       const chip = chips()[index];
       const color = colorOf(source, pair, palette);
-      const [named, verdict] = chip.getAttribute("aria-label")!.split(": ");
-      const [word, lc] = verdict.split(", ");
+      // The handle sits ahead of the colour name - see the next test for why -
+      // so the name and the verdict are the label's last two segments.
+      const segments = chip.getAttribute("aria-label")!.split(": ");
+      const named = segments.at(-2);
+      const [word, lc] = segments.at(-1)!.split(", ");
 
       expect(chip.style.backgroundColor, source).toBe(color.hex("rgb"));
       expect(named, source).toBe(colorName(color));
@@ -115,6 +118,28 @@ describe("ColorChooser", () => {
 
     // The row is what the arrow keys walk, and its label says what for.
     expect(toolbar().getAttribute("aria-label")).toBe("Color for Headline");
+  });
+
+
+  it("names every chip by a handle no other chip carries, T and BG included", async () => {
+    // `T` and one palette slot can hold the very colour the draft's pair
+    // starts with, and so can `BG` and another - a name of the colour alone
+    // then reads the same for two buttons in one toolbar, and the arrow keys
+    // give no other way to tell which is under them. The handle is what
+    // breaks the tie; `chipSourceName()` spells `T` and `BG` out as well,
+    // because a screen reader speaks either as letters.
+    const {chips} = await chooser();
+
+    const labels = chips().map(chip => chip.getAttribute("aria-label")!);
+
+    expect(new Set(labels).size, labels.join(" | ")).toBe(labels.length);
+
+    for (const [index, source] of CHIP_SOURCES.entries()) {
+      expect(labels[index]).toContain(chipLabelFor(source));
+
+      const sourceName = chipSourceName(source);
+      if (sourceName !== null) expect(labels[index]).toContain(sourceName);
+    }
   });
 
 
@@ -149,7 +174,7 @@ describe("ColorChooser", () => {
 
     for (const source of CHIP_SOURCES) {
       const label = focused().getAttribute("aria-label")!;
-      const [word, lc] = label.split(": ")[1].split(", ");
+      const [word, lc] = label.split(": ").at(-1)!.split(", ");
 
       // The same word and the same figure the row beside it shows.
       expect(previewRow().textContent, `${source}: ${label}`).toContain(word);
