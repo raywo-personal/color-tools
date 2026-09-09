@@ -34,6 +34,20 @@ const SPLIT_ATTRIBUTE = "data-place-sides";
 
 const SPLIT_SELECTOR = `[${SPLIT_ATTRIBUTE}]`;
 
+/**
+ * The height a box needs before a finger can aim at either of its halves, in
+ * CSS pixels - the app's own hit area, `h-11`.
+ *
+ * Below it a touch release takes the ink and the box does not split. The small
+ * print and the caption run about ten pixels a half and the table's numbers
+ * nearer seven, while a finger covers the very element it is aiming at: the
+ * side a release landed on was chance, and a visitor who wanted coloured text
+ * got a band behind it. A mouse and a pen name a point and keep both halves at
+ * every size - and the badge names the side before the release, which is what
+ * rescues a half nobody could hit blind.
+ */
+const TOUCH_SPLIT_FLOOR = 44;
+
 
 /**
  * Where a carried chip is: the element under the pointer, and which of that
@@ -223,6 +237,11 @@ export class PlacementGesture {
    * own top edge - so every release would read as a ground, on every element,
    * with every spec still green. The ink is the side a page opens in and the
    * one a drag is for.
+   *
+   * **And so does a box a finger cannot halve** - `TOUCH_SPLIT_FLOOR`. The
+   * element still takes a colour from a touch drag; what it does not do is
+   * guess which of its two the visitor meant. The chooser is where a finger
+   * says `BACKGROUND` on the small print, and the mark is one press away.
    */
   #sideOf(target: Element, event: PointerEvent): SamplePlacement {
     const box = target.matches(SPLIT_SELECTOR)
@@ -231,6 +250,7 @@ export class PlacementGesture {
     const rect = box.getBoundingClientRect();
 
     if (rect.height === 0) return "ink";
+    if (event.pointerType === "touch" && rect.height < TOUCH_SPLIT_FLOOR) return "ink";
 
     return event.clientY < rect.top + rect.height / 2 ? "ink" : "ground";
   }

@@ -87,8 +87,17 @@ describe("VerdictMark", () => {
      * the point looked up instead, and a test DOM has no layout to look one up
      * in - so these drive the mouse's path.
      */
-    async function releaseOn(element: EventTarget, clientY = 0) {
-      element.dispatchEvent(new PointerEvent("pointerup", {bubbles: true, clientY}));
+    async function releaseOn(element: EventTarget, clientY = 0, pointerType?: string) {
+      const event = new PointerEvent("pointerup", {bubbles: true, clientY});
+
+      // `pointerType` is not settable through the constructor in this test
+      // environment, and the floor below the split reads it - see
+      // `PlacementGesture`.
+      if (pointerType !== undefined) {
+        Object.defineProperty(event, "pointerType", {value: pointerType});
+      }
+
+      element.dispatchEvent(event);
       await fixture.whenStable();
     }
 
@@ -370,6 +379,38 @@ describe("VerdictMark", () => {
     await releaseOn(host, 10);
 
     expect(store.placements()["headline"]).toEqual({ground: "color2", ink: "color3"});
+  });
+
+
+  it("does not halve a box a finger cannot halve, and places the ink there", async () => {
+    // The small print and the caption run about ten pixels a half and the
+    // table's numbers nearer seven, while a finger covers the very element it
+    // is aiming at: the side a touch release landed on was chance, and a
+    // visitor who wanted coloured text got a band behind it. Below the app's
+    // hit area the element still takes a colour - it just takes the ink, and
+    // the chooser is where a finger asks for the ground.
+    const {store, host, carry, releaseOn, splitOver} = await mark("smallPrint");
+
+    await carry("color2");
+    splitOver(0, 20);
+    await releaseOn(host, 15, "touch");
+
+    expect(store.placements()["smallPrint"]).toEqual({ink: "color2"});
+
+    // A box a finger can halve splits for a finger too.
+    await carry("color3");
+    splitOver(0, 60);
+    await releaseOn(host, 50, "touch");
+
+    expect(store.placements()["smallPrint"]).toEqual({ink: "color2", ground: "color3"});
+
+    // And a mouse keeps both halves at every size: it names a point, and the
+    // badge names the side before the release.
+    await carry("color4");
+    splitOver(0, 20);
+    await releaseOn(host, 15, "mouse");
+
+    expect(store.placements()["smallPrint"]).toEqual({ink: "color2", ground: "color4"});
   });
 
 
