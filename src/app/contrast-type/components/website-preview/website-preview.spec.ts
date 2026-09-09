@@ -11,7 +11,7 @@ import {converterEvents} from "@core/converter/converter.events";
 import {mixColors} from "@engine/color/mix-color.helper";
 import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
 import {DEFAULT_TYPE_SETTINGS_BY_ROLE, TypeRole} from "@engine/contrast/type-role.model";
-import {PaletteSlot} from "@engine/palette/palette.model";
+import {ChipSource} from "@contrast-type/models/chip-source.model";
 import {SelectedFont} from "@common/models/google-font.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
@@ -158,8 +158,8 @@ describe("WebsitePreview", () => {
       await fixture.whenStable();
     }
 
-    async function place(elementKey: string, slot: PaletteSlot) {
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, slot}));
+    async function place(elementKey: string, source: ChipSource) {
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, source}));
       await fixture.whenStable();
     }
 

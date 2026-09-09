@@ -4,6 +4,7 @@ import {Dispatcher} from "@ngrx/signals/events";
 import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
+import {CHIP_SOURCES} from "@contrast-type/models/chip-source.model";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
@@ -330,7 +331,7 @@ describe("VerdictMark", () => {
 
     expect(store.placements()["headline"]).toBe("color2");
     // The placement puts the chip down by itself; nothing is left in hand.
-    expect(store.carriedSlot()).toBeNull();
+    expect(store.carriedChip()).toBeNull();
   });
 
 
@@ -342,7 +343,7 @@ describe("VerdictMark", () => {
     await carry("color3");
     await releaseOn(document.body);
 
-    expect(store.carriedSlot()).toBeNull();
+    expect(store.carriedChip()).toBeNull();
     expect(store.placements()["headline"]).toBeUndefined();
   });
 
@@ -351,7 +352,7 @@ describe("VerdictMark", () => {
     // The one path a finger and a keyboard share. A drag is the mouse's
     // shortcut: below `lg` the preview is stacked under the whole control
     // column and a keyboard cannot drag at all - so a tap or a press on the
-    // mark opens the palette, and a tap or a press on a chip places.
+    // mark opens the chips, and a tap or a press on a chip places.
     const {store, chooser, press, fixture} = await mark("headline");
 
     await press();
@@ -360,7 +361,9 @@ describe("VerdictMark", () => {
       (chooser() as HTMLElement).querySelectorAll<HTMLButtonElement>("[role=toolbar] button")
     );
 
-    expect(chips).toHaveLength(5);
+    // All seven, or the pair's own two would be droppable and placeable by
+    // mouse alone - `ColorChooser` holds the reason.
+    expect(chips).toHaveLength(CHIP_SOURCES.length);
 
     chips[2].click();
     await fixture.whenStable();

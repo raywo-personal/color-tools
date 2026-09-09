@@ -11,7 +11,7 @@ import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 import {randomSeed} from "@engine/helpers/random.helper";
 import {TypeRole} from "@engine/contrast/type-role.model";
-import {PaletteSlot} from "@engine/palette/palette.model";
+import {ChipSource} from "@contrast-type/models/chip-source.model";
 import {ElementPlacements} from "@contrast-type/models/sample-page.model";
 
 
@@ -50,9 +50,9 @@ export type AppState = {
    */
   openVerdict: string | null;
   /**
-   * The palette slot the visitor put on each element of the sample page,
-   * keyed by `SAMPLE_ELEMENTS` key - see `ElementPlacements` for why a slot
-   * and not a colour.
+   * The chip the visitor put on each element of the sample page, keyed by
+   * `SAMPLE_ELEMENTS` key - see `ElementPlacements` for why a source and not
+   * a colour.
    *
    * Not persisted: the placements are part of the result, so carrying them
    * across a reload and into a shared link is real work with a shape of its
@@ -61,9 +61,13 @@ export type AppState = {
    */
   placements: ElementPlacements;
   /**
-   * The slot the visitor is carrying, or null while nothing is in hand. A
+   * The chip the visitor is carrying, or null while nothing is in hand. A
    * drag of a chip sets it; the release clears it, either by placing the
    * colour or by putting the chip down where it found no element.
+   *
+   * A `ChipSource` rather than a `PaletteSlot`, because the row's last two
+   * chips are the pair's own colours - a name that said "slot" would be
+   * wrong for two of the seven.
    *
    * **A press must never arm this.** Only a drag can tell a cancel from an
    * accident, because CDK holds the pointer down for its whole length. Below
@@ -81,7 +85,7 @@ export type AppState = {
    * separate component instances, in two columns of the screen. Transient
    * and not persisted - nothing is in hand across a reload.
    */
-  carriedSlot: PaletteSlot | null;
+  carriedChip: ChipSource | null;
 
   // Common
   colorTheme: ColorTheme;
@@ -131,7 +135,7 @@ export const initialState: AppState = {
   contrastColors: contrastPairFromPalette(initialPalette),
   openVerdict: null,
   placements: {},
-  carriedSlot: null,
+  carriedChip: null,
 
   colorTheme: "system",
   typeRole: "body",

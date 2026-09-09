@@ -2,13 +2,14 @@ import {EventInstance, Events} from "@ngrx/signals/events";
 import {tap} from "rxjs";
 import {AnnouncementService} from "@common/services/announcement.service";
 import {colorName} from "@engine/color/color-name.helper";
-import {PaletteSlot} from "@engine/palette/palette.model";
-// The screen's own two models, read from `@core` on purpose: the sentence has
-// to name an element in the same words as the mark beside it and the row in
-// the ledger, and a copy of those names here would be the one that drifts.
-// What keeps the direction harmless is that neither model imports anything
-// from `@core` - do not add such an import to `element-verdict.model.ts` or
-// `sample-page.model.ts`, or this edge closes into a cycle.
+// The screen's own three models, read from `@core` on purpose: the sentence
+// has to name an element and a colour in the same words as the mark beside it
+// and the row in the ledger, and a copy of those names here would be the one
+// that drifts. What keeps the direction harmless is that none of the three
+// imports anything from `@core` - do not add such an import to
+// `element-verdict.model.ts`, `sample-page.model.ts` or `chip-source.model.ts`,
+// or this edge closes into a cycle.
+import {ChipSource, colorOf} from "@contrast-type/models/chip-source.model";
 import {sampleElement} from "@contrast-type/models/sample-page.model";
 import {elementName} from "@contrast-type/models/element-verdict.model";
 import {contrastEvents} from "./contrast.events";
@@ -82,12 +83,11 @@ export function contrastPairAnnouncedEffect(
  * either, and `RESET PAGE` repaints the lot - so nothing on screen would tell
  * a screen reader that anything happened.
  *
- * **The element and the colour, not the slot.** `roleCaptionFor()` is what
- * this app calls a slot and it is what the ledger's row shows, but its
- * captions are all-caps and a screen reader spells those out letter by letter
- * - `BASE`, `SPLIT A`, `−14`. The colour's own name is the thing the visitor
- * can act on, and it is already the app's word for a palette member wherever
- * one is announced.
+ * **The element and the colour, not the chip's handle.** `P3`, `T` and `BG`
+ * are what the row and the ledger show, and they identify a chip without
+ * saying anything about it: a screen reader speaks `T` as a letter. The
+ * colour's own name is the thing the visitor can act on, and it is already
+ * the app's word for a colour wherever one is announced.
  *
  * Through `AnnouncementService` for `contrastPairAnnouncedEffect`'s reason:
  * a placement usually moves the page's tally, which has a sentence of its own
@@ -123,7 +123,7 @@ export function placementAnnouncedEffect(
 
 
 type PlacementEvent =
-  | EventInstance<"[Contrast] colorPlaced", {elementKey: string; slot: PaletteSlot}>
+  | EventInstance<"[Contrast] colorPlaced", {elementKey: string; source: ChipSource}>
   | EventInstance<"[Contrast] placementReset", string>
   | EventInstance<"[Contrast] placementsReset", void>;
 
@@ -143,8 +143,8 @@ function sentenceFor(event: PlacementEvent, store: AppStateStore): string {
       // One wording that is true for all of them beats a per-element branch.
       return `${nameOf(event.payload)} back to its default color`;
     case contrastEvents.colorPlaced.type: {
-      const {elementKey, slot} = event.payload;
-      const color = colorName(store.currentPalette()[slot].color);
+      const {elementKey, source} = event.payload;
+      const color = colorName(colorOf(source, store.contrastColors(), store.currentPalette()));
 
       return `${nameOf(elementKey)} takes ${color}`;
     }

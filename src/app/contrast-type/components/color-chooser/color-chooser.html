@@ -12,16 +12,22 @@
   </p>
 
   <!-- A toolbar, because the arrow keys move between the chips and a press
-       places: the row is five commands, not a list something else applies.
+       places: the row is seven commands, not a list something else applies.
        The label names the element, so a screen reader hears what the row is
-       for once rather than in every chip's name. -->
+       for once rather than in every chip's name.
+
+       Four across below `sm`, seven from `sm` on: seven in one row at 320px
+       leaves 33px a chip, short of the hit area's width, and the gap cannot
+       pay for it here either - see `palette-chips.html` for why. Two rows of
+       four (the last one three wide) clear it at every width down to 320px;
+       `sm` is wide enough for seven across without the same shortfall. -->
   <div role="toolbar"
        aria-orientation="horizontal"
-       class="mt-3 flex gap-1"
+       class="mt-3 grid grid-cols-4 gap-1 sm:grid-cols-7"
        [attr.aria-label]="toolbarLabel()">
-    @for (chip of chips(); track chip.slot; let index = $index) {
+    @for (chip of chips(); track chip.source; let index = $index) {
       <!-- One tab stop for the row: the arrow keys move the stop, which is
-           what keeps five chips from costing five stops on the way past. The
+           what keeps seven chips from costing seven stops on the way past. The
            keys are handled here rather than on the row, because the chip is
            where the focus is and a row that took a keydown would have to be
            focusable itself.
@@ -37,17 +43,17 @@
            be a colour name and nothing else. -->
       <button #chip
               type="button"
-              class="flex h-11 flex-1 items-center justify-center rounded-xs border border-line outline-offset-2 focus-visible:outline-2 focus-visible:outline-text"
+              class="flex h-11 items-center justify-center rounded-xs border border-line outline-offset-2 focus-visible:outline-2 focus-visible:outline-text"
               [style.background-color]="chip.background"
               [attr.tabindex]="index === active() ? 0 : -1"
               [attr.aria-label]="chip.label"
               [attr.aria-pressed]="chip.placed"
               (focus)="onFocus(index)"
               (keydown)="onKeydown($event)"
-              (click)="place(chip.slot)">
+              (click)="place(chip.source)">
         @if (chip.placed) {
           <!-- The tick, not the colour, is what says this one is on the
-               element: the chips are the palette the page is coloured from, so
+               element: the chips are the colours the page is coloured from, so
                a chip told apart by its colour is told apart by nothing. Black
                or white against the chip's own colour, because it is the one
                thing here drawn on a colour the visitor picked. -->
@@ -68,13 +74,17 @@
        own says nothing. -->
   <p class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
     <ct-verdict-shape class="size-4" [state]="preview().state"/>
-    <span class="font-mono">{{ preview().name }} · Lc {{ preview().lc }}</span>
+    <!-- The handle first, because seven swatches in the app's own panel say
+         nothing about which is which - and two of them are the pair's, which
+         no colour tells apart. It is the same word the chip in the row and the
+         ledger's rows carry. -->
+    <span class="font-mono">{{ preview().handle }} · {{ preview().name }} · Lc {{ preview().lc }}</span>
     <span class="text-dim">{{ preview().word }}</span>
   </p>
 
   <!-- The way back, spelled out rather than left to `Backspace` alone: a key
        nobody is told about is not a way back. Disabled while the element wears
-       the palette's own colour, because there is nothing to take away.
+       its default colour, because there is nothing to take away.
 
        The ring is the chips': the app defines no global focus style, so a
        control without one is ringed by the browser instead and stands out from
@@ -82,6 +92,6 @@
 
   <button type="button"
           class="mt-3 flex h-11 w-full items-center justify-center rounded-xs border border-line text-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-text disabled:text-dim"
-          [disabled]="!placedSlot()"
+          [disabled]="!placedSource()"
           (click)="reset()">Reset to default</button>
 </div>

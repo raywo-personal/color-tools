@@ -9,6 +9,8 @@ import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {colorName} from "@engine/color/color-name.helper";
+import {CHIP_SOURCES} from "@contrast-type/models/chip-source.model";
+import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {PaletteChips} from "@contrast-type/components/palette-chips/palette-chips";
 
@@ -90,6 +92,17 @@ describe("PaletteChips", () => {
       await fixture.whenStable();
     }
 
+    /** Repaints the pair's background, which is what the `BG` chip carries. */
+    async function paintBackground(hex: string) {
+      dispatcher.dispatch(contrastEvents.backgroundColorChanged(chroma(hex)));
+      await fixture.whenStable();
+    }
+
+    /** The handle each chip shows, in the row's order. */
+    function handles() {
+      return swatches().map(swatch => swatch.textContent?.trim());
+    }
+
     /** How often the chip announced that it had ended a gesture empty-handed. */
     function countPutDowns() {
       let count = 0;
@@ -109,6 +122,8 @@ describe("PaletteChips", () => {
       pickTarget,
       drags,
       pressWith,
+      paintBackground,
+      handles,
       startDrag,
       endDrag,
       countPutDowns
@@ -116,15 +131,53 @@ describe("PaletteChips", () => {
   }
 
 
-  it("shows the five colors of the current palette", async () => {
+  it("shows the palette's five colors and then the pair's own two", async () => {
     const {store, swatches} = await chips();
     const palette = store.currentPalette();
 
-    expect(swatches().length).toBe(5);
+    expect(swatches().length).toBe(CHIP_SOURCES.length);
     // Through chroma rather than as a string: how a DOM implementation spells
     // `rgb(...)` back is not what this pins.
     expect(chroma(swatches()[0].style.backgroundColor).hex("rgb"))
       .toBe(palette.color0.color.hex("rgb"));
+    // The pair comes last and in the pair's own order, which is what puts the
+    // two chips under the two fields that set them.
+    expect(chroma(swatches()[5].style.backgroundColor).hex("rgb")).toBe("#111111");
+    expect(chroma(swatches()[6].style.backgroundColor).hex("rgb")).toBe("#eeeeee");
+  });
+
+
+  it("follows the pair, because T and G are the pair's two colors", async () => {
+    const {swatches, paintBackground} = await chips();
+
+    await paintBackground("#204080");
+
+    expect(chroma(swatches()[6].style.backgroundColor).hex("rgb")).toBe("#204080");
+  });
+
+
+  it("carries a handle per chip, which is what the ledger's rows point at", async () => {
+    const {handles} = await chips();
+
+    expect(handles()).toEqual(["P1", "P2", "P3", "P4", "P5", "T", "BG"]);
+  });
+
+
+  it("writes the handle in whichever of black and white APCA puts further away", async () => {
+    // The label sits on a colour the visitor picked, so a token is guaranteed
+    // against none of it - and the draft's fixed white disappears on a light
+    // `BG` the moment the page is light. The `BG` chip is the one this can
+    // drive through the whole cube: it takes the pair's background.
+    const {fixture, swatches, paintBackground} = await chips();
+
+    await expectApcaForeground(async background => {
+      await paintBackground(background.hex("rgb"));
+      await fixture.whenStable();
+
+      const label = swatches()[6].querySelector("span") as HTMLElement;
+
+      return label.style.color;
+    });
   });
 
 
@@ -134,7 +187,7 @@ describe("PaletteChips", () => {
     // Safari with VoiceOver stops treating a list without markers as a list,
     // and the label goes with it.
     expect(list.getAttribute("role")).toBe("list");
-    expect(list.getAttribute("aria-label")).toBe("Palette colors");
+    expect(list.getAttribute("aria-label")).toBe("Palette colors and the pair");
   });
 
 
@@ -190,19 +243,49 @@ describe("PaletteChips", () => {
     });
 
 
-    it("names every chip by its color and by what the click will do", async () => {
+    it("names every chip by its handle, its color and what the click will do", async () => {
       // This is what pays for the mode: the outcome is spoken by the control
-      // the visitor is standing on, so the target cannot be a hidden trap.
+      // the visitor is standing on, so the target cannot be a hidden trap. The
+      // handle opens the name verbatim, because it is visible text in the
+      // button and WCAG 2.5.3 asks the name to contain the label.
       const {store, swatches, pickTarget} = await chips();
       const color = store.currentPalette().color0.color;
 
       expect(swatches()[0].getAttribute("aria-label"))
-        .toBe(`Use ${colorName(color)} as the background`);
+        .toBe(`P1: Use ${colorName(color)} as the background`);
 
       await pickTarget("TEXT");
 
       expect(swatches()[0].getAttribute("aria-label"))
-        .toBe(`Use ${colorName(color)} as the text color`);
+        .toBe(`P1: Use ${colorName(color)} as the text color`);
+    });
+
+
+    it("says what T and BG stand for, which the handle alone does not", async () => {
+      // A screen reader speaks `T` as a letter and `BG` as two, and neither
+      // says which half of the pair it is. The handle is the initial of the
+      // field that sets it, which a reader can see and a listener cannot.
+      const {swatches} = await chips();
+
+      expect(swatches()[5].getAttribute("aria-label"))
+        .toBe(`T, the text color: Use ${colorName(chroma("#111111"))} as the background`);
+      expect(swatches()[6].getAttribute("aria-label"))
+        .toBe(`BG, the background: Use ${colorName(chroma("#EEEEEE"))} as the background`);
+    });
+
+
+    it("applies T to the named half, the way any other chip's click does", async () => {
+      // Seven chips, one gesture: a chip that answered a press differently
+      // from its six neighbours would be the harder thing to learn, and the
+      // target above the row already says which half the click sets.
+      const {fixture, store, swatches, pickTarget} = await chips();
+
+      await pickTarget("BACKGROUND");
+      swatches()[5].click();
+      await fixture.whenStable();
+
+      expect(store.contrastColors.background().hex("rgb")).toBe("#111111");
+      expect(store.contrastColors.text().hex("rgb")).toBe("#111111");
     });
 
 
@@ -223,7 +306,7 @@ describe("PaletteChips", () => {
         await fixture.whenStable();
 
         expect(store.contrastColors.background().hex("rgb")).toBe(expected);
-        expect(store.carriedSlot()).toBeNull();
+        expect(store.carriedChip()).toBeNull();
       }
     );
 
@@ -294,7 +377,49 @@ describe("PaletteChips", () => {
 
       await startDrag(1);
 
-      expect(store.carriedSlot()).toBe("color1");
+      expect(store.carriedChip()).toBe("color1");
+    });
+
+
+    it("puts T and G in hand as well, so the pair's colors can be dropped", async () => {
+      // The whole point of the two chips: the text colour onto a button, the
+      // background onto a card.
+      const {store, startDrag, endDrag} = await chips();
+
+      await startDrag(5);
+
+      expect(store.carriedChip()).toBe("text");
+
+      await endDrag(5);
+      await startDrag(6);
+
+      expect(store.carriedChip()).toBe("background");
+    });
+
+
+    it("drops T on an element and writes nothing back to the pair", async () => {
+      // The rule the two new chips are held to: they carry the pair's colours
+      // into the page, and no drop ever writes one back. The release itself
+      // raises `colorPlaced` alone; what could still reach the pair is the
+      // drag's own click, and on `T` with `BACKGROUND` picked that click would
+      // put the text colour on the other half and leave the whole page at
+      // Lc 0 - which is why the two chips get this spec of their own.
+      const {fixture, store, dispatcher, swatches, pickTarget, pressWith, startDrag, endDrag} =
+        await chips();
+
+      await pickTarget("BACKGROUND");
+
+      pressWith(swatches()[5], "mouse");
+      await startDrag(5);
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "text"}));
+      await fixture.whenStable();
+      await endDrag(5);
+      swatches()[5].click();
+      await fixture.whenStable();
+
+      expect(store.placements()).toEqual({headline: "text"});
+      expect(store.contrastColors.text().hex("rgb")).toBe("#111111");
+      expect(store.contrastColors.background().hex("rgb")).toBe("#eeeeee");
     });
 
 
@@ -325,7 +450,7 @@ describe("PaletteChips", () => {
       await startDrag(1);
       await endDrag(1);
 
-      expect(store.carriedSlot()).toBeNull();
+      expect(store.carriedChip()).toBeNull();
     });
 
 
@@ -338,12 +463,12 @@ describe("PaletteChips", () => {
       const putDowns = countPutDowns();
 
       await startDrag(1);
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", slot: "color1"}));
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color1"}));
       await fixture.whenStable();
       await endDrag(1);
 
       expect(putDowns()).toBe(0);
-      expect(store.carriedSlot()).toBeNull();
+      expect(store.carriedChip()).toBeNull();
       expect(store.placements()).toEqual({headline: "color1"});
     });
 

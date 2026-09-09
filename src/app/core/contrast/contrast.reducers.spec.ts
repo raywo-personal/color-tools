@@ -42,14 +42,31 @@ describe("the placements on the sample page", () => {
     const {store} = setup();
 
     expect(store.placements()).toEqual({});
-    expect(store.carriedSlot()).toBeNull();
+    expect(store.carriedChip()).toBeNull();
+  });
+
+
+  it("holds a placement from T or G, so the pair can move under it too", () => {
+    const {store, dispatcher} = setup();
+
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "background"}));
+
+    expect(store.placements()).toEqual({headline: "background"});
+
+    // The same property a slot has: the source is kept and the colour is
+    // resolved when the page is built, so typing a new background moves the
+    // headline with it.
+    dispatcher.dispatch(contrastEvents.backgroundColorChanged(chroma("#204080")));
+
+    expect(store.placements()).toEqual({headline: "background"});
+    expect(headlineInk(store)).toBe("#204080");
   });
 
 
   it("holds a placement as a slot, so the palette can move under it", () => {
     const {store, dispatcher} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", slot: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color2"}));
 
     expect(store.placements()).toEqual({headline: "color2"});
 
@@ -69,11 +86,17 @@ describe("the placements on the sample page", () => {
 
     dispatcher.dispatch(contrastEvents.chipPickedUp("color3"));
 
-    expect(store.carriedSlot()).toBe("color3");
+    expect(store.carriedChip()).toBe("color3");
 
     dispatcher.dispatch(contrastEvents.chipPutDown());
 
-    expect(store.carriedSlot()).toBeNull();
+    expect(store.carriedChip()).toBeNull();
+
+    // The row's last two chips carry the pair's colours, so what is in hand is
+    // a source rather than a slot.
+    dispatcher.dispatch(contrastEvents.chipPickedUp("text"));
+
+    expect(store.carriedChip()).toBe("text");
   });
 
 
@@ -84,18 +107,18 @@ describe("the placements on the sample page", () => {
     const {store, dispatcher} = setup();
 
     dispatcher.dispatch(contrastEvents.chipPickedUp("color1"));
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", slot: "color1"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", source: "color1"}));
 
     expect(store.placements()).toEqual({quote: "color1"});
-    expect(store.carriedSlot()).toBeNull();
+    expect(store.carriedChip()).toBeNull();
   });
 
 
   it("replaces a placement on an element the visitor places again", () => {
     const {store, dispatcher} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", slot: "color2"}));
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", slot: "color4"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color4"}));
 
     expect(store.placements()).toEqual({headline: "color4"});
   });
@@ -104,8 +127,8 @@ describe("the placements on the sample page", () => {
   it("resets one element without touching the others", () => {
     const {store, dispatcher} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", slot: "color2"}));
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", slot: "color3"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", source: "color3"}));
     dispatcher.dispatch(contrastEvents.placementReset("headline"));
 
     // The key is gone rather than set to null: an absent key is the one
@@ -118,8 +141,8 @@ describe("the placements on the sample page", () => {
   it("resets the whole page in one gesture", () => {
     const {store, dispatcher} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", slot: "color2"}));
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", slot: "color3"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", source: "color3"}));
     dispatcher.dispatch(contrastEvents.placementsReset());
 
     expect(store.placements()).toEqual({});
@@ -129,7 +152,7 @@ describe("the placements on the sample page", () => {
   it("writes no placement to storage, because carrying one across a reload is #68's", () => {
     const {dispatcher} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", slot: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color2"}));
     dispatcher.dispatch(contrastEvents.placementReset("headline"));
     dispatcher.dispatch(contrastEvents.placementsReset());
 
@@ -167,7 +190,7 @@ describe("the contrast pair", () => {
     const store = TestBed.inject(AppStateStore);
     const dispatcher = TestBed.inject(Dispatcher);
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", slot: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color2"}));
     dispatcher.dispatch(contrastEvents.backgroundColorChanged(chroma("#1B1917")));
 
     expect(store.placements()).toEqual({headline: "color2"});

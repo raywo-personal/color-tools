@@ -3,7 +3,8 @@ import {mixColors} from "@engine/color/mix-color.helper";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {TypeRole} from "@engine/contrast/type-role.model";
-import {Palette, PALETTE_SLOTS, PaletteSlot} from "@engine/palette/palette.model";
+import {Palette, PALETTE_SLOTS} from "@engine/palette/palette.model";
+import {ChipSource, colorOf} from "@contrast-type/models/chip-source.model";
 
 
 /**
@@ -18,7 +19,7 @@ export type SampleInk = "text" | "dim" | "accent" | "accentSoft" | "onAccent" | 
 /** The grounds the sample page's text sits on. */
 export type SampleGround = "page" | "card" | "nav" | "accent" | "muted" | "field";
 
-/** Which of an element's two colours a placed palette colour replaces. */
+/** Which of an element's two colours a placed chip replaces. */
 export type SamplePlacement = "ink" | "ground";
 
 
@@ -53,7 +54,7 @@ export interface SampleElement {
    */
   readonly figure: boolean;
   /**
-   * Which of the element's two colours a placed palette colour replaces.
+   * Which of the element's two colours a placed chip replaces.
    *
    * `ink` wherever the ink is the visitor's own. `ground` for the three inks
    * the app computes for itself: `onAccent` is whichever of black or white
@@ -318,15 +319,16 @@ export function samplePageColors(pair: ContrastColors, palette: Palette): Sample
 
 
 /**
- * The palette slot a visitor put on an element, per `SAMPLE_ELEMENTS` key. An
- * element nobody has placed a colour on is absent.
+ * The chip a visitor put on an element, per `SAMPLE_ELEMENTS` key. An element
+ * nobody has placed a colour on is absent.
  *
- * **A slot, never a hex.** The placement is about the palette member, not
- * about the colour it happens to hold, so repainting the palette hands the
- * element the new colour of the same slot for free. A stored hex would freeze
- * the page at the palette it was placed in.
+ * **A source, never a hex.** The placement is about the chip it came off, not
+ * about the colour that chip happens to hold, so repainting the palette hands
+ * the element the new colour of the same slot for free - and a placement made
+ * from `T` or `BG` follows the pair the same way. A stored hex would freeze the
+ * element at the palette and the pair it was placed in.
  */
-export type ElementPlacements = Readonly<Record<string, PaletteSlot | undefined>>;
+export type ElementPlacements = Readonly<Record<string, ChipSource | undefined>>;
 
 
 /**
@@ -350,17 +352,18 @@ export interface SamplePage {
 /**
  * The page from the pair, the palette and what the visitor placed.
  *
- * The slots are resolved against this palette here and nowhere else, which is
- * what makes a palette change move every placed element at once. A placement
- * is only ever read back out through `inkOf()` and `groundOf()`.
+ * The sources are resolved against this pair and this palette here and nowhere
+ * else - through `colorOf()` - which is what makes a palette change move every
+ * placed element at once and a new background move the ones placed from `BG`. A
+ * placement is only ever read back out through `inkOf()` and `groundOf()`.
  */
 export function samplePage(pair: ContrastColors,
                            palette: Palette,
                            placements: ElementPlacements): SamplePage {
   const placed: Record<string, Color> = {};
 
-  for (const [key, slot] of Object.entries(placements)) {
-    if (slot) placed[key] = palette[slot].color;
+  for (const [key, source] of Object.entries(placements)) {
+    if (source) placed[key] = colorOf(source, pair, palette);
   }
 
   return {colors: samplePageColors(pair, palette), placed};

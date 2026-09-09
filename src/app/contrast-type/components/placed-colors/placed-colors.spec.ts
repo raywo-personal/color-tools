@@ -9,7 +9,7 @@ import {palettesEvents} from "@core/palettes/palettes.events";
 import {createContrastColors} from "@engine/contrast/contrast-colors.model";
 import {colorName} from "@engine/color/color-name.helper";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
-import {PaletteSlot} from "@engine/palette/palette.model";
+import {ChipSource} from "@contrast-type/models/chip-source.model";
 import {samplePage} from "@contrast-type/models/sample-page.model";
 import {
   verdictFor,
@@ -46,8 +46,14 @@ describe("PlacedColors", () => {
 
     const host = fixture.nativeElement as HTMLElement;
 
-    async function place(elementKey: string, slot: PaletteSlot) {
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, slot}));
+    async function place(elementKey: string, source: ChipSource) {
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, source}));
+      await fixture.whenStable();
+    }
+
+    /** Repaints the background, which is the colour the `BG` chip carries. */
+    async function paintBackground(hex: string) {
+      dispatcher.dispatch(contrastEvents.backgroundColorChanged(chroma(hex)));
       await fixture.whenStable();
     }
 
@@ -106,8 +112,8 @@ describe("PlacedColors", () => {
     }
 
     return {
-      fixture, host, store, place, pickStyle, rows, names, texts, resets, resetPage, press,
-      info, infoProse
+      fixture, host, store, place, paintBackground, pickStyle, rows, names, texts, resets,
+      resetPage, press, info, infoProse
     };
   }
 
@@ -207,17 +213,20 @@ describe("PlacedColors", () => {
     });
 
 
-    it("names the colour and what the palette calls the slot - no P-numbers", async () => {
+    it("names the colour and the chip it came off, in the chip's own word", async () => {
+      // The handle, not `roleCaptionFor()`: the row has to point at something
+      // the visitor can still see, and since the chips carry `P1` to `P5`,
+      // `T` and `BG` that thing is the handle. One word per screen - the
+      // generator's caption stays in the Studio.
       const {store, place, texts} = await ledger();
 
       await place("headline", "color3");
 
-      const palette = store.currentPalette();
-      const color = palette.color3.color;
+      const color = store.currentPalette().color3.color;
 
       expect(texts()[0]).toContain(colorName(color));
-      expect(texts()[0]).toContain(roleCaptionFor(palette.style, "color3"));
-      expect(texts()[0]).not.toMatch(/\bP[1-5]\b/);
+      expect(texts()[0]).toContain("P4");
+      expect(texts()[0]).not.toContain(roleCaptionFor(store.currentPalette().style, "color3"));
     });
 
 
@@ -227,10 +236,28 @@ describe("PlacedColors", () => {
       await place("headline", "color3");
       await pickStyle("triadic");
 
-      const palette = store.currentPalette();
+      expect(texts()[0]).toContain(colorName(store.currentPalette().color3.color));
+      expect(texts()[0]).toContain("P4");
+    });
 
-      expect(texts()[0]).toContain(colorName(palette.color3.color));
-      expect(texts()[0]).toContain(roleCaptionFor("triadic", "color3"));
+
+    it("names T and BG by their handles, and follows the pair", async () => {
+      // A placement from `BG` tracks the background the way one from `P2`
+      // tracks the palette: `colorOf()` resolves both, and neither stores a
+      // hex.
+      const {store, place, paintBackground, texts} = await ledger();
+
+      await place("headline", "background");
+
+      // `toContain` carries this one: `texts()` runs the row's spans together
+      // without a separator, and no colour name holds an upper-case `BG`. The
+      // draft's single `G` would not have been safe here - `Green` holds it.
+      expect(texts()[0]).toContain("BG");
+      expect(texts()[0]).toContain(colorName(store.contrastColors.background()));
+
+      await paintBackground("#204080");
+
+      expect(texts()[0]).toContain(colorName(chroma("#204080")));
     });
 
 

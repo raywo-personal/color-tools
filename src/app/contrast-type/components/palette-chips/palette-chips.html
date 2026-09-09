@@ -4,7 +4,7 @@
   <p class="font-sans text-sm tracking-widest text-dim">APPLY TO</p>
 
   <div role="group"
-       aria-label="Apply a palette color to"
+       aria-label="Apply a color to"
        class="flex flex-wrap gap-2">
     @for (option of options; track option.role) {
       <!-- aria-pressed, not colour alone: the inverted chip is the only other
@@ -22,23 +22,31 @@
   </div>
 </div>
 
-<!-- Five in one row at every width, unlike the Studio's palette: the chips are
+<!-- Seven in one row at every width, unlike the Studio's palette: the chips are
      h-11 rather than square, so the touch minimum is met by their height. The
-     shell's px-4 leaves 288px of a 320px screen, and five across it with the
-     four gaps leave 54px each.
+     shell's px-4 leaves 288px of a 320px screen, and seven across it with the
+     six gaps leave 37px each.
 
-     The ring is offset off the chip, and the 4px gap is what it lands on: 2px
-     of offset plus 2px of ring reach exactly to the neighbour's edge, so all
-     four sides sit on the page ground, where the text token always shows. -->
+     **37px is the narrowest a chip gets, and it is short of the width the hit
+     area asks for.** The rule wants h-11 in both directions; here the height
+     carries the touch minimum and the width is what one row of seven leaves at
+     320px. Do not buy the width back out of the gap: the ring is offset off
+     the chip and the 4px gap is what it lands on - 2px of offset plus 2px of
+     ring reach exactly to the neighbour's edge, so all four sides sit on the
+     page ground where the text token always shows. A narrower gap puts a chip's
+     ring on its neighbour's colour.
+
+     `T` and `BG` come last and in the pair's own order, so the two chips stand
+     under the two fields whose initials they carry. -->
 <ul role="list"
-    aria-label="Palette colors"
-    class="grid grid-cols-5 gap-1">
-  @for (chip of chips(); track chip.slot) {
+    aria-label="Palette colors and the pair"
+    class="grid grid-cols-7 gap-1">
+  @for (chip of chips(); track chip.source) {
     <li class="min-w-0">
       <!-- One button, two gestures - the component says how they are kept
            apart. `cdkDrag` with no drop list: the elements that answer a carry
            live in the preview's own component tree, so the two halves talk
-           through `carriedSlot` in the store rather than through a connected
+           through `carriedChip` in the store rather than through a connected
            list that would have to cross both trees.
 
            `pointerdown` and `keydown` both mark the start of a gesture, which
@@ -61,7 +69,7 @@
       <button type="button"
               cdkDrag
               [cdkDragStartDelay]="dragStartDelay"
-              class="block h-11 w-full cursor-pointer rounded-xs border border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+              class="flex h-11 w-full cursor-pointer items-end justify-center rounded-xs border border-line pb-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
               [class.pointer-events-none]="dragging()"
               [class.relative]="dragging()"
               [class.z-30]="dragging()"
@@ -71,7 +79,19 @@
               (keydown)="onGestureStart()"
               (cdkDragStarted)="onDragStarted(chip)"
               (cdkDragEnded)="onDragEnded($event)"
-              (click)="apply(chip)"></button>
+              (click)="apply(chip)">
+        <!-- The handle, in whichever of black and white APCA puts further from
+             the chip: it is drawn on a colour the visitor picked, so the
+             draft's fixed white would vanish on a light `BG`. Bottom-aligned as
+             the draft has it, which keeps it clear of the chip's own colour at
+             the centre where the eye reads the hue.
+
+             `aria-hidden`, because the button's own name already opens with
+             this text - see the label in `palette-chips.ts`. -->
+        <span class="font-mono text-sm leading-none"
+              aria-hidden="true"
+              [style.color]="chip.ink">{{ chip.handle }}</span>
+      </button>
     </li>
   }
 </ul>

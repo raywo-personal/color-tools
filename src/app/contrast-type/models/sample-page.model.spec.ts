@@ -256,6 +256,28 @@ describe("sample page", () => {
   });
 
 
+  it("resolves a placement from T or G against the pair, and follows it", () => {
+    // The pair's two halves are sources like any slot, and `colorOf()` is
+    // where all seven are resolved - so a placement from `BG` tracks the
+    // background the way one from `P3` tracks the palette.
+    const palette = generatePalette("triadic");
+    const first = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
+    const second = createContrastColors(chroma("#111111"), chroma("#204080"));
+    const placements = {headline: "background", filledButton: "text"} as const;
+    const headline = sampleElement("headline");
+    const filledButton = sampleElement("filledButton");
+
+    expect(inkOf(headline, samplePage(first, palette, placements)).hex("rgb"))
+      .toBe("#eeeeee");
+    expect(inkOf(headline, samplePage(second, palette, placements)).hex("rgb"))
+      .toBe("#204080");
+    // `filledButton` takes a colour as its fill, not as its label - which is
+    // `SampleElement.placement`, and it holds for a pair source too.
+    expect(groundOf(filledButton, samplePage(first, palette, placements)).hex("rgb"))
+      .toBe("#111111");
+  });
+
+
   it("draws a placed colour that matches the ground, and reports Lc 0 for it", () => {
     // The page has to survive a placement nobody can read, and the verdict is
     // what says so - nothing here corrects its own contrast, so an invisible

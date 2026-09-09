@@ -7,7 +7,7 @@ import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {colorName} from "@engine/color/color-name.helper";
-import {PALETTE_SLOTS} from "@engine/palette/palette.model";
+import {CHIP_SOURCES, chipLabelFor, chipSourceName, colorOf} from "@contrast-type/models/chip-source.model";
 import {VERDICT_STATES, verdictWord} from "@contrast-type/models/element-verdict.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
@@ -88,26 +88,32 @@ describe("ColorChooser", () => {
   }
 
 
-  it("offers the palette in slot order, each chip named by its colour and its verdict", async () => {
-    // The names open with `colorName()`'s, the same ones the chip row above
-    // the preview and the ledger use - a swatch a visitor can activate is
-    // named, and P-numbers name nothing. What follows is how the element would
-    // fare with that colour; the test below says why it has to be there.
+  it("offers all seven chips in the row's order, each named by its colour and its verdict", async () => {
+    // All seven, or `T` and `BG` would be droppable and placeable by mouse
+    // alone. The names open with `colorName()`'s, the same ones the chip row
+    // above the preview and the ledger use - a swatch a visitor can activate
+    // is named, and a handle names nothing. What follows is how the element
+    // would fare with that colour; the test below says why it has to be there.
     const {store, chips, toolbar} = await chooser();
+    const pair = store.contrastColors();
     const palette = store.currentPalette();
     const words = VERDICT_STATES.map(verdictWord);
 
-    expect(chips()).toHaveLength(PALETTE_SLOTS.length);
+    expect(chips()).toHaveLength(CHIP_SOURCES.length);
 
-    for (const [index, slot] of PALETTE_SLOTS.entries()) {
+    for (const [index, source] of CHIP_SOURCES.entries()) {
       const chip = chips()[index];
-      const [named, verdict] = chip.getAttribute("aria-label")!.split(": ");
-      const [word, lc] = verdict.split(", ");
+      const color = colorOf(source, pair, palette);
+      // The handle sits ahead of the colour name - see the next test for why -
+      // so the name and the verdict are the label's last two segments.
+      const segments = chip.getAttribute("aria-label")!.split(": ");
+      const named = segments.at(-2);
+      const [word, lc] = segments.at(-1)!.split(", ");
 
-      expect(chip.style.backgroundColor, slot).toBe(palette[slot].color.hex("rgb"));
-      expect(named, slot).toBe(colorName(palette[slot].color));
-      expect(words, slot).toContain(word);
-      expect(lc, slot).toMatch(/^Lc \d+$/);
+      expect(chip.style.backgroundColor, source).toBe(color.hex("rgb"));
+      expect(named, source).toBe(colorName(color));
+      expect(words, source).toContain(word);
+      expect(lc, source).toMatch(/^Lc \d+$/);
     }
 
     // The row is what the arrow keys walk, and its label says what for.
@@ -115,23 +121,64 @@ describe("ColorChooser", () => {
   });
 
 
+  it("names every chip by a handle no other chip carries, T and BG included", async () => {
+    // `T` and one palette slot can hold the very colour the draft's pair
+    // starts with, and so can `BG` and another - a name of the colour alone
+    // then reads the same for two buttons in one toolbar, and the arrow keys
+    // give no other way to tell which is under them. The handle is what
+    // breaks the tie; `chipSourceName()` spells `T` and `BG` out as well,
+    // because a screen reader speaks either as letters.
+    const {chips} = await chooser();
+
+    const labels = chips().map(chip => chip.getAttribute("aria-label")!);
+
+    expect(new Set(labels).size, labels.join(" | ")).toBe(labels.length);
+
+    for (const [index, source] of CHIP_SOURCES.entries()) {
+      expect(labels[index]).toContain(chipLabelFor(source));
+
+      const sourceName = chipSourceName(source);
+      if (sourceName !== null) expect(labels[index]).toContain(sourceName);
+    }
+  });
+
+
+  it("says which of the seven the arrow keys are on, which no colour does", async () => {
+    // Seven swatches on the app's own panel, two of them the pair's: the
+    // handle is the one thing here that tells them apart, and it is the word
+    // the chip in the row and the ledger's rows carry.
+    const {chips, previewRow, press} = await chooser();
+
+    expect(previewRow().textContent).toContain(chipLabelFor(CHIP_SOURCES[0]));
+
+    for (let step = 1; step < CHIP_SOURCES.length; step++) {
+      await press("ArrowRight");
+
+      expect(previewRow().textContent, `step ${step}`)
+        .toContain(chipLabelFor(CHIP_SOURCES[step]));
+    }
+
+    expect(chips()).toHaveLength(CHIP_SOURCES.length);
+  });
+
+
   it("carries the verdict in every chip's own name, not only in the row", async () => {
     // The row under the toolbar shows it for the focused chip and is no live
     // region, so a name of the colour alone would let a screen-reader visitor
-    // walk all five and never learn that one of them fails - with placing it
+    // walk all seven and never learn that one of them fails - with placing it
     // and resetting again as the only way to find out. This is the path for
     // keyboard and touch alike, which makes it the one place it has to travel.
     const {chips, previewRow, press} = await chooser();
 
     const focused = () => chips().find(chip => chip.getAttribute("tabindex") === "0")!;
 
-    for (const slot of PALETTE_SLOTS) {
+    for (const source of CHIP_SOURCES) {
       const label = focused().getAttribute("aria-label")!;
-      const [word, lc] = label.split(": ")[1].split(", ");
+      const [word, lc] = label.split(": ").at(-1)!.split(", ");
 
       // The same word and the same figure the row beside it shows.
-      expect(previewRow().textContent, `${slot}: ${label}`).toContain(word);
-      expect(previewRow().textContent, `${slot}: ${label}`).toContain(lc);
+      expect(previewRow().textContent, `${source}: ${label}`).toContain(word);
+      expect(previewRow().textContent, `${source}: ${label}`).toContain(lc);
 
       await press("ArrowRight");
     }
@@ -150,25 +197,28 @@ describe("ColorChooser", () => {
 
 
   it("keeps one tab stop for the whole row and moves it with the arrows", async () => {
-    // Five chips as five stops would cost four presses to walk past the row.
+    // Seven chips as seven stops would cost six presses to walk past the row.
     const {chips, press} = await chooser();
     const stops = () => chips().map(chip => chip.getAttribute("tabindex"));
+    const on = (index: number) =>
+      CHIP_SOURCES.map((_, position) => position === index ? "0" : "-1");
+    const last = CHIP_SOURCES.length - 1;
 
-    expect(stops()).toEqual(["0", "-1", "-1", "-1", "-1"]);
+    expect(stops()).toEqual(on(0));
 
     await press("ArrowRight");
-    expect(stops()).toEqual(["-1", "0", "-1", "-1", "-1"]);
+    expect(stops()).toEqual(on(1));
 
     // Wrapping, so the row has no dead end at either side.
     await press("ArrowLeft");
     await press("ArrowLeft");
-    expect(stops()).toEqual(["-1", "-1", "-1", "-1", "0"]);
+    expect(stops()).toEqual(on(last));
 
     await press("End");
-    expect(stops()).toEqual(["-1", "-1", "-1", "-1", "0"]);
+    expect(stops()).toEqual(on(last));
 
     await press("Home");
-    expect(stops()).toEqual(["0", "-1", "-1", "-1", "-1"]);
+    expect(stops()).toEqual(on(0));
   });
 
 
@@ -182,6 +232,22 @@ describe("ColorChooser", () => {
 
     expect(store.placements()["headline"]).toBe("color2");
     expect(fakeLiveAnnouncer().announcements).toHaveLength(1);
+  });
+
+
+  it("places T and G too, which is what keeps them off a mouse-only path", async () => {
+    // The row's last two chips can be dropped, so they have to be placeable
+    // without a drag as well - this is the whole of the keyboard and touch
+    // path to them.
+    const {store, chips, click} = await chooser();
+
+    await click(chips()[5]);
+
+    expect(store.placements()["headline"]).toBe("text");
+
+    await click(chips()[6]);
+
+    expect(store.placements()["headline"]).toBe("background");
   });
 
 

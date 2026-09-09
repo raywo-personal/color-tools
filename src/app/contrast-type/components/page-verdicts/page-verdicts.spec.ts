@@ -12,6 +12,7 @@ import {commonEvents} from "@core/common/common.events";
 import {palettesEvents} from "@core/palettes/palettes.events";
 import {paletteColorFrom} from "@engine/palette/palette-color.model";
 import {PaletteSlot} from "@engine/palette/palette.model";
+import {ChipSource} from "@contrast-type/models/chip-source.model";
 import {SAMPLE_ELEMENTS} from "@contrast-type/models/sample-page.model";
 import {PageVerdicts} from "@contrast-type/components/page-verdicts/page-verdicts";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
@@ -76,8 +77,8 @@ describe("PageVerdicts", () => {
       await fixture.whenStable();
     }
 
-    async function place(elementKey: string, slot: PaletteSlot) {
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, slot}));
+    async function place(elementKey: string, source: ChipSource) {
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, source}));
       await fixture.whenStable();
     }
 
