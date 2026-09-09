@@ -34,12 +34,12 @@ describe("placementAnnouncedEffect", () => {
     // nothing on screen would say what happened.
     const {store, dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "smallPrint", source: "color3"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "smallPrint", side: "ink", source: "color3"}));
 
     const name = elementName(sampleElement("smallPrint"));
     const colour = colorName(store.currentPalette().color3.color);
 
-    expect(announcer.last?.message).toBe(`${name} takes ${colour}`);
+    expect(announcer.last?.message).toBe(`${name} takes ${colour} as its text color`);
     // Polite: the visitor has just finished a gesture of their own, and there
     // is nothing in progress to interrupt.
     expect(announcer.last?.politeness).toBe("polite");
@@ -51,7 +51,7 @@ describe("placementAnnouncedEffect", () => {
     // all-caps caption is what a screen reader spells out letter by letter.
     const {dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "filledButton", source: "color1"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "filledButton", side: "ink", source: "color1"}));
 
     expect(announcer.last?.message).toContain("Filled button");
   });
@@ -63,7 +63,7 @@ describe("placementAnnouncedEffect", () => {
     // acts on.
     const {dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color0"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", side: "ink", source: "color0"}));
 
     expect(announcer.last?.message).not.toMatch(/\bP1\b/);
   });
@@ -74,11 +74,11 @@ describe("placementAnnouncedEffect", () => {
     // pair is announced by the colour it actually put on the element.
     const {store, dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "background"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", side: "ink", source: "background"}));
 
     const colour = colorName(store.contrastColors.background());
 
-    expect(announcer.last?.message).toBe(`Headline takes ${colour}`);
+    expect(announcer.last?.message).toBe(`Headline takes ${colour} as its text color`);
   });
 
 
@@ -87,16 +87,39 @@ describe("placementAnnouncedEffect", () => {
     // page's own, so a sentence naming the page would be false for them.
     const {dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", source: "color2"}));
-    dispatcher.dispatch(contrastEvents.placementReset("quote"));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", side: "ink", source: "color2"}));
+    dispatcher.dispatch(contrastEvents.placementReset({elementKey: "quote", side: "ink"}));
 
-    expect(announcer.last?.message).toBe("Pull quote back to its default color");
+    expect(announcer.last?.message).toBe("Pull quote's text color back to its default");
     expect(announcer.last?.politeness).toBe("polite");
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "eyebrow", source: "color2"}));
-    dispatcher.dispatch(contrastEvents.placementReset("eyebrow"));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "eyebrow", side: "ink", source: "color2"}));
+    dispatcher.dispatch(contrastEvents.placementReset({elementKey: "eyebrow", side: "ink"}));
 
     expect(announcer.last?.message).not.toContain("the page");
+  });
+
+
+  it("names the side, because a drop's own half is what chose it", () => {
+    // Which half of the element a chip was released on is a thing a
+    // screen-reader visitor never sees, and both sides of one element can be
+    // placed - so a sentence naming only the element would say the same thing
+    // twice about two different changes.
+    const {store, dispatcher, announcer} = setup();
+
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "bodyText", side: "ground", source: "color3"}));
+
+    const colour = colorName(store.currentPalette().color3.color);
+
+    // `highlight`, not `background`: the running text has no box of its own,
+    // so what a ground puts there is a band behind that one paragraph.
+    expect(announcer.last?.message).toBe(`Body text takes ${colour} as its highlight`);
+
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "filledButton", side: "ground", source: "color3"}));
+
+    // The filled button does have a box, and there the same side is its
+    // background - `SampleElement.boxed`.
+    expect(announcer.last?.message).toBe(`Filled button takes ${colour} as its background`);
   });
 
 
@@ -105,7 +128,7 @@ describe("placementAnnouncedEffect", () => {
     // is one nobody hears the end of.
     const {dispatcher, announcer} = setup();
 
-    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", source: "color2"}));
+    dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "quote", side: "ink", source: "color2"}));
     dispatcher.dispatch(contrastEvents.placementsReset());
 
     expect(announcer.last?.message).toBe("Every placed color removed");

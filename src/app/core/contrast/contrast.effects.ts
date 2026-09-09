@@ -10,7 +10,11 @@ import {colorName} from "@engine/color/color-name.helper";
 // `element-verdict.model.ts`, `sample-page.model.ts` or `chip-source.model.ts`,
 // or this edge closes into a cycle.
 import {ChipSource, colorOf} from "@contrast-type/models/chip-source.model";
-import {sampleElement} from "@contrast-type/models/sample-page.model";
+import {
+  SamplePlacement,
+  sampleElement,
+  sideName
+} from "@contrast-type/models/sample-page.model";
 import {elementName} from "@contrast-type/models/element-verdict.model";
 import {contrastEvents} from "./contrast.events";
 import {transferEvents} from "@core/common/transfer.events";
@@ -89,6 +93,12 @@ export function contrastPairAnnouncedEffect(
  * colour's own name is the thing the visitor can act on, and it is already
  * the app's word for a colour wherever one is announced.
  *
+ * **And the side, because an element has two.** A drop lands on the half of
+ * the element the pointer was over, which a screen-reader visitor never sees,
+ * and both sides of one element can be placed - so a sentence that named only
+ * the element would say the same thing twice about two different changes.
+ * `sideName()` is the wording, the ledger's own rows included.
+ *
  * Through `AnnouncementService` for `contrastPairAnnouncedEffect`'s reason:
  * a placement usually moves the page's tally, which has a sentence of its own
  * about the same change, and the specific one is the one to hear. Polite -
@@ -123,8 +133,8 @@ export function placementAnnouncedEffect(
 
 
 type PlacementEvent =
-  | EventInstance<"[Contrast] colorPlaced", {elementKey: string; source: ChipSource}>
-  | EventInstance<"[Contrast] placementReset", string>
+  | EventInstance<"[Contrast] colorPlaced", {elementKey: string; side: SamplePlacement; source: ChipSource}>
+  | EventInstance<"[Contrast] placementReset", {elementKey: string; side: SamplePlacement}>
   | EventInstance<"[Contrast] placementsReset", void>;
 
 
@@ -135,18 +145,21 @@ function sentenceFor(event: PlacementEvent, store: AppStateStore): string {
       // element, and a sentence naming them all is one nobody hears the end
       // of.
       return "Every placed color removed";
-    case contrastEvents.placementReset.type:
-      // "its default color", not "the page's own color": six elements -
-      // the eyebrow, the form label, the table header, `Sign in`, the link
-      // in the text and the filled button - default to a palette colour, so
-      // naming the page would tell the visitor the opposite of what they see.
-      // One wording that is true for all of them beats a per-element branch.
-      return `${nameOf(event.payload)} back to its default color`;
+    case contrastEvents.placementReset.type: {
+      const {elementKey, side} = event.payload;
+
+      // "its default", not "the page's own colour": six elements - the
+      // eyebrow, the form label, the table header, `Sign in`, the link in the
+      // text and the filled button - default to a palette colour, so naming
+      // the page would tell the visitor the opposite of what they see. One
+      // wording that is true for all of them beats a per-element branch.
+      return `${nameOf(elementKey)}'s ${sideOf(elementKey, side)} back to its default`;
+    }
     case contrastEvents.colorPlaced.type: {
-      const {elementKey, source} = event.payload;
+      const {elementKey, side, source} = event.payload;
       const color = colorName(colorOf(source, store.contrastColors(), store.currentPalette()));
 
-      return `${nameOf(elementKey)} takes ${color}`;
+      return `${nameOf(elementKey)} takes ${color} as its ${sideOf(elementKey, side)}`;
     }
   }
 }
@@ -154,4 +167,9 @@ function sentenceFor(event: PlacementEvent, store: AppStateStore): string {
 
 function nameOf(elementKey: string): string {
   return elementName(sampleElement(elementKey));
+}
+
+
+function sideOf(elementKey: string, side: SamplePlacement): string {
+  return sideName(sampleElement(elementKey), side);
 }

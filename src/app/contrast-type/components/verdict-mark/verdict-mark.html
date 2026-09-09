@@ -65,6 +65,13 @@
        guaranteed against the app's six and against none of the visitor's.
        `outline` rather than `border`, so nothing in the page moves when it
        appears - the offset puts it clear of the words either way. -->
+  <!-- `data-place-sides` while a chip is carried: it is what splits this box
+       into the half that takes the text colour and the half that takes the
+       ground. One attribute for both halves of the job - `src/styles.css`
+       draws the hairline off it and `PlacementGesture` measures the release
+       against the same box. On the outlined copy rather than on the host,
+       because the host is the whole row and its midline is not the middle of
+       the words. -->
   <span data-content
         class="relative outline-offset-4"
         [class.block]="!inline()"
@@ -75,9 +82,15 @@
         [class.underline-offset-4]="missed()"
         [class.outline-2]="named()"
         [class.outline-dashed]="dashed()"
+        [attr.data-place-sides]="carrying() ? '' : null"
+        [style.--place-split-color]="inkHex()"
         [style.outline-color]="inkHex()">
     <!-- The element's name where the outline is, so the page says what the
-         chip would land on without the visitor reading the ledger. The app's
+         chip would land on without the visitor reading the ledger, and - while
+         the chip is over this element - which of its two colours the release
+         would take. The side belongs here rather than in each half of the
+         split: a word inside the half of a link in a line has nowhere to go,
+         and the badge is already the one label the page shows. The app's
          badge again, rimmed in the measured colour - a label in the page's own
          ink would be text the visitor had apparently written.
 
@@ -96,7 +109,7 @@
       <span data-element-name
             aria-hidden="true"
             class="absolute -bottom-7 left-0 z-10 rounded-xs border bg-panel px-1.5 py-0.5 font-mono text-sm tracking-widest whitespace-nowrap text-text"
-            [style.border-color]="inkHex()">{{ caption() }}</span>
+            [style.border-color]="inkHex()">{{ badge() }}</span>
     }<ng-content/></span>
 </span>
 

@@ -21,7 +21,7 @@ import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
-import {SampleGround, samplePage} from "@contrast-type/models/sample-page.model";
+import {SampleGround, samplePage, sideCaption} from "@contrast-type/models/sample-page.model";
 import {
   elementName,
   missedRequirement,
@@ -107,6 +107,23 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * has at least the button's own hit area to release a chip on - three of the
  * table's marks wrap a few characters and one wraps a word inside a line.
  * `PlacementGesture` reads the attribute; do not move it onto the copy.
+ *
+ * **The element takes both of its colours, and a release has one point, so the
+ * outlined box splits.** A hairline appears across it while a chip is carried:
+ * release in the upper half and the chip becomes the element's text colour, in
+ * the lower half its ground. The split is measured against the outlined copy
+ * rather than against the drop target, because the target is this whole row -
+ * badge and gutter included - and a midline through that would fall somewhere
+ * other than the middle of the words. `data-place-sides` is the one attribute
+ * both jobs run off: `src/styles.css` draws the line and `PlacementGesture`
+ * measures against the same box.
+ *
+ * **And the name says which side the release is on.** The halves are geometry
+ * and geometry explains nothing; the badge under the element already names it
+ * while a chip is carried, so the side goes there beside the name rather than
+ * as a second label inside each half - which is also the only thing that
+ * would fit on a word inside a line. The chooser asks the same question
+ * outright, in words, for whoever is not dragging.
  *
  * **The mark is one occurrence of the element, and the others are
  * `PlaceTarget`.** Five elements appear more than once, and a mark wraps one
@@ -212,6 +229,22 @@ export class VerdictMark {
 
   /** The element's all-caps name, as the page's own badge shows it. */
   protected readonly caption = computed(() => this.verdict().element.caption);
+
+  /**
+   * What the badge under the element says: its name, and while a chip is over
+   * this element the side a release would land on.
+   *
+   * The side only while the pointer is on this element, because that is when
+   * the answer is about to be used - the other twenty-one are outlined to say
+   * a colour may go there, not to say where in them.
+   */
+  protected readonly badge = computed(() => {
+    const side = this.#gesture.side();
+
+    if (!this.over() || side === null) return this.caption();
+
+    return `${this.caption()} · ${sideCaption(this.verdict().element, side)}`;
+  });
 
   /**
    * What the popup is, in both of its jobs. The mark's own name stays the

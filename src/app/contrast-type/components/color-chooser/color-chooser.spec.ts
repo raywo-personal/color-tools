@@ -59,6 +59,11 @@ describe("ColorChooser", () => {
         .find(paragraph => paragraph.querySelector("ct-verdict-shape")) as HTMLElement;
     }
 
+    /** The two buttons of the side toggle, in `SAMPLE_PLACEMENTS` order. */
+    function sideButtons(): HTMLButtonElement[] {
+      return Array.from(host.querySelectorAll("[role=group] button"));
+    }
+
     function resetButton(): HTMLButtonElement {
       return Array.from(host.querySelectorAll("button"))
         .find(button => button.textContent?.includes("Reset")) as HTMLButtonElement;
@@ -83,7 +88,8 @@ describe("ColorChooser", () => {
     }
 
     return {
-      fixture, store, dispatcher, host, toolbar, chips, previewRow, resetButton, press, click, paint
+      fixture, store, dispatcher, host, toolbar, chips, previewRow, sideButtons, resetButton,
+      press, click, paint
     };
   }
 
@@ -116,8 +122,9 @@ describe("ColorChooser", () => {
       expect(lc, source).toMatch(/^Lc \d+$/);
     }
 
-    // The row is what the arrow keys walk, and its label says what for.
-    expect(toolbar().getAttribute("aria-label")).toBe("Color for Headline");
+    // The row is what the arrow keys walk, and its label says what for -
+    // the element and the side the chips are placing on.
+    expect(toolbar().getAttribute("aria-label")).toBe("Headline: text color");
   });
 
 
@@ -185,14 +192,63 @@ describe("ColorChooser", () => {
   });
 
 
-  it("names the side a chip would land on, so the two ground elements say so", async () => {
-    // On the filled button and the error line a chip takes the surface, not
-    // the words - `SampleElement.placement` is what decides it.
-    const onInk = await chooser("headline");
-    const onGround = await chooser("filledButton");
+  it("asks which of the element's two colours before offering the seven", async () => {
+    // A drag answers the side by which half of the element it is released on,
+    // which a keyboard cannot aim at and a screen reader cannot see. So the
+    // popup puts the question in words - and it opens on the text colour,
+    // which is the half a drag defaults to as well.
+    const {host, sideButtons} = await chooser();
 
-    expect(onInk.host.textContent).toContain("HEADLINE · COLOR");
-    expect(onGround.host.textContent).toContain("FILLED BUTTON · BACKGROUND");
+    expect(sideButtons().map(button => button.textContent?.trim()))
+      .toEqual(["TEXT", "HIGHLIGHT"]);
+    expect(sideButtons().map(button => button.getAttribute("aria-pressed")))
+      .toEqual(["true", "false"]);
+    expect(host.querySelector("[role=group]")?.getAttribute("aria-label"))
+      .toBe("text color or highlight for Headline");
+  });
+
+
+  it("calls the ground a background where the element has a box, a highlight where it has not", async () => {
+    // `background` on a paragraph of running text promises a repainted page,
+    // and a placement may never repaint one - so on an element without a box
+    // of its own the word says what the visitor actually gets.
+    const boxed = await chooser("filledButton");
+    const unboxed = await chooser("smallPrint");
+
+    expect(boxed.sideButtons()[1].textContent?.trim()).toBe("BACKGROUND");
+    expect(unboxed.sideButtons()[1].textContent?.trim()).toBe("HIGHLIGHT");
+  });
+
+
+  it("places on the side the toggle stands on, and takes that side back alone", async () => {
+    const {store, chips, click, sideButtons, resetButton} = await chooser();
+
+    await click(chips()[2]);
+    await click(sideButtons()[1]);
+
+    // A fresh side: nothing is placed on it yet, so the way back is off again
+    // while the ink's own placement stands.
+    expect(resetButton().disabled).toBe(true);
+    expect(chips().some(chip => chip.querySelector("svg") !== null)).toBe(false);
+
+    await click(chips()[4]);
+
+    expect(store.placements()["headline"]).toEqual({ink: "color2", ground: "color4"});
+
+    await click(resetButton());
+
+    expect(store.placements()["headline"]).toEqual({ink: "color2"});
+  });
+
+
+  it("names the side in the way back, so two rows do not offer one word", async () => {
+    const {click, sideButtons, resetButton} = await chooser();
+
+    expect(resetButton().textContent).toContain("Reset text color");
+
+    await click(sideButtons()[1]);
+
+    expect(resetButton().textContent).toContain("Reset highlight");
   });
 
 
@@ -230,7 +286,7 @@ describe("ColorChooser", () => {
 
     await click(chips()[2]);
 
-    expect(store.placements()["headline"]).toBe("color2");
+    expect(store.placements()["headline"]).toEqual({ink: "color2"});
     expect(fakeLiveAnnouncer().announcements).toHaveLength(1);
   });
 
@@ -243,11 +299,11 @@ describe("ColorChooser", () => {
 
     await click(chips()[5]);
 
-    expect(store.placements()["headline"]).toBe("text");
+    expect(store.placements()["headline"]).toEqual({ink: "text"});
 
     await click(chips()[6]);
 
-    expect(store.placements()["headline"]).toBe("background");
+    expect(store.placements()["headline"]).toEqual({ink: "background"});
   });
 
 

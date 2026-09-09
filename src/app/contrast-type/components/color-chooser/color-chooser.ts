@@ -11,7 +11,14 @@ import {
   chipSourceName,
   colorOf
 } from "@contrast-type/models/chip-source.model";
-import {sampleElement, samplePage} from "@contrast-type/models/sample-page.model";
+import {
+  SAMPLE_PLACEMENTS,
+  SamplePlacement,
+  sampleElement,
+  samplePage,
+  sideCaption,
+  sideName
+} from "@contrast-type/models/sample-page.model";
 import {VerdictState, elementName, verdictFor, verdictWord} from "@contrast-type/models/element-verdict.model";
 import {VerdictShape} from "@contrast-type/components/verdict-shape/verdict-shape";
 
@@ -41,6 +48,17 @@ interface ChipOption {
 }
 
 
+/** One of the element's two sides, as the toggle above the chips offers it. */
+interface SideOption {
+
+  readonly side: SamplePlacement;
+  /** `TEXT`, and `BACKGROUND` or `HIGHLIGHT` - see `sideCaption()`. */
+  readonly caption: string;
+  readonly selected: boolean;
+
+}
+
+
 /**
  * The seven chips, as a way of colouring one element of the sample page
  * without a drag.
@@ -57,6 +75,19 @@ interface ChipOption {
  * can be dropped on an element, so they have to be placeable without a drag
  * as well; the order is the row's so that walking the two is the same walk in
  * both places.
+ *
+ * **Which side first, then which colour.** An element takes a colour for its
+ * text and one for its ground, and a drag answers that by which half of the
+ * element it is released on - which a keyboard cannot aim at and a screen
+ * reader cannot see. So the popup asks outright: a segmented toggle above the
+ * chips, the app's own idiom for a choice of two - see `TypeRoles`. It costs
+ * the popup one row and it is the only place the question is put in words.
+ *
+ * **A toggle rather than fourteen chips.** Two rows of seven would need no
+ * mode, and they would also double the arrow keys' walk and add two rows of
+ * hit area to a popup that already carries the verdict above it. The chip's
+ * own verdict preview is what makes the mode safe: it is computed for the
+ * selected side, so the row under the chips says what *this* press would do.
  *
  * **A toolbar of real buttons, not a listbox of divs.** Placing a colour is a
  * command rather than a selection that something else applies later: the press
@@ -115,30 +146,59 @@ export class ColorChooser {
 
   protected readonly active = this.#active.asReadonly();
 
+  /**
+   * Which of the element's two colours the chips place on.
+   *
+   * Opens on the ink, which is the side a page is coloured on most of the
+   * time and the side a drag's own default half is - `PlacementGesture` says
+   * why the two agree.
+   */
+  readonly #side = signal<SamplePlacement>("ink");
+
   protected readonly element = computed(() => sampleElement(this.elementKey()));
 
   protected readonly caption = computed(() => this.element().caption);
 
-  /**
-   * Which of the element's two colours a chip would take, in the visitor's
-   * words. `SampleElement.placement` is the one list that decides it.
-   */
-  protected readonly sideWord = computed(() =>
-    this.element().placement === "ground" ? "BACKGROUND" : "COLOR");
+  /** The two sides for the toggle, in `SAMPLE_PLACEMENTS` order. */
+  protected readonly sides = computed<readonly SideOption[]>(() => {
+    const element = this.element();
+    const selected = this.#side();
 
-  /**
-   * The row's name, in sentence case: a screen reader spells the page's
-   * all-caps captions out letter by letter, so the caption stays on screen and
-   * `elementName()` speaks.
-   */
-  protected readonly toolbarLabel = computed(() => {
-    const side = this.element().placement === "ground" ? "Background" : "Color";
-
-    return `${side} for ${elementName(this.element())}`;
+    return SAMPLE_PLACEMENTS.map(side => ({
+      side,
+      caption: sideCaption(element, side),
+      selected: side === selected
+    }));
   });
 
+  /**
+   * The toggle's own name, and the chip row's.
+   *
+   * In sentence case and never the page's caption: a screen reader spells
+   * `SMALL PRINT` out letter by letter, so the caption stays on screen and
+   * `elementName()` speaks. The side is `sideName()`, the same words the
+   * announcement and the ledger use.
+   */
+  protected readonly toolbarLabel = computed(() =>
+    `${elementName(this.element())}: ${sideName(this.element(), this.#side())}`);
+
+  /**
+   * The toggle group's own name: the choice it offers, in the same two words
+   * its buttons carry - a screen reader hears what the two buttons are for
+   * before walking them, and the chip row below has a name of its own.
+   */
+  protected readonly sidesLabel = computed(() => {
+    const element = this.element();
+
+    return `${sideName(element, "ink")} or ${sideName(element, "ground")} for ${elementName(element)}`;
+  });
+
+  /** The way back, named after the side it takes back. */
+  protected readonly resetLabel = computed(() =>
+    `Reset ${sideName(this.element(), this.#side())}`);
+
   protected readonly placedSource = computed(() =>
-    this.#stateStore.placements()[this.elementKey()] ?? null);
+    this.#stateStore.placements()[this.elementKey()]?.[this.#side()] ?? null);
 
   protected readonly chips = computed<readonly ChipOption[]>(() => {
     const key = this.elementKey();
@@ -146,14 +206,21 @@ export class ColorChooser {
     const palette = this.#stateStore.currentPalette();
     const placements = this.#stateStore.placements();
     const roles = this.#stateStore.typeRoles();
-    const placed = placements[key];
+    const side = this.#side();
+    const placed = placements[key]?.[side];
 
     return CHIP_SOURCES.map(source => {
       const color = colorOf(source, pair, palette);
       // The page this element would be on, not the one it is on: the swap goes
       // through `samplePage()` so the figure comes out of the same derivation
-      // the preview paints with.
-      const verdict = verdictFor(key, samplePage(pair, palette, {...placements, [key]: source}), roles);
+      // the preview paints with. Only the selected side is swapped, because
+      // the element keeps whatever the other one is wearing - which is what
+      // makes the figure the answer to *this* press.
+      const verdict = verdictFor(
+        key,
+        samplePage(pair, palette, {...placements, [key]: {...placements[key], [side]: source}}),
+        roles
+      );
 
       const name = colorName(color);
       const word = verdictWord(verdict.state);
@@ -210,13 +277,31 @@ export class ColorChooser {
   }
 
 
+  /**
+   * Switching sides moves the roving stop to the colour the new side is
+   * already wearing, the way opening the popup does - otherwise the stop would
+   * be left on a chip that belongs to the other side. It moves no focus: that
+   * is on the toggle the visitor has just pressed, and taking it away would
+   * make a second press of the same button impossible.
+   */
+  protected selectSide(side: SamplePlacement): void {
+    this.#side.set(side);
+
+    const placed = this.placedSource();
+
+    this.#active.set(placed ? CHIP_SOURCES.indexOf(placed) : 0);
+  }
+
+
   protected place(source: ChipSource): void {
-    this.#dispatch.colorPlaced({elementKey: this.elementKey(), source});
+    this.#dispatch.colorPlaced({elementKey: this.elementKey(), side: this.#side(), source});
   }
 
 
   protected reset(): void {
-    if (this.placedSource()) this.#dispatch.placementReset(this.elementKey());
+    if (this.placedSource()) {
+      this.#dispatch.placementReset({elementKey: this.elementKey(), side: this.#side()});
+    }
   }
 
 

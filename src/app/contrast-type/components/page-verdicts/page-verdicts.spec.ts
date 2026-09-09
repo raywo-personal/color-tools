@@ -13,7 +13,7 @@ import {palettesEvents} from "@core/palettes/palettes.events";
 import {paletteColorFrom} from "@engine/palette/palette-color.model";
 import {PaletteSlot} from "@engine/palette/palette.model";
 import {ChipSource} from "@contrast-type/models/chip-source.model";
-import {SAMPLE_ELEMENTS} from "@contrast-type/models/sample-page.model";
+import {SAMPLE_ELEMENTS, SamplePlacement} from "@contrast-type/models/sample-page.model";
 import {PageVerdicts} from "@contrast-type/components/page-verdicts/page-verdicts";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {provideSilentFontLoader} from "@testing/font-loader.fake";
@@ -77,8 +77,10 @@ describe("PageVerdicts", () => {
       await fixture.whenStable();
     }
 
-    async function place(elementKey: string, source: ChipSource) {
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, source}));
+    async function place(elementKey: string,
+                         source: ChipSource,
+                         side: SamplePlacement = "ink") {
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, side, source}));
       await fixture.whenStable();
     }
 
@@ -189,7 +191,8 @@ describe("PageVerdicts", () => {
 
     const since = fakeLiveAnnouncer().announcements.slice(spokenBefore);
 
-    expect(since.map(spoken => spoken.message)).toEqual(["Body text takes white"]);
+    expect(since.map(spoken => spoken.message))
+      .toEqual(["Body text takes white as its text color"]);
     expect(since.map(spoken => spoken.politeness)).toEqual(["polite"]);
   });
 
@@ -208,7 +211,7 @@ describe("PageVerdicts", () => {
     await place("eyebrow", "color4");
 
     expect(counts().map(entry => entry.count), "the eyebrow moved a verdict").toEqual(before);
-    expect(fakeLiveAnnouncer().last?.message).toBe("Eyebrow takes white");
+    expect(fakeLiveAnnouncer().last?.message).toBe("Eyebrow takes white as its text color");
 
     await setPair(IDENTICAL);
 

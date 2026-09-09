@@ -34,7 +34,7 @@
            all and is free to stay sentence case. -->
       <button type="button"
               class="flex h-11 cursor-pointer items-center gap-2 rounded-xs border border-line px-3 font-sans text-base text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
-              aria-label="RESET PAGE: every element back to its default color"
+              aria-label="RESET PAGE: every element back to its default colors"
               (click)="resetPage()">
         <svg class="size-4 shrink-0"
              viewBox="0 0 16 16" fill="none" stroke="currentColor"
@@ -72,7 +72,7 @@
   <ul role="list"
       aria-label="Placed colors"
       class="mt-2 grid">
-    @for (row of rows(); track row.key) {
+    @for (row of rows(); track row.trackKey) {
       <li class="border-b border-line py-1 last:border-b-0">
         <!-- Two lines rather than the draft's one row of seven columns. The
              left column is `minmax(18rem,22rem)` and the draft drew this block
@@ -99,7 +99,7 @@
           <button type="button"
                   class="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xs text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
                   [attr.aria-label]="row.resetLabel"
-                  (click)="reset(row.key)">
+                  (click)="reset(row)">
             <svg class="size-4"
                  viewBox="0 0 16 16" fill="none" stroke="currentColor"
                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -127,7 +127,7 @@
           <!-- The handle, in mono like the chip's own label: it is a token to
                match against the row above, not a word to read. -->
           <span class="font-mono">{{ row.handle }}</span>
-          <span>{{ row.side }}</span>
+          <span>{{ row.sideWord }}</span>
           <span class="font-mono tabular-nums text-text">Lc {{ row.lc }}</span>
         </div>
       </li>

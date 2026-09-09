@@ -87,13 +87,30 @@ describe("VerdictMark", () => {
      * the point looked up instead, and a test DOM has no layout to look one up
      * in - so these drive the mouse's path.
      */
-    async function releaseOn(element: EventTarget) {
-      element.dispatchEvent(new PointerEvent("pointerup", {bubbles: true}));
+    async function releaseOn(element: EventTarget, clientY = 0) {
+      element.dispatchEvent(new PointerEvent("pointerup", {bubbles: true, clientY}));
       await fixture.whenStable();
     }
 
-    async function moveOver(element: EventTarget) {
-      element.dispatchEvent(new PointerEvent("pointermove", {bubbles: true}));
+    /**
+     * Gives the box that splits a height, so a release can land in one half or
+     * the other. A test DOM has no layout and reports every rect as zero, and
+     * `#sideOf()` answers a box with no height with the ink - the side a page
+     * opens in - rather than reading a midline off its own top edge.
+     */
+    function splitOver(top: number, height: number) {
+      const box = host.querySelector("[data-place-sides]") as HTMLElement;
+
+      box.getBoundingClientRect = () => ({
+        top, height, bottom: top + height, left: 0, right: 100, width: 100, x: 0, y: top,
+        toJSON: () => ({})
+      });
+
+      return box;
+    }
+
+    async function moveOver(element: EventTarget, clientY = 0) {
+      element.dispatchEvent(new PointerEvent("pointermove", {bubbles: true, clientY}));
       await fixture.whenStable();
     }
 
@@ -114,7 +131,7 @@ describe("VerdictMark", () => {
     return {
       fixture, store, host, colors,
       button, badge, content, panel, press,
-      elementName, chooser, carry, releaseOn, moveOver
+      elementName, chooser, carry, releaseOn, moveOver, splitOver
     };
   }
 
@@ -329,9 +346,58 @@ describe("VerdictMark", () => {
     await carry("color2");
     await releaseOn(host);
 
-    expect(store.placements()["headline"]).toBe("color2");
+    expect(store.placements()["headline"]).toEqual({ink: "color2"});
     // The placement puts the chip down by itself; nothing is left in hand.
     expect(store.carriedChip()).toBeNull();
+  });
+
+
+  it("splits the element, so a release chooses which of its two colours it takes", async () => {
+    // An element takes both of its colours and a release has one point, so the
+    // outlined box splits: the upper half takes the text colour and the lower
+    // half the ground. The halves are the same order the chooser's toggle is
+    // in, which is what lets a visitor who learnt one aim with the other.
+    const {store, host, carry, releaseOn, splitOver} = await mark("headline");
+
+    await carry("color2");
+    splitOver(0, 40);
+    await releaseOn(host, 30);
+
+    expect(store.placements()["headline"]).toEqual({ground: "color2"});
+
+    await carry("color3");
+    splitOver(0, 40);
+    await releaseOn(host, 10);
+
+    expect(store.placements()["headline"]).toEqual({ground: "color2", ink: "color3"});
+  });
+
+
+  it("draws the split only while a chip is carried, and says which half in words", async () => {
+    // A hairline across the page at rest would be something the visitor had
+    // apparently set. And the halves are geometry, which explains nothing on
+    // its own - so the badge that already names the element names the side as
+    // well, for as long as the chip is over this one.
+    const {host, carry, elementName, moveOver, splitOver} = await mark("headline");
+
+    expect(host.querySelector("[data-place-sides]")).toBeNull();
+
+    await carry("color2");
+
+    expect(host.querySelector("[data-place-sides]")).not.toBeNull();
+    // Outlined but not aimed at: the name alone, because the pointer is
+    // nowhere near this element yet.
+    expect(elementName()?.textContent?.trim()).toBe("HEADLINE");
+
+    splitOver(0, 40);
+    await moveOver(host, 30);
+
+    expect(elementName()?.textContent?.trim()).toBe("HEADLINE · HIGHLIGHT");
+
+    splitOver(0, 40);
+    await moveOver(host, 10);
+
+    expect(elementName()?.textContent?.trim()).toBe("HEADLINE · TEXT");
   });
 
 
@@ -368,7 +434,7 @@ describe("VerdictMark", () => {
     chips[2].click();
     await fixture.whenStable();
 
-    expect(store.placements()["headline"]).toBe("color2");
+    expect(store.placements()["headline"]).toEqual({ink: "color2"});
 
     // The popup stays where it is, so the next colour is one press away and
     // no focus moves while the placement is being announced.

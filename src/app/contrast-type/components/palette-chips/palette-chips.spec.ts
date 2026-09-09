@@ -411,13 +411,13 @@ describe("PaletteChips", () => {
 
       pressWith(swatches()[5], "mouse");
       await startDrag(5);
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "text"}));
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", side: "ink", source: "text"}));
       await fixture.whenStable();
       await endDrag(5);
       swatches()[5].click();
       await fixture.whenStable();
 
-      expect(store.placements()).toEqual({headline: "text"});
+      expect(store.placements()).toEqual({headline: {ink: "text"}});
       expect(store.contrastColors.text().hex("rgb")).toBe("#111111");
       expect(store.contrastColors.background().hex("rgb")).toBe("#eeeeee");
     });
@@ -463,13 +463,13 @@ describe("PaletteChips", () => {
       const putDowns = countPutDowns();
 
       await startDrag(1);
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", source: "color1"}));
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey: "headline", side: "ink", source: "color1"}));
       await fixture.whenStable();
       await endDrag(1);
 
       expect(putDowns()).toBe(0);
       expect(store.carriedChip()).toBeNull();
-      expect(store.placements()).toEqual({headline: "color1"});
+      expect(store.placements()).toEqual({headline: {ink: "color1"}});
     });
 
   });

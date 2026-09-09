@@ -207,7 +207,7 @@ describe("apcaLookup as the verdict states read it", () => {
     // The placement reaches the verdict through the same `inkOf()` the
     // preview paints with, so the mark cannot disagree with the element
     // beside it.
-    const placed = pageOf(BLACK_ON_WHITE, {headline: "color1"});
+    const placed = pageOf(BLACK_ON_WHITE, {headline: {ink: "color1"}});
     const headline = sampleElement("headline");
     const verdict = elementVerdict(headline, placed, DEFAULT_TYPE_ROLES);
 
@@ -220,13 +220,28 @@ describe("apcaLookup as the verdict states read it", () => {
     // The label follows its ground, so the mark and the popup are about the
     // button the visitor is looking at rather than about the accent it was
     // filled with before.
-    const placed = pageOf(BLACK_ON_WHITE, {filledButton: "color3"});
+    const placed = pageOf(BLACK_ON_WHITE, {filledButton: {ground: "color3"}});
     const verdict = elementVerdict(sampleElement("filledButton"), placed, DEFAULT_TYPE_ROLES);
     const fill = PALETTE.color3.color;
 
     expect(verdict.ground.hex("rgb")).toBe(fill.hex("rgb"));
     expect(verdict.ink.hex("rgb")).toBe(findOptimalTextColor(fill).color.hex("rgb"));
     expect(verdict.contrast).toBeCloseTo(chroma.contrastAPCA(verdict.ink, fill), 6);
+  });
+
+
+  it("judges the pairing a placed ground made, not the surface behind it", () => {
+    // A band drawn behind one element is a pairing the visitor made, and the
+    // mark beside it has to be about that band rather than about the page the
+    // element used to sit on.
+    const placed = pageOf(BLACK_ON_WHITE, {bodyText: {ground: "color1"}});
+    const bodyText = sampleElement("bodyText");
+    const verdict = elementVerdict(bodyText, placed, DEFAULT_TYPE_ROLES);
+    const band = PALETTE.color1.color;
+
+    expect(verdict.ground.hex("rgb")).toBe(band.hex("rgb"));
+    expect(verdict.ink.hex("rgb")).toBe(BLACK_ON_WHITE.text.hex("rgb"));
+    expect(verdict.contrast).toBeCloseTo(chroma.contrastAPCA(verdict.ink, band), 6);
   });
 
 
@@ -237,7 +252,7 @@ describe("apcaLookup as the verdict states read it", () => {
     const ground = PALETTE.color1.color;
     const onItsOwnGround = pageOf(
       createContrastColors(chroma("#111111"), ground),
-      {bodyText: "color1"}
+      {bodyText: {ink: "color1"}}
     );
     const verdict = elementVerdict(sampleElement("bodyText"), onItsOwnGround, roles("body", 18, 400));
 
@@ -381,14 +396,15 @@ describe("verdictFacts", () => {
   });
 
 
-  it("omits the suggestion where the ink is not a colour the visitor can move", () => {
-    // The filled button's label is whichever of black or white APCA puts
-    // further from the accent - taking a palette colour instead changes
-    // nothing on the button, because the ink is not the accent.
+  it("offers the suggestion on an element whose ink the app computes for itself", () => {
+    // The row used to be held back on the filled button, the disabled label
+    // and the error line, on the grounds that the ink there was not the
+    // visitor's to move. It is now - the computed value is only the default -
+    // so a colour that would carry the element is a fix everywhere.
     const failing = elementVerdict(sampleElement("filledButton"), pageOf(), roles("ui", 14, 400));
 
     expect(failing.state).toBe("largeOnly");
-    expect(verdictFacts(failing, PALETTE).map(fact => fact.label)).not.toContain("Nearest color");
+    expect(verdictFacts(failing, PALETTE).map(fact => fact.label)).toContain("Nearest color");
   });
 
 

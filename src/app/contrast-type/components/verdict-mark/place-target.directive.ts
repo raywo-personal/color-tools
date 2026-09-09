@@ -40,6 +40,19 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
  * an element - `named()` there - and change it here, or one paragraph of the
  * running text will offer itself while the next one does not.
  *
+ * **It splits the same way the mark does.** A release in the upper half takes
+ * the element's text colour and one in the lower half its ground, and the
+ * hairline that says so is drawn off `data-place-sides` - the one attribute
+ * `src/styles.css` and `PlacementGesture` both run off. Here the attribute is
+ * on the directive's own element, which is the outlined box as well, so the
+ * line and the measurement are the same box without further ado.
+ *
+ * **What it cannot carry is the word.** The side travels in the mark's badge,
+ * and an occurrence with no badge has nowhere to put it - so a visitor learns
+ * which half is which on the one occurrence that is marked, or from the
+ * chooser, which asks outright. Giving the directive a badge of its own would
+ * be the second name per element that the rule above forbids.
+ *
  * **It answers a carried chip and nothing else - no hover, unlike the mark.**
  * The mark outlines *and names* its element under the pointer, and a name is
  * what makes that outline mean something; an occurrence with no badge would
@@ -57,6 +70,8 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
     "class": "outline-offset-4",
     "[class.outline-2]": "named()",
     "[class.outline-dashed]": "dashed()",
+    "[attr.data-place-sides]": "named() ? '' : null",
+    "[style.--place-split-color]": "inkHex()",
     "[style.outline-color]": "inkHex()",
     "[class.underline]": "missed()",
     "[class.decoration-dotted]": "missed()",

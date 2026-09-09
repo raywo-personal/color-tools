@@ -16,7 +16,7 @@ import {SelectedFont} from "@common/models/google-font.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {provideSilentFontLoader} from "@testing/font-loader.fake";
-import {SAMPLE_ELEMENTS} from "@contrast-type/models/sample-page.model";
+import {SAMPLE_ELEMENTS, SamplePlacement} from "@contrast-type/models/sample-page.model";
 import {elementName} from "@contrast-type/models/element-verdict.model";
 import {WebsitePreview} from "@contrast-type/components/website-preview/website-preview";
 
@@ -158,8 +158,10 @@ describe("WebsitePreview", () => {
       await fixture.whenStable();
     }
 
-    async function place(elementKey: string, source: ChipSource) {
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, source}));
+    async function place(elementKey: string,
+                         source: ChipSource,
+                         side: SamplePlacement = "ink") {
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, side, source}));
       await fixture.whenStable();
     }
 
@@ -286,12 +288,23 @@ describe("WebsitePreview", () => {
       expect(element.style.outlineColor, element.textContent ?? "").not.toBe("");
     }
 
+    // Every occurrence splits as well, on the box that is outlined - that is
+    // what `PlacementGesture` measures a release against and what
+    // `src/styles.css` draws the hairline across. Without it the biggest block
+    // of text on the page would take a drop on one side only.
+    for (const element of repeats()) {
+      expect(element.hasAttribute("data-place-sides"), element.textContent ?? "").toBe(true);
+      expect(element.style.getPropertyValue("--place-split-color"), element.textContent ?? "")
+        .not.toBe("");
+    }
+
     // Nothing marks the page once the hand is empty.
     dispatcher.dispatch(contrastEvents.chipPutDown());
     await fixture.whenStable();
 
     expect(outlined()).toHaveLength(0);
     expect(page.querySelectorAll("[data-element-name]")).toHaveLength(0);
+    expect(page.querySelectorAll("[data-place-sides]")).toHaveLength(0);
   });
 
 
@@ -750,6 +763,32 @@ describe("WebsitePreview", () => {
 
     expect(link.style.color).toBe(store.currentPalette().color0.color.hex("rgb"));
     expect(link.style.fontSize).toBe("");
+  });
+
+
+  it("puts a band behind the paragraph behind the link in it as well", async () => {
+    // The link is a word inside the running text, not a piece of text on a
+    // surface: what sits behind it is whatever the paragraph is wearing. Left
+    // on the page's own colour it painted a hole through the band and its mark
+    // went on measuring against the page - `SampleElement.inside`.
+    const {within, place, store} = await preview();
+    const link = () => within("span", LINK);
+
+    expect(link().style.backgroundColor).toBe(store.contrastColors().background.hex("rgb"));
+
+    await place("bodyText", "color1", "ground");
+
+    const band = store.currentPalette().color1.color.hex("rgb");
+
+    expect(link().closest("p")?.getAttribute("style")).toContain(band);
+    expect(link().style.backgroundColor).toBe(band);
+
+    // A ground placed on the link itself is the visitor's own and wins over
+    // the paragraph's.
+    await place("bodyLink", "color3", "ground");
+
+    expect(link().style.backgroundColor)
+      .toBe(store.currentPalette().color3.color.hex("rgb"));
   });
 
 
