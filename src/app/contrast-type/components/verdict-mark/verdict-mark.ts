@@ -119,20 +119,26 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * measures against the same box.
  *
  * **And the name says which side the release is on.** The halves are geometry
- * and geometry explains nothing; the badge under the element already names it
- * while a chip is carried, so the side goes there beside the name rather than
- * as a second label inside each half - which is also the only thing that
- * would fit on a word inside a line. The chooser asks the same question
- * outright, in words, for whoever is not dragging.
+ * and geometry explains nothing; the badge under the element names the side
+ * beside the element's own name rather than as a second label inside each half
+ * - which is also the only thing that would fit on a word inside a line. The
+ * chooser asks the same question outright, in words, for whoever is not
+ * dragging.
+ *
+ * **The outline is on every element at once, the name only on the one under
+ * the pointer.** `labelled()` says why: the offer has to be visible across the
+ * whole page before the pointer arrives anywhere, and an explanation of it
+ * does not - twenty-two badges were a page of labels over the page they were
+ * about.
  *
  * **The mark is one occurrence of the element, and the others are
  * `PlaceTarget`.** Five elements appear more than once, and a mark wraps one
  * of them: the rest carry the directive, which draws this same outline and
  * takes the same drop without adding a second mark, a second name or a second
  * tab stop. The two are seen side by side on one element, so a change to what
- * `dashed()` means here belongs there as well. `named()` does not port whole -
- * an occurrence with no badge has no name to show, and `PlaceTarget` says why
- * it therefore answers a carried chip only.
+ * `outlined()` and `dashed()` mean here belongs there as well. `labelled()`
+ * does not port - an occurrence with no badge has no name to show, and
+ * `PlaceTarget` says why it therefore answers a carried chip only.
  *
  * **What is drawn while a chip is carried is the app's chrome on the visitor's
  * page**, so the outline and the name take the same APCA foreground the rim
@@ -279,17 +285,37 @@ export class VerdictMark {
   protected readonly over = computed(() => this.#gesture.over() === this.elementKey());
 
   /**
-   * Whether the element shows its outline and its name.
+   * Whether the element shows its outline.
    *
    * Every element at once while a chip is carried, so the visitor can see
    * where a colour may go; at rest only the one under the pointer or holding
    * focus, so nothing marks the page until it is asked.
    */
-  protected readonly named = computed(() =>
+  protected readonly outlined = computed(() =>
     this.carrying() || this.#hovered() || this.#focusedWithin());
 
   /** Solid names the drop; dashed only offers it. */
-  protected readonly dashed = computed(() => this.named() && !this.over());
+  protected readonly dashed = computed(() => this.outlined() && !this.over());
+
+  /**
+   * Whether the element shows its name - the one element the pointer is on,
+   * never the whole page at once.
+   *
+   * **The outline offers, the name explains, and only one of the two scales to
+   * twenty-two elements.** Every badge at the same time was a page of labels
+   * over the page the visitor is looking at, and each one hangs `-bottom-7`
+   * under its element - further than the gap between two paragraphs, so the
+   * names covered the outlines they were there to explain. The outline alone
+   * says a colour may go here, which is what the whole page has to say at
+   * once; the name says which element it is and which of its two colours a
+   * release would take, and that is only asked where the release is about to
+   * happen.
+   *
+   * Hover and focus keep it at rest, because those are the two ways of asking
+   * about one element without carrying anything.
+   */
+  protected readonly labelled = computed(() =>
+    this.over() || this.#hovered() || this.#focusedWithin());
 
   private readonly markButton = viewChild.required<ElementRef<HTMLElement>>("markButton");
 

@@ -317,22 +317,24 @@ describe("VerdictMark", () => {
   });
 
 
-  it("offers itself while a chip is carried, and names the drop under the pointer", async () => {
-    // 1i: every named element dashed and named, the one under the pointer
-    // solid. The offer has to be visible before the pointer reaches it, or the
-    // visitor is dragging at a page that says nothing.
+  it("offers itself while a chip is carried, and names itself under the pointer", async () => {
+    // 1i: every named element dashed, the one under the pointer solid. The
+    // offer has to be visible before the pointer reaches it, or the visitor is
+    // dragging at a page that says nothing - but the name waits for the
+    // pointer, or twenty-two of them stand over the page at once.
     const {content, elementName, carry, moveOver} = await mark("headline");
 
     await carry("color2");
 
     expect(content().className).toContain("outline-2");
     expect(content().className).toContain("outline-dashed");
-    expect(elementName()?.textContent).toBe("HEADLINE");
+    expect(elementName()).toBeNull();
 
     await moveOver(content());
 
     expect(content().className).toContain("outline-2");
     expect(content().className, "the drop is still only offered").not.toContain("outline-dashed");
+    expect(elementName()?.textContent).toContain("HEADLINE");
   });
 
 
@@ -340,9 +342,12 @@ describe("VerdictMark", () => {
     // Both sit on the surface the mark sits on, so they take the rim's colour:
     // `line` and `text` are guaranteed against the app's six surfaces and
     // against none of the visitor's.
-    const {badge, content, elementName, carry} = await mark("filledButton", {surface: "page"});
+    const {badge, content, elementName, carry, moveOver} = await mark("filledButton", {surface: "page"});
 
     await carry("color2");
+    // The name is on the element under the pointer, so the pointer has to be
+    // on it before there is a border to measure.
+    await moveOver(content());
 
     expect(content().style.outlineColor).toBe(badge().style.borderColor);
     expect(elementName()?.style.borderColor).toBe(badge().style.borderColor);
@@ -457,9 +462,9 @@ describe("VerdictMark", () => {
     await carry("color2");
 
     expect(host.querySelector("[data-place-sides]")).not.toBeNull();
-    // Outlined but not aimed at: the name alone, because the pointer is
+    // Outlined but not aimed at: no name either, because the pointer is
     // nowhere near this element yet.
-    expect(elementName()?.textContent?.trim()).toBe("HEADLINE");
+    expect(elementName()).toBeNull();
 
     splitOver(0, 40);
     await moveOver(host, 30);

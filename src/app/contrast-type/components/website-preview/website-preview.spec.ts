@@ -215,23 +215,36 @@ describe("WebsitePreview", () => {
   });
 
 
-  it("marks every named element while a chip is carried, and none of them at rest", async () => {
+  it("outlines every element while a chip is carried, and names none of them", async () => {
     // 1h and 1i. The offer has to be visible before the pointer reaches an
-    // element, or the visitor is dragging at a page that says nothing.
-    const {page, fixture} = await preview();
+    // element, or the visitor is dragging at a page that says nothing - and it
+    // is the outline that carries it. The names do not: twenty-two badges were
+    // a page of labels over the page they were about, each hanging further
+    // below its element than the gap to the next one, so a name waits for the
+    // pointer to arrive on its element.
+    const {page, fixture, repeats} = await preview();
     const dispatcher = TestBed.inject(Dispatcher);
     const named = () => page.querySelectorAll("[data-element-name]");
+    // The chrome's own offset as well as the width: the sample field draws a
+    // static `outline-2` of its own, which is the page's drawn focus ring and
+    // not an offer to drop anything.
+    const outlined = () => page.querySelectorAll(".outline-2.outline-offset-4");
 
     expect(named()).toHaveLength(0);
+    expect(outlined()).toHaveLength(0);
 
     dispatcher.dispatch(contrastEvents.chipPickedUp("color2"));
     await fixture.whenStable();
 
-    expect(named()).toHaveLength(SAMPLE_ELEMENTS.length);
+    // Every element and every further occurrence of one, which is what the
+    // page has to offer at once.
+    expect(outlined()).toHaveLength(SAMPLE_ELEMENTS.length + repeats().length);
+    expect(named()).toHaveLength(0);
 
     dispatcher.dispatch(contrastEvents.chipPutDown());
     await fixture.whenStable();
 
+    expect(outlined()).toHaveLength(0);
     expect(named()).toHaveLength(0);
   });
 

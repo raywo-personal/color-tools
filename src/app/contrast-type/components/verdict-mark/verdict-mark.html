@@ -84,19 +84,20 @@
         [class.underline]="missed()"
         [class.decoration-dotted]="missed()"
         [class.underline-offset-4]="missed()"
-        [class.outline-2]="named()"
+        [class.outline-2]="outlined()"
         [class.outline-dashed]="dashed()"
         [attr.data-place-sides]="carrying() ? '' : null"
         [style.--place-split-color]="splitHex()"
         [style.outline-color]="inkHex()">
-    <!-- The element's name where the outline is, so the page says what the
-         chip would land on without the visitor reading the ledger, and - while
-         the chip is over this element - which of its two colours the release
-         would take. The side belongs here rather than in each half of the
-         split: a word inside the half of a link in a line has nowhere to go,
-         and the badge is already the one label the page shows. The app's
-         badge again, rimmed in the measured colour - a label in the page's own
-         ink would be text the visitor had apparently written.
+    <!-- The element's name, on the one element the pointer is on: what a
+         release would land on without the visitor reading the ledger, and
+         which of the element's two colours it would take. `labelled()` says
+         why this is not on every element the way the outline is. The side
+         belongs here rather than in each half of the split: a word inside the
+         half of a link in a line has nowhere to go, and the badge is already
+         the one label the page shows. The app's badge again, rimmed in the
+         measured colour - a label in the page's own ink would be text the
+         visitor had apparently written.
 
          Out of flow, for the popup's reason: a label in the flow would push
          the page it names.
@@ -109,7 +110,7 @@
 
          `aria-hidden`, because the mark's own name already carries the
          element and a screen reader would otherwise hear it twice. -->
-    @if (named()) {
+    @if (labelled()) {
       <span data-element-name
             aria-hidden="true"
             class="absolute -bottom-7 left-0 z-10 rounded-xs border bg-panel px-1.5 py-0.5 font-mono text-sm tracking-widest whitespace-nowrap text-text"

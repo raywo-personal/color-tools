@@ -37,8 +37,8 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
  *
  * **Keep this in step with `VerdictMark`'s own chrome.** The two draw one
  * element and a visitor sees them side by side: change when the mark outlines
- * an element - `named()` there - and change it here, or one paragraph of the
- * running text will offer itself while the next one does not.
+ * an element - `outlined()` there - and change it here, or one paragraph of
+ * the running text will offer itself while the next one does not.
  *
  * **It splits the same way the mark does.** A release in the upper half takes
  * the element's text colour and one in the lower half its ground, and the
@@ -68,9 +68,9 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
   host: {
     "[attr.data-place-target]": "elementKey()",
     "class": "outline-offset-4",
-    "[class.outline-2]": "named()",
+    "[class.outline-2]": "outlined()",
     "[class.outline-dashed]": "dashed()",
-    "[attr.data-place-sides]": "named() ? '' : null",
+    "[attr.data-place-sides]": "outlined() ? '' : null",
     "[style.--place-split-color]": "splitHex()",
     "[style.outline-color]": "inkHex()",
     "[class.underline]": "missed()",
@@ -131,10 +131,10 @@ export class PlaceTarget {
   protected readonly missed = computed(() => missedRequirement(this.#verdict()));
 
   /** Every occurrence at once while a chip is carried, and none of them at rest. */
-  protected readonly named = computed(() => this.#gesture.carrying());
+  protected readonly outlined = computed(() => this.#gesture.carrying());
 
   /** Solid names the drop; dashed only offers it. */
   protected readonly dashed = computed(() =>
-    this.named() && this.#gesture.over() !== this.elementKey());
+    this.outlined() && this.#gesture.over() !== this.elementKey());
 
 }
