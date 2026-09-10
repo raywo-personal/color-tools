@@ -109,7 +109,7 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * `PlacementGesture` reads the attribute; do not move it onto the copy.
  *
  * **The element takes both of its colours, and a release has one point, so the
- * outlined box splits.** A hairline appears across it while a chip is carried:
+ * outlined box splits.** A hairline appears across it while a chip is over it:
  * release in the upper half and the chip becomes the element's text colour, in
  * the lower half its ground. The split is measured against the outlined copy
  * rather than against the drop target, because the target is this whole row -
@@ -125,11 +125,12 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * chooser asks the same question outright, in words, for whoever is not
  * dragging.
  *
- * **The outline is on every element at once, the name only on the one under
- * the pointer.** `labelled()` says why: the offer has to be visible across the
- * whole page before the pointer arrives anywhere, and an explanation of it
- * does not - twenty-two badges were a page of labels over the page they were
- * about.
+ * **The outline is on every element at once; the name and the hairline only on
+ * the one under the pointer.** `labelled()` and `placeSides()` say why: the
+ * offer has to be visible across the whole page before the pointer arrives
+ * anywhere, and an explanation of it does not - twenty-two badges were a page
+ * of labels over the page they were about, and as many hairlines were lines
+ * through its words.
  *
  * **The mark is one occurrence of the element, and the others are
  * `PlaceTarget`.** Five elements appear more than once, and a mark wraps one
@@ -315,6 +316,31 @@ export class VerdictMark {
 
   /** Solid names the drop; dashed only offers it. */
   protected readonly dashed = computed(() => this.outlined() && !this.over());
+
+  /**
+   * `data-place-sides`: the attribute the split runs off, and the value that
+   * says whether this is the element being aimed at.
+   *
+   * **The attribute is on every element while a chip is carried, the line only
+   * on the one under the pointer.** `PlacementGesture` looks the attribute up
+   * to measure a release against the same box the line is drawn across, and it
+   * has to find it on whatever element the pointer reaches next - the box is
+   * measured in the very event that works out where the pointer is, so a value
+   * this component has not rendered yet cannot gate it. That is why the
+   * presence carries the measurement and the value carries the drawing:
+   * `src/styles.css` draws the hairline for `over` alone, and `SPLIT_SELECTOR`
+   * there must stay value-agnostic.
+   *
+   * **The line only where the release is about to happen**, for `labelled()`'s
+   * reason: outlined at once, the page says a colour may go anywhere; a
+   * hairline at once was thirty lines through the page's own words, each in the
+   * APCA maximum against what it crossed.
+   */
+  protected readonly placeSides = computed(() => {
+    if (!this.carrying()) return null;
+
+    return this.over() ? "over" : "";
+  });
 
   /**
    * Whether the element shows its name - the one element the pointer is on,

@@ -461,7 +461,14 @@ describe("VerdictMark", () => {
 
     await carry("color2");
 
-    expect(host.querySelector("[data-place-sides]")).not.toBeNull();
+    const box = () => host.querySelector("[data-place-sides]");
+
+    expect(box()).not.toBeNull();
+    // Present, so a release here can be measured against this box - and empty,
+    // so no line is drawn yet: the value is what `src/styles.css` waits for,
+    // and a line on every element at once was a page of lines through its own
+    // words.
+    expect(box()?.getAttribute("data-place-sides")).toBe("");
     // Outlined but not aimed at: no name either, because the pointer is
     // nowhere near this element yet.
     expect(elementName()).toBeNull();
@@ -469,6 +476,7 @@ describe("VerdictMark", () => {
     splitOver(0, 40);
     await moveOver(host, 30);
 
+    expect(box()?.getAttribute("data-place-sides")).toBe("over");
     expect(elementName()?.textContent?.trim()).toBe("HEADLINE · HIGHLIGHT");
 
     splitOver(0, 40);

@@ -114,13 +114,19 @@
 
      The color is measured against the page and arrives as a custom property -
      `VerdictMark` says why a neutral token is guaranteed against none of the
-     visitor's colors. The attribute is on the element only while a chip is
-     carried, which is what keeps the line off a page nobody is coloring. */
-  [data-place-sides] {
+     visitor's colors.
+
+     **The value, not the presence.** The attribute is on every element while a
+     chip is carried, because that is what `PlacementGesture` measures a
+     release against - and thirty hairlines through the page's own words is a
+     page nobody can read while they aim at it. So the line waits for `over`,
+     the element the pointer is on. `VerdictMark.placeSides` says why the two
+     tests cannot be one. */
+  [data-place-sides="over"] {
     position: relative;
   }
 
-  [data-place-sides]::after {
+  [data-place-sides="over"]::after {
     content: "";
     position: absolute;
     inset-inline: 0;

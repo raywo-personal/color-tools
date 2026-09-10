@@ -65,13 +65,14 @@
        guaranteed against the app's six and against none of the visitor's.
        `outline` rather than `border`, so nothing in the page moves when it
        appears - the offset puts it clear of the words either way. -->
-  <!-- `data-place-sides` while a chip is carried: it is what splits this box
-       into the half that takes the text colour and the half that takes the
-       ground. One attribute for both halves of the job - `src/styles.css`
-       draws the hairline off it and `PlacementGesture` measures the release
-       against the same box. On the outlined copy rather than on the host,
-       because the host is the whole row and its midline is not the middle of
-       the words.
+  <!-- `data-place-sides` while a chip is carried, and `over` on the element
+       under the pointer: it is what splits this box into the half that takes
+       the text colour and the half that takes the ground. One attribute for
+       both halves of the job - `src/styles.css` draws the hairline off the
+       value and `PlacementGesture` measures the release against the box it
+       finds by presence alone; `placeSides()` says why the two cannot be the
+       same test. On the outlined copy rather than on the host, because the
+       host is the whole row and its midline is not the middle of the words.
 
        The line is the one piece of chrome that is not measured against the
        surface: it is drawn inside the box, so it takes `splitHex()`, which
@@ -86,7 +87,7 @@
         [class.underline-offset-4]="missed()"
         [class.outline-2]="outlined()"
         [class.outline-dashed]="dashed()"
-        [attr.data-place-sides]="carrying() ? '' : null"
+        [attr.data-place-sides]="placeSides()"
         [style.--place-split-color]="splitHex()"
         [style.outline-color]="inkHex()">
     <!-- The element's name, on the one element the pointer is on: what a

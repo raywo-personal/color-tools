@@ -29,6 +29,13 @@ const TARGET_SELECTOR = `[${TARGET_ATTRIBUTE}]`;
  *
  * **Present only while a chip is carried**, which is the only time either job
  * is asked for - and it is what keeps the line off a page nobody is colouring.
+ *
+ * **The selector must stay value-agnostic.** The attribute carries `over` on
+ * the element under the pointer, and `src/styles.css` draws the line off that
+ * value alone - but the box below is measured in the very event that works out
+ * which element the pointer is on, before anything has rendered the new value.
+ * Narrow this selector to `over` and the first release on an element falls back
+ * to the drop target's own rect, whose midline is not the middle of the words.
  */
 const SPLIT_ATTRIBUTE = "data-place-sides";
 

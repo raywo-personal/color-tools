@@ -48,7 +48,8 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
  * hairline that says so is drawn off `data-place-sides` - the one attribute
  * `src/styles.css` and `PlacementGesture` both run off. Here the attribute is
  * on the directive's own element, which is the outlined box as well, so the
- * line and the measurement are the same box without further ado.
+ * line and the measurement are the same box without further ado. The line is
+ * drawn on the element under the pointer and nowhere else, as on the mark.
  *
  * **What it cannot carry is the word.** The side travels in the mark's badge,
  * and an occurrence with no badge has nowhere to put it - so a visitor learns
@@ -73,7 +74,7 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
     "class": "outline-offset-4",
     "[class.outline-2]": "outlined()",
     "[class.outline-dashed]": "dashed()",
-    "[attr.data-place-sides]": "outlined() ? '' : null",
+    "[attr.data-place-sides]": "placeSides()",
     "[style.--place-split-color]": "splitHex()",
     "[style.outline-color]": "inkHex()",
     "[class.underline]": "missed()",
@@ -138,8 +139,22 @@ export class PlaceTarget {
   /** Every occurrence at once while a chip is carried, and none of them at rest. */
   protected readonly outlined = computed(() => this.#gesture.carrying());
 
+  /** Whether the pointer carrying a chip is on this element. */
+  protected readonly over = computed(() => this.#gesture.over() === this.elementKey());
+
   /** Solid names the drop; dashed only offers it. */
-  protected readonly dashed = computed(() =>
-    this.outlined() && this.#gesture.over() !== this.elementKey());
+  protected readonly dashed = computed(() => this.outlined() && !this.over());
+
+  /**
+   * `data-place-sides` on every occurrence while a chip is carried, `over` on
+   * the element the pointer is on - `VerdictMark.placeSides` says why the
+   * presence and the value answer two different questions, and why only the
+   * value may narrow.
+   */
+  protected readonly placeSides = computed(() => {
+    if (!this.outlined()) return null;
+
+    return this.over() ? "over" : "";
+  });
 
 }

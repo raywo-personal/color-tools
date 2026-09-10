@@ -324,6 +324,40 @@ describe("WebsitePreview", () => {
   });
 
 
+  it("draws the hairline on the element under the pointer, not across the page", async () => {
+    // The outline offers across the whole page at once and the split does not:
+    // a hairline on each element was some thirty lines through the page's own
+    // words, each in the APCA maximum against what it crossed, while the
+    // visitor was aiming at one of them. The attribute stays everywhere -
+    // `PlacementGesture` measures a release against the box it finds by it -
+    // and the value is what the line waits for.
+    const {page, copy, fixture, repeats, targets} = await preview();
+    const dispatcher = TestBed.inject(Dispatcher);
+    const split = () => page.querySelectorAll("[data-place-sides]");
+    const lined = () => Array.from(page.querySelectorAll<HTMLElement>('[data-place-sides="over"]'));
+
+    dispatcher.dispatch(contrastEvents.chipPickedUp("color2"));
+    await fixture.whenStable();
+
+    expect(split()).toHaveLength(SAMPLE_ELEMENTS.length + repeats().length);
+    expect(lined()).toHaveLength(0);
+
+    copy(BODY).dispatchEvent(new PointerEvent("pointermove", {bubbles: true}));
+    await fixture.whenStable();
+
+    // The element under the pointer, and every occurrence of it: a release on
+    // any of them recolours the one element, so they are one box to aim at -
+    // the same reason the solid outline goes on all of them.
+    expect(lined()).toHaveLength(targets("bodyText"));
+    expect(lined().every(element => element
+      .closest("[data-place-target]")
+      ?.getAttribute("data-place-target") === "bodyText")).toBe(true);
+    // And the attribute is still on the rest, or the next element the pointer
+    // reaches has no box to measure a release against.
+    expect(split()).toHaveLength(SAMPLE_ELEMENTS.length + repeats().length);
+  });
+
+
   it("rims the error line's mark against the page, not against a colour placed on the line", async () => {
     // The error line's red is computed, so a placement lands on the surface
     // the line sits on - but the mark sits beside the line, on the page. Drawn
