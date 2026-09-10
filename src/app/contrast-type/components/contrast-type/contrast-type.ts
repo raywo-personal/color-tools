@@ -92,13 +92,20 @@ import {ColorVision} from "@contrast-type/components/color-vision/color-vision";
 export class ContrastType {
 
   /**
-   * The half of the pair the chip row applies to and the sliders move.
+   * The half of the pair the sliders move.
    *
-   * Two controls of one mode, so the mode sits above both rather than in
-   * either. `PaletteChips` carries the control that changes it and keeps the
-   * same default for standing on its own - the two-way binding makes this one
-   * the value the screen opens on, so change both or neither.
+   * `PairSliders` carries the selector and keeps the same default for standing
+   * on its own - the two-way binding makes this one the value the screen opens
+   * on, so change both or neither. It sits here rather than in the panel
+   * because the chip row moves it too: a press there sets a half of the pair
+   * and says which, and the panel follows the colour the visitor has just
+   * chosen.
    */
   protected readonly target = signal<ContrastColorRole>("background");
+
+
+  protected aimAt(role: ContrastColorRole): void {
+    this.target.set(role);
+  }
 
 }

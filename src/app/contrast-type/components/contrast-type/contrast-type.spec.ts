@@ -67,10 +67,10 @@ describe("ContrastType", () => {
   });
 
 
-  it("puts the sliders directly under the chips, because one target steers both", async () => {
-    // `APPLY TO` names the half a chip's click applies to and the half the
-    // sliders move. A block between them would put the two controls of one
-    // mode on either side of something unrelated.
+  it("puts the sliders directly under the chips, because a press there aims them", async () => {
+    // The half a menu item has just written is the half the sliders move, so
+    // a block between them would put the press and its consequence on either
+    // side of something unrelated.
     const host = await contrastType();
     const order = Array.from(host.querySelectorAll("ct-palette-chips, ct-pair-sliders, ct-pair-actions"))
       .map(element => element.tagName.toLowerCase());
@@ -79,28 +79,36 @@ describe("ContrastType", () => {
   });
 
 
-  it("steers the sliders from the chip row's target, not from a second selector", async () => {
-    // The one mode has one display. Pressing `TEXT` above the chips is what
-    // aims the sliders, and the sliders' own caption is what says so.
+  it("aims the sliders at the half a chip's menu has just written", async () => {
+    // The screen holds the target because two blocks move it: the panel's own
+    // selector, and a press on a chip - which is a consequence of setting a
+    // colour rather than a second control. The segments are where it lands.
     const fixture = TestBed.createComponent(ContrastType);
     await fixture.whenStable();
 
     const host = fixture.nativeElement as HTMLElement;
-    const chips = host.querySelector("ct-palette-chips") as HTMLElement;
-    const caption = () => host
-      .querySelector("ct-pair-sliders p")?.textContent?.trim() ?? "";
+    const segments = () => Array.from(host
+      .querySelectorAll<HTMLButtonElement>("ct-pair-sliders [aria-label='Adjust which half of the pair'] button"));
+    const pressed = () => segments()
+      .filter(segment => segment.getAttribute("aria-pressed") === "true")
+      .map(segment => segment.textContent?.trim());
 
-    expect(caption()).toBe("ADJUST BACKGROUND");
+    expect(pressed()).toEqual(["BACKGROUND"]);
 
-    const text = Array
-      .from(chips.querySelectorAll<HTMLButtonElement>("[role=group] button"))
-      .find(button => button.textContent?.trim() === "TEXT") as HTMLButtonElement;
+    const chip = host
+      .querySelector<HTMLButtonElement>("ct-palette-chips ul button") as HTMLButtonElement;
 
-    text.click();
+    chip.click();
     await fixture.whenStable();
 
-    expect(caption()).toBe("ADJUST TEXT");
-    expect(text.getAttribute("aria-pressed")).toBe("true");
+    const item = Array
+      .from(document.querySelectorAll<HTMLButtonElement>(".cdk-overlay-container [role=menuitem]"))
+      .find(candidate => candidate.textContent?.includes("TEXT color")) as HTMLButtonElement;
+
+    item.click();
+    await fixture.whenStable();
+
+    expect(pressed()).toEqual(["TEXT"]);
   });
 
 

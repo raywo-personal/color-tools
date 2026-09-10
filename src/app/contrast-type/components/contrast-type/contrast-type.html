@@ -10,13 +10,13 @@
 <div class="min-w-0">
   <ct-pair-fields/>
 
-  <ct-palette-chips class="mt-6" [(target)]="target"/>
+  <ct-palette-chips class="mt-6" (colorApplied)="aimAt($event)"/>
 
-  <!-- Directly under the chips, because `APPLY TO` steers both: the half a
-       click applies a chip to is the half these three tracks move. Anything
-       between them would put the two controls of one mode on either side of
-       an unrelated block. -->
-  <ct-pair-sliders class="mt-6" [target]="target()"/>
+  <!-- Directly under the chips, because a press on a chip aims them: the half
+       a menu item has just written is the half these three tracks move.
+       Anything between them would put the press and its consequence on either
+       side of an unrelated block. -->
+  <ct-pair-sliders class="mt-6" [(target)]="target"/>
 
   <ct-pair-actions class="mt-6"/>
 

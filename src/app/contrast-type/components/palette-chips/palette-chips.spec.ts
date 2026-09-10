@@ -4,10 +4,11 @@ import {provideZonelessChangeDetection} from "@angular/core";
 import {CdkDrag} from "@angular/cdk/drag-drop";
 import {Dispatcher, Events} from "@ngrx/signals/events";
 import {beforeEach, describe, expect, it} from "vitest";
-import chroma from "chroma-js";
+import chroma, {Color} from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
+import {ContrastColorRole} from "@engine/contrast/contrast-color.model";
 import {colorName} from "@engine/color/color-name.helper";
 import {CHIP_SOURCES} from "@contrast-type/models/chip-source.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
@@ -35,23 +36,54 @@ describe("PaletteChips", () => {
     dispatcher.dispatch(contrastEvents.backgroundColorChanged(chroma(background)));
 
     const fixture = TestBed.createComponent(PaletteChips);
+    const applied: ContrastColorRole[] = [];
+
+    fixture.componentInstance.colorApplied.subscribe(role => applied.push(role));
     await fixture.whenStable();
 
     const events = TestBed.inject(Events);
     const host = fixture.nativeElement as HTMLElement;
     const list = host.querySelector("ul") as HTMLUListElement;
-    const targets = Array.from(host.querySelectorAll("[role=group] button"));
 
     function swatches() {
       return Array.from(list.querySelectorAll("button")) as HTMLButtonElement[];
     }
 
-    async function pickTarget(caption: string) {
-      const button = targets
-        .find(target => target.textContent?.trim() === caption) as HTMLButtonElement;
+    /**
+     * The items of the open menu. A CDK menu renders into the overlay
+     * container on the body, not into the component's own element.
+     */
+    function items() {
+      return Array.from(document
+        .querySelectorAll<HTMLButtonElement>(".cdk-overlay-container [role=menuitem]"));
+    }
 
-      button.click();
+    /** The menu of one chip, opened the way a click opens it. */
+    async function openMenu(index: number) {
+      swatches()[index].click();
       await fixture.whenStable();
+
+      return items();
+    }
+
+    /** What one item reads: its caption and the figure beside it. */
+    function captions() {
+      return items().map(item => Array
+        .from(item.querySelectorAll("span"))
+        .map(span => span.textContent?.trim()));
+    }
+
+    async function press(caption: string) {
+      const item = items()
+        .find(candidate => candidate.textContent?.includes(caption)) as HTMLButtonElement;
+
+      item.click();
+      await fixture.whenStable();
+    }
+
+    /** The open menu itself, which is what carries the chip's name. */
+    function menu() {
+      return document.querySelector(".cdk-overlay-container [role=menu]");
     }
 
     /** The `cdkDrag` on each chip, in the row's order. */
@@ -116,10 +148,15 @@ describe("PaletteChips", () => {
       fixture,
       store,
       dispatcher,
+      host,
       list,
-      targets,
+      applied,
       swatches,
-      pickTarget,
+      items,
+      openMenu,
+      captions,
+      press,
+      menu,
       drags,
       pressWith,
       paintBackground,
@@ -128,6 +165,12 @@ describe("PaletteChips", () => {
       endDrag,
       countPutDowns
     };
+  }
+
+
+  /** The figure an item promises, as every Lc a visitor reads is written. */
+  function lc(text: Color | string, background: Color | string): number {
+    return Math.floor(Math.abs(chroma.contrastAPCA(text, background)));
   }
 
 
@@ -191,26 +234,95 @@ describe("PaletteChips", () => {
   });
 
 
-  describe("the target above the row", () => {
+  it("says under the row what a press does, or the menu is undiscoverable", async () => {
+    // The chips are seven swatches and the row has no caption of its own: the
+    // sentence is what says they are controls and what pressing one offers.
+    // The drag and the marks are said once already, beside `PREVIEW`.
+    const {host} = await chips();
 
-    it("starts on the background, which is the draft's single click", async () => {
-      const {targets} = await chips();
-      const pressed = targets.filter(target => target.getAttribute("aria-pressed") === "true");
+    expect(host.querySelector("p")?.textContent?.trim())
+      .toBe("Press a color to use it as the text or the background.");
+  });
 
-      expect(pressed.length).toBe(1);
-      expect(pressed[0].textContent?.trim()).toBe("BACKGROUND");
+
+  describe("the menu on a chip", () => {
+
+    it("says a press opens something rather than applying a colour", async () => {
+      const {swatches} = await chips();
+
+      expect(swatches()[0].getAttribute("aria-haspopup")).toBe("menu");
+      expect(swatches()[0].getAttribute("aria-expanded")).toBe("false");
     });
 
 
-    it("says which half is selected without relying on the inverted chip", async () => {
-      const {targets, pickTarget} = await chips();
+    it("opens on a click and stands the keyboard on the first item", async () => {
+      // Two keys or two clicks is the whole gesture, which is what a mode
+      // above the row used to buy down to one - see the component.
+      const {swatches, openMenu} = await chips();
 
-      await pickTarget("TEXT");
+      const items = await openMenu(0);
 
-      const states = targets
-        .map(target => [target.textContent?.trim(), target.getAttribute("aria-pressed")]);
+      expect(swatches()[0].getAttribute("aria-expanded")).toBe("true");
+      expect(items.length).toBe(2);
+      expect(document.activeElement).toBe(items[0]);
+    });
 
-      expect(states).toEqual([["TEXT", "true"], ["BACKGROUND", "false"]]);
+
+    it("offers both halves of the pair, each with the Lc it would reach", async () => {
+      // The figure is the pair's own, not the page's: this row can promise the
+      // two colours it leaves behind and nothing about 22 elements.
+      const {store, openMenu, captions} = await chips();
+      const color = store.currentPalette().color0.color;
+
+      await openMenu(0);
+
+      expect(captions()).toEqual([
+        ["Use as the TEXT color", `Lc ${lc(color, "#EEEEEE")}`],
+        ["Use as the BACKGROUND", `Lc ${lc("#111111", color)}`]
+      ]);
+    });
+
+
+    it("keeps the promise the figure made", async () => {
+      // The one assertion that ties the item to the pair rather than to a
+      // formula written twice: what the item said, the pair then stands at.
+      const {store, openMenu, press} = await chips();
+
+      const items = await openMenu(2);
+      const promised = items[0].textContent?.trim();
+
+      await press("Use as the TEXT color");
+
+      expect(`Lc ${lc(store.contrastColors().text, store.contrastColors().background)}`)
+        .toBe(promised?.slice(promised.indexOf("Lc")));
+    });
+
+
+    it("leaves out the item T already is, and the one BG already is", async () => {
+      // The two presses that changed nothing stop existing. The source decides
+      // it, not the value - a palette colour that happens to equal the text
+      // colour keeps both items.
+      const {openMenu, captions} = await chips();
+
+      await openMenu(5);
+
+      expect(captions()).toEqual([["Use as the BACKGROUND", `Lc ${lc("#111111", "#111111")}`]]);
+
+      await openMenu(6);
+
+      expect(captions()).toEqual([["Use as the TEXT color", `Lc ${lc("#EEEEEE", "#EEEEEE")}`]]);
+    });
+
+
+    it("names the menu after the chip it belongs to", async () => {
+      // It opens away from the row, so seven of them would otherwise be seven
+      // identical menus in speech.
+      const {store, openMenu, menu} = await chips();
+      const color = store.currentPalette().color0.color;
+
+      await openMenu(0);
+
+      expect(menu()?.getAttribute("aria-label")).toBe(`P1: ${colorName(color)}`);
     });
 
   });
@@ -218,46 +330,50 @@ describe("PaletteChips", () => {
 
   describe("applying a chip", () => {
 
-    it("sets the background while the target says background", async () => {
-      const {fixture, store, swatches} = await chips();
+    it("sets the background from the item that says so", async () => {
+      const {store, openMenu, press} = await chips();
       const expected = store.currentPalette().color2.color.hex("rgb");
 
-      swatches()[2].click();
-      await fixture.whenStable();
+      await openMenu(2);
+      await press("Use as the BACKGROUND");
 
       expect(store.contrastColors.background().hex("rgb")).toBe(expected);
       expect(store.contrastColors.text().hex("rgb")).toBe("#111111");
     });
 
 
-    it("sets the text color once the target says text", async () => {
-      const {fixture, store, swatches, pickTarget} = await chips();
+    it("sets the text color from the item that says so", async () => {
+      const {store, openMenu, press} = await chips();
       const expected = store.currentPalette().color2.color.hex("rgb");
 
-      await pickTarget("TEXT");
-      swatches()[2].click();
-      await fixture.whenStable();
+      await openMenu(2);
+      await press("Use as the TEXT color");
 
       expect(store.contrastColors.text().hex("rgb")).toBe(expected);
       expect(store.contrastColors.background().hex("rgb")).toBe("#eeeeee");
     });
 
 
-    it("names every chip by its handle, its color and what the click will do", async () => {
-      // This is what pays for the mode: the outcome is spoken by the control
-      // the visitor is standing on, so the target cannot be a hidden trap. The
-      // handle opens the name verbatim, because it is visible text in the
-      // button and WCAG 2.5.3 asks the name to contain the label.
-      const {store, swatches, pickTarget} = await chips();
+    it("reports the half it wrote, so the sliders follow the colour just set", async () => {
+      // A report, not a mode: this row reads nothing back. `PairSliders` holds
+      // which half its three tracks move.
+      const {applied, openMenu, press} = await chips();
+
+      await openMenu(1);
+      await press("Use as the TEXT color");
+
+      expect(applied).toEqual(["text"]);
+    });
+
+
+    it("names every chip by its handle and its colour, not by an outcome", async () => {
+      // The outcome is the menu's to say now. The handle still opens the name
+      // verbatim, because it is visible text in the button and WCAG 2.5.3 asks
+      // the name to contain the label.
+      const {store, swatches} = await chips();
       const color = store.currentPalette().color0.color;
 
-      expect(swatches()[0].getAttribute("aria-label"))
-        .toBe(`P1: Use ${colorName(color)} as the background`);
-
-      await pickTarget("TEXT");
-
-      expect(swatches()[0].getAttribute("aria-label"))
-        .toBe(`P1: Use ${colorName(color)} as the text color`);
+      expect(swatches()[0].getAttribute("aria-label")).toBe(`P1: ${colorName(color)}`);
     });
 
 
@@ -268,21 +384,19 @@ describe("PaletteChips", () => {
       const {swatches} = await chips();
 
       expect(swatches()[5].getAttribute("aria-label"))
-        .toBe(`T, the text color: Use ${colorName(chroma("#111111"))} as the background`);
+        .toBe(`T, the text color: ${colorName(chroma("#111111"))}`);
       expect(swatches()[6].getAttribute("aria-label"))
-        .toBe(`BG, the background: Use ${colorName(chroma("#EEEEEE"))} as the background`);
+        .toBe(`BG, the background: ${colorName(chroma("#EEEEEE"))}`);
     });
 
 
-    it("applies T to the named half, the way any other chip's click does", async () => {
-      // Seven chips, one gesture: a chip that answered a press differently
-      // from its six neighbours would be the harder thing to learn, and the
-      // target above the row already says which half the click sets.
-      const {fixture, store, swatches, pickTarget} = await chips();
+    it("puts T on the other half, which is the one item it offers", async () => {
+      // The whole of what the two pair chips do to the pair: `T` can become
+      // the background and `BG` the text colour, and neither can become itself.
+      const {store, openMenu, press} = await chips();
 
-      await pickTarget("BACKGROUND");
-      swatches()[5].click();
-      await fixture.whenStable();
+      await openMenu(5);
+      await press("Use as the BACKGROUND");
 
       expect(store.contrastColors.background().hex("rgb")).toBe("#111111");
       expect(store.contrastColors.text().hex("rgb")).toBe("#111111");
@@ -292,18 +406,18 @@ describe("PaletteChips", () => {
     // A regression pin rather than a branch test: no press may put a chip in
     // hand. `pointerType` cannot tell a finger from a screen reader's
     // synthesised touch, so a carry armed here would be armed by an activation
-    // whose whole account of itself is the chip's name - and the name says
-    // what the click does. The no-drag path is the chooser on the element's
-    // own mark.
+    // whose whole account of itself is the chip's name - and the name says the
+    // chip holds a colour and opens a menu. The no-drag path onto the page is
+    // the chooser on the element's own mark.
     it.each(["mouse", "touch", "pen"])(
-      "applies the colour and carries nothing when a %s pressed it",
+      "opens the menu and carries nothing when a %s pressed it",
       async pointerType => {
-        const {fixture, store, swatches, pressWith} = await chips();
+        const {store, swatches, openMenu, press, pressWith} = await chips();
         const expected = store.currentPalette().color0.color.hex("rgb");
 
         pressWith(swatches()[0], pointerType);
-        swatches()[0].click();
-        await fixture.whenStable();
+        await openMenu(0);
+        await press("Use as the BACKGROUND");
 
         expect(store.contrastColors.background().hex("rgb")).toBe(expected);
         expect(store.carriedChip()).toBeNull();
@@ -311,12 +425,12 @@ describe("PaletteChips", () => {
     );
 
 
-    it("says nothing, because the chip's own name already did", async () => {
+    it("says nothing, because the visitor is standing on the item that said it", async () => {
       const announcer = fakeLiveAnnouncer();
-      const {fixture, swatches} = await chips();
+      const {openMenu, press} = await chips();
 
-      swatches()[0].click();
-      await fixture.whenStable();
+      await openMenu(0);
+      await press("Use as the BACKGROUND");
 
       expect(announcer.announcements).toEqual([]);
     });
@@ -335,23 +449,50 @@ describe("PaletteChips", () => {
     });
 
 
-    it("still applies from the keyboard after a drag that raised no click here", async () => {
+    it("still opens the menu on the press after a drag", async () => {
       // A drag's click goes to the common ancestor of its press and its
-      // release, so `apply()` does not run and cannot clear the drag flag on
-      // the way out. The next gesture's start is what clears it - here the
-      // keydown - or this press would do nothing at all.
-      const {fixture, store, swatches, pressWith, startDrag, endDrag} = await chips();
+      // release, so nothing here runs on the way out of a drag. The next press
+      // has to find the chip as it was.
+      const {swatches, openMenu, pressWith, startDrag, endDrag} = await chips();
 
       pressWith(swatches()[0], "mouse");
       await startDrag(0);
       await endDrag(0);
 
-      swatches()[0].dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", bubbles: true}));
-      swatches()[0].click();
+      const items = await openMenu(0);
+
+      expect(items.length).toBe(2);
+    });
+
+
+    it("puts an open menu away when the same chip is carried off", async () => {
+      // The press that starts the drag is on the trigger, which is not an
+      // outside click: left to CDK the menu hangs at the place the chip has
+      // just left until the drop closes it.
+      const {swatches, items, openMenu, startDrag} = await chips();
+
+      await openMenu(0);
+      await startDrag(0);
+
+      expect(items()).toEqual([]);
+      expect(swatches()[0].getAttribute("aria-expanded")).toBe("false");
+    });
+
+
+    it("writes nothing to the pair when a click does reach the chip after a drag", async () => {
+      // What a stray click can produce is a menu, and a menu has changed
+      // nothing: the outcome moved into an item, which a drag cannot reach.
+      // Do not wire an apply back onto this click.
+      const {fixture, store, swatches, pressWith, startDrag, endDrag} = await chips();
+
+      pressWith(swatches()[3], "mouse");
+      await startDrag(3);
+      await endDrag(3);
+      swatches()[3].click();
       await fixture.whenStable();
 
-      expect(store.contrastColors.background().hex("rgb"))
-        .toBe(store.currentPalette().color0.color.hex("rgb"));
+      expect(store.contrastColors.background().hex("rgb")).toBe("#eeeeee");
+      expect(store.contrastColors.text().hex("rgb")).toBe("#111111");
     });
 
 
@@ -419,14 +560,9 @@ describe("PaletteChips", () => {
     it("drops T on an element and writes nothing back to the pair", async () => {
       // The rule the two new chips are held to: they carry the pair's colours
       // into the page, and no drop ever writes one back. The release itself
-      // raises `colorPlaced` alone; what could still reach the pair is the
-      // drag's own click, and on `T` with `BACKGROUND` picked that click would
-      // put the text colour on the other half and leave the whole page at
-      // Lc 0 - which is why the two chips get this spec of their own.
-      const {fixture, store, dispatcher, swatches, pickTarget, pressWith, startDrag, endDrag} =
+      // raises `colorPlaced` alone, and the drag's own click reaches no item.
+      const {fixture, store, dispatcher, swatches, pressWith, startDrag, endDrag} =
         await chips();
-
-      await pickTarget("BACKGROUND");
 
       pressWith(swatches()[5], "mouse");
       await startDrag(5);
@@ -439,27 +575,6 @@ describe("PaletteChips", () => {
       expect(store.placements()).toEqual({headline: {ink: "text"}});
       expect(store.contrastColors.text().hex("rgb")).toBe("#111111");
       expect(store.contrastColors.background().hex("rgb")).toBe("#eeeeee");
-    });
-
-
-    it("applies nothing to the pair when a click does reach it after a drag", async () => {
-      // The net under `pointer-events-none`. With that class in place a real
-      // browser dispatches the drag's click at the common ancestor of press
-      // and release, so it never arrives here at all - which is why this spec
-      // has to call `.click()` itself. Were the class ever lost, the click
-      // would be delivered to the chip and this flag is what stops one gesture
-      // meaning two things: a colour placed on an element and half the pair
-      // repainted.
-      const {fixture, store, swatches, pressWith, startDrag, endDrag} = await chips();
-
-      pressWith(swatches()[3], "mouse");
-      await startDrag(3);
-      await endDrag(3);
-      swatches()[3].click();
-      await fixture.whenStable();
-
-      expect(store.contrastColors.background().hex("rgb")).toBe("#eeeeee");
-      expect(store.contrastColors.text().hex("rgb")).toBe("#111111");
     });
 
 

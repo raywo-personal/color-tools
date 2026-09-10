@@ -99,6 +99,12 @@ const HUE_MAX = 359;
  * and Contrast & Type moves one half of the pair with the same three sliders.
  * Do not reach for the store from here - a panel bound to `currentColor` is
  * what kept the second host from existing.
+ *
+ * **The header takes projected content, beside the caption.** A host whose
+ * colour is one of several has a control that says which one - and it belongs
+ * on the panel it steers rather than one block away, or the mode is displayed
+ * twice and set once. What that control is stays the host's: the panel knows
+ * only the colour it was handed.
  */
 @Component({
   selector: "ct-color-sliders",
@@ -130,10 +136,9 @@ export class ColorSliders {
   /**
    * The section's own caption.
    *
-   * The Studio's `PLAY` is the default. A host whose colour is one of several
-   * says which one it is here: the sliders name their axes and not their
-   * subject, so on Contrast & Type the caption is the visible text that tells
-   * a visitor which half of the pair the tracks below move.
+   * The Studio's `PLAY` is the default. The sliders name their axes and never
+   * their subject, so a host whose colour is one of several names it here -
+   * either in the caption itself or in a control projected beside it.
    */
   readonly caption = input("PLAY");
 
