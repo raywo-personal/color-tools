@@ -127,7 +127,7 @@
   </div>
 
   <div class="px-5 pt-8 pb-8 sm:px-12 sm:pt-13 sm:pb-10">
-    <ct-verdict-mark elementKey="eyebrow">
+    <ct-verdict-mark elementKey="eyebrow" surface="page">
       <span class="mb-3 block tracking-[0.18em]"
             [style.font-family]="style().eyebrow.fontFamily"
             [style.font-size]="style().eyebrow.fontSize"
@@ -145,7 +145,7 @@
          the column: at the top of the display range a single word is wider
          than a phone, and the panel's `overflow-hidden` would cut it off
          without a scrollbar to say so. -->
-    <ct-verdict-mark elementKey="headline">
+    <ct-verdict-mark elementKey="headline" surface="page">
       <p class="mb-4 max-w-[24ch] tracking-tight wrap-break-word text-pretty"
          [style.font-family]="style().headline.fontFamily"
          [style.font-size]="style().headline.fontSize"
@@ -155,7 +155,7 @@
          [style.background-color]="style().headline.ground">Reading is a physical act</p>
     </ct-verdict-mark>
 
-    <ct-verdict-mark elementKey="lead">
+    <ct-verdict-mark elementKey="lead" surface="page">
       <p class="max-w-[52ch] text-pretty"
          [style.font-size]="style().lead.fontSize"
          [style.font-weight]="style().lead.fontWeight"
@@ -188,7 +188,7 @@
               [style.color]="style().filledButton.ink">Read the notes</span>
       </ct-verdict-mark>
 
-      <ct-verdict-mark elementKey="ghostButton">
+      <ct-verdict-mark elementKey="ghostButton" surface="page">
         <span class="block rounded-xs border px-5 py-3"
               [style.font-family]="style().ghostButton.fontFamily"
               [style.font-size]="style().ghostButton.fontSize"
@@ -229,7 +229,7 @@
          The closing paragraph sits past the card and cannot join them, so it
          keeps the directive - and `ml-7` there is this mark's gutter written
          out, because one element must not be indented two ways. -->
-    <ct-verdict-mark elementKey="bodyText">
+    <ct-verdict-mark elementKey="bodyText" surface="page">
       <p class="mb-[1.1em] max-w-[66ch] text-pretty"
          [style.font-size]="style().bodyText.fontSize"
          [style.font-weight]="style().bodyText.fontWeight"
@@ -261,7 +261,7 @@
          themselves. -->
     <div class="my-8 grid gap-7 sm:grid-cols-2 sm:items-start">
       <div>
-        <ct-verdict-mark elementKey="fieldLabel">
+        <ct-verdict-mark elementKey="fieldLabel" surface="page">
           <span class="mb-2 block tracking-[0.16em]"
                 [style.font-family]="style().fieldLabel.fontFamily"
                 [style.font-size]="style().fieldLabel.fontSize"
@@ -292,11 +292,11 @@
              the reason `copy-confirmation.ts` gives for its own: a glyph is at
              the mercy of whichever family the visitor picked, and a family
              without it renders a box. -->
-        <!-- `surface="page"` for the same reason the two buttons carry it: the
-             mark sits beside the line, on the page, while the line's ground is
-             whatever was placed on it. Without it the rim and the ring would
-             be chosen for a dark colour dropped here and then vanish on the
-             light page they are actually drawn on. -->
+        <!-- `surface="page"` for the reason every mark on this page carries
+             one: the mark sits beside the line, on the page, while the line's
+             ground is whatever was placed on it. Without it the rim and the
+             ring would be chosen for a dark colour dropped here and then
+             vanish on the light page they are actually drawn on. -->
         <ct-verdict-mark elementKey="errorLine" surface="page">
           <p class="mt-2 flex items-start gap-2"
              [style.font-size]="style().errorLine.fontSize"
@@ -321,7 +321,7 @@
              pixels. -->
         <div class="flex aspect-video items-center justify-center rounded-xs"
              [style.background-color]="style().mutedBackground">
-          <ct-verdict-mark elementKey="imageLabel">
+          <ct-verdict-mark elementKey="imageLabel" surface="muted">
             <span class="block tracking-[0.12em]"
                   [style.font-family]="style().imageLabel.fontFamily"
                   [style.font-size]="style().imageLabel.fontSize"
@@ -332,7 +332,7 @@
           </ct-verdict-mark>
         </div>
 
-        <ct-verdict-mark elementKey="imageCaption">
+        <ct-verdict-mark elementKey="imageCaption" surface="page">
           <p class="mt-2 text-pretty"
              [style.font-size]="style().imageCaption.fontSize"
              [style.font-weight]="style().imageCaption.fontWeight"
@@ -384,7 +384,7 @@
                 [style.font-weight]="style().tableHeader.fontWeight"
                 [style.line-height]="style().tableHeader.lineHeight"
                 [style.color]="style().tableHeader.ink"
-                [style.background-color]="style().tableHeader.ground">@if ($last) {<ct-verdict-mark elementKey="tableHeader" [inline]="true">{{ column.caption }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableHeader">{{ column.caption }}</span>}</th>
+                [style.background-color]="style().tableHeader.ground">@if ($last) {<ct-verdict-mark elementKey="tableHeader" surface="page" [inline]="true">{{ column.caption }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableHeader" surface="page">{{ column.caption }}</span>}</th>
           }
         </tr>
       </thead>
@@ -397,7 +397,7 @@
                 [style.font-weight]="style().tableCell.fontWeight"
                 [style.line-height]="style().tableCell.lineHeight"
                 [style.color]="style().tableCell.ink"
-                [style.background-color]="style().tableCell.ground">@if (rowIndex === 0) {<ct-verdict-mark elementKey="tableCell" [inline]="true">{{ row.element }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableCell">{{ row.element }}</span>}</td>
+                [style.background-color]="style().tableCell.ground">@if (rowIndex === 0) {<ct-verdict-mark elementKey="tableCell" surface="page" [inline]="true">{{ row.element }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableCell" surface="page">{{ row.element }}</span>}</td>
 
             @for (value of row.values; track $index) {
               <td class="py-2.5 text-right tabular-nums"
@@ -406,7 +406,7 @@
                   [style.font-weight]="style().tableNumber.fontWeight"
                   [style.line-height]="style().tableNumber.lineHeight"
                   [style.color]="style().tableNumber.ink"
-                  [style.background-color]="style().tableNumber.ground">@if (rowIndex === 1 && $first) {<ct-verdict-mark elementKey="tableNumber" [inline]="true">{{ value }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableNumber">{{ value }}</span>}</td>
+                  [style.background-color]="style().tableNumber.ground">@if (rowIndex === 1 && $first) {<ct-verdict-mark elementKey="tableNumber" surface="page" [inline]="true">{{ value }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableNumber" surface="page">{{ value }}</span>}</td>
             }
           </tr>
         }
@@ -436,7 +436,7 @@
       </ct-verdict-mark>
     </div>
 
-    <p ctPlaceTarget="bodyText"
+    <p ctPlaceTarget="bodyText" surface="page"
        class="ml-7 max-w-[66ch] text-pretty"
        [style.font-size]="style().bodyText.fontSize"
        [style.font-weight]="style().bodyText.fontWeight"
@@ -446,7 +446,7 @@
 
     <div class="mt-9 flex flex-wrap justify-between gap-5 border-t pt-4"
          [style.border-top-color]="style().rule">
-      <ct-verdict-mark elementKey="smallPrint">
+      <ct-verdict-mark elementKey="smallPrint" surface="page">
         <span class="block max-w-[52ch] text-pretty"
               [style.font-size]="style().smallPrint.fontSize"
               [style.font-weight]="style().smallPrint.fontWeight"
@@ -455,7 +455,7 @@
               [style.background-color]="style().smallPrint.ground">Small print, captions and legal notes. This is where most pairings fail first.</span>
       </ct-verdict-mark>
 
-      <span ctPlaceTarget="smallPrint"
+      <span ctPlaceTarget="smallPrint" surface="page"
             [style.font-size]="style().smallPrint.fontSize"
             [style.font-weight]="style().smallPrint.fontWeight"
             [style.line-height]="style().smallPrint.lineHeight"

@@ -345,6 +345,29 @@ describe("WebsitePreview", () => {
   });
 
 
+  it("rims a mark against the page, not against a band placed on its own element", async () => {
+    // The same rule as the error line's, on an element whose mark names no
+    // ground of its own to be measured against: a colour placed on the
+    // headline's ground is a band behind those words, while the mark's rim,
+    // its ring and its outline are all drawn outside them, on the page. Left
+    // to the element's own ground the rim is chosen for the band and drawn on
+    // the page, where a dark band leaves it white on `#EEEEEE`.
+    const {page, place, setBackground} = await preview();
+
+    await place("headline", "color0", "ground");
+
+    await expectApcaForeground(async background => {
+      await setBackground(background.hex("rgb"));
+
+      const mark = Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"))
+        .find(candidate => candidate.getAttribute("aria-label")?.startsWith("Headline:"));
+      const badge = mark?.firstElementChild as HTMLElement | undefined;
+
+      return badge?.style.borderColor ?? "";
+    });
+  });
+
+
   it("gives every element exactly one mark, named after it and its verdict", async () => {
     // One list, one mark each: an element that appears more than once - the
     // running text, the nav items, the table's cells, the small print - is

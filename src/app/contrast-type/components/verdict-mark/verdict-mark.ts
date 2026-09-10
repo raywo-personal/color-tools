@@ -70,10 +70,10 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * **Its rim and its focus ring are still computed against the page.** They are
  * the edge between the app's badge and the visitor's colour, and a neutral
  * token is guaranteed against none of them - so both take black or white,
- * whichever APCA puts further from that surface. `surface` is usually the
- * element's own ground and is given separately where it is not - the label on
- * the filled button sits on the accent while its mark sits beside the button,
- * on the page.
+ * whichever APCA puts further from that surface. Which surface that is comes
+ * from `surface`, named on every mark: the element's own ground is what a
+ * placement moves, and this chrome is drawn outside the element, where it
+ * cannot follow.
  *
  * **The mark is a disclosure, and its name carries the verdict.** A screen
  * reader hears the element and how it fares before deciding whether to open
@@ -143,8 +143,8 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * **What is drawn while a chip is carried is the app's chrome on the visitor's
  * page**, so the outline and the name take the same APCA foreground the rim
  * takes, against the same `surface`. That is why `surface` has to be right on
- * every mark and not only on the three whose ground is not what is behind
- * them.
+ * every mark and on every `PlaceTarget` beside it, and not only where an
+ * element's ground is not what is behind it.
  *
  * **The popup is also the no-drag way to colour the element**, for a keyboard
  * and for a finger alike: a drag cannot be performed from a keyboard, and
@@ -176,9 +176,22 @@ export class VerdictMark {
   readonly elementKey = input.required<string>();
 
   /**
-   * The page surface the mark itself sits on, which decides what its rim and
-   * its focus ring are drawn in. Defaults to nothing and falls back to the
-   * element's own ground - see `surfaceColor`.
+   * The page surface the mark itself sits on, which decides what its rim, its
+   * focus ring, its outline and its name are drawn in.
+   *
+   * **Every mark on the page names it, and the one that does not is nested.**
+   * The chrome is drawn *outside* the element - `outline-offset-4` puts it on
+   * the surface behind it - while the element's own ground is whatever a
+   * visitor placed there: a band behind the words, or the fill of a box. Left
+   * to the fallback, a dark band on the headline of a light page has the rim
+   * measured white and drawn on the page, where it disappears. So the surface
+   * is named here, out of the six the page paints, and a placement cannot
+   * move it.
+   *
+   * `bodyLink` is the exception and takes the fallback: it is a word inside
+   * the running text, so its chrome sits inside whatever the paragraph is
+   * wearing - see `SampleElement.inside`, which is the step `verdict().ground`
+   * follows for it.
    */
   readonly surface = input<SampleGround | null>(null);
 
@@ -204,7 +217,13 @@ export class VerdictMark {
 
   protected readonly open = computed(() => this.#stateStore.openVerdict() === this.elementKey());
 
-  /** The colour the surface is painted in, so APCA has something to measure. */
+  /**
+   * The colour the surface is painted in, so APCA has something to measure.
+   *
+   * The fallback is the nested element's case and not a default worth
+   * spreading: it reads the element's own ground, which a placement can move -
+   * see `surface`, which says why every other mark names one.
+   */
   readonly #surfaceColor = computed<Color>(() => {
     const surface = this.surface();
 

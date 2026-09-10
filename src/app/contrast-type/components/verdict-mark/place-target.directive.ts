@@ -93,7 +93,9 @@ export class PlaceTarget {
    * The page surface this occurrence sits on, for the reason `VerdictMark`
    * gives for its own input: it decides what the outline is drawn in, and it
    * has to match the mark's - the marked occurrence and this one are one
-   * element and must not be outlined in two colours.
+   * element and must not be outlined in two colours. Which also means it is
+   * named on every occurrence, since a placement moves the element's own
+   * ground and the outline is drawn outside it.
    */
   readonly surface = input<SampleGround | null>(null);
 
