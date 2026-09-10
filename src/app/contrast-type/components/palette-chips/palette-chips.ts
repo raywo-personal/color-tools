@@ -237,7 +237,25 @@ export class PaletteChips {
    */
   #draggedFromPress = false;
 
-  readonly #dragging = signal(false);
+  /**
+   * The chip CDK is carrying, or nothing.
+   *
+   * **The source rather than a flag, because the lift is per chip.** The row's
+   * seven chips are one component, so a flag put `relative z-30` on all seven
+   * at once - they then sat on one z-index in one stacking context, where paint
+   * order is document order, and every chip to the right of the carried one
+   * painted over it. Dragging `P1` looked like the colour disappearing under
+   * its neighbours.
+   *
+   * **CDK's own drag, not the carry in the store.** `Escape` puts the chip down
+   * while CDK goes on translating the element - `DragRef` has no cancel - so a
+   * lift tied to `carriedChip` would drop the chip back under its neighbours
+   * for the rest of a drag the visitor can still see.
+   */
+  readonly #draggedChip = signal<ChipSource | null>(null);
+
+  /** Which chip to lift out of the row - the one the pointer is carrying. */
+  protected readonly draggedChip = this.#draggedChip.asReadonly();
 
   /**
    * Whether this row has a chip under the pointer right now.
@@ -259,7 +277,7 @@ export class PaletteChips {
    * no spec would catch it: happy-dom has no layout, so a spec picks the
    * release's target by hand.
    */
-  protected readonly dragging = this.#dragging.asReadonly();
+  protected readonly dragging = computed(() => this.#draggedChip() !== null);
 
 
   protected pickTarget(role: ContrastColorRole): void {
@@ -282,13 +300,13 @@ export class PaletteChips {
 
   protected onDragStarted(chip: Chip): void {
     this.#draggedFromPress = true;
-    this.#dragging.set(true);
+    this.#draggedChip.set(chip.source);
     this.#dispatch.chipPickedUp(chip.source);
   }
 
 
   protected onDragEnded(event: CdkDragEnd): void {
-    this.#dragging.set(false);
+    this.#draggedChip.set(null);
     // A free drag has no drop list to return the element to, so CDK leaves it
     // translated where the pointer let go. Without this the chip stays out of
     // its row for good.

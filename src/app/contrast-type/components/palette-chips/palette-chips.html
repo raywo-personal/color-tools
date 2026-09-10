@@ -58,12 +58,15 @@
            land on the element under the pointer rather than on the chip
            itself - see `dragging`.
 
-           `relative z-30` for the same stretch, so the chip a visitor is
-           carrying stays on top of what it is carried over. The preview is
-           `sticky` from `lg`, which puts it in the positioned layer and paints
-           it over anything still in the flow - the chip went under it halfway
-           across and the visitor lost sight of what they were holding. The
-           z-index costs the drop nothing: a hit test skips an element with
+           `relative z-30` on the carried chip alone, so it stays on top of
+           what it is carried over. The preview is `sticky` from `lg`, which
+           puts it in the positioned layer and paints it over anything still in
+           the flow - the chip went under it halfway across and the visitor lost
+           sight of what they were holding. **On the row rather than on the one
+           chip it lifted nothing**: seven chips on one z-index in one stacking
+           context are painted in document order, so each one to the right of
+           the carried chip covered it - see `draggedChip`. The z-index costs
+           the drop nothing: a hit test skips an element with
            `pointer-events: none` whatever it paints over, which is what
            `dragging` rests on. -->
       <button type="button"
@@ -71,8 +74,8 @@
               [cdkDragStartDelay]="dragStartDelay"
               class="flex h-11 w-full cursor-pointer items-end justify-center rounded-xs border border-line pb-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
               [class.pointer-events-none]="dragging()"
-              [class.relative]="dragging()"
-              [class.z-30]="dragging()"
+              [class.relative]="draggedChip() === chip.source"
+              [class.z-30]="draggedChip() === chip.source"
               [style.background-color]="chip.background"
               [attr.aria-label]="chip.label"
               (pointerdown)="onGestureStart()"

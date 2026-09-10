@@ -372,6 +372,25 @@ describe("PaletteChips", () => {
     });
 
 
+    it("lifts the carried chip out of the row, and only that one", async () => {
+      // The lift is what keeps the chip in sight over the sticky preview. On
+      // the row it lifted nothing: seven chips on one z-index in one stacking
+      // context are painted in document order, so dragging the first one let
+      // every chip to its right paint over it - the colour disappeared under
+      // its own neighbours.
+      const {swatches, startDrag, endDrag} = await chips();
+
+      await startDrag(0);
+
+      expect(Array.from(swatches()[0].classList)).toContain("z-30");
+      expect(swatches().slice(1).some(chip => chip.classList.contains("z-30"))).toBe(false);
+
+      await endDrag(0);
+
+      expect(swatches().some(chip => chip.classList.contains("z-30"))).toBe(false);
+    });
+
+
     it("puts the chip in hand when a drag begins", async () => {
       const {store, startDrag} = await chips();
 
