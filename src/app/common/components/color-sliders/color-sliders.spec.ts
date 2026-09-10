@@ -18,6 +18,7 @@ import {ColorSliders} from "@common/components/color-sliders/color-sliders";
   imports: [ColorSliders],
   template: `
     <ct-color-sliders [color]="color()"
+                      [subject]="subject()"
                       [caption]="caption()"
                       (colorAdjusted)="adjust($event)"
                       (commit)="commit()"/>
@@ -27,6 +28,9 @@ class TestHost {
 
   readonly color = signal<Color>(chroma("#3366CC"));
   readonly caption = signal("PLAY");
+
+  /** Whose colour the host is handing in - the Studio would pass nothing. */
+  readonly subject = signal<unknown>(undefined);
 
   /** Every colour the panel handed out, in order. */
   readonly adjustments: Color[] = [];
@@ -310,6 +314,49 @@ describe("ColorSliders", () => {
       await select("OKLCH");
 
       expect(distinctStops(sliders()[2])).toBeGreaterThan(1);
+    });
+
+
+    it("gives the kept values up when the subject changes under the same bytes", async () => {
+      // Contrast & Type hands in one half of the pair at a time, and two halves
+      // that coincide arrive as the same three bytes - the comparison the
+      // colour alone gets. Without the subject the panel would go on showing
+      // the hue and saturation of the half it is no longer editing, neither of
+      // which black carries.
+      const {fixture, host, sliders, drag} = await panel("#3366CC");
+
+      await drag(2, 0);
+
+      expect(host.color().hex("rgb")).toBe("#000000");
+
+      host.subject.set("text");
+      host.color.set(chroma("#000000"));
+      await fixture.whenStable();
+
+      expect(sliders().map(input => Number(input.value))).toEqual([0, 0, 0]);
+
+      await drag(2, 40);
+
+      expect(host.color().hex("rgb")).toBe(chroma.hsl(0, 0, 0.4).hex("rgb"));
+    });
+
+
+    it("gives the kept chroma up on that same switch", async () => {
+      // The OKLch half of it. The chroma reads 0 at either end of the lightness
+      // axis whatever is kept, so what the switch has to be read off is the
+      // colour the panel builds once lightness is back.
+      const {fixture, host, select, drag} = await panel("#3366CC");
+
+      await select("OKLCH");
+      await drag(0, 0);
+
+      host.subject.set("text");
+      host.color.set(chroma("#000000"));
+      await fixture.whenStable();
+
+      await drag(0, 40);
+
+      expect(host.color().oklch()[1]).toBeCloseTo(0, 3);
     });
 
 

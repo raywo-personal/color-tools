@@ -37,6 +37,12 @@ interface Oklch {
   readonly h: number;
 }
 
+/** A colour and whose it is - what the kept values below are compared against. */
+interface ColorSource {
+  readonly color: Color;
+  readonly subject: unknown;
+}
+
 /**
  * How many stops each gradient is built from.
  *
@@ -108,6 +114,20 @@ export class ColorSliders {
   readonly color = input.required<Color>();
 
   /**
+   * An opaque value naming whose colour that is.
+   *
+   * The kept values below are given up when the colour changes, and two
+   * colours that round to the same three bytes are no change at all - so a
+   * host holding more than one colour hands a value that moves with the one
+   * it is showing. On Contrast & Type a switch to a half of the pair that
+   * happens to coincide with the other half is then still a colour that
+   * arrived from elsewhere, rather than the half no longer being edited
+   * leaving its hue behind. The Studio shows one colour throughout and passes
+   * nothing.
+   */
+  readonly subject = input<unknown>();
+
+  /**
    * The section's own caption.
    *
    * The Studio's `PLAY` is the default. A host whose colour is one of several
@@ -136,6 +156,10 @@ export class ColorSliders {
 
   protected readonly space = signal<SliderSpace>("hsl");
 
+  /** The colour and its subject, the pair both kept sets are read against. */
+  readonly #source = computed<ColorSource>(() =>
+    ({color: this.color(), subject: this.subject()}));
+
   /**
    * The three HSL values the sliders stand at.
    *
@@ -148,22 +172,26 @@ export class ColorSliders {
    *
    * The values are given up as soon as the color no longer agrees with them -
    * anything but this panel moving it - which is exactly what the comparison
-   * below asks. A host that hands the panel a different colour is one such
-   * thing: switching the half of a pair reads as a colour that arrived from
-   * elsewhere, so the kept values are the ones of the half being edited and
-   * never a mix of both.
+   * below asks. It asks about `subject` first, because a colour is compared
+   * in three bytes and two colours can agree in those while coming from
+   * different places: switching the half of a pair whose colours coincide
+   * would otherwise leave the values of the half no longer being edited
+   * standing, and pulling lightness back up would hand back the other half's
+   * hue.
    *
    * They are kept unrounded, and `hslShown` rounds them for the control. A
    * value the visitor drags arrives on the slider's step anyway; one that
    * arrived with the color would otherwise be moved before the first touch.
    * That matters for OKLch, see `oklch`, and the two are kept alike.
    */
-  protected readonly hsl = linkedSignal<Color, Hsl>({
-    source: this.color,
-    computation: (color, previous) => {
-      if (previous && sameColor(hslColor(previous.value), color)) return previous.value;
+  protected readonly hsl = linkedSignal<ColorSource, Hsl>({
+    source: this.#source,
+    computation: (source, previous) => {
+      if (previous && sameSource(previous.source, source, hslColor(previous.value))) {
+        return previous.value;
+      }
 
-      return readHsl(color);
+      return readHsl(source.color);
     }
   });
 
@@ -181,12 +209,14 @@ export class ColorSliders {
    * color that just arrived, and the first nudge of lightness would rebuild
    * the color at the lower ceiling - a visible jump for a move of 0.1 %.
    */
-  protected readonly oklch = linkedSignal<Color, Oklch>({
-    source: this.color,
-    computation: (color, previous) => {
-      if (previous && sameColor(oklchColor(previous.value), color)) return previous.value;
+  protected readonly oklch = linkedSignal<ColorSource, Oklch>({
+    source: this.#source,
+    computation: (source, previous) => {
+      if (previous && sameSource(previous.source, source, oklchColor(previous.value))) {
+        return previous.value;
+      }
 
-      return readOklch(color);
+      return readOklch(source.color);
     }
   });
 
@@ -403,6 +433,18 @@ function oklchColor(oklch: Oklch): Color {
   const chromacity = Math.min(oklch.c, chromaCeilingAt(oklch.l, oklch.h));
 
   return fromOklch({l: oklch.l / 100, c: chromacity, h: oklch.h});
+}
+
+
+/**
+ * Whether the kept values still stand for what the panel is being handed.
+ *
+ * The subject before the colour: two halves of a pair that coincide arrive as
+ * the same three bytes, so the colour alone cannot tell a switch of subject
+ * from the panel's own last frame.
+ */
+function sameSource(previous: ColorSource, source: ColorSource, kept: Color): boolean {
+  return previous.subject === source.subject && sameColor(kept, source.color);
 }
 
 

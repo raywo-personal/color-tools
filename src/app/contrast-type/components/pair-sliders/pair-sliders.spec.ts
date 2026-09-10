@@ -113,6 +113,22 @@ describe("PairSliders", () => {
     });
 
 
+    it("hands it the other half even where the two coincide", async () => {
+      // The panel keeps the slider values a colour cannot hold and gives them
+      // up on a colour it did not produce itself - a comparison in three
+      // bytes, which two halves that coincide pass. Aiming at black text after
+      // dragging the background to black would otherwise leave the tracks on
+      // the background's hue and saturation.
+      const {sliders, aimAt, drag} = await panel("background", "#000000", "#3366CC");
+
+      await drag(2, 0);
+
+      await aimAt("text");
+
+      expect(sliders().map(input => Number(input.value))).toEqual([0, 0, 0]);
+    });
+
+
     it("names the target, because the sliders name only their axes", async () => {
       // The one thing on this block saying which half the three tracks move.
       // Colour is not a carrier of it, and a visitor who has scrolled past

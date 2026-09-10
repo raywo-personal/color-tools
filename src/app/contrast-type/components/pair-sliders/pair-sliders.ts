@@ -26,6 +26,12 @@ import {ColorSliders} from "@common/components/color-sliders/color-sliders";
  * owns it; a selector of its own here would be a second display of one mode,
  * which is what `PaletteChips`' own comment argues against.
  *
+ * **The target goes in beside the colour, as the panel's subject.** The panel
+ * keeps the slider values a colour cannot hold and gives them up on a colour it
+ * did not itself produce - a comparison in three bytes, which two halves of a
+ * pair that coincide pass. Aiming at the other half then has to say so, or the
+ * tracks stand at the hue of the half no longer being edited.
+ *
  * **The caption names the target, and that is what pays for the mode.** The
  * sliders name their axes - `HUE`, `SATURATION` - and never their subject, so
  * without it the panel would be silent about which half it moves for anyone who
@@ -41,6 +47,7 @@ import {ColorSliders} from "@common/components/color-sliders/color-sliders";
   imports: [ColorSliders],
   template: `
     <ct-color-sliders [color]="color()"
+                      [subject]="target()"
                       [caption]="caption()"
                       (colorAdjusted)="adjust($event)"
                       (commit)="commit()"/>
