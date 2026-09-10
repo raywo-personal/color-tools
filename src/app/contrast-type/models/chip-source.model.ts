@@ -14,9 +14,9 @@ import {Palette, PALETTE_SLOTS, PaletteSlot} from "@engine/palette/palette.model
  * says why it is a source and never a hex.
  *
  * `ContrastColorRole` rather than two literals of this file's own: `text` and
- * `background` are already the words the `APPLY TO` row and the two fields
- * above it use for the pair, and a second spelling of the same two would be
- * the one that drifts.
+ * `background` are already the words the two fields, the chips' own menus and
+ * the sliders' selector use for the pair, and a second spelling of the same
+ * two would be the one that drifts.
  *
  * **The type stays out of the engine.** A slot is the palette's own concept
  * and the engine has it; "a chip on the Contrast & Type row" is this screen's,

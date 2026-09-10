@@ -52,6 +52,23 @@ describe("PairSliders", () => {
       return element.querySelector("p")?.textContent?.trim() ?? "";
     }
 
+    /**
+     * The two segments of the panel's own subject selector, found by the
+     * group's name - the space switch beside them is a `role=group` too.
+     */
+    function segments(): HTMLButtonElement[] {
+      return Array.from(element
+        .querySelectorAll("[aria-label='Adjust which half of the pair'] button"));
+    }
+
+    async function pick(caption: string) {
+      const button = segments()
+        .find(segment => segment.textContent?.trim() === caption) as HTMLButtonElement;
+
+      button.click();
+      await fixture.whenStable();
+    }
+
     async function aimAt(role: ContrastColorRole) {
       fixture.componentRef.setInput("target", role);
       await fixture.whenStable();
@@ -69,7 +86,7 @@ describe("PairSliders", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, store, element, sliders, caption, aimAt, drag, release};
+    return {fixture, store, element, sliders, caption, segments, pick, aimAt, drag, release};
   }
 
 
@@ -84,7 +101,7 @@ describe("PairSliders", () => {
 
   describe("the target", () => {
 
-    it("stands the panel on the half the chip row is aimed at", async () => {
+    it("stands the panel on the half it is aimed at", async () => {
       const {sliders} = await panel("background", "#111111", "#3366CC");
 
       const [hue] = chroma("#3366CC").hsl();
@@ -129,17 +146,62 @@ describe("PairSliders", () => {
     });
 
 
-    it("names the target, because the sliders name only their axes", async () => {
-      // The one thing on this block saying which half the three tracks move.
-      // Colour is not a carrier of it, and a visitor who has scrolled past
-      // `APPLY TO` has nothing else.
-      const {caption, aimAt} = await panel("background");
+    it("carries the selector in its own header, opened on the background", async () => {
+      // The mode belongs to the block it steers: a selector one block away
+      // reads as steering the chip row too, and the chips ask nothing about a
+      // half.
+      const {caption, segments} = await panel("background");
 
-      expect(caption()).toBe("ADJUST BACKGROUND");
+      expect(caption()).toBe("ADJUST");
+      expect(segments().map(segment => segment.textContent?.trim()))
+        .toEqual(["TEXT", "BACKGROUND"]);
+      expect(segments().map(segment => segment.getAttribute("aria-pressed")))
+        .toEqual(["false", "true"]);
+    });
 
-      await aimAt("text");
 
-      expect(caption()).toBe("ADJUST TEXT");
+    it("says which half is selected without relying on the inversion", async () => {
+      const {segments, pick} = await panel("background");
+
+      await pick("TEXT");
+
+      expect(segments().map(segment => segment.getAttribute("aria-pressed")))
+        .toEqual(["true", "false"]);
+    });
+
+
+    it("hands the panel the other colour when a segment is pressed", async () => {
+      // The selector is the way to reach the other half without writing a
+      // colour to it first, which a press on a chip cannot be.
+      const {sliders, pick} = await panel("background", "#AA2244", "#3366CC");
+
+      await pick("TEXT");
+
+      const [hue] = chroma("#AA2244").hsl();
+
+      expect(Number(sliders()[0].value)).toBe(Math.round(hue));
+    });
+
+
+    it("moves the half the segment names", async () => {
+      const {store, pick, drag} = await panel("background", "#AA2244", "#3366CC");
+
+      await pick("TEXT");
+      await drag(0, 120);
+
+      expect(store.contrastColors().text.hsl()[0]).toBeCloseTo(120, 0);
+      expect(store.contrastColors().background.hex("rgb")).toBe("#3366cc");
+    });
+
+
+    it("says nothing when the target switches", async () => {
+      // The visitor is standing on the button that switched it, and it carries
+      // its own name and `aria-pressed`.
+      const {pick} = await panel("background");
+
+      await pick("TEXT");
+
+      expect(fakeLiveAnnouncer().announcements).toEqual([]);
     });
 
   });

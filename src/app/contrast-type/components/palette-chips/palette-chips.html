@@ -1,27 +1,3 @@
-<!-- The caption and the two chips wrap together, so in the narrow column the
-     target takes the rows it needs rather than squeezing past its hit area. -->
-<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-  <p class="font-sans text-sm tracking-widest text-dim">APPLY TO</p>
-
-  <div role="group"
-       aria-label="Apply a color to"
-       class="flex flex-wrap gap-2">
-    @for (option of options; track option.role) {
-      <!-- aria-pressed, not colour alone: the inverted chip is the only other
-           thing telling a visitor which half of the pair the row below sets. -->
-      <button type="button"
-              class="h-11 cursor-pointer rounded-xs border px-3 font-sans text-base focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
-              [class.border-text]="target() === option.role"
-              [class.bg-text]="target() === option.role"
-              [class.text-bg]="target() === option.role"
-              [class.border-line]="target() !== option.role"
-              [class.text-text]="target() !== option.role"
-              [attr.aria-pressed]="target() === option.role"
-              (click)="pickTarget(option.role)">{{ option.caption }}</button>
-    }
-  </div>
-</div>
-
 <!-- Seven in one row at every width, unlike the Studio's palette: the chips are
      h-11 rather than square, so the touch minimum is met by their height. The
      shell's px-4 leaves 288px of a 320px screen, and seven across it with the
@@ -49,10 +25,14 @@
            through `carriedChip` in the store rather than through a connected
            list that would have to cross both trees.
 
-           `pointerdown` and `keydown` both mark the start of a gesture, which
-           is where the drag flag is cleared. Neither may be folded into the
-           click: by the time a click arrives the browser has forgotten which
-           one produced it.
+           `cdkMenuTriggerFor` is the press: CDK opens on a click and on
+           `Space` or `Enter`, focuses the first item, closes on `Escape` and
+           hands focus back to this chip afterwards - and it writes
+           `aria-haspopup` and `aria-expanded` itself, which is what says a
+           press opens something rather than applying a colour. The trigger is
+           handed to the drag because a press on the chip is not an outside
+           click, so an open menu would otherwise hang at the chip's old place
+           for the length of the carry.
 
            `pointer-events-none` while the chip is out is what makes a drop
            land on the element under the pointer rather than on the chip
@@ -71,18 +51,17 @@
            `dragging` rests on. -->
       <button type="button"
               cdkDrag
+              #trigger="cdkMenuTriggerFor"
               [cdkDragStartDelay]="dragStartDelay"
+              [cdkMenuTriggerFor]="chipMenu"
               class="flex h-11 w-full cursor-pointer items-end justify-center rounded-xs border border-line pb-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
               [class.pointer-events-none]="dragging()"
               [class.relative]="draggedChip() === chip.source"
               [class.z-30]="draggedChip() === chip.source"
               [style.background-color]="chip.background"
               [attr.aria-label]="chip.label"
-              (pointerdown)="onGestureStart()"
-              (keydown)="onGestureStart()"
-              (cdkDragStarted)="onDragStarted(chip)"
-              (cdkDragEnded)="onDragEnded($event)"
-              (click)="apply(chip)">
+              (cdkDragStarted)="onDragStarted(chip, trigger)"
+              (cdkDragEnded)="onDragEnded($event)">
         <!-- The handle, in whichever of black and white APCA puts further from
              the chip: it is drawn on a colour the visitor picked, so the
              draft's fixed white would vanish on a light `BG`. Bottom-aligned as
@@ -95,6 +74,49 @@
               aria-hidden="true"
               [style.color]="chip.ink">{{ chip.handle }}</span>
       </button>
+
+      <!-- What this colour can be, in the app's own colours: it is the app
+           offering the visitor a pair, not a part of the page it colours -
+           `VerdictPanel` and `ColorChooser` are the same card. Nothing in it
+           is drawn on a visitor colour, so every pair here is a token pair and
+           none of it is measured.
+
+           The menu is named after the chip it belongs to, because it opens
+           away from the row and seven of them would otherwise be seven
+           identical menus in speech. `min-w-` rather than a width: the two
+           captions are what set it, and they are not translated. -->
+      <ng-template #chipMenu>
+        <div cdkMenu
+             class="min-w-64 rounded-xs border border-line bg-panel p-1 text-text shadow-lg"
+             [attr.aria-label]="chip.label">
+          @for (action of chip.actions; track action.role) {
+            <!-- The caption and the figure are the item's whole accessible
+                 name, in that order: what this press does, then what the pair
+                 would stand at. No `aria-label`, so the name a screen reader
+                 speaks is the text a visitor reads - and the Lc is a figure
+                 rather than a colour, which is what lets a listener learn a
+                 pairing fails before making it.
+
+                 The ring is `text` on `panel` and needs no measuring; the
+                 offset is on the element itself, because the check reads one
+                 element at a time. -->
+            <button cdkMenuItem
+                    type="button"
+                    class="flex h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-xs px-3 text-left text-base outline-offset-2 hover:bg-field focus-visible:outline-2 focus-visible:outline-text"
+                    (cdkMenuItemTriggered)="apply(chip, action.role)">
+              <span>{{ action.caption }}</span>
+              <span class="shrink-0 font-mono text-dim">Lc {{ action.lc }}</span>
+            </button>
+          }
+        </div>
+      </ng-template>
     </li>
   }
 </ul>
+
+<!-- What a press does, under the row rather than above it: the chips are
+     swatches and the sentence is what turns them into controls. It names the
+     press alone. The drag and the marks are said once already, beside
+     `PREVIEW` - `website-preview.html` says why that one line stands over the
+     page it is about rather than here. -->
+<p class="mt-2 text-sm text-dim">Press a color to use it as the text or the background.</p>

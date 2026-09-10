@@ -1,6 +1,7 @@
-import {Component, computed, inject, model, signal} from "@angular/core";
+import {Component, computed, inject, output, signal} from "@angular/core";
 import {CdkDrag, CdkDragEnd, DragStartDelay} from "@angular/cdk/drag-drop";
-import {Color} from "chroma-js";
+import {CdkMenu, CdkMenuItem, CdkMenuTrigger} from "@angular/cdk/menu";
+import chroma, {Color} from "chroma-js";
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
@@ -16,6 +17,16 @@ import {
 } from "@contrast-type/models/chip-source.model";
 
 
+/** One half of the pair, as the chip's menu offers it. */
+interface ChipAction {
+  readonly role: ContrastColorRole;
+  /** The item's own visible text, which is also its accessible name. */
+  readonly caption: string;
+  /** The Lc the pair would reach - absolute and rounded down, as everywhere. */
+  readonly lc: number;
+}
+
+
 interface Chip {
   readonly source: ChipSource;
   readonly color: Color;
@@ -25,19 +36,17 @@ interface Chip {
   /** Black or white, whichever APCA puts further from the chip's own color. */
   readonly ink: string;
   readonly label: string;
+  readonly actions: readonly ChipAction[];
 }
 
 
-interface TargetOption {
-  readonly role: ContrastColorRole;
-  readonly caption: string;
-}
+/** What each half is called in the item that sets it. */
+const ACTION_CAPTIONS: Record<ContrastColorRole, string> = {
+  text: "Use as the TEXT color",
+  background: "Use as the BACKGROUND"
+};
 
-
-const TARGET_OPTIONS: readonly TargetOption[] = [
-  {role: "text", caption: "TEXT"},
-  {role: "background", caption: "BACKGROUND"}
-];
+const ACTION_ROLES: readonly ContrastColorRole[] = ["text", "background"];
 
 /**
  * How long a finger has to rest on a chip before a drag begins, and no delay
@@ -57,35 +66,51 @@ const DRAG_START_DELAY: DragStartDelay = {touch: 300, mouse: 0};
  * pair's own two. Each one is a way into the pair and a colour they can put on
  * one element of the preview.
  *
- * The draft sets the background on a click and the text color on a
- * double-click. A double-click is not reachable from the keyboard, so it
- * cannot be the only way to set the text color, and the alternative here is a
- * target above the row rather than a second control per chip: seven chips are
- * seven focus stops instead of fourteen, every action stays one click, and the
- * row needs no overlay.
+ * ## A press opens a menu
  *
- * The price of a target is a mode, and what pays for it is the chip's own
- * name: it says which half of the pair the click will set, so the outcome is
- * spoken by the control the visitor is standing on. That is also why setting a
- * color from here is not announced - see `PairFields`.
+ * **The chip says what it holds and the menu says what it can be.** The draft
+ * sets the background on a click and the text color on a double-click, and a
+ * double-click is not reachable from the keyboard - so the two outcomes have
+ * to be named somewhere a keyboard can get at. The menu names them: a click or
+ * `Space` opens it, the first item takes focus, and the whole gesture is two
+ * keys or two clicks.
  *
- * The target is screen state, not app state: it is how these controls are
- * being used, not something the app has to remember or share. It is a `model()`
- * rather than this row's own signal because `PairSliders` moves the same half -
- * `ContrastType` owns it and hands it to both. Do not add a second selector
- * there: two ways of setting one mode is what the target was bought to avoid.
- * The sliders' caption reads the mode without setting it, which is what pays
- * for a panel that names its axes and never its subject.
+ * **Not a target above the row.** A `TEXT / BACKGROUND` selector there would
+ * say which half the next press writes, which is a mode - a thing to hold in
+ * one's head, and a line of this column - for two outcomes the menu already
+ * names in words. The half the *sliders* move is a different question and
+ * `PairSliders` owns it; this row reports the half it has just written so the
+ * panel follows, and asks nothing about it.
+ *
+ * **Two items, and never the page's elements.** The mark beside an element
+ * already offers all seven chips, and it knows which element it is about
+ * because the visitor is standing on it - a menu of targets would say
+ * `TABLE NUMBER` and leave them to work out which run of figures that is,
+ * which the drag never asks either. With both colours of every element it
+ * would be 46 entries, and each would have to carry a verdict: a
+ * screen-reader visitor has to be able to learn that a colour fails *before*
+ * placing it, which is `ColorChooser`'s rule and holds here. At two entries
+ * that is one figure each.
+ *
+ * **An item the colour already occupies is not offered.** `T` has no
+ * `Use as the TEXT color` and `BG` no `Use as the BACKGROUND`: the two presses
+ * that changed nothing stop existing. The source decides that, not the value -
+ * a palette colour that happens to equal the text colour is a coincidence the
+ * next roll of the palette undoes, and an item that came and went with it
+ * would make the menu flicker.
+ *
+ * **The figure is the pair's own Lc, not the page's.** Each item measures the
+ * pair it would leave behind - this colour against the other half, standing -
+ * which is the one thing this row can promise: what the page's elements then
+ * read at is the marks' business, and 22 of them cannot be summed into a
+ * number. Absolute and rounded down, as every Lc a visitor reads on this
+ * screen is.
  *
  * ## `T` and `BG` are chips like the other five
  *
- * **They carry the pair's two colours, and a click applies them the way any
- * chip's does** - to the half named above the row. Two of the four
- * combinations then change nothing, because the colour is already on that
- * half; the row is not made honest by hiding that, and a chip that answered a
- * press differently from its six neighbours would be the harder thing to
- * learn. What they are for is the drop: the text colour onto a button, the
- * background onto a card.
+ * **They carry the pair's two colours, and their menu is the same menu** -
+ * minus the item they already are. What they are for is the drop: the text
+ * colour onto a button, the background onto a card.
  *
  * **The pair is still set only from here and from the two fields.** A release
  * over the preview places a colour on an element and never writes `T` or `BG` -
@@ -110,23 +135,37 @@ const DRAG_START_DELAY: DragStartDelay = {touch: 300, mouse: 0};
  * stays in the Studio; `chipLabelFor()` says why the two are not printed
  * together.
  *
+ * **The chip's name is its handle and its colour; the outcome is the menu's.**
+ * The name opens with the handle **verbatim**, because the handle is visible
+ * text in the button and WCAG 2.5.3 asks the name to contain the label - the
+ * same rule `RESET PAGE` is held to. `T` and `BG` add what the letter stands
+ * for: a screen reader speaks them as letters and the adjacency to the two
+ * fields that carries it on screen is no help in speech. What a press does is
+ * `aria-haspopup`, which CDK sets, and then the items themselves - which is
+ * also why setting a colour from here is not announced: the visitor is
+ * standing on the item that says it. See `PairFields`.
+ *
  * **The label's colour comes from APCA, not from the draft's white.** It sits
  * on a colour the visitor picked, so a token is guaranteed against none of it
  * and a fixed white disappears on `BG` the moment the page is light.
  *
  * ## Two gestures on one button
  *
- * **A click applies the colour to the pair. On every device, and only that.**
- * The click is the gesture the target above the row describes, so a visitor who
- * has selected `BACKGROUND` gets a background and nothing else.
+ * **A click opens the menu. On every device, and only that.**
  *
  * **A drag carries the chip onto an element of the preview, and its release
- * applies nothing to the pair.** Two things hold that, and they are layered:
- * `pointer-events-none` moves the release's target off the chip, so the click
- * the browser dispatches at the common ancestor of press and release never
- * reaches this button at all; `#draggedFromPress` is the net under that, for
- * the case where press and release do coincide on the chip. Neither is
- * CDK's - its drag has no click handling of any kind.
+ * applies nothing to the pair.** `pointer-events-none` moves the release's
+ * target off the chip, so the click the browser dispatches at the common
+ * ancestor of press and release never reaches this button at all.
+ *
+ * **Nothing on this button writes to the pair, which is what a drag's click
+ * used to have to be kept away from.** An item writes a half, and a drag
+ * cannot reach an item: no press opens the menu while a chip is being carried,
+ * and a press that turns into a drag has moved on before its click. Where
+ * press and release do coincide on the chip, what a stray click can produce is
+ * a menu - which `Escape` closes and which has changed nothing. Do not wire an
+ * apply back onto this click: the flag that was the net under that is gone
+ * with the outcome it guarded.
  *
  * **No press puts a chip in hand - not a tap, not a click.** Three reasons,
  * and each of them is on its own enough:
@@ -148,16 +187,14 @@ const DRAG_START_DELAY: DragStartDelay = {touch: 300, mouse: 0};
  * `Touch.identifier` and `radiusX` to make that split, which a pointer handler
  * never sees. A carry armed from a press would therefore be armed by an
  * activation whose whole account of itself is the chip's name - and the name
- * says what the click does. This row rests on the outcome being spoken by the
- * control the visitor is standing on, and naming a second outcome is no way
- * out: it would bury the one they are about to make.
+ * says the chip holds a colour and opens a menu.
  *
- * **The no-drag path is not here.** It is the chooser on the element's own
- * mark - one press, on the thing being coloured, reachable by keyboard, mouse
- * and finger alike, with no state to carry across a scroll. It holds the same
- * seven chips, which is what keeps `T` and `BG` from being mouse-only. Placing
- * from this row as well would be a second way to do one thing, and it is the
- * way that cannot say what it is doing.
+ * **The no-drag path onto the page is not here.** It is the chooser on the
+ * element's own mark - one press, on the thing being coloured, reachable by
+ * keyboard, mouse and finger alike, with no state to carry across a scroll. It
+ * holds the same seven chips, which is what keeps `T` and `BG` from being
+ * mouse-only. Placing from this row as well would be a second way to do one
+ * thing, and it is the way that cannot say which element it is doing it to.
  *
  * **The carry is store state, not a signal here**: the chip that is picked up
  * and the elements that answer the carry are separate component trees, in two
@@ -165,7 +202,7 @@ const DRAG_START_DELAY: DragStartDelay = {touch: 300, mouse: 0};
  */
 @Component({
   selector: "ct-palette-chips",
-  imports: [CdkDrag],
+  imports: [CdkDrag, CdkMenu, CdkMenuItem, CdkMenuTrigger],
   templateUrl: "./palette-chips.html",
   host: {
     "class": "block"
@@ -176,26 +213,23 @@ export class PaletteChips {
   readonly #stateStore = inject(AppStateStore);
   readonly #dispatch = injectDispatch(contrastEvents);
 
-  protected readonly options = TARGET_OPTIONS;
   protected readonly dragStartDelay = DRAG_START_DELAY;
 
   /**
-   * The half of the pair a click applies to, and the half the sliders below
-   * the row move.
+   * The half of the pair a menu item has just written.
    *
-   * The background to begin with, which is the click the draft draws. It is
-   * also the half a palette color is usually tried as - the text color then
-   * follows from whether it reads on it. The default is kept here as well as
-   * at the host, so the row still reads as intended when it stands alone; the
-   * host's is the one a screen opens on, so the two have to agree.
+   * **A report, not a mode.** The sliders below the row move one half and
+   * `PairSliders` holds which - the half a visitor has just set is the one
+   * they are most likely to nudge next, so the panel follows a press here
+   * rather than making them say it twice. This row reads nothing back: a
+   * second display of that state is what a target above the chips would have
+   * been.
    */
-  readonly target = model<ContrastColorRole>("background");
+  readonly colorApplied = output<ContrastColorRole>();
 
   protected readonly chips = computed<Chip[]>(() => {
     const pair = this.#stateStore.contrastColors();
     const palette = this.#stateStore.currentPalette();
-    const target = this.target();
-    const targetName = target === "text" ? "text color" : "background";
 
     return CHIP_SOURCES.map(source => {
       const color = colorOf(source, pair, palette);
@@ -208,44 +242,21 @@ export class PaletteChips {
         background: color.hex("rgb"),
         handle,
         ink: findOptimalTextColor(color).color.hex("rgb"),
-        // What the click does, and it is the whole of what a press does. The
-        // name is read out by the control the visitor is standing on, so a
-        // second outcome it did not name would be a press that lied about
-        // itself - which is why no press arms a carry.
-        //
-        // It opens with the handle **verbatim**, because the handle is visible
-        // text in the button and WCAG 2.5.3 asks the name to contain the label
-        // - the same rule `RESET PAGE` is held to. `T` and `BG` add what the
-        // letter stands for: a screen reader speaks them as letters and the
-        // adjacency to the two fields that carries it on screen is no help in
-        // speech.
         label: sourceName === null
-          ? `${handle}: Use ${colorName(color)} as the ${targetName}`
-          : `${handle}, ${sourceName}: Use ${colorName(color)} as the ${targetName}`
+          ? `${handle}: ${colorName(color)}`
+          : `${handle}, ${sourceName}: ${colorName(color)}`,
+        actions: ACTION_ROLES
+          // The item this chip already is: the source against the role, never
+          // the two colours - see the comment on the class.
+          .filter(role => source !== role)
+          .map(role => ({
+            role,
+            caption: ACTION_CAPTIONS[role],
+            lc: lcWith(color, role, pair.text, pair.background)
+          }))
       };
     });
   });
-
-  /**
-   * Whether the press or key now in progress turned into a drag, so that its
-   * click has to go nowhere.
-   *
-   * **It is the net under `pointer-events-none`, and that is why it stays.**
-   * With that class in place the release's target is the element under the
-   * pointer, so the browser dispatches the drag's click at the common ancestor
-   * of press and release and `apply()` never runs. Take the class away and the
-   * two targets coincide on the chip, the click *is* delivered here, and this
-   * flag is the only thing left between a drop and half the pair being
-   * repainted. Do not delete it because a drag "already" applies nothing.
-   *
-   * **Cleared at the start of the next gesture**, because the end of a gesture
-   * offers no point that reliably runs: `apply()` does not run after a drag at
-   * all, so a flag cleared there would still be standing at the next Enter on
-   * any chip and would swallow it. `onGestureStart()` is on both `pointerdown`
-   * and `keydown` - a gesture always starts, and clearing it there is what
-   * makes the flag mean "this gesture", not "some earlier one".
-   */
-  #draggedFromPress = false;
 
   /**
    * The chip CDK is carrying, or nothing.
@@ -290,26 +301,15 @@ export class PaletteChips {
   protected readonly dragging = computed(() => this.#draggedChip() !== null);
 
 
-  protected pickTarget(role: ContrastColorRole): void {
-    this.target.set(role);
-  }
-
-
   /**
-   * A gesture begins - a press or a key - and nothing has been dragged in it
-   * yet.
+   * A carry begins, and the chip's own menu goes with it.
    *
-   * One handler on both events rather than a branch on the kind of gesture:
-   * what the flag needs is a point that is reliably before the click, and both
-   * of these are.
+   * CDK closes a menu on a click outside it, and the press that starts a drag
+   * is on the trigger - which is not outside. Left standing, the menu hangs at
+   * the place the chip has just left until the drop's click closes it.
    */
-  protected onGestureStart(): void {
-    this.#draggedFromPress = false;
-  }
-
-
-  protected onDragStarted(chip: Chip): void {
-    this.#draggedFromPress = true;
+  protected onDragStarted(chip: Chip, trigger: CdkMenuTrigger): void {
+    trigger.close();
     this.#draggedChip.set(chip.source);
     this.#dispatch.chipPickedUp(chip.source);
   }
@@ -335,16 +335,32 @@ export class PaletteChips {
   }
 
 
-  protected apply(chip: Chip): void {
-    // The drag already said what the gesture meant. Letting the click through
-    // as well would repaint half the pair every time a colour is placed.
-    if (this.#draggedFromPress) return;
-
-    if (this.target() === "text") {
+  protected apply(chip: Chip, role: ContrastColorRole): void {
+    if (role === "text") {
       this.#dispatch.textColorChanged(chip.color);
     } else {
       this.#dispatch.backgroundColorChanged(chip.color);
     }
+
+    this.colorApplied.emit(role);
   }
 
+}
+
+
+/**
+ * The Lc the pair would stand at with this colour on one of its halves.
+ *
+ * The other half is whatever it is now: the item promises the pair it leaves
+ * behind, not a pair in which both halves moved.
+ */
+function lcWith(color: Color,
+                role: ContrastColorRole,
+                text: Color,
+                background: Color): number {
+  const contrast = role === "text"
+    ? chroma.contrastAPCA(color, background)
+    : chroma.contrastAPCA(text, color);
+
+  return Math.floor(Math.abs(contrast));
 }
