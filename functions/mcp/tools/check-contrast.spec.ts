@@ -9,6 +9,7 @@ interface CheckContrastArgs {
   backgroundColor: string;
   fontSize?: string;
   fontWeight?: string;
+  textKind?: string;
 }
 
 function checkContrast(client: Client, args: CheckContrastArgs) {
@@ -44,6 +45,46 @@ describe("check_contrast", () => {
 
       expect(tool!.inputSchema.required)
         .toEqual(["textColor", "backgroundColor"]);
+    });
+
+  });
+
+
+  describe("the kind of text", () => {
+
+    it("should hold a column of body copy to the floor its row falls below", async () => {
+      // 24px/400 asks Lc 60 of spot text and the floor of a column of it, so
+      // the same pair is a verdict either way round. Without this an
+      // assistant is told a paragraph passes on the figure the table writes
+      // for a copyright line.
+      const args = {
+        textColor: "#808080",
+        backgroundColor: "#ffffff",
+        fontSize: "24px",
+        fontWeight: "400"
+      };
+
+      const spot = structured(await checkContrast(client, {...args, textKind: "spotText"}));
+      const body = structured(await checkContrast(client, {...args, textKind: "bodyCopy"}));
+
+      expect(spot["requiredLc"]).toBe(60);
+      expect(spot["meetsRequirement"]).toBe(true);
+      expect(body["requiredLc"]).toBe(75);
+      expect(body["meetsRequirement"]).toBe(false);
+    });
+
+    it("should answer for spot text where the caller says nothing", async () => {
+      // The table as written. An assistant asking about a paragraph has to
+      // say so, which is what the input's description is for.
+      const result = structured(await checkContrast(client, {
+        textColor: "#808080",
+        backgroundColor: "#ffffff",
+        fontSize: "24px",
+        fontWeight: "400"
+      }));
+
+      expect(result["textKind"]).toBe("spotText");
+      expect(result["requiredLc"]).toBe(60);
     });
 
   });

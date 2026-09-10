@@ -364,6 +364,30 @@ describe("sample page", () => {
   });
 
 
+  it("calls exactly the four columns of running text body copy", () => {
+    // The pinned list is the classification itself - the lead, the running
+    // text, the link inside it and the pull quote. The original's own
+    // examples settle the two that look arguable: it names a copyright line,
+    // a placeholder and a disabled label as spot text, so the small print and
+    // the disabled button stay spot text however weakly they are set, and a
+    // table cell, a field's text, an error line and a caption are each a cell
+    // or a line rather than a column.
+    const bodyCopy = SAMPLE_ELEMENTS
+      .filter(element => element.textKind === "bodyCopy")
+      .map(element => element.key);
+
+    expect(bodyCopy).toEqual(["lead", "bodyText", "bodyLink", "quote"]);
+  });
+
+
+  it("gives the link inside the paragraph the paragraph's own kind", () => {
+    // The link is a word within `bodyText`, so a laxer requirement on it
+    // would rate one run of the same sentence more leniently than the rest.
+    expect(sampleElement("bodyLink").textKind)
+      .toBe(sampleElement("bodyText").textKind);
+  });
+
+
   it("keeps a role off the pair's ground", () => {
     // `color0` is the accent and a candidate for the ground once a pair is
     // taken from the palette; the roles read the remaining slots instead.

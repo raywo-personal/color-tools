@@ -1,5 +1,6 @@
 import {isTranslucent, isHex} from "@engine/color/color-format-parser.helper";
 import {FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
+import {BODY_COPY_MIN_LC, TEXT_KINDS} from "@engine/contrast/apca-rating.helper";
 import {z} from "zod";
 import {PIXEL_FONT_SIZE_PATTERN} from "@engine/helpers/font-size.helper";
 import chroma from "chroma-js";
@@ -36,3 +37,16 @@ export const fontSizeInput = z.string()
 export const fontWeightInput = z.enum(FONT_WEIGHTS)
   .default("400")
   .describe("CSS font weight, for example '400' for regular or '700' for bold. The APCA requirement depends on it.");
+
+/**
+ * Whether the text is a column of body copy, which the APCA table holds to a
+ * higher Lc than anything read in passing.
+ *
+ * `spotText` is the default because it is the table as written, and because it
+ * is the answer for most of what a tool is asked about - a button, a label, a
+ * heading. An assistant rating a paragraph has to say so, which is what the
+ * description is for.
+ */
+export const textKindInput = z.enum(TEXT_KINDS)
+  .default("spotText")
+  .describe(`bodyCopy: a column of text read fluently, such as a paragraph or an article - held to at least Lc ${BODY_COPY_MIN_LC}. spotText: text read in passing, such as a heading, a button, a label, a caption, a copyright line or a placeholder - held to the plain requirement for its size and weight.`);

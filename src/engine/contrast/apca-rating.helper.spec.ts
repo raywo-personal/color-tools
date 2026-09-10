@@ -1,6 +1,7 @@
 import {
   APCA_RATING_LABELS,
   APCARating,
+  BODY_COPY_MIN_LC,
   findClosestSizeKey,
   getAPCAPolarity,
   getAPCARating,
@@ -8,7 +9,8 @@ import {
   getRequiredLc,
   lightestPassingFontWeight,
   NEGATIVE_MAX_APCA_CONTRAST,
-  smallestPassingFontSize
+  smallestPassingFontSize,
+  TEXT_KINDS
 } from "./apca-rating.helper";
 import {
   APCALookupTable,
@@ -30,7 +32,7 @@ describe("APCA Rating Helper", () => {
 
       it("should return 0 when lookup table entry has null contrast", () => {
         // 12px font at any weight has null contrast (not readable)
-        const rating = getAPCARating(100, "12px", "400", apcaLookup);
+        const rating = getAPCARating(100, "12px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(0);
       });
@@ -38,7 +40,7 @@ describe("APCA Rating Helper", () => {
       it("should return 0 when contrast is below 70% of required", () => {
         // 16px/400 requires 90 contrast, 70% = 63
         // Contrast of 50 is below 63
-        const rating = getAPCARating(50, "16px", "400", apcaLookup);
+        const rating = getAPCARating(50, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(0);
       });
@@ -46,7 +48,7 @@ describe("APCA Rating Helper", () => {
       it("should return 1 when contrast is between 70% and 100% of required", () => {
         // 16px/400 requires 90 contrast
         // 70% = 63, contrast of 70 is between 63 and 90
-        const rating = getAPCARating(70, "16px", "400", apcaLookup);
+        const rating = getAPCARating(70, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(1);
       });
@@ -54,7 +56,7 @@ describe("APCA Rating Helper", () => {
       it("should return 2 when contrast is between 100% and 130% of required", () => {
         // 16px/400 requires 90 contrast
         // 95 is between 90 and 117 (130% of 90)
-        const rating = getAPCARating(95, "16px", "400", apcaLookup);
+        const rating = getAPCARating(95, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(2);
       });
@@ -62,7 +64,7 @@ describe("APCA Rating Helper", () => {
       it("should return 3 when contrast exceeds 130% of required", () => {
         // 16px/400 requires 90 contrast
         // 130% = 117, contrast of 120 exceeds this
-        const rating = getAPCARating(120, "16px", "400", apcaLookup);
+        const rating = getAPCARating(120, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(3);
       });
@@ -73,20 +75,20 @@ describe("APCA Rating Helper", () => {
 
       it("should use absolute value for negative contrast", () => {
         // Negative contrast should be treated the same as positive
-        const positiveRating = getAPCARating(100, "16px", "400", apcaLookup);
-        const negativeRating = getAPCARating(-100, "16px", "400", apcaLookup);
+        const positiveRating = getAPCARating(100, "16px", "400", "spotText", apcaLookup);
+        const negativeRating = getAPCARating(-100, "16px", "400", "spotText", apcaLookup);
 
         expect(negativeRating).toBe(positiveRating);
       });
 
       it("should return 0 for negative contrast below threshold", () => {
-        const rating = getAPCARating(-50, "16px", "400", apcaLookup);
+        const rating = getAPCARating(-50, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(0);
       });
 
       it("should return 3 for high negative contrast", () => {
-        const rating = getAPCARating(-120, "16px", "400", apcaLookup);
+        const rating = getAPCARating(-120, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(3);
       });
@@ -101,7 +103,7 @@ describe("APCA Rating Helper", () => {
         // if the lookup ever reads a neighbouring row again. Snapping a
         // number of pixels to a key is fontSizeKeyFrom()'s job, and the
         // parameter type keeps a raw number out of here.
-        const rating = getAPCARating(80, "16px", "400", apcaLookup);
+        const rating = getAPCARating(80, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(1);
       });
@@ -115,8 +117,8 @@ describe("APCA Rating Helper", () => {
         // 16px/700 requires 60 contrast
         const contrast = 65;
 
-        const rating400 = getAPCARating(contrast, "16px", "400", apcaLookup);
-        const rating700 = getAPCARating(contrast, "16px", "700", apcaLookup);
+        const rating400 = getAPCARating(contrast, "16px", "400", "spotText", apcaLookup);
+        const rating700 = getAPCARating(contrast, "16px", "700", "spotText", apcaLookup);
 
         // 65 is below 70% of 90 (63) so rating400 should be higher than expected
         // Actually 65 > 63, so rating400 = 1
@@ -127,14 +129,14 @@ describe("APCA Rating Helper", () => {
 
       it("should handle weight 100 which often has null contrast", () => {
         // Weight 100 at most sizes has null contrast
-        const rating = getAPCARating(100, "16px", "100", apcaLookup);
+        const rating = getAPCARating(100, "16px", "100", "spotText", apcaLookup);
 
         expect(rating).toBe(0);
       });
 
       it("should handle weight 900 appropriately", () => {
         // 18px/900 requires 55 contrast
-        const rating = getAPCARating(60, "18px", "900", apcaLookup);
+        const rating = getAPCARating(60, "18px", "900", "spotText", apcaLookup);
 
         // 60 > 55 and < 71.5 (130% of 55)
         expect(rating).toBe(2);
@@ -145,14 +147,14 @@ describe("APCA Rating Helper", () => {
     describe("edge cases", () => {
 
       it("should return 0 for zero contrast", () => {
-        const rating = getAPCARating(0, "16px", "400", apcaLookup);
+        const rating = getAPCARating(0, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(0);
       });
 
       it("should handle maximum possible APCA contrast (~106)", () => {
         // Maximum APCA contrast is around 106
-        const rating = getAPCARating(106, "96px", "400", apcaLookup);
+        const rating = getAPCARating(106, "96px", "400", "spotText", apcaLookup);
 
         // 96px/400 requires 33 contrast, 106 far exceeds 130% of 33
         expect(rating).toBe(3);
@@ -160,8 +162,8 @@ describe("APCA Rating Helper", () => {
 
       it("should handle exact threshold boundaries", () => {
         // 24px/400 requires 60 contrast, so the 70% boundary sits at 42.
-        const ratingAt43 = getAPCARating(43, "24px", "400", apcaLookup);
-        const ratingAt41 = getAPCARating(41, "24px", "400", apcaLookup);
+        const ratingAt43 = getAPCARating(43, "24px", "400", "spotText", apcaLookup);
+        const ratingAt41 = getAPCARating(41, "24px", "400", "spotText", apcaLookup);
 
         expect(ratingAt43).toBe(1);
         expect(ratingAt41).toBe(0);
@@ -203,7 +205,7 @@ describe("APCA Rating Helper", () => {
           "96px": defaultWeights
         };
 
-        const rating = getAPCARating(55, "16px", "400", customLookup);
+        const rating = getAPCARating(55, "16px", "400", "spotText", customLookup);
 
         // 55 > 50 and < 65 (130% of 50)
         expect(rating).toBe(2);
@@ -215,10 +217,10 @@ describe("APCA Rating Helper", () => {
 
       it("should return APCARating type (0, 1, 2, or 3)", () => {
         const ratings: APCARating[] = [
-          getAPCARating(10, "16px", "400", apcaLookup),
-          getAPCARating(70, "16px", "400", apcaLookup),
-          getAPCARating(100, "16px", "400", apcaLookup),
-          getAPCARating(120, "16px", "400", apcaLookup)
+          getAPCARating(10, "16px", "400", "spotText", apcaLookup),
+          getAPCARating(70, "16px", "400", "spotText", apcaLookup),
+          getAPCARating(100, "16px", "400", "spotText", apcaLookup),
+          getAPCARating(120, "16px", "400", "spotText", apcaLookup)
         ];
 
         ratings.forEach(rating => {
@@ -233,7 +235,7 @@ describe("APCA Rating Helper", () => {
       it("should rate black text on white background as good for body text", () => {
         // Black on white reaches an APCA contrast of about 106. 16px/400
         // requires 90, and 106 stays below 130% of that.
-        const rating = getAPCARating(106, "16px", "400", apcaLookup);
+        const rating = getAPCARating(106, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(2);
       });
@@ -243,7 +245,7 @@ describe("APCA Rating Helper", () => {
         // APCA contrast any pair can reach. A rating of 3 is therefore
         // unreachable at body size, and an expectation of 3 there is a
         // symptom of the size lookup reading the next larger row.
-        const rating = getAPCARating(NEGATIVE_MAX_APCA_CONTRAST, "16px", "400", apcaLookup);
+        const rating = getAPCARating(NEGATIVE_MAX_APCA_CONTRAST, "16px", "400", "spotText", apcaLookup);
 
         expect(90 * 1.3).toBeGreaterThan(NEGATIVE_MAX_APCA_CONTRAST);
         expect(rating).toBe(2);
@@ -251,7 +253,7 @@ describe("APCA Rating Helper", () => {
 
       it("should rate low contrast text as not readable", () => {
         // Light gray on white might have contrast around 30
-        const rating = getAPCARating(30, "16px", "400", apcaLookup);
+        const rating = getAPCARating(30, "16px", "400", "spotText", apcaLookup);
 
         expect(rating).toBe(0);
       });
@@ -261,8 +263,8 @@ describe("APCA Rating Helper", () => {
         // 48px/400 requires 40 contrast
         const contrastValue = 45;
 
-        const smallTextRating = getAPCARating(contrastValue, "16px", "400", apcaLookup);
-        const largeTextRating = getAPCARating(contrastValue, "48px", "400", apcaLookup);
+        const smallTextRating = getAPCARating(contrastValue, "16px", "400", "spotText", apcaLookup);
+        const largeTextRating = getAPCARating(contrastValue, "48px", "400", "spotText", apcaLookup);
 
         // Same contrast should rate better for large text
         expect(largeTextRating).toBeGreaterThan(smallTextRating);
@@ -281,7 +283,7 @@ describe("APCA Rating Helper", () => {
       // back too lenient if the lookup skipped ahead.
       const wrongRows = FONT_SIZES.flatMap(size => FONT_WEIGHTS
         .filter(weight =>
-          getRequiredLc(size, weight, apcaLookup)
+          getRequiredLc(size, weight, "spotText", apcaLookup)
           !== apcaLookup[size][weight].contrast)
         .map(weight => `${size}/${weight}`));
 
@@ -304,16 +306,18 @@ describe("APCA Rating Helper", () => {
         ];
       });
 
-      const disagreements = FONT_SIZES.flatMap(size => FONT_WEIGHTS
-        .flatMap(weight => pairs
-          .filter(({text, background}) => {
-            const lc = calculateAPCAContrast(text, background);
-            const rating = getAPCARating(lc, size, weight, apcaLookup);
+      const disagreements = TEXT_KINDS.flatMap(textKind => FONT_SIZES
+        .flatMap(size => FONT_WEIGHTS
+          .flatMap(weight => pairs
+            .filter(({text, background}) => {
+              const lc = calculateAPCAContrast(text, background);
+              const rating = getAPCARating(lc, size, weight, textKind, apcaLookup);
 
-            return meetsAPCARequirement(text, background, size, weight)
-              !== (rating >= 2);
-          })
-          .map(({text, background}) => `${size}/${weight} ${text} on ${background}`)));
+              return meetsAPCARequirement(text, background, size, weight, textKind)
+                !== (rating >= 2);
+            })
+            .map(({text, background}) =>
+              `${textKind} ${size}/${weight} ${text} on ${background}`))));
 
       expect(disagreements).toEqual([]);
     });
@@ -321,8 +325,8 @@ describe("APCA Rating Helper", () => {
     it("should report no requirement where the table has none", () => {
       // Not a missing value: at 12px, and at the thin weights above it, no
       // text is readable whatever the colors are.
-      expect(getRequiredLc("12px", "400", apcaLookup)).toBeNull();
-      expect(getRequiredLc("16px", "100", apcaLookup)).toBeNull();
+      expect(getRequiredLc("12px", "400", "spotText", apcaLookup)).toBeNull();
+      expect(getRequiredLc("16px", "100", "spotText", apcaLookup)).toBeNull();
     });
 
   });
@@ -367,20 +371,20 @@ describe("APCA Rating Helper", () => {
 
     it("should name the first row of the column the contrast clears", () => {
       // At weight 400 the column asks 100, 100, 90, 75 from 14px to 18px.
-      expect(smallestPassingFontSize(75, "400")).toBe("18px");
-      expect(smallestPassingFontSize(90, "400")).toBe("16px");
-      expect(smallestPassingFontSize(-100, "400")).toBe("14px");
+      expect(smallestPassingFontSize(75, "400", "spotText")).toBe("18px");
+      expect(smallestPassingFontSize(90, "400", "spotText")).toBe("16px");
+      expect(smallestPassingFontSize(-100, "400", "spotText")).toBe("14px");
     });
 
     it("should scan past the empty 12px row rather than stop at it", () => {
       // A null cell is a gap in the column, not its end.
-      expect(smallestPassingFontSize(106, "400")).toBe("14px");
+      expect(smallestPassingFontSize(106, "400", "spotText")).toBe("14px");
     });
 
     it("should come back empty where no size passes", () => {
       // The table asks 30 at the least; below that no row helps.
-      expect(smallestPassingFontSize(0, "400")).toBeNull();
-      expect(smallestPassingFontSize(29, "900")).toBeNull();
+      expect(smallestPassingFontSize(0, "400", "spotText")).toBeNull();
+      expect(smallestPassingFontSize(29, "900", "spotText")).toBeNull();
     });
 
   });
@@ -390,20 +394,66 @@ describe("APCA Rating Helper", () => {
 
     it("should name the first cell of the row the contrast clears", () => {
       // At 16px the row asks 90, 75, 70, 60, 60 from 400 to 800.
-      expect(lightestPassingFontWeight(60, "16px")).toBe("700");
-      expect(lightestPassingFontWeight(75, "16px")).toBe("500");
-      expect(lightestPassingFontWeight(-90, "16px")).toBe("400");
+      expect(lightestPassingFontWeight(60, "16px", "spotText")).toBe("700");
+      expect(lightestPassingFontWeight(75, "16px", "spotText")).toBe("500");
+      expect(lightestPassingFontWeight(-90, "16px", "spotText")).toBe("400");
     });
 
     it("should scan past the empty thin weights rather than stop at them", () => {
       // 100 to 300 are null at 16px, and so is 900 again after 800: the
       // row has gaps on both sides of its values.
-      expect(lightestPassingFontWeight(106, "16px")).toBe("400");
+      expect(lightestPassingFontWeight(106, "16px", "spotText")).toBe("400");
     });
 
     it("should come back empty where no weight passes", () => {
-      expect(lightestPassingFontWeight(106, "12px")).toBeNull();
-      expect(lightestPassingFontWeight(50, "16px")).toBeNull();
+      expect(lightestPassingFontWeight(106, "12px", "spotText")).toBeNull();
+      expect(lightestPassingFontWeight(50, "16px", "spotText")).toBeNull();
+    });
+
+  });
+
+
+  describe("the body-copy floor", () => {
+
+    it("should lift a requirement under the floor and leave the ones above it", () => {
+      // 24px/400 asks Lc 60 of spot text; a column of body copy at that size
+      // is held to the floor instead. 16px/400 already asks 90, which is
+      // above the floor and stays untouched.
+      expect(getRequiredLc("24px", "400", "spotText")).toBe(60);
+      expect(getRequiredLc("24px", "400", "bodyCopy")).toBe(BODY_COPY_MIN_LC);
+      expect(getRequiredLc("16px", "400", "bodyCopy")).toBe(90);
+    });
+
+    it("should leave a cell that carries no text at all empty", () => {
+      // The floor is a stricter requirement, not a readable one. At 12px the
+      // original prohibits text outright, so answering with the floor there
+      // would offer a size the table has already ruled out.
+      expect(getRequiredLc("12px", "400", "bodyCopy")).toBeNull();
+      expect(getRequiredLc("16px", "100", "bodyCopy")).toBeNull();
+    });
+
+    it("should rate the same contrast against the kind of text it carries", () => {
+      // 24px/400 asks 60 of spot text and the floor of a column of it, so
+      // Lc 70 is comfortable for a caption and short for a paragraph.
+      expect(getAPCARating(70, "24px", "400", "spotText")).toBe(2);
+      expect(getAPCARating(70, "24px", "400", "bodyCopy")).toBe(1);
+    });
+
+    it("should name no size and no weight below the floor for body copy", () => {
+      // Lc 74 clears the 21px row for spot text and nothing at all for a
+      // column of it, at any size and any weight - which is what makes such
+      // an element's mark a cross rather than an arrow.
+      expect(smallestPassingFontSize(74, "400", "spotText")).toBe("21px");
+      expect(smallestPassingFontSize(74, "400", "bodyCopy")).toBeNull();
+      expect(lightestPassingFontWeight(74, "18px", "spotText")).toBe("500");
+      expect(lightestPassingFontWeight(74, "18px", "bodyCopy")).toBeNull();
+    });
+
+    it("should name the first row reaching the floor once the contrast does", () => {
+      // Above the floor the advice is the table's again: 18px is the first
+      // row at weight 400 whose requirement Lc 75 covers.
+      expect(smallestPassingFontSize(75, "400", "bodyCopy")).toBe("18px");
+      expect(smallestPassingFontSize(90, "400", "bodyCopy")).toBe("16px");
     });
 
   });

@@ -20,11 +20,11 @@ The colour engine is exposed under `/mcp` on the app's origin as a stateless
 Streamable HTTP server: `https://color-tools.skillbird.de/mcp`. Every tool is
 read-only.
 
-| Tool              | What it answers                                                                                              |
-|-------------------|--------------------------------------------------------------------------------------------------------------|
-| `describe_color`  | Name, HEX, RGB, HSL and OKLCH of a color, plus the chroma its hue can hold                                   |
-| `check_contrast`  | The APCA contrast of a text color on a background, at a font size and weight, with the verdict               |
-| `find_text_color` | A text color for a background – the strongest, the softest that still passes, or one on the background's hue |
+| Tool              | What it answers                                                                                                    |
+|-------------------|--------------------------------------------------------------------------------------------------------------------|
+| `describe_color`  | Name, HEX, RGB, HSL and OKLCH of a color, plus the chroma its hue can hold                                         |
+| `check_contrast`  | The APCA contrast of a text color on a background and its verdict, at a size and weight, as body copy or spot text |
+| `find_text_color` | A text color for a background – the strongest, the softest that still passes, or one on the background's hue       |
 
 Connect it from Claude Code:
 

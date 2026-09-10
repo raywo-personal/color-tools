@@ -1,7 +1,7 @@
 import chroma, {Color} from "chroma-js";
 
-import {apcaLookup} from "@engine/contrast/apca-look-up-table.helper";
 import {FontSize, FontWeight} from "@engine/contrast/apca-lookup-table.model";
+import {getRequiredLc, TextKind} from "@engine/contrast/apca-rating.helper";
 import {generateRange} from "@engine/helpers/iterables.helper";
 import {fromOklch} from "@engine/color/color-from-oklch.helper";
 import {MAX_USABLE_LIGHTNESS, maxChroma, MIN_USABLE_LIGHTNESS} from "@engine/color/oklch.helper";
@@ -23,6 +23,16 @@ export interface OptimalColorConfigOptions {
   fontSize: FontSize;
   /** Font weight for APCA lookup (default: "400") */
   fontWeight: FontWeight;
+  /**
+   * Whether the text the color is for is a column of body copy or spot text
+   * (default: "spotText").
+   *
+   * It moves the requirement the searches aim at, so `minimum` and `harmonic`
+   * answer with a stronger color for body copy than for a caption of the same
+   * size - see `BODY_COPY_MIN_LC`. `spotText` is the default because it is the
+   * table as written; a caller asking for body copy opts into the floor.
+   */
+  textKind: TextKind;
   /** Whether to include colored alternatives (default: false) */
   includeColoredAlternatives: boolean;
 }
@@ -30,6 +40,7 @@ export interface OptimalColorConfigOptions {
 export const DEFAULT_COLOR_CONFIG: OptimalColorConfigOptions = {
   fontSize: "16px",
   fontWeight: "400",
+  textKind: "spotText",
   includeColoredAlternatives: false
 };
 
@@ -106,17 +117,18 @@ export function calculateAPCAContrast(
  * @param bgColor - The background color
  * @param fontSize - The font size
  * @param fontWeight - The font weight
+ * @param textKind - Whether the text is a column of body copy or spot text
  * @returns True if the combination meets APCA requirements
  */
 export function meetsAPCARequirement(
   textColor: Color | string,
   bgColor: Color | string,
   fontSize: FontSize = "16px",
-  fontWeight: FontWeight = "400"
+  fontWeight: FontWeight = "400",
+  textKind: TextKind = "spotText"
 ): boolean {
   const contrast = calculateAPCAContrast(textColor, bgColor);
-  const entry = apcaLookup[fontSize]?.[fontWeight];
-  const requiredContrast = entry?.contrast;
+  const requiredContrast = getRequiredLc(fontSize, fontWeight, textKind);
 
   if (requiredContrast === null) {
     return false; // Text not readable at this size/weight
@@ -190,13 +202,13 @@ export function findOptimalTextColor(
   const options: OptimalColorConfigOptions = {...DEFAULT_COLOR_CONFIG, ...config};
 
   const bg = toColor(bgColor);
-  const {fontSize, fontWeight} = options;
+  const {fontSize, fontWeight, textKind} = options;
 
   // Pick the better of black and white
   const bestMatch = findBestContrastColorFromBW(bg);
 
   // Check it against the lookup row
-  const requiredContrast = getRequiredContrast(fontSize, fontWeight);
+  const requiredContrast = getRequiredLc(fontSize, fontWeight, textKind);
   const meetsRequirement = requiredContrast === null ? false : Math.abs(bestMatch.contrast) >= requiredContrast;
 
   return {
@@ -226,9 +238,9 @@ export function findMinimumContrastTextColor(
 ): OptimalTextColorResult {
   const options: OptimalColorConfigOptions = {...DEFAULT_COLOR_CONFIG, ...config};
   const bg = toColor(bgColor);
-  const {fontSize, fontWeight} = options;
+  const {fontSize, fontWeight, textKind} = options;
 
-  const requiredContrast = getRequiredContrast(fontSize, fontWeight);
+  const requiredContrast = getRequiredLc(fontSize, fontWeight, textKind);
 
   if (requiredContrast == null) return createResult("minimum", null);
 
@@ -274,9 +286,9 @@ export function findHarmonicTextColor(
   const options: OptimalColorConfigOptions = {...DEFAULT_COLOR_CONFIG, ...config};
 
   const bg = toColor(bgColor);
-  const {fontSize, fontWeight} = options;
+  const {fontSize, fontWeight, textKind} = options;
 
-  const requiredContrast = getRequiredContrast(fontSize, fontWeight);
+  const requiredContrast = getRequiredLc(fontSize, fontWeight, textKind);
 
   if (requiredContrast == null) return createResult("harmonic", null);
 
@@ -402,21 +414,6 @@ function toColor(color: Color | string): Color {
 
 function isLightColor(color: Color): boolean {
   return Math.abs(chroma.contrastAPCA(WHITE, color)) <= Math.abs(chroma.contrastAPCA(BLACK, color));
-}
-
-
-/**
- * The APCA contrast the lookup table asks for at a size and weight.
- *
- * @param fontSize - The font size to look up
- * @param fontWeight - The font weight to look up
- * @returns The required contrast, or null where no text is readable at all
- */
-function getRequiredContrast(
-  fontSize: FontSize,
-  fontWeight: FontWeight
-): number | null {
-  return apcaLookup[fontSize]?.[fontWeight]?.contrast ?? null;
 }
 
 

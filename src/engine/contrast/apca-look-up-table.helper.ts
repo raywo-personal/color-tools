@@ -21,11 +21,13 @@ import {APCALookupTable} from "@engine/contrast/apca-lookup-table.model";
  * a narrower one with a smaller x-height is rated more leniently here than it
  * has earned.
  *
- * **The original's body-text surcharge is not applied.** Its footnote asks
- * for Lc 15 on top of any requirement under Lc 70 where the text is a column
- * of body copy, and holds spot text - a copyright line, a placeholder - to
- * the plain figure. Every requirement here is the plain figure, so body copy
- * is rated by the more lenient of the two the original allows.
+ * **Every cell here is the plain figure, for spot text.** The original's
+ * footnote asks for Lc 15 on top of any requirement under Lc 70 where the
+ * text is a column of body copy, and holds spot text - a copyright line, a
+ * placeholder - to the figure as written. Body copy reaches its requirement
+ * through `getRequiredLc()`, which lifts a cell to `BODY_COPY_MIN_LC`; that
+ * constant says why the footnote is applied as a floor rather than as an
+ * addition. Which piece of text is which is `SampleElement.textKind`.
  *
  * The Lc side of the pair comes from `chroma.contrastAPCA()`. Replacing that
  * function means checking that it still implements the generation of the

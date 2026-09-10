@@ -2,6 +2,7 @@ import chroma, {Color} from "chroma-js";
 import {mixColors} from "@engine/color/mix-color.helper";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
+import {TextKind} from "@engine/contrast/apca-rating.helper";
 import {TypeRole} from "@engine/contrast/type-role.model";
 import {Palette, PALETTE_SLOTS} from "@engine/palette/palette.model";
 import {ChipSource, colorOf} from "@contrast-type/models/chip-source.model";
@@ -59,6 +60,29 @@ export interface SampleElement {
   readonly role: TypeRole;
   /** The element's size as a share of the role's, as the draft scales it. */
   readonly sizeRatio: number;
+  /**
+   * Whether this piece of text is a column of body copy or spot text - what
+   * decides whether `BODY_COPY_MIN_LC` applies to it.
+   *
+   * **Spelled on every element, never left to a default.** The floor is a
+   * stricter requirement, so an element that fell through to `spotText` by
+   * omission would be rated more leniently than it has earned and nothing
+   * would say so. `sample-page.model.spec.ts` pins the classification.
+   *
+   * The original's own examples settle the two that look arguable. It names a
+   * copyright line, a placeholder and a disabled label as spot text, so the
+   * small print and the disabled button are `spotText` however small they are
+   * - the floor is about text read fluently, not about text that is hard to
+   * read. And a table's cells, a field's text, an error line and a caption are
+   * a cell or a line each rather than a column, which leaves the lead, the
+   * running text, the link inside it and the pull quote.
+   *
+   * The link's own reason is that it is a word inside a body paragraph, not
+   * that `bodyText` carries the same value - unlike `role` and `sizeRatio`, it
+   * would still be body copy in a paragraph set from a role of its own, so it
+   * takes no constant from `BODY_TEXT_ROLE`.
+   */
+  readonly textKind: TextKind;
   readonly ink: SampleInk;
   readonly ground: SampleGround;
   /**
@@ -145,28 +169,28 @@ const BODY_TEXT_SIZE_RATIO = 1;
  * dim ink, and the caption sits at the small print's size.
  */
 export const SAMPLE_ELEMENTS: readonly SampleElement[] = [
-  {key: "navActive", caption: "ACTIVE NAV ITEM", role: "ui", sizeRatio: 0.87, ink: "text", ground: "nav", figure: false, boxed: false},
-  {key: "navItems", caption: "NAV ITEMS", role: "ui", sizeRatio: 0.87, ink: "dim", ground: "nav", figure: false, boxed: false},
-  {key: "signIn", caption: "SIGN IN", role: "ui", sizeRatio: 0.87, ink: "accent", ground: "nav", figure: false, boxed: true},
-  {key: "eyebrow", caption: "EYEBROW", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: true, boxed: false},
-  {key: "headline", caption: "HEADLINE", role: "display", sizeRatio: 1, ink: "text", ground: "page", figure: true, boxed: false},
-  {key: "lead", caption: "LEAD", role: "body", sizeRatio: 1.22, ink: "text", ground: "page", figure: false, boxed: false},
-  {key: "filledButton", caption: "FILLED BUTTON", role: "ui", sizeRatio: 1, ink: "onAccent", ground: "accent", figure: true, boxed: true},
-  {key: "ghostButton", caption: "GHOST BUTTON", role: "ui", sizeRatio: 1, ink: "text", ground: "page", figure: false, boxed: true},
-  {key: "disabledButton", caption: "DISABLED BUTTON", role: "ui", sizeRatio: 1, ink: "onMuted", ground: "muted", figure: false, boxed: true},
-  {key: "bodyText", caption: "BODY TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "text", ground: "page", figure: true, boxed: false},
-  {key: "bodyLink", caption: "LINK IN TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "accent", ground: "page", figure: false, boxed: false, inside: "bodyText"},
-  {key: "fieldLabel", caption: "FIELD LABEL", role: "ui", sizeRatio: 0.8, ink: "accentSoft", ground: "page", figure: false, boxed: false},
-  {key: "fieldText", caption: "FIELD TEXT", role: "body", sizeRatio: 0.89, ink: "text", ground: "field", figure: false, boxed: true},
-  {key: "errorLine", caption: "ERROR LINE", role: "body", sizeRatio: 0.78, ink: "danger", ground: "page", figure: false, boxed: false},
-  {key: "imageLabel", caption: "IMAGE LABEL", role: "mono", sizeRatio: 1, ink: "dim", ground: "muted", figure: false, boxed: false},
-  {key: "imageCaption", caption: "CAPTION", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false, boxed: false},
-  {key: "tableHeader", caption: "TABLE HEADER", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: false, boxed: false},
-  {key: "tableCell", caption: "TABLE CELL", role: "body", sizeRatio: 0.83, ink: "text", ground: "page", figure: false, boxed: false},
-  {key: "tableNumber", caption: "TABLE NUMBER", role: "ui", sizeRatio: 0.87, ink: "text", ground: "page", figure: false, boxed: false},
-  {key: "cardLabel", caption: "CARD LABEL", role: "mono", sizeRatio: 0.9, ink: "dim", ground: "card", figure: false, boxed: false},
-  {key: "quote", caption: "PULL QUOTE", role: "body", sizeRatio: 1.3, ink: "text", ground: "card", figure: false, boxed: false},
-  {key: "smallPrint", caption: "SMALL PRINT", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false, boxed: false}
+  {key: "navActive", caption: "ACTIVE NAV ITEM", role: "ui", sizeRatio: 0.87, textKind: "spotText", ink: "text", ground: "nav", figure: false, boxed: false},
+  {key: "navItems", caption: "NAV ITEMS", role: "ui", sizeRatio: 0.87, textKind: "spotText", ink: "dim", ground: "nav", figure: false, boxed: false},
+  {key: "signIn", caption: "SIGN IN", role: "ui", sizeRatio: 0.87, textKind: "spotText", ink: "accent", ground: "nav", figure: false, boxed: true},
+  {key: "eyebrow", caption: "EYEBROW", role: "mono", sizeRatio: 1, textKind: "spotText", ink: "accentSoft", ground: "page", figure: true, boxed: false},
+  {key: "headline", caption: "HEADLINE", role: "display", sizeRatio: 1, textKind: "spotText", ink: "text", ground: "page", figure: true, boxed: false},
+  {key: "lead", caption: "LEAD", role: "body", sizeRatio: 1.22, textKind: "bodyCopy", ink: "text", ground: "page", figure: false, boxed: false},
+  {key: "filledButton", caption: "FILLED BUTTON", role: "ui", sizeRatio: 1, textKind: "spotText", ink: "onAccent", ground: "accent", figure: true, boxed: true},
+  {key: "ghostButton", caption: "GHOST BUTTON", role: "ui", sizeRatio: 1, textKind: "spotText", ink: "text", ground: "page", figure: false, boxed: true},
+  {key: "disabledButton", caption: "DISABLED BUTTON", role: "ui", sizeRatio: 1, textKind: "spotText", ink: "onMuted", ground: "muted", figure: false, boxed: true},
+  {key: "bodyText", caption: "BODY TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, textKind: "bodyCopy", ink: "text", ground: "page", figure: true, boxed: false},
+  {key: "bodyLink", caption: "LINK IN TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, textKind: "bodyCopy", ink: "accent", ground: "page", figure: false, boxed: false, inside: "bodyText"},
+  {key: "fieldLabel", caption: "FIELD LABEL", role: "ui", sizeRatio: 0.8, textKind: "spotText", ink: "accentSoft", ground: "page", figure: false, boxed: false},
+  {key: "fieldText", caption: "FIELD TEXT", role: "body", sizeRatio: 0.89, textKind: "spotText", ink: "text", ground: "field", figure: false, boxed: true},
+  {key: "errorLine", caption: "ERROR LINE", role: "body", sizeRatio: 0.78, textKind: "spotText", ink: "danger", ground: "page", figure: false, boxed: false},
+  {key: "imageLabel", caption: "IMAGE LABEL", role: "mono", sizeRatio: 1, textKind: "spotText", ink: "dim", ground: "muted", figure: false, boxed: false},
+  {key: "imageCaption", caption: "CAPTION", role: "body", sizeRatio: 0.72, textKind: "spotText", ink: "dim", ground: "page", figure: false, boxed: false},
+  {key: "tableHeader", caption: "TABLE HEADER", role: "mono", sizeRatio: 1, textKind: "spotText", ink: "accentSoft", ground: "page", figure: false, boxed: false},
+  {key: "tableCell", caption: "TABLE CELL", role: "body", sizeRatio: 0.83, textKind: "spotText", ink: "text", ground: "page", figure: false, boxed: false},
+  {key: "tableNumber", caption: "TABLE NUMBER", role: "ui", sizeRatio: 0.87, textKind: "spotText", ink: "text", ground: "page", figure: false, boxed: false},
+  {key: "cardLabel", caption: "CARD LABEL", role: "mono", sizeRatio: 0.9, textKind: "spotText", ink: "dim", ground: "card", figure: false, boxed: false},
+  {key: "quote", caption: "PULL QUOTE", role: "body", sizeRatio: 1.3, textKind: "bodyCopy", ink: "text", ground: "card", figure: false, boxed: false},
+  {key: "smallPrint", caption: "SMALL PRINT", role: "body", sizeRatio: 0.72, textKind: "spotText", ink: "dim", ground: "page", figure: false, boxed: false}
 ];
 
 

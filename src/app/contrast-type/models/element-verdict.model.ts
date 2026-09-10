@@ -104,6 +104,14 @@ export function elementFontSize(element: SampleElement, roles: TypeRolesMap): nu
  * button sits on the accent, the disabled label on the muted surface, the
  * field's text in the field - so a page of verdicts says something the pair's
  * own Lc never could. `sample-page.model.ts` holds which ground that is.
+ *
+ * **And the requirement is the element's too.** A column of body copy is held
+ * to `BODY_COPY_MIN_LC` where its own row asks for less, so the lead and the
+ * pull quote can fail at a size the caption beside them passes at.
+ * `SampleElement.textKind` is which is which, and it reaches all three lookups
+ * here - the requirement, the size that would carry it and the weight that
+ * would - so the mark and the rows under it cannot answer from different
+ * tables.
  */
 export function elementVerdict(element: SampleElement,
                                page: SamplePage,
@@ -114,11 +122,12 @@ export function elementVerdict(element: SampleElement,
   const sizeKey = fontSizeKeyFrom(fontSize);
   const fontWeight = String(roles[element.role].settings.fontWeight) as FontWeight;
   const contrast = chroma.contrastAPCA(ink, ground);
-  const requiredLc = getRequiredLc(sizeKey, fontWeight);
-  const carriesAt = smallestPassingFontSize(contrast, fontWeight);
+  const {textKind} = element;
+  const requiredLc = getRequiredLc(sizeKey, fontWeight, textKind);
+  const carriesAt = smallestPassingFontSize(contrast, fontWeight, textKind);
   // Not stored on the verdict: `carriedBy()` already looks this up again for
   // the panel's own row, and a second field would only repeat it.
-  const weightCarries = lightestPassingFontWeight(contrast, sizeKey) !== null;
+  const weightCarries = lightestPassingFontWeight(contrast, sizeKey, textKind) !== null;
 
   return {
     element,
@@ -349,7 +358,11 @@ export function verdictFacts(verdict: ElementVerdict, palette: Palette): readonl
  * the page they are building, not about the preview's controls.
  */
 function carriedBy(verdict: ElementVerdict): string {
-  const weight = lightestPassingFontWeight(verdict.contrast, verdict.sizeKey);
+  const weight = lightestPassingFontWeight(
+    verdict.contrast,
+    verdict.sizeKey,
+    verdict.element.textKind
+  );
   const size = verdict.carriesAt;
 
   if (size !== null && weight !== null) return `${size}, or weight ${weight}`;
@@ -393,10 +406,12 @@ function nearest(verdict: ElementVerdict, palette: Palette): VerdictFact {
  * size would carry it is a different one - the opened verdict still answers it
  * in words, but the mark says what the table said: nothing.
  *
- * `largeOnly` before `fail`, because every column of `apcaLookup` falls as the
- * size grows: a contrast that misses its own row and clears another clears a
- * larger one. `element-verdict.model.spec.ts` pins that, which is what would
- * catch a retuned table.
+ * `largeOnly` before `fail`, because every column of requirements falls as the
+ * size grows, for either kind of text: a contrast that misses its own row and
+ * clears another clears a larger one. `element-verdict.model.spec.ts` pins
+ * that over `getRequiredLc()` rather than over `apcaLookup`, which is what
+ * would catch a retuned table - and a body-copy requirement that stopped
+ * falling.
  *
  * **Both sliders decide it, not only the size's.** `carriesAt` alone once let
  * an element that a heavier weight already carries read as `fail` - a cross
