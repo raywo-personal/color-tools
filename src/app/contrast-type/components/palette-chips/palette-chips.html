@@ -84,10 +84,16 @@
            The menu is named after the chip it belongs to, because it opens
            away from the row and seven of them would otherwise be seven
            identical menus in speech. `min-w-` rather than a width: the two
-           captions are what set it, and they are not translated. -->
+           captions are what set it, and they are not translated. The cap is
+           the one the other popups carry: every length in here is `rem`, so at
+           a large browser font size the menu passes the viewport, and the
+           overlay is `fixed` - the `Lc` at an item's right-hand end would sit
+           off screen with nothing to scroll to it. `min-h-11` on the item is
+           the other half of the cap: a capped menu wraps the caption, and a
+           fixed `h-11` would cut it. -->
       <ng-template #chipMenu>
         <div cdkMenu
-             class="min-w-64 rounded-xs border border-line bg-panel p-1 text-text shadow-lg"
+             class="min-w-64 max-w-[calc(100vw-2rem)] rounded-xs border border-line bg-panel p-1 text-text shadow-lg"
              [attr.aria-label]="chip.label">
           @for (action of chip.actions; track action.role) {
             <!-- The caption and the figure are the item's whole accessible
@@ -102,7 +108,7 @@
                  element at a time. -->
             <button cdkMenuItem
                     type="button"
-                    class="flex h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-xs px-3 text-left text-base outline-offset-2 hover:bg-field focus-visible:outline-2 focus-visible:outline-text"
+                    class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-xs px-3 text-left text-base outline-offset-2 hover:bg-field focus-visible:outline-2 focus-visible:outline-text"
                     (cdkMenuItemTriggered)="apply(chip, action.role)">
               <span>{{ action.caption }}</span>
               <span class="shrink-0 font-mono text-dim">Lc {{ action.lc }}</span>
