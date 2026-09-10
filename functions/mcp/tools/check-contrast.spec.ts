@@ -310,6 +310,26 @@ describe("check_contrast", () => {
       expect(summary(result)).toContain(payload["fontWeight"] as string);
     });
 
+    it("should name the kind of text it rated", async () => {
+      // The one input that flips the verdict without changing anything else
+      // the sentence names. Left out, the two calls hand an assistant two
+      // sentences that read alike and disagree about the same pair.
+      const args = {
+        textColor: "#808080",
+        backgroundColor: "#ffffff",
+        fontSize: "24px",
+        fontWeight: "400"
+      };
+
+      const spot = await checkContrast(client, {...args, textKind: "spotText"});
+      const body = await checkContrast(client, {...args, textKind: "bodyCopy"});
+
+      expect(structured(spot)["ratingLabel"])
+        .not.toBe(structured(body)["ratingLabel"]);
+      expect(summary(spot)).toContain("as spot text");
+      expect(summary(body)).toContain("as body copy");
+    });
+
   });
 
 

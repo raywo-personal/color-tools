@@ -1,6 +1,6 @@
 import {isTranslucent, isHex} from "@engine/color/color-format-parser.helper";
 import {FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
-import {BODY_COPY_MIN_LC, TEXT_KINDS} from "@engine/contrast/apca-rating.helper";
+import {BODY_COPY_MIN_LC, TEXT_KINDS, TextKind} from "@engine/contrast/apca-rating.helper";
 import {z} from "zod";
 import {PIXEL_FONT_SIZE_PATTERN} from "@engine/helpers/font-size.helper";
 import chroma from "chroma-js";
@@ -50,3 +50,18 @@ export const fontWeightInput = z.enum(FONT_WEIGHTS)
 export const textKindInput = z.enum(TEXT_KINDS)
   .default("spotText")
   .describe(`bodyCopy: a column of text read fluently, such as a paragraph or an article - held to at least Lc ${BODY_COPY_MIN_LC}. spotText: text read in passing, such as a heading, a button, a label, a caption, a copyright line or a placeholder - held to the plain requirement for its size and weight.`);
+
+
+/**
+ * How a tool's sentence names the kind of text it rated.
+ *
+ * The payload carries `textKind`; the sentence has to carry it too. It is the
+ * one input that changes the verdict without changing anything else the
+ * sentence names, so two calls that differ only in it read as a
+ * contradiction about the same colors at the same size and weight.
+ *
+ * @param textKind - The kind of text the tool was asked about
+ */
+export function textKindPhrase(textKind: TextKind): string {
+  return textKind === "bodyCopy" ? "as body copy" : "as spot text";
+}

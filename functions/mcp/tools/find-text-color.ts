@@ -12,7 +12,13 @@ import {colorName} from "@engine/color/color-name.helper";
 import chroma from "chroma-js";
 import {findTextColor, MODES} from "@engine/contrast/optimal-text-color.helper";
 import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
-import {opaqueHexColor, fontSizeInput, fontWeightInput, textKindInput} from "../helper/tool-schemas.helper";
+import {
+  fontSizeInput,
+  fontWeightInput,
+  opaqueHexColor,
+  textKindInput,
+  textKindPhrase
+} from "../helper/tool-schemas.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 
 
@@ -97,9 +103,11 @@ const callback: ToolCallback<typeof inputSchema> =
       ? ""
       : `; ${mode} could not answer, so this is the ${foundResult.appliedMode} result`;
 
+    const kindNote = textKindPhrase(textKind);
+
     const text = foundResult.meetsRequirement
-      ? `${textColorName} on ${backgroundColorName} is readable at ${fontSizeKey}, weight ${fontWeight}${modeNote}.`
-      : `No text color is readable on ${backgroundColorName} at ${fontSizeKey}, weight ${fontWeight}; ${textColorName} is the closest${modeNote}.`;
+      ? `${textColorName} on ${backgroundColorName} is readable at ${fontSizeKey}, weight ${fontWeight}, ${kindNote}${modeNote}.`
+      : `No text color is readable on ${backgroundColorName} at ${fontSizeKey}, weight ${fontWeight}, ${kindNote}; ${textColorName} is the closest${modeNote}.`;
 
     return {
       content: [

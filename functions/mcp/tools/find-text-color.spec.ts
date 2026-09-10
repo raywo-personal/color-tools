@@ -410,6 +410,21 @@ describe("find_text_color", () => {
       expect(summary(result)).not.toContain("could not answer");
     });
 
+    it("should name the kind of text it answered for", async () => {
+      // On mid-gray at 24px/400 the stronger pole is readable for spot text
+      // and misses the floor for a column of it. Without the kind the two
+      // sentences deny each other about the same background.
+      const args = {backgroundColor: "#808080", fontSize: "24px", fontWeight: "400"};
+
+      const spot = await findTextColor(client, {...args, textKind: "spotText"});
+      const body = await findTextColor(client, {...args, textKind: "bodyCopy"});
+
+      expect(structured(spot)["meetsRequirement"]).toBe(true);
+      expect(structured(body)["meetsRequirement"]).toBe(false);
+      expect(summary(spot)).toContain("as spot text");
+      expect(summary(body)).toContain("as body copy");
+    });
+
   });
 
 

@@ -13,7 +13,13 @@ import {
 } from "@engine/contrast/apca-rating.helper";
 import {calculateAPCAContrast, meetsAPCARequirement} from "@engine/contrast/optimal-text-color.helper";
 import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
-import {opaqueHexColor, fontSizeInput, fontWeightInput, textKindInput} from "../helper/tool-schemas.helper";
+import {
+  fontSizeInput,
+  fontWeightInput,
+  opaqueHexColor,
+  textKindInput,
+  textKindPhrase
+} from "../helper/tool-schemas.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 
 
@@ -66,7 +72,7 @@ const callback: ToolCallback<typeof inputSchema> =
       content: [
         {
           type: "text",
-          text: `${structuredContent.textColorName} on ${structuredContent.backgroundColorName} is "${structuredContent.ratingLabel}" at ${fontSizeKey}, weight ${fontWeight}.`
+          text: `${structuredContent.textColorName} on ${structuredContent.backgroundColorName} is "${structuredContent.ratingLabel}" at ${fontSizeKey}, weight ${fontWeight}, ${textKindPhrase(textKind)}.`
         }
       ],
       structuredContent
