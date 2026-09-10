@@ -8,12 +8,24 @@
      rather than on every mark: forty tooltips say the same thing forty times
      and none of them is read until the visitor already knows to hover.
 
+     **The hint names the two halves**, because an element takes both of its
+     colours and the split is geometry: while a chip is carried the badge under
+     the element says which half the pointer is on, and this is where a visitor
+     learns there are two before they have picked anything up. The chooser on
+     the mark asks the same question in words.
+
+     `what sits behind it` rather than a name for the side: the ground has two
+     of them - a background where the element draws a box, a highlight where it
+     does not - and one sentence for the whole page can use neither. `ground`
+     itself is not a word this app puts in front of a visitor; see
+     `chip-source.model.ts` for where that was settled.
+
      `items-baseline` so the two sit on one line where there is room, and
      `flex-wrap` so the hint drops under the caption where there is not. -->
 <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
   <p class="font-sans text-sm tracking-widest text-dim">PREVIEW</p>
 
-  <p class="text-sm text-dim">Drag a color onto an element, or select its mark to choose one</p>
+  <p class="text-sm text-dim">Drag a color onto an element &ndash; upper half for the text, lower half for what sits behind it &ndash; or select its mark to choose one</p>
 </div>
 
 <!-- A named region, so a screen reader can tell the sample page from the app
@@ -77,6 +89,7 @@
               [style.font-weight]="style().navActive.fontWeight"
               [style.line-height]="style().navActive.lineHeight"
               [style.color]="style().navActive.ink"
+              [style.background-color]="style().navActive.ground"
               [style.border-bottom-color]="style().accent">Notes</span>
       </ct-verdict-mark>
 
@@ -85,7 +98,8 @@
            the running text, the table's cells and the small print - a mark
            per occurrence would count the page twice. -->
       <ct-verdict-mark elementKey="navItems" surface="nav">
-        <span class="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <span class="flex flex-wrap items-center gap-x-5 gap-y-2"
+              [style.background-color]="style().navItems.ground">
           @for (item of navItems; track item) {
             <span [style.font-family]="style().navItems.fontFamily"
                   [style.font-size]="style().navItems.fontSize"
@@ -106,19 +120,21 @@
               [style.font-weight]="style().signIn.fontWeight"
               [style.line-height]="style().signIn.lineHeight"
               [style.border-color]="style().signIn.ink"
+              [style.background-color]="style().signIn.ground"
               [style.color]="style().signIn.ink">Sign in</span>
       </ct-verdict-mark>
     </div>
   </div>
 
   <div class="px-5 pt-8 pb-8 sm:px-12 sm:pt-13 sm:pb-10">
-    <ct-verdict-mark elementKey="eyebrow">
+    <ct-verdict-mark elementKey="eyebrow" surface="page">
       <span class="mb-3 block tracking-[0.18em]"
             [style.font-family]="style().eyebrow.fontFamily"
             [style.font-size]="style().eyebrow.fontSize"
             [style.font-weight]="style().eyebrow.fontWeight"
             [style.line-height]="style().eyebrow.lineHeight"
-            [style.color]="style().eyebrow.ink">Field notes</span>
+            [style.color]="style().eyebrow.ink"
+            [style.background-color]="style().eyebrow.ground">Field notes</span>
     </ct-verdict-mark>
 
     <!-- The headline is a paragraph, not a heading: it is sample copy, and an
@@ -129,21 +145,23 @@
          the column: at the top of the display range a single word is wider
          than a phone, and the panel's `overflow-hidden` would cut it off
          without a scrollbar to say so. -->
-    <ct-verdict-mark elementKey="headline">
+    <ct-verdict-mark elementKey="headline" surface="page">
       <p class="mb-4 max-w-[24ch] tracking-tight wrap-break-word text-pretty"
          [style.font-family]="style().headline.fontFamily"
          [style.font-size]="style().headline.fontSize"
          [style.font-weight]="style().headline.fontWeight"
          [style.line-height]="style().headline.lineHeight"
-         [style.color]="style().headline.ink">Reading is a physical act</p>
+         [style.color]="style().headline.ink"
+         [style.background-color]="style().headline.ground">Reading is a physical act</p>
     </ct-verdict-mark>
 
-    <ct-verdict-mark elementKey="lead">
+    <ct-verdict-mark elementKey="lead" surface="page">
       <p class="max-w-[52ch] text-pretty"
          [style.font-size]="style().lead.fontSize"
          [style.font-weight]="style().lead.fontWeight"
          [style.line-height]="style().lead.lineHeight"
-         [style.color]="style().lead.ink">A contrast ratio tells you whether two colors are far enough apart to be separated by the eye. It does not tell you whether the result is comfortable over a page of text.</p>
+         [style.color]="style().lead.ink"
+         [style.background-color]="style().lead.ground">A contrast ratio tells you whether two colors are far enough apart to be separated by the eye. It does not tell you whether the result is comfortable over a page of text.</p>
     </ct-verdict-mark>
 
     <!-- Text, not buttons: the sample content is still not focusable, and a
@@ -170,13 +188,14 @@
               [style.color]="style().filledButton.ink">Read the notes</span>
       </ct-verdict-mark>
 
-      <ct-verdict-mark elementKey="ghostButton">
+      <ct-verdict-mark elementKey="ghostButton" surface="page">
         <span class="block rounded-xs border px-5 py-3"
               [style.font-family]="style().ghostButton.fontFamily"
               [style.font-size]="style().ghostButton.fontSize"
               [style.font-weight]="style().ghostButton.fontWeight"
               [style.line-height]="style().ghostButton.lineHeight"
               [style.color]="style().ghostButton.ink"
+              [style.background-color]="style().ghostButton.ground"
               [style.border-color]="style().ghostBorder">Browse palettes</span>
       </ct-verdict-mark>
 
@@ -194,26 +213,43 @@
       </ct-verdict-mark>
     </div>
 
-    <ct-verdict-mark elementKey="bodyText">
+    <!-- Both paragraphs inside one mark, rather than a mark and a
+         `ctPlaceTarget` beside it: they are one element, and as two outlined
+         boxes they read as two - the marked one indented by the mark's gutter
+         and the other flush with the page, a release on either recolouring
+         both, and the first box's outline reaching down through its own
+         bottom margin into the second's. One box around the pair says what a
+         release does before it happens.
+
+         The price is the midline: the split falls in the gap between the two
+         paragraphs, so the upper half is the first paragraph rather than the
+         upper half of one block of text. The pair is what a release applies
+         to either way.
+
+         The closing paragraph sits past the card and cannot join them, so it
+         keeps the directive - and `ml-7` there is this mark's gutter written
+         out, because one element must not be indented two ways. -->
+    <ct-verdict-mark elementKey="bodyText" surface="page">
       <p class="mb-[1.1em] max-w-[66ch] text-pretty"
          [style.font-size]="style().bodyText.fontSize"
          [style.font-weight]="style().bodyText.fontWeight"
          [style.line-height]="style().bodyText.lineHeight"
-         [style.color]="style().bodyText.ink">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you actually plan to ship, then <ct-verdict-mark elementKey="bodyLink" [inline]="true"><span class="underline underline-offset-4"
-               [style.color]="style().bodyLink.ink">read this the way a reader would</span></ct-verdict-mark>: quickly, at arm's length, without looking for problems.</p>
-    </ct-verdict-mark>
+         [style.color]="style().bodyText.ink"
+         [style.background-color]="style().bodyText.ground">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you actually plan to ship, then <ct-verdict-mark elementKey="bodyLink" [inline]="true"><span class="underline underline-offset-4"
+               [style.color]="style().bodyLink.ink"
+               [style.background-color]="style().bodyLink.ground">read this the way a reader would</span></ct-verdict-mark>: quickly, at arm's length, without looking for problems.</p>
 
-    <!-- `ctPlaceTarget`, not a second mark: this paragraph and the closing one
-         are the same element as the marked one above - same role, same ink,
-         same ground - so they take the same drop and draw the same outline
-         without adding a mark the tally and the ledger would count twice.
-         `PlaceTarget` says the rest. -->
-    <p ctPlaceTarget="bodyText"
-       class="mb-[1.1em] max-w-[66ch] text-pretty"
-       [style.font-size]="style().bodyText.fontSize"
-       [style.font-weight]="style().bodyText.fontWeight"
-       [style.line-height]="style().bodyText.lineHeight"
-       [style.color]="style().bodyText.ink">Watch the line endings and the gaps between words. If your eye keeps returning to the same line, the issue is usually spacing or weight rather than color. If the text seems to vibrate against its background, the two colors are close in lightness but far apart in hue, and no amount of extra size will fix it. Long passages punish decisions that look fine in a headline: thin weights lose their stems, saturated backgrounds bleed into the letterforms, and near-black on near-white can read as cold rather than clear.</p>
+      <!-- No bottom margin on the last paragraph: a flex item encloses its
+           children's margins instead of collapsing them out, so the outline
+           would carry an empty strip below the words - and the block below
+           brings its own `my-8`. -->
+      <p class="max-w-[66ch] text-pretty"
+         [style.font-size]="style().bodyText.fontSize"
+         [style.font-weight]="style().bodyText.fontWeight"
+         [style.line-height]="style().bodyText.lineHeight"
+         [style.color]="style().bodyText.ink"
+         [style.background-color]="style().bodyText.ground">Watch the line endings and the gaps between words. If your eye keeps returning to the same line, the issue is usually spacing or weight rather than color. If the text seems to vibrate against its background, the two colors are close in lightness but far apart in hue, and no amount of extra size will fix it. Long passages punish decisions that look fine in a headline: thin weights lose their stems, saturated backgrounds bleed into the letterforms, and near-black on near-white can read as cold rather than clear.</p>
+    </ct-verdict-mark>
 
     <!-- The parts nobody photographs, which the closing paragraph below has
          always named and the page did not show: a control nobody can press, a
@@ -225,13 +261,14 @@
          themselves. -->
     <div class="my-8 grid gap-7 sm:grid-cols-2 sm:items-start">
       <div>
-        <ct-verdict-mark elementKey="fieldLabel">
+        <ct-verdict-mark elementKey="fieldLabel" surface="page">
           <span class="mb-2 block tracking-[0.16em]"
                 [style.font-family]="style().fieldLabel.fontFamily"
                 [style.font-size]="style().fieldLabel.fontSize"
                 [style.font-weight]="style().fieldLabel.fontWeight"
                 [style.line-height]="style().fieldLabel.lineHeight"
-                [style.color]="style().fieldLabel.ink">EMAIL</span>
+                [style.color]="style().fieldLabel.ink"
+                [style.background-color]="style().fieldLabel.ground">EMAIL</span>
         </ct-verdict-mark>
 
         <!-- A div holding text, not an input: the sample content takes no
@@ -246,7 +283,7 @@
                [style.font-weight]="style().fieldText.fontWeight"
                [style.line-height]="style().fieldText.lineHeight"
                [style.color]="style().fieldText.ink"
-               [style.background-color]="style().fieldBackground"
+               [style.background-color]="style().fieldText.ground"
                [style.border-color]="style().pageColor"
                [style.outline-color]="style().pageColor">reader&#64;kelvin</div>
         </ct-verdict-mark>
@@ -255,16 +292,11 @@
              the reason `copy-confirmation.ts` gives for its own: a glyph is at
              the mercy of whichever family the visitor picked, and a family
              without it renders a box. -->
-        <!-- The one element outside the nav, the card and the field that binds
-             a ground: the red is computed, so a placement lands on the surface
-             instead - `SampleElement.placement` says why. Unplaced it paints
-             the page's own colour, which is what is already behind it.
-
-             `surface="page"` for the same reason the two buttons carry it: the
-             mark sits beside the line, on the page, while the line's ground is
-             whatever was placed on it. Without it the rim and the ring would
-             be chosen for a dark colour dropped here and then vanish on the
-             light page they are actually drawn on. -->
+        <!-- `surface="page"` for the reason every mark on this page carries
+             one: the mark sits beside the line, on the page, while the line's
+             ground is whatever was placed on it. Without it the rim and the
+             ring would be chosen for a dark colour dropped here and then
+             vanish on the light page they are actually drawn on. -->
         <ct-verdict-mark elementKey="errorLine" surface="page">
           <p class="mt-2 flex items-start gap-2"
              [style.font-size]="style().errorLine.fontSize"
@@ -289,22 +321,24 @@
              pixels. -->
         <div class="flex aspect-video items-center justify-center rounded-xs"
              [style.background-color]="style().mutedBackground">
-          <ct-verdict-mark elementKey="imageLabel">
+          <ct-verdict-mark elementKey="imageLabel" surface="muted">
             <span class="block tracking-[0.12em]"
                   [style.font-family]="style().imageLabel.fontFamily"
                   [style.font-size]="style().imageLabel.fontSize"
                   [style.font-weight]="style().imageLabel.fontWeight"
                   [style.line-height]="style().imageLabel.lineHeight"
-                  [style.color]="style().imageLabel.ink">IMAGE</span>
+                  [style.color]="style().imageLabel.ink"
+                  [style.background-color]="style().imageLabel.ground">IMAGE</span>
           </ct-verdict-mark>
         </div>
 
-        <ct-verdict-mark elementKey="imageCaption">
+        <ct-verdict-mark elementKey="imageCaption" surface="page">
           <p class="mt-2 text-pretty"
              [style.font-size]="style().imageCaption.fontSize"
              [style.font-weight]="style().imageCaption.fontWeight"
              [style.line-height]="style().imageCaption.lineHeight"
-             [style.color]="style().imageCaption.ink">Fig. 1 &ndash; The caption under a picture is where most pairings fail first.</p>
+             [style.color]="style().imageCaption.ink"
+             [style.background-color]="style().imageCaption.ground">Fig. 1 &ndash; The caption under a picture is where most pairings fail first.</p>
         </ct-verdict-mark>
       </div>
     </div>
@@ -349,7 +383,8 @@
                 [style.font-size]="style().tableHeader.fontSize"
                 [style.font-weight]="style().tableHeader.fontWeight"
                 [style.line-height]="style().tableHeader.lineHeight"
-                [style.color]="style().tableHeader.ink">@if ($last) {<ct-verdict-mark elementKey="tableHeader" [inline]="true">{{ column.caption }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableHeader">{{ column.caption }}</span>}</th>
+                [style.color]="style().tableHeader.ink"
+                [style.background-color]="style().tableHeader.ground">@if ($last) {<ct-verdict-mark elementKey="tableHeader" surface="page" [inline]="true">{{ column.caption }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableHeader" surface="page">{{ column.caption }}</span>}</th>
           }
         </tr>
       </thead>
@@ -361,7 +396,8 @@
                 [style.font-size]="style().tableCell.fontSize"
                 [style.font-weight]="style().tableCell.fontWeight"
                 [style.line-height]="style().tableCell.lineHeight"
-                [style.color]="style().tableCell.ink">@if (rowIndex === 0) {<ct-verdict-mark elementKey="tableCell" [inline]="true">{{ row.element }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableCell">{{ row.element }}</span>}</td>
+                [style.color]="style().tableCell.ink"
+                [style.background-color]="style().tableCell.ground">@if (rowIndex === 0) {<ct-verdict-mark elementKey="tableCell" surface="page" [inline]="true">{{ row.element }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableCell" surface="page">{{ row.element }}</span>}</td>
 
             @for (value of row.values; track $index) {
               <td class="py-2.5 text-right tabular-nums"
@@ -369,7 +405,8 @@
                   [style.font-size]="style().tableNumber.fontSize"
                   [style.font-weight]="style().tableNumber.fontWeight"
                   [style.line-height]="style().tableNumber.lineHeight"
-                  [style.color]="style().tableNumber.ink">@if (rowIndex === 1 && $first) {<ct-verdict-mark elementKey="tableNumber" [inline]="true">{{ value }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableNumber">{{ value }}</span>}</td>
+                  [style.color]="style().tableNumber.ink"
+                  [style.background-color]="style().tableNumber.ground">@if (rowIndex === 1 && $first) {<ct-verdict-mark elementKey="tableNumber" surface="page" [inline]="true">{{ value }}</ct-verdict-mark>} @else {<span ctPlaceTarget="tableNumber" surface="page">{{ value }}</span>}</td>
             }
           </tr>
         }
@@ -385,7 +422,8 @@
               [style.font-size]="style().cardLabel.fontSize"
               [style.font-weight]="style().cardLabel.fontWeight"
               [style.line-height]="style().cardLabel.lineHeight"
-              [style.color]="style().cardLabel.ink">Pull quote</span>
+              [style.color]="style().cardLabel.ink"
+              [style.background-color]="style().cardLabel.ground">Pull quote</span>
       </ct-verdict-mark>
 
       <ct-verdict-mark elementKey="quote" surface="card">
@@ -393,32 +431,36 @@
            [style.font-size]="style().quote.fontSize"
            [style.font-weight]="style().quote.fontWeight"
            [style.line-height]="style().quote.lineHeight"
-           [style.color]="style().quote.ink">Adjust one variable at a time and keep the paragraph in view.</p>
+           [style.color]="style().quote.ink"
+           [style.background-color]="style().quote.ground">Adjust one variable at a time and keep the paragraph in view.</p>
       </ct-verdict-mark>
     </div>
 
-    <p ctPlaceTarget="bodyText"
-       class="max-w-[66ch] text-pretty"
+    <p ctPlaceTarget="bodyText" surface="page"
+       class="ml-7 max-w-[66ch] text-pretty"
        [style.font-size]="style().bodyText.fontSize"
        [style.font-weight]="style().bodyText.fontWeight"
        [style.line-height]="style().bodyText.lineHeight"
-       [style.color]="style().bodyText.ink">Where a palette earns its keep is in the parts nobody photographs: the disabled button, the error line, the caption under an image, the row of small numbers in a table. Those are the places to look before signing off on a color.</p>
+       [style.color]="style().bodyText.ink"
+       [style.background-color]="style().bodyText.ground">Where a palette earns its keep is in the parts nobody photographs: the disabled button, the error line, the caption under an image, the row of small numbers in a table. Those are the places to look before signing off on a color.</p>
 
     <div class="mt-9 flex flex-wrap justify-between gap-5 border-t pt-4"
          [style.border-top-color]="style().rule">
-      <ct-verdict-mark elementKey="smallPrint">
+      <ct-verdict-mark elementKey="smallPrint" surface="page">
         <span class="block max-w-[52ch] text-pretty"
               [style.font-size]="style().smallPrint.fontSize"
               [style.font-weight]="style().smallPrint.fontWeight"
               [style.line-height]="style().smallPrint.lineHeight"
-              [style.color]="style().smallPrint.ink">Small print, captions and legal notes. This is where most pairings fail first.</span>
+              [style.color]="style().smallPrint.ink"
+              [style.background-color]="style().smallPrint.ground">Small print, captions and legal notes. This is where most pairings fail first.</span>
       </ct-verdict-mark>
 
-      <span ctPlaceTarget="smallPrint"
+      <span ctPlaceTarget="smallPrint" surface="page"
             [style.font-size]="style().smallPrint.fontSize"
             [style.font-weight]="style().smallPrint.fontWeight"
             [style.line-height]="style().smallPrint.lineHeight"
-            [style.color]="style().smallPrint.ink">&copy; Kelvin</span>
+            [style.color]="style().smallPrint.ink"
+            [style.background-color]="style().smallPrint.ground">&copy; Kelvin</span>
     </div>
   </div>
 </section>

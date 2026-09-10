@@ -78,9 +78,16 @@ interface TableRow {
  * reaching the page. `inkOf()` and `groundOf()` are where both come from, the
  * same two functions the rating measures through.
  *
- * `ground` is bound only where a placement lands on it - see
- * `SampleElement.placement`. The surfaces several elements share stay fields
- * of `PreviewStyle`, because that is what they are.
+ * **Both are bound on every element, `ground` included.** An element nobody
+ * has placed anything on paints exactly what is already behind it, so the
+ * binding costs nothing until it is used and there is no element the lever
+ * misses. Where the element draws a box of its own - the three buttons, `Sign
+ * in`, the form field - the ground lands in that box; elsewhere it is a band
+ * behind the one element, which is what `SampleElement.boxed` is the word for.
+ *
+ * The surfaces several elements share - the nav bar, the card, the picture -
+ * stay fields of `PreviewStyle`, because that is what they are: a placement
+ * may not move one, so nothing binds them per element.
  */
 interface ElementStyle {
 
@@ -120,8 +127,8 @@ interface PreviewStyle {
    */
   readonly ghostBorder: string;
   readonly rule: string;
+  /** The picture's surface. The form field's is `fieldText.ground`. */
   readonly mutedBackground: string;
-  readonly fieldBackground: string;
 
   readonly wordmarkSize: string;
 
@@ -169,6 +176,13 @@ interface PreviewStyle {
  * is painted as it is and how the palette is read; a colour the visitor
  * placed on one element reaches the page through the same two functions the
  * rating measures with - see `ElementStyle`.
+ *
+ * **Every element paints both of its colours.** A visitor can put a colour on
+ * an element's text and on what sits behind it, so each one binds its ink and
+ * its ground; unplaced, the ground is the surface that was already there and
+ * nothing moves. The shared surfaces are still painted by the boxes that own
+ * them - the nav bar, the card, the picture - because a placement may not move
+ * a surface several elements sit on.
  *
  * **No sample content in here is focusable or announced as a control**, and
  * placing a colour on it did not change that. The nav links, `Sign in`, the
@@ -272,7 +286,6 @@ export class WebsitePreview {
       ghostBorder: hex(colors.ghostBorder),
       rule: hex(colors.rule),
       mutedBackground: hex(colors.muted),
-      fieldBackground: hex(colors.field),
 
       wordmarkSize: px(WORDMARK_SIZE),
 

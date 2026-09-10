@@ -2,6 +2,7 @@ import {computed, DOCUMENT, effect, inject, Service, signal} from "@angular/core
 import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
+import {SamplePlacement} from "@contrast-type/models/sample-page.model";
 
 
 /**
@@ -16,10 +17,60 @@ const TARGET_ATTRIBUTE = "data-place-target";
 
 const TARGET_SELECTOR = `[${TARGET_ATTRIBUTE}]`;
 
+/**
+ * The attribute on the box a release is measured against - the same box the
+ * hairline that says where the two sides are is drawn across, so what the
+ * visitor aims at is what decides the side.
+ *
+ * It is the outlined box rather than the drop target: a mark's target is its
+ * whole row, badge and gutter included, and a midline through that would sit
+ * somewhere other than the middle of the words. `src/styles.css` draws the
+ * line off this same attribute.
+ *
+ * **Present only while a chip is carried**, which is the only time either job
+ * is asked for - and it is what keeps the line off a page nobody is colouring.
+ *
+ * **The selector must stay value-agnostic.** The attribute carries `over` on
+ * the element under the pointer, and `src/styles.css` draws the line off that
+ * value alone - but the box below is measured in the very event that works out
+ * which element the pointer is on, before anything has rendered the new value.
+ * Narrow this selector to `over` and the first release on an element falls back
+ * to the drop target's own rect, whose midline is not the middle of the words.
+ */
+const SPLIT_ATTRIBUTE = "data-place-sides";
+
+const SPLIT_SELECTOR = `[${SPLIT_ATTRIBUTE}]`;
 
 /**
- * The half of a drag that happens over the sample page: which element the
- * pointer is on, and what a release does.
+ * The height a box needs before a finger can aim at either of its halves, in
+ * CSS pixels - the app's own hit area, `h-11`.
+ *
+ * Below it a touch release takes the ink and the box does not split. The small
+ * print and the caption run about ten pixels a half and the table's numbers
+ * nearer seven, while a finger covers the very element it is aiming at: the
+ * side a release landed on was chance, and a visitor who wanted coloured text
+ * got a band behind it. A mouse and a pen name a point and keep both halves at
+ * every size - and the badge names the side before the release, which is what
+ * rescues a half nobody could hit blind.
+ */
+const TOUCH_SPLIT_FLOOR = 44;
+
+
+/**
+ * Where a carried chip is: the element under the pointer, and which of that
+ * element's two colours a release there would take.
+ */
+export interface PlacePoint {
+
+  readonly elementKey: string;
+  readonly side: SamplePlacement;
+
+}
+
+
+/**
+ * The half of a drag that happens over the sample page: which element and
+ * which side the pointer is on, and what a release does.
  *
  * **This is a drag-only concern, and the listeners below depend on it.** A chip
  * is picked up by `cdkDragStarted` and by nothing else, so `carriedChip` is
@@ -47,6 +98,13 @@ const TARGET_SELECTOR = `[${TARGET_ATTRIBUTE}]`;
  * the current one; reading the store inside the handler would be reading it
  * after whatever else ran on the same event.
  *
+ * **The side is geometry, and this is the only place it is read.** An element
+ * has two colours and a release has one point, so the box splits: the upper
+ * half of what the visitor sees outlined takes the text colour, the lower half
+ * the ground. `#sideOf()` says which box and why, and `src/styles.css` draws
+ * the line the visitor aims either side of. The chooser is the other path and
+ * asks the question outright - a drag is still the mouse's shortcut.
+ *
  * **A service rather than component state**, because the elements that answer
  * a carry are twenty-two component instances and the pointer is one. It is not
  * app state either - nothing outside the page is about to ask which element a
@@ -59,7 +117,7 @@ export class PlacementGesture {
   readonly #dispatch = injectDispatch(contrastEvents);
   readonly #document = inject(DOCUMENT);
 
-  readonly #over = signal<string | null>(null);
+  readonly #at = signal<PlacePoint | null>(null);
 
   /** Whether a chip is in hand, which is to say: whether a drag is running. */
   readonly carrying = computed(() => this.#stateStore.carriedChip() !== null);
@@ -68,7 +126,17 @@ export class PlacementGesture {
    * The key of the element the pointer is over while a chip is carried, or
    * null. Always null at rest: nothing marks the page when nothing is in hand.
    */
-  readonly over = this.#over.asReadonly();
+  readonly over = computed(() => this.#at()?.elementKey ?? null);
+
+  /**
+   * Which of that element's two colours a release would take, or null where
+   * the pointer is over no element.
+   *
+   * The marks read it to say the side in words beside the element's name, so
+   * a visitor learns what the halves mean from the one occurrence that has a
+   * badge - `VerdictMark`.
+   */
+  readonly side = computed(() => this.#at()?.side ?? null);
 
 
   constructor() {
@@ -76,17 +144,17 @@ export class PlacementGesture {
       const source = this.#stateStore.carriedChip();
 
       if (!source) {
-        this.#over.set(null);
+        this.#at.set(null);
 
         return;
       }
 
-      const track = (event: Event) => this.#over.set(this.#targetOf(event as PointerEvent));
+      const track = (event: Event) => this.#at.set(this.#targetOf(event as PointerEvent));
       const release = (event: Event) => {
-        const elementKey = this.#targetOf(event as PointerEvent);
+        const at = this.#targetOf(event as PointerEvent);
 
-        if (elementKey) {
-          this.#dispatch.colorPlaced({elementKey, source});
+        if (at) {
+          this.#dispatch.colorPlaced({elementKey: at.elementKey, side: at.side, source});
         } else {
           this.#dispatch.chipPutDown();
         }
@@ -144,13 +212,54 @@ export class PlacementGesture {
    * layout-free test DOM returns nothing from it - which is why the specs
    * drive the target path.
    */
-  #targetOf(event: PointerEvent): string | null {
+  #targetOf(event: PointerEvent): PlacePoint | null {
     const target = event.target instanceof Element
       ? event.target.closest(TARGET_SELECTOR)
       : null;
     const under = target ?? (event.pointerType === "mouse" ? null : this.#elementUnder(event));
+    const elementKey = under?.getAttribute(TARGET_ATTRIBUTE);
 
-    return under?.getAttribute(TARGET_ATTRIBUTE) ?? null;
+    if (!under || !elementKey) return null;
+
+    return {elementKey, side: this.#sideOf(under, event)};
+  }
+
+
+  /**
+   * Which half of the element the pointer is in: the upper one takes the text
+   * colour, the lower one the ground.
+   *
+   * **Halves of the outlined box, not of the drop target.** A mark's target is
+   * its whole row - the badge's column and the hit area's minimum height
+   * included - and a midline through that would fall somewhere other than the
+   * middle of the words the visitor is aiming at. `SPLIT_ATTRIBUTE` marks the
+   * box the line is drawn across, and this measures the same one.
+   *
+   * The ink on top, because that is the order the chooser's toggle reads in
+   * and the order `SAMPLE_PLACEMENTS` is in - a visitor who learnt one knows
+   * the other.
+   *
+   * **A box with no height answers with the ink.** A layout-free test DOM
+   * reports every rect as zero, and the midline of a zero-height box is its
+   * own top edge - so every release would read as a ground, on every element,
+   * with every spec still green. The ink is the side a page opens in and the
+   * one a drag is for.
+   *
+   * **And so does a box a finger cannot halve** - `TOUCH_SPLIT_FLOOR`. The
+   * element still takes a colour from a touch drag; what it does not do is
+   * guess which of its two the visitor meant. The chooser is where a finger
+   * says `BACKGROUND` on the small print, and the mark is one press away.
+   */
+  #sideOf(target: Element, event: PointerEvent): SamplePlacement {
+    const box = target.matches(SPLIT_SELECTOR)
+      ? target
+      : target.querySelector(SPLIT_SELECTOR) ?? target;
+    const rect = box.getBoundingClientRect();
+
+    if (rect.height === 0) return "ink";
+    if (event.pointerType === "touch" && rect.height < TOUCH_SPLIT_FLOOR) return "ink";
+
+    return event.clientY < rect.top + rect.height / 2 ? "ink" : "ground";
   }
 
 

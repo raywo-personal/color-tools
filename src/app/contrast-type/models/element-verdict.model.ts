@@ -305,6 +305,11 @@ export interface VerdictFact {
  * and ground - those last two are on screen at full size, in the element the
  * row is about.
  *
+ * **The nearest-colour row is offered on every element.** It used to be held
+ * back wherever the app computed the ink for itself, on the grounds that
+ * suggesting a colour for an ink nobody could move was a fix that does not
+ * exist. Every ink is the visitor's now, so the row is a fix everywhere.
+ *
  * **A pass carries three rows, not five.** What would carry an element that
  * is already carried is a question nobody asked, and a nearest-pass row under
  * a tick reads as a correction.
@@ -330,13 +335,6 @@ export function verdictFacts(verdict: ElementVerdict, palette: Palette): readonl
   facts.push({label: "Would pass at", value: carriedBy(verdict)});
 
   if (!missedRequirement(verdict)) return facts;
-  // Only where the ink is the visitor's to move. The three inks the app
-  // computes for itself take a colour on their ground instead, so the
-  // nearest palette colour changes none of them and the row would suggest a
-  // fix that does not exist. Which three, and why, is
-  // `SampleElement.placement` - the one list, read here rather than spelled
-  // out a second time.
-  if (element.placement !== "ink") return facts;
 
   return [...facts, nearest(verdict, palette)];
 }

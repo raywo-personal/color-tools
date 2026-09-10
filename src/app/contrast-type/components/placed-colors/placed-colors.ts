@@ -4,7 +4,13 @@ import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {colorName} from "@engine/color/color-name.helper";
 import {chipLabelFor, colorOf} from "@contrast-type/models/chip-source.model";
-import {SAMPLE_ELEMENTS, samplePage} from "@contrast-type/models/sample-page.model";
+import {
+  SAMPLE_ELEMENTS,
+  SAMPLE_PLACEMENTS,
+  SamplePlacement,
+  samplePage,
+  sideName
+} from "@contrast-type/models/sample-page.model";
 import {
   VerdictState,
   elementName,
@@ -19,6 +25,12 @@ import {InfoButton} from "@common/components/info-button/info-button";
 interface PlacedRow {
 
   readonly key: string;
+  readonly side: SamplePlacement;
+  /**
+   * The row's identity for `@for`: an element can hold two placements, so the
+   * key alone is not unique any more.
+   */
+  readonly trackKey: string;
   /** `Small print`, from `elementName()` - the name every path uses. */
   readonly name: string;
   readonly state: VerdictState;
@@ -28,11 +40,8 @@ interface PlacedRow {
   readonly color: string;
   /** The chip the colour came off: `P1` to `P5`, `T` or `BG`. */
   readonly handle: string;
-  /**
-   * Which of the element's two colours the placement took, in the words the
-   * chip's own name uses for the pair - see `PaletteChips`.
-   */
-  readonly side: string;
+  /** Which of the element's two colours the placement took - `sideName()`. */
+  readonly sideWord: string;
   readonly lc: number;
   readonly resetLabel: string;
 
@@ -54,6 +63,13 @@ interface PlacedRow {
  * in words as well - the draft's column of bare glyphs does not port. Same
  * reason `page-verdicts` keeps its four words.
  *
+ * **A row per placement, which is a row per element and side.** An element
+ * takes a colour for its text and one for its ground, and the two are reset
+ * one at a time - so a paragraph whose ink and whose band the visitor both
+ * set stands here twice, and each row undoes its own half. The verdict is the
+ * element's and is the same on both rows: there is one pairing on the page,
+ * and both placements made it.
+ *
  * **A row per named element, not per occurrence.** A placement is keyed by the
  * element, and the running text, the nav items, the table's cells and the
  * small print each appear more than once in the preview at one size in one
@@ -61,10 +77,12 @@ interface PlacedRow {
  * one mark per named element rather than one per paragraph.
  *
  * **The rows are in the page's reading order**, taken by walking
- * `SAMPLE_ELEMENTS` rather than the placements. That is also the guard the
- * type asks for - `ElementPlacements` permits a key mapped to `undefined` -
- * and it keeps the ledger in the order the marks and the tally are in, rather
- * than in the order the visitor happened to drop things.
+ * `SAMPLE_ELEMENTS` and then `SAMPLE_PLACEMENTS` rather than the placements.
+ * That is also the guard the type asks for - `ElementPlacements` permits a key
+ * mapped to `undefined` - and it keeps the ledger in the order the marks and
+ * the tally are in, rather than in the order the visitor happened to drop
+ * things. Within one element the ink comes first, which is the order the
+ * chooser's toggle and the drag's split are both in.
  *
  * **A row names the chip the colour came off, and what the colour is called.**
  * The handle - `P3`, `T`, `BG` - is the word on the chip the visitor pressed or
@@ -76,12 +94,12 @@ interface PlacedRow {
  * and a swatch is a colour that needs a carrier which is not the colour
  * itself.
  *
- * **The side is the text color or the background, not the name of a ground.**
- * Which of the element's two colours a placement took is
- * `SampleElement.placement`, and these are the two words the row above the
- * chips already uses for the pair. What the page's derived surfaces are called
- * - `accentSoft`, `muted`, `field` - is true of the derivation and not of the
- * page, which is why `verdictFacts()` leaves it out as well.
+ * **The side is the text color, the background or a highlight - never the name
+ * of a ground.** `sideName()` is the wording, the same one the announcement
+ * uses, and `SampleElement.boxed` is why the ground has two words. What the
+ * page's derived surfaces are called - `accentSoft`, `muted`, `field` - is
+ * true of the derivation and not of the page, which is why `verdictFacts()`
+ * leaves it out as well.
  *
  * **Empty, the block says only that nothing is placed.** What colours the
  * elements instead is true whether or not the visitor has placed anything, so
@@ -123,29 +141,36 @@ export class PlacedColors {
     const rows: PlacedRow[] = [];
 
     for (const element of SAMPLE_ELEMENTS) {
-      const source = placements[element.key];
-
-      if (!source) continue;
-
       const verdict = verdictFor(element.key, page, roles);
-      const color = colorOf(source, pair, palette);
       const name = elementName(element);
 
-      rows.push({
-        key: element.key,
-        name,
-        state: verdict.state,
-        word: verdictWord(verdict.state),
-        swatch: color.hex("rgb"),
-        color: colorName(color),
-        handle: chipLabelFor(source),
-        side: element.placement === "ink" ? "as the text color" : "as the background",
-        lc: verdict.lc,
-        // The same wording the announcement uses: six elements default to a
-        // palette colour rather than to anything of the page's own, so
-        // "its default color" is the one phrase true of all of them.
-        resetLabel: `Reset ${name} to its default color`
-      });
+      for (const side of SAMPLE_PLACEMENTS) {
+        const source = placements[element.key]?.[side];
+
+        if (!source) continue;
+
+        const color = colorOf(source, pair, palette);
+        const noun = sideName(element, side);
+
+        rows.push({
+          key: element.key,
+          side,
+          trackKey: `${element.key}:${side}`,
+          name,
+          state: verdict.state,
+          word: verdictWord(verdict.state),
+          swatch: color.hex("rgb"),
+          color: colorName(color),
+          handle: chipLabelFor(source),
+          sideWord: `as its ${noun}`,
+          lc: verdict.lc,
+          // The same wording the announcement uses, and it names the side: two
+          // rows of one element would otherwise offer two buttons with one
+          // name. "its default", not "the page's own colour" - six elements
+          // default to a palette colour rather than to anything of the page's.
+          resetLabel: `Reset ${name}'s ${noun} to its default`
+        });
+      }
     }
 
     return rows;
@@ -163,8 +188,8 @@ export class PlacedColors {
     : "PLACED COLORS");
 
 
-  protected reset(key: string): void {
-    this.#dispatch.placementReset(key);
+  protected reset(row: PlacedRow): void {
+    this.#dispatch.placementReset({elementKey: row.key, side: row.side});
   }
 
 

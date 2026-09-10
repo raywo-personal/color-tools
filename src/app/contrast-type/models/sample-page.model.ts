@@ -19,8 +19,27 @@ export type SampleInk = "text" | "dim" | "accent" | "accentSoft" | "onAccent" | 
 /** The grounds the sample page's text sits on. */
 export type SampleGround = "page" | "card" | "nav" | "accent" | "muted" | "field";
 
-/** Which of an element's two colours a placed chip replaces. */
+/**
+ * Which of an element's two colours a placement carries - the ink it is
+ * written in, or the ground it sits on.
+ *
+ * **What a placement carries, not what an element permits.** Every element of
+ * the page takes a colour on both sides, so the side belongs to the placement
+ * and `ElementPlacements` is keyed by element *and* side. This used to be a
+ * field of `SampleElement` naming the one side that element offered; nothing
+ * decides that any more, and the field it left behind is `boxed`, which is
+ * about a word rather than about a permission.
+ */
 export type SamplePlacement = "ink" | "ground";
+
+/**
+ * The two sides in the order both paths offer them, the ink first.
+ *
+ * The chooser's toggle reads left to right and a carried chip's split reads
+ * top to bottom, and the two are the same order on purpose: a visitor who
+ * learnt the toggle knows which half of an element is which.
+ */
+export const SAMPLE_PLACEMENTS: readonly SamplePlacement[] = ["ink", "ground"];
 
 
 /**
@@ -54,22 +73,42 @@ export interface SampleElement {
    */
   readonly figure: boolean;
   /**
-   * Which of the element's two colours a placed chip replaces.
+   * Whether the element already draws a box of its own that a placed ground
+   * fills.
    *
-   * `ink` wherever the ink is the visitor's own. `ground` for the three inks
-   * the app computes for itself: `onAccent` is whichever of black or white
-   * APCA puts further from the accent, `onMuted` is a fixed mix off the pair,
-   * and `danger` is one of two constants picked by the page's lightness.
-   * Handing one of those three a palette colour would throw away a value the
-   * app derived for a reason, so on those elements the lever is the ground -
-   * the filled button takes a colour as its fill and keeps its computed
-   * label, the error line takes one as the surface it sits on.
+   * True on the three buttons, `Sign in` and the form field: there a ground
+   * lands in a box the visitor can already see, and it is that element's
+   * background. False everywhere else, and there it is the *word* that
+   * changes rather than the behaviour - a ground on running text is a band
+   * drawn behind that one element and nowhere else, which is a highlight.
    *
-   * **This field is also what decides whether a nearest-colour row is worth
-   * offering** - see `verdictFacts()`. Do not spell the three computed inks
-   * out a second time anywhere: two lists drift the day a fourth is added.
+   * **The word is the whole of why this field exists.** `background` on a
+   * paragraph suggests a repainted page, and a placement may never repaint
+   * one: `page` is a surface several elements share, and `placedOn()` says
+   * why one of them may not move it. `sideCaption()` and `sideName()` are the
+   * two places the word is spelled; do not branch on `boxed` anywhere else.
    */
-  readonly placement: SamplePlacement;
+  readonly boxed: boolean;
+  /**
+   * The key of the element this one sits *inside*, where it is a word within
+   * another element rather than a piece of text on a surface.
+   *
+   * **`bodyLink` is the only one, and it is what keeps a band honest.** The
+   * link is a word inside `bodyText`'s paragraph, so what sits behind it is
+   * whatever the paragraph is wearing - the page's colour until a visitor
+   * bands the paragraph, and the band after that. Named here rather than left
+   * to `ground`, because `ground` can only name a surface and the paragraph
+   * is not one: without this the link paints the page's own colour over the
+   * band, punching a hole through it, and its mark reports an Lc against a
+   * colour the link is no longer on.
+   *
+   * Every other element sits in a box that paints a surface several elements
+   * share - the nav bar, the card, the picture - and a placement may not move
+   * one of those, so their ground is the surface and nothing else. Keep this
+   * to actual nesting and never let two entries name each other: `groundOf()`
+   * follows the chain.
+   */
+  readonly inside?: string;
 
 }
 
@@ -106,28 +145,28 @@ const BODY_TEXT_SIZE_RATIO = 1;
  * dim ink, and the caption sits at the small print's size.
  */
 export const SAMPLE_ELEMENTS: readonly SampleElement[] = [
-  {key: "navActive", caption: "ACTIVE NAV ITEM", role: "ui", sizeRatio: 0.87, ink: "text", ground: "nav", figure: false, placement: "ink"},
-  {key: "navItems", caption: "NAV ITEMS", role: "ui", sizeRatio: 0.87, ink: "dim", ground: "nav", figure: false, placement: "ink"},
-  {key: "signIn", caption: "SIGN IN", role: "ui", sizeRatio: 0.87, ink: "accent", ground: "nav", figure: false, placement: "ink"},
-  {key: "eyebrow", caption: "EYEBROW", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: true, placement: "ink"},
-  {key: "headline", caption: "HEADLINE", role: "display", sizeRatio: 1, ink: "text", ground: "page", figure: true, placement: "ink"},
-  {key: "lead", caption: "LEAD", role: "body", sizeRatio: 1.22, ink: "text", ground: "page", figure: false, placement: "ink"},
-  {key: "filledButton", caption: "FILLED BUTTON", role: "ui", sizeRatio: 1, ink: "onAccent", ground: "accent", figure: true, placement: "ground"},
-  {key: "ghostButton", caption: "GHOST BUTTON", role: "ui", sizeRatio: 1, ink: "text", ground: "page", figure: false, placement: "ink"},
-  {key: "disabledButton", caption: "DISABLED BUTTON", role: "ui", sizeRatio: 1, ink: "onMuted", ground: "muted", figure: false, placement: "ground"},
-  {key: "bodyText", caption: "BODY TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "text", ground: "page", figure: true, placement: "ink"},
-  {key: "bodyLink", caption: "LINK IN TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "accent", ground: "page", figure: false, placement: "ink"},
-  {key: "fieldLabel", caption: "FIELD LABEL", role: "ui", sizeRatio: 0.8, ink: "accentSoft", ground: "page", figure: false, placement: "ink"},
-  {key: "fieldText", caption: "FIELD TEXT", role: "body", sizeRatio: 0.89, ink: "text", ground: "field", figure: false, placement: "ink"},
-  {key: "errorLine", caption: "ERROR LINE", role: "body", sizeRatio: 0.78, ink: "danger", ground: "page", figure: false, placement: "ground"},
-  {key: "imageLabel", caption: "IMAGE LABEL", role: "mono", sizeRatio: 1, ink: "dim", ground: "muted", figure: false, placement: "ink"},
-  {key: "imageCaption", caption: "CAPTION", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false, placement: "ink"},
-  {key: "tableHeader", caption: "TABLE HEADER", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: false, placement: "ink"},
-  {key: "tableCell", caption: "TABLE CELL", role: "body", sizeRatio: 0.83, ink: "text", ground: "page", figure: false, placement: "ink"},
-  {key: "tableNumber", caption: "TABLE NUMBER", role: "ui", sizeRatio: 0.87, ink: "text", ground: "page", figure: false, placement: "ink"},
-  {key: "cardLabel", caption: "CARD LABEL", role: "mono", sizeRatio: 0.9, ink: "dim", ground: "card", figure: false, placement: "ink"},
-  {key: "quote", caption: "PULL QUOTE", role: "body", sizeRatio: 1.3, ink: "text", ground: "card", figure: false, placement: "ink"},
-  {key: "smallPrint", caption: "SMALL PRINT", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false, placement: "ink"}
+  {key: "navActive", caption: "ACTIVE NAV ITEM", role: "ui", sizeRatio: 0.87, ink: "text", ground: "nav", figure: false, boxed: false},
+  {key: "navItems", caption: "NAV ITEMS", role: "ui", sizeRatio: 0.87, ink: "dim", ground: "nav", figure: false, boxed: false},
+  {key: "signIn", caption: "SIGN IN", role: "ui", sizeRatio: 0.87, ink: "accent", ground: "nav", figure: false, boxed: true},
+  {key: "eyebrow", caption: "EYEBROW", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: true, boxed: false},
+  {key: "headline", caption: "HEADLINE", role: "display", sizeRatio: 1, ink: "text", ground: "page", figure: true, boxed: false},
+  {key: "lead", caption: "LEAD", role: "body", sizeRatio: 1.22, ink: "text", ground: "page", figure: false, boxed: false},
+  {key: "filledButton", caption: "FILLED BUTTON", role: "ui", sizeRatio: 1, ink: "onAccent", ground: "accent", figure: true, boxed: true},
+  {key: "ghostButton", caption: "GHOST BUTTON", role: "ui", sizeRatio: 1, ink: "text", ground: "page", figure: false, boxed: true},
+  {key: "disabledButton", caption: "DISABLED BUTTON", role: "ui", sizeRatio: 1, ink: "onMuted", ground: "muted", figure: false, boxed: true},
+  {key: "bodyText", caption: "BODY TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "text", ground: "page", figure: true, boxed: false},
+  {key: "bodyLink", caption: "LINK IN TEXT", role: BODY_TEXT_ROLE, sizeRatio: BODY_TEXT_SIZE_RATIO, ink: "accent", ground: "page", figure: false, boxed: false, inside: "bodyText"},
+  {key: "fieldLabel", caption: "FIELD LABEL", role: "ui", sizeRatio: 0.8, ink: "accentSoft", ground: "page", figure: false, boxed: false},
+  {key: "fieldText", caption: "FIELD TEXT", role: "body", sizeRatio: 0.89, ink: "text", ground: "field", figure: false, boxed: true},
+  {key: "errorLine", caption: "ERROR LINE", role: "body", sizeRatio: 0.78, ink: "danger", ground: "page", figure: false, boxed: false},
+  {key: "imageLabel", caption: "IMAGE LABEL", role: "mono", sizeRatio: 1, ink: "dim", ground: "muted", figure: false, boxed: false},
+  {key: "imageCaption", caption: "CAPTION", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false, boxed: false},
+  {key: "tableHeader", caption: "TABLE HEADER", role: "mono", sizeRatio: 1, ink: "accentSoft", ground: "page", figure: false, boxed: false},
+  {key: "tableCell", caption: "TABLE CELL", role: "body", sizeRatio: 0.83, ink: "text", ground: "page", figure: false, boxed: false},
+  {key: "tableNumber", caption: "TABLE NUMBER", role: "ui", sizeRatio: 0.87, ink: "text", ground: "page", figure: false, boxed: false},
+  {key: "cardLabel", caption: "CARD LABEL", role: "mono", sizeRatio: 0.9, ink: "dim", ground: "card", figure: false, boxed: false},
+  {key: "quote", caption: "PULL QUOTE", role: "body", sizeRatio: 1.3, ink: "text", ground: "card", figure: false, boxed: false},
+  {key: "smallPrint", caption: "SMALL PRINT", role: "body", sizeRatio: 0.72, ink: "dim", ground: "page", figure: false, boxed: false}
 ];
 
 
@@ -172,6 +211,35 @@ export function roleOf(key: string): TypeRole {
 
 
 /**
+ * What a side is called where the app captions it - the chooser's toggle, and
+ * the split a carried chip draws over an element.
+ *
+ * All caps, like every caption on this page. Which word the ground takes is
+ * `SampleElement.boxed`, and this is one of the two places it is spelled.
+ */
+export function sideCaption(element: SampleElement, side: SamplePlacement): string {
+  if (side === "ink") return "TEXT";
+
+  return element.boxed ? "BACKGROUND" : "HIGHLIGHT";
+}
+
+
+/**
+ * The same two sides where a sentence names one - an announcement, a reset
+ * button's label, a ledger row.
+ *
+ * The bare noun, with no article: it reads in `takes Lapis Blue as its
+ * highlight` and in `back to its default highlight` alike, and a `the` baked
+ * in here would have made one of the two ungrammatical.
+ */
+export function sideName(element: SampleElement, side: SamplePlacement): string {
+  if (side === "ink") return "text color";
+
+  return element.boxed ? "background" : "highlight";
+}
+
+
+/**
  * How far each derived surface is mixed, and towards what. The draft's
  * fractions, mixed in OKLab - see `mixColors()`.
  */
@@ -188,6 +256,10 @@ const FIELD_TINT = 0.09;
  * derivation as `dim` and weaker than it, because a control nobody can press
  * is the one place a page is meant to be hard to read. It is the weakest text
  * the page carries, which is what makes it worth showing.
+ *
+ * **This defends the default, not the absence of an override.** A visitor can
+ * place an ink on the disabled label like on any other element; the mix is
+ * what the label opens in and what comes back on reset.
  */
 const DISABLED_MIX = 0.55;
 
@@ -212,7 +284,9 @@ const LIGHT_BACKGROUND_LUMINANCE = 0.4;
  *
  * **Neither of them corrects itself against the ground.** The split says which
  * red a designer would reach for, not whether it works - a mid-lightness page
- * still gets an error line that fails, and the page is meant to show that.
+ * still gets an error line that fails, and the page is meant to show that -
+ * until the visitor says otherwise. A red that means what it means is still a
+ * default: a placed ink replaces it, and reset brings it back.
  */
 const DANGER_ON_LIGHT = "#A0402C";
 const DANGER_ON_DARK = "#FF9E8E";
@@ -270,7 +344,9 @@ export interface SamplePageColors {
  * which element it is deriving for. `onMuted` and `danger` stay here and stay
  * uncorrected on purpose - see their own comments; do not "fix" those two the
  * way the label is fixed, because a disabled control and a red are meant to
- * fail where the page makes them fail.
+ * fail where the page makes them fail *until the visitor says otherwise*. All
+ * three are defaults: a placed ink replaces any of them and reset brings it
+ * back.
  *
  * **The palette is read in fixed roles, not through a control.** The accent -
  * wordmark, `Sign in`, the active nav item's underline, the filled button, the
@@ -319,21 +395,40 @@ export function samplePageColors(pair: ContrastColors, palette: Palette): Sample
 
 
 /**
- * The chip a visitor put on an element, per `SAMPLE_ELEMENTS` key. An element
- * nobody has placed a colour on is absent.
+ * The chips a visitor put on one element, one per side. Either side can be
+ * absent, and an element nobody has touched has neither.
+ *
+ * A partial record rather than two named fields, so a caller holding a side
+ * indexes it - `sides[side]` - and no reader of it has to branch on which of
+ * the two it is dealing with.
+ */
+export type PlacedSources = Readonly<Partial<Record<SamplePlacement, ChipSource>>>;
+
+
+/**
+ * The chips a visitor put on the page, per `SAMPLE_ELEMENTS` key.
  *
  * **A source, never a hex.** The placement is about the chip it came off, not
  * about the colour that chip happens to hold, so repainting the palette hands
  * the element the new colour of the same slot for free - and a placement made
  * from `T` or `BG` follows the pair the same way. A stored hex would freeze the
  * element at the palette and the pair it was placed in.
+ *
+ * **Keyed by element and side, because both sides are the visitor's.** An
+ * element's ink and its ground are two placements: they are reset one at a
+ * time, they are a ledger row each, and either can be there without the
+ * other. A key of the element alone could hold only one of them.
  */
-export type ElementPlacements = Readonly<Record<string, ChipSource | undefined>>;
+export type ElementPlacements = Readonly<Record<string, PlacedSources | undefined>>;
+
+
+/** The colours a visitor placed on one element, one per side. */
+export type PlacedColors = Readonly<Partial<Record<SamplePlacement, Color>>>;
 
 
 /**
  * The page as it is drawn and as it is measured: every derived surface, and
- * the colour a placement put on an element.
+ * the colours a placement put on an element.
  *
  * One value rather than two arguments, because every reader needs both - a
  * reader handed only the surfaces would draw and measure a page the visitor
@@ -343,8 +438,11 @@ export type ElementPlacements = Readonly<Record<string, ChipSource | undefined>>
 export interface SamplePage {
 
   readonly colors: SamplePageColors;
-  /** The placed colour per element key; absent where nothing was placed. */
-  readonly placed: Readonly<Record<string, Color | undefined>>;
+  /**
+   * The placed colours per element key and side - `ElementPlacements` resolved
+   * against this pair and this palette. Absent where nothing was placed.
+   */
+  readonly placed: Readonly<Record<string, PlacedColors | undefined>>;
 
 }
 
@@ -360,10 +458,20 @@ export interface SamplePage {
 export function samplePage(pair: ContrastColors,
                            palette: Palette,
                            placements: ElementPlacements): SamplePage {
-  const placed: Record<string, Color> = {};
+  const placed: Record<string, PlacedColors> = {};
 
-  for (const [key, source] of Object.entries(placements)) {
-    if (source) placed[key] = colorOf(source, pair, palette);
+  for (const [key, sources] of Object.entries(placements)) {
+    if (!sources) continue;
+
+    const sides: Partial<Record<SamplePlacement, Color>> = {};
+
+    for (const side of SAMPLE_PLACEMENTS) {
+      const source = sources[side];
+
+      if (source) sides[side] = colorOf(source, pair, palette);
+    }
+
+    if (SAMPLE_PLACEMENTS.some(side => sides[side])) placed[key] = sides;
   }
 
   return {colors: samplePageColors(pair, palette), placed};
@@ -378,10 +486,10 @@ export function samplePage(pair: ContrastColors,
  * rather than takes: black or white, whichever APCA puts further from what
  * the button is filled with. Read off a surface it would stay the white that
  * suited the accent while a visitor filled the button with gold, and the
- * label would be unreadable through no choice of theirs that a nearest-colour
- * row could undo - `verdictFacts()` offers none where the ink is not the
- * visitor's. That is the guarantee this ink exists for, so it has to be
- * computed where the element and its ground meet, which is here.
+ * label would be unreadable through no choice of theirs. That is the
+ * guarantee this ink exists for, so it has to be computed where the element
+ * and its ground meet, which is here - and it is what the label opens in
+ * until a visitor places an ink of their own on it.
  *
  * The choice does not depend on a size, so none is passed: the button label
  * is set at a share of the UI size and has no fixed row in the table.
@@ -389,7 +497,8 @@ export function samplePage(pair: ContrastColors,
  * **`onMuted` and `danger` are not treated this way, and must not be.** Their
  * comments in `samplePageColors()` declare the missing correction as the
  * point: a control nobody can press and a red that means what it means are
- * meant to fail where the page makes them fail.
+ * meant to fail where the page makes them fail until the visitor says
+ * otherwise.
  */
 export function inkOf(element: SampleElement, page: SamplePage): Color {
   const placed = placedOn(element, "ink", page);
@@ -401,9 +510,32 @@ export function inkOf(element: SampleElement, page: SamplePage): Color {
 }
 
 
-/** The color an element sits on. */
+/**
+ * The color an element sits on: what a placement put on its ground, what the
+ * element around it is wearing, or the surface behind it.
+ *
+ * **Every element has a ground and every element takes a placement on it.**
+ * The preview binds this on all twenty-two, so an element nobody has placed
+ * anything on repaints exactly what is already behind it and nothing moves.
+ * Which word the visitor is offered for it - `BACKGROUND` or `HIGHLIGHT` - is
+ * `SampleElement.boxed`.
+ *
+ * **An element inside another one inherits its ground rather than its
+ * surface** - `SampleElement.inside` says which, and the link in the running
+ * text is the only one. Take that step away and the link paints the page's own
+ * colour over a band the visitor put behind the paragraph, punching a hole
+ * through it, while its mark goes on measuring against the page it left.
+ */
 export function groundOf(element: SampleElement, page: SamplePage): Color {
-  return placedOn(element, "ground", page) ?? page.colors[element.ground];
+  const placed = placedOn(element, "ground", page);
+
+  if (placed) return placed;
+
+  const inside = element.inside;
+
+  if (inside !== undefined) return groundOf(sampleElement(inside), page);
+
+  return page.colors[element.ground];
 }
 
 
@@ -413,18 +545,19 @@ export function groundOf(element: SampleElement, page: SamplePage): Color {
  * **This is the only place a placement is applied.** The preview paints it,
  * the rating measures it, the tally counts it and the marks judge it, and all
  * four reach it through `inkOf()` and `groundOf()` - a reader that resolved a
- * slot of its own would be a second answer about the same element. Which side
- * a placement lands on is `SampleElement.placement`.
+ * slot of its own would be a second answer about the same element.
  *
  * **A placement applies to its own element and to nothing else**, which is why
  * it is not a field of `SamplePageColors`: `muted` is both the disabled button
- * and the picture, `nav` is three elements, and a ground rewritten there would
- * move all of them.
+ * and the picture, `nav` is three elements, `page` is most of them, and a
+ * ground rewritten on the shared surface would move the lot. So a ground
+ * placed on an element that has no box of its own is a band drawn behind that
+ * element and nothing else - `SampleElement.boxed` is the word for it.
  */
 function placedOn(element: SampleElement,
                   side: SamplePlacement,
                   page: SamplePage): Color | undefined {
-  return element.placement === side ? page.placed[element.key] : undefined;
+  return page.placed[element.key]?.[side];
 }
 
 

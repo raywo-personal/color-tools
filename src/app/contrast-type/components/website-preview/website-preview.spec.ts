@@ -16,7 +16,7 @@ import {SelectedFont} from "@common/models/google-font.model";
 import {expectApcaForeground} from "@testing/apca-foreground.expectation";
 import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {provideSilentFontLoader} from "@testing/font-loader.fake";
-import {SAMPLE_ELEMENTS} from "@contrast-type/models/sample-page.model";
+import {SAMPLE_ELEMENTS, SamplePlacement} from "@contrast-type/models/sample-page.model";
 import {elementName} from "@contrast-type/models/element-verdict.model";
 import {WebsitePreview} from "@contrast-type/components/website-preview/website-preview";
 
@@ -158,8 +158,10 @@ describe("WebsitePreview", () => {
       await fixture.whenStable();
     }
 
-    async function place(elementKey: string, source: ChipSource) {
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, source}));
+    async function place(elementKey: string,
+                         source: ChipSource,
+                         side: SamplePlacement = "ink") {
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, side, source}));
       await fixture.whenStable();
     }
 
@@ -213,23 +215,36 @@ describe("WebsitePreview", () => {
   });
 
 
-  it("marks every named element while a chip is carried, and none of them at rest", async () => {
+  it("outlines every element while a chip is carried, and names none of them", async () => {
     // 1h and 1i. The offer has to be visible before the pointer reaches an
-    // element, or the visitor is dragging at a page that says nothing.
-    const {page, fixture} = await preview();
+    // element, or the visitor is dragging at a page that says nothing - and it
+    // is the outline that carries it. The names do not: twenty-two badges were
+    // a page of labels over the page they were about, each hanging further
+    // below its element than the gap to the next one, so a name waits for the
+    // pointer to arrive on its element.
+    const {page, fixture, repeats} = await preview();
     const dispatcher = TestBed.inject(Dispatcher);
     const named = () => page.querySelectorAll("[data-element-name]");
+    // The chrome's own offset as well as the width: the sample field draws a
+    // static `outline-2` of its own, which is the page's drawn focus ring and
+    // not an offer to drop anything.
+    const outlined = () => page.querySelectorAll(".outline-2.outline-offset-4");
 
     expect(named()).toHaveLength(0);
+    expect(outlined()).toHaveLength(0);
 
     dispatcher.dispatch(contrastEvents.chipPickedUp("color2"));
     await fixture.whenStable();
 
-    expect(named()).toHaveLength(SAMPLE_ELEMENTS.length);
+    // Every element and every further occurrence of one, which is what the
+    // page has to offer at once.
+    expect(outlined()).toHaveLength(SAMPLE_ELEMENTS.length + repeats().length);
+    expect(named()).toHaveLength(0);
 
     dispatcher.dispatch(contrastEvents.chipPutDown());
     await fixture.whenStable();
 
+    expect(outlined()).toHaveLength(0);
     expect(named()).toHaveLength(0);
   });
 
@@ -256,7 +271,10 @@ describe("WebsitePreview", () => {
     // Every occurrence, not one more: three paragraphs of running text, the
     // copyright line beside the small print, and a cell per column and per row
     // of the table.
-    expect(targets("bodyText")).toBe(3);
+    // Two, not three: the two paragraphs that sit together are inside one
+    // mark - `website-preview.html` says why - and the closing one past the
+    // card carries the directive.
+    expect(targets("bodyText")).toBe(2);
     expect(targets("smallPrint")).toBe(2);
     expect(targets("tableHeader")).toBe(3);
     expect(targets("tableCell")).toBe(3);
@@ -286,12 +304,57 @@ describe("WebsitePreview", () => {
       expect(element.style.outlineColor, element.textContent ?? "").not.toBe("");
     }
 
+    // Every occurrence splits as well, on the box that is outlined - that is
+    // what `PlacementGesture` measures a release against and what
+    // `src/styles.css` draws the hairline across. Without it the biggest block
+    // of text on the page would take a drop on one side only.
+    for (const element of repeats()) {
+      expect(element.hasAttribute("data-place-sides"), element.textContent ?? "").toBe(true);
+      expect(element.style.getPropertyValue("--place-split-color"), element.textContent ?? "")
+        .not.toBe("");
+    }
+
     // Nothing marks the page once the hand is empty.
     dispatcher.dispatch(contrastEvents.chipPutDown());
     await fixture.whenStable();
 
     expect(outlined()).toHaveLength(0);
     expect(page.querySelectorAll("[data-element-name]")).toHaveLength(0);
+    expect(page.querySelectorAll("[data-place-sides]")).toHaveLength(0);
+  });
+
+
+  it("draws the hairline on the element under the pointer, not across the page", async () => {
+    // The outline offers across the whole page at once and the split does not:
+    // a hairline on each element was some thirty lines through the page's own
+    // words, each in the APCA maximum against what it crossed, while the
+    // visitor was aiming at one of them. The attribute stays everywhere -
+    // `PlacementGesture` measures a release against the box it finds by it -
+    // and the value is what the line waits for.
+    const {page, copy, fixture, repeats, targets} = await preview();
+    const dispatcher = TestBed.inject(Dispatcher);
+    const split = () => page.querySelectorAll("[data-place-sides]");
+    const lined = () => Array.from(page.querySelectorAll<HTMLElement>('[data-place-sides="over"]'));
+
+    dispatcher.dispatch(contrastEvents.chipPickedUp("color2"));
+    await fixture.whenStable();
+
+    expect(split()).toHaveLength(SAMPLE_ELEMENTS.length + repeats().length);
+    expect(lined()).toHaveLength(0);
+
+    copy(BODY).dispatchEvent(new PointerEvent("pointermove", {bubbles: true}));
+    await fixture.whenStable();
+
+    // The element under the pointer, and every occurrence of it: a release on
+    // any of them recolours the one element, so they are one box to aim at -
+    // the same reason the solid outline goes on all of them.
+    expect(lined()).toHaveLength(targets("bodyText"));
+    expect(lined().every(element => element
+      .closest("[data-place-target]")
+      ?.getAttribute("data-place-target") === "bodyText")).toBe(true);
+    // And the attribute is still on the rest, or the next element the pointer
+    // reaches has no box to measure a release against.
+    expect(split()).toHaveLength(SAMPLE_ELEMENTS.length + repeats().length);
   });
 
 
@@ -309,6 +372,29 @@ describe("WebsitePreview", () => {
 
       const mark = Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"))
         .find(candidate => candidate.getAttribute("aria-label")?.startsWith("Error line:"));
+      const badge = mark?.firstElementChild as HTMLElement | undefined;
+
+      return badge?.style.borderColor ?? "";
+    });
+  });
+
+
+  it("rims a mark against the page, not against a band placed on its own element", async () => {
+    // The same rule as the error line's, on an element whose mark names no
+    // ground of its own to be measured against: a colour placed on the
+    // headline's ground is a band behind those words, while the mark's rim,
+    // its ring and its outline are all drawn outside them, on the page. Left
+    // to the element's own ground the rim is chosen for the band and drawn on
+    // the page, where a dark band leaves it white on `#EEEEEE`.
+    const {page, place, setBackground} = await preview();
+
+    await place("headline", "color0", "ground");
+
+    await expectApcaForeground(async background => {
+      await setBackground(background.hex("rgb"));
+
+      const mark = Array.from(page.querySelectorAll<HTMLElement>("ct-verdict-mark button"))
+        .find(candidate => candidate.getAttribute("aria-label")?.startsWith("Headline:"));
       const badge = mark?.firstElementChild as HTMLElement | undefined;
 
       return badge?.style.borderColor ?? "";
@@ -750,6 +836,32 @@ describe("WebsitePreview", () => {
 
     expect(link.style.color).toBe(store.currentPalette().color0.color.hex("rgb"));
     expect(link.style.fontSize).toBe("");
+  });
+
+
+  it("puts a band behind the paragraph behind the link in it as well", async () => {
+    // The link is a word inside the running text, not a piece of text on a
+    // surface: what sits behind it is whatever the paragraph is wearing. Left
+    // on the page's own colour it painted a hole through the band and its mark
+    // went on measuring against the page - `SampleElement.inside`.
+    const {within, place, store} = await preview();
+    const link = () => within("span", LINK);
+
+    expect(link().style.backgroundColor).toBe(store.contrastColors().background.hex("rgb"));
+
+    await place("bodyText", "color1", "ground");
+
+    const band = store.currentPalette().color1.color.hex("rgb");
+
+    expect(link().closest("p")?.getAttribute("style")).toContain(band);
+    expect(link().style.backgroundColor).toBe(band);
+
+    // A ground placed on the link itself is the visitor's own and wins over
+    // the paragraph's.
+    await place("bodyLink", "color3", "ground");
+
+    expect(link().style.backgroundColor)
+      .toBe(store.currentPalette().color3.color.hex("rgb"));
   });
 
 

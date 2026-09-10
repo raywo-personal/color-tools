@@ -13,10 +13,11 @@ import {
   inkOf,
   roleOf,
   SAMPLE_ELEMENTS,
-  SampleInk,
   sampleElement,
   samplePage,
-  samplePageColors
+  samplePageColors,
+  sideCaption,
+  sideName
 } from "@contrast-type/models/sample-page.model";
 
 
@@ -147,32 +148,46 @@ describe("sample page", () => {
   });
 
 
-  it("gives every element a placement, and the computed inks the ground", () => {
-    // The three inks the app computes for itself cannot take a colour: the
-    // lever there is the ground. One list rather than two - `verdictFacts()`
-    // reads this same field to decide whether a nearest-colour row is worth
-    // offering, so a list edited without running this spec would move both
-    // answers at once.
-    const computed: readonly SampleInk[] = ["onAccent", "onMuted", "danger"];
-
+  it("offers the same two sides on every element, and names the ground for what it is", () => {
+    // A ground lands in a box the element already draws, or it is a band drawn
+    // behind that one element - which is a highlight, and the word is what
+    // stops `background` promising a repainted page. `SampleElement.boxed` is
+    // the one field that decides it, and these two functions the only readers.
     for (const element of SAMPLE_ELEMENTS) {
-      expect(element.placement, element.key)
-        .toBe(computed.includes(element.ink) ? "ground" : "ink");
+      expect(sideCaption(element, "ink"), element.key).toBe("TEXT");
+      expect(sideName(element, "ink"), element.key).toBe("text color");
+      expect(sideCaption(element, "ground"), element.key)
+        .toBe(element.boxed ? "BACKGROUND" : "HIGHLIGHT");
+      expect(sideName(element, "ground"), element.key)
+        .toBe(element.boxed ? "background" : "highlight");
     }
+
+    // Both kinds are on the page, or one of the two words would be dead: the
+    // filled button has a box of its own and the running text has not.
+    expect(sampleElement("filledButton").boxed).toBe(true);
+    expect(sampleElement("bodyText").boxed).toBe(false);
   });
 
 
-  it("puts a placed colour on the side the element's placement names", () => {
-    // The headline takes a palette colour as its type; the filled button
-    // takes one as its fill and keeps the label the app computed for it.
+  it("puts a placed colour on the side the placement names, on either side of any element", () => {
+    // Both sides belong to the visitor now: the headline takes a palette
+    // colour as its type, the filled button one as its fill, and the running
+    // text one of each at the same time.
     const palette = generatePalette("triadic");
     const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
-    const page = samplePage(pair, palette, {headline: "color2", filledButton: "color3"});
+    const page = samplePage(pair, palette, {
+      headline: {ink: "color2"},
+      filledButton: {ground: "color3"},
+      bodyText: {ink: "color1", ground: "color4"}
+    });
 
     const headline = sampleElement("headline");
     const button = sampleElement("filledButton");
+    const bodyText = sampleElement("bodyText");
 
     expect(inkOf(headline, page)).toBe(palette.color2.color);
+    // The side that was not placed is the surface that was already there, so
+    // an element nobody touched on that side paints what is behind it.
     expect(groundOf(headline, page)).toBe(page.colors.page);
 
     expect(groundOf(button, page)).toBe(palette.color3.color);
@@ -180,6 +195,49 @@ describe("sample page", () => {
     // is measured against the fill the button ended up with.
     expect(inkOf(button, page).hex("rgb"))
       .toBe(findOptimalTextColor(palette.color3.color).color.hex("rgb"));
+
+    expect(inkOf(bodyText, page)).toBe(palette.color1.color);
+    expect(groundOf(bodyText, page)).toBe(palette.color4.color);
+  });
+
+
+  it("leaves the page's own colour alone when a ground is placed on text that sits on it", () => {
+    // The band is behind that one element and nowhere else. `page` is a
+    // surface most of the elements share, and a placement may not move one -
+    // so the headline beside the recoloured paragraph is untouched, and so is
+    // the page the two of them sit on.
+    const palette = generatePalette("triadic");
+    const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
+    const page = samplePage(pair, palette, {bodyText: {ground: "color4"}});
+
+    expect(groundOf(sampleElement("bodyText"), page)).toBe(palette.color4.color);
+    expect(groundOf(sampleElement("headline"), page)).toBe(page.colors.page);
+    expect(page.colors.page).toBe(pair.background);
+  });
+
+
+  it("hands the band to the word inside the paragraph, because that is what is behind it", () => {
+    // `bodyLink` is a word inside `bodyText`, not a piece of text on a
+    // surface - `SampleElement.inside`. Without that step the link paints the
+    // page's own colour over the band, punching a hole through it, and its
+    // verdict measures against a colour the link is no longer on.
+    const palette = generatePalette("triadic");
+    const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
+    const link = sampleElement("bodyLink");
+
+    expect(groundOf(link, samplePage(pair, palette, {}))).toBe(pair.background);
+    expect(groundOf(link, samplePage(pair, palette, {bodyText: {ground: "color4"}})))
+      .toBe(palette.color4.color);
+
+    // A ground placed on the link itself wins over the paragraph's, and the
+    // paragraph keeps its own.
+    const both = samplePage(pair, palette, {
+      bodyText: {ground: "color4"},
+      bodyLink: {ground: "color1"}
+    });
+
+    expect(groundOf(link, both)).toBe(palette.color1.color);
+    expect(groundOf(sampleElement("bodyText"), both)).toBe(palette.color4.color);
   });
 
 
@@ -187,14 +245,13 @@ describe("sample page", () => {
     // The guarantee `onAccent` exists for: black or white, whichever APCA
     // puts further from what the button is actually filled with. Read off the
     // accent surface it would keep the colour that suited a fill the visitor
-    // has replaced, and `verdictFacts()` offers no nearest-colour row on an
-    // ink the visitor cannot move.
+    // has replaced.
     const palette = generatePalette("harmonic");
     const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
     const button = sampleElement("filledButton");
 
     for (const slot of PALETTE_SLOTS) {
-      const page = samplePage(pair, palette, {filledButton: slot});
+      const page = samplePage(pair, palette, {filledButton: {ground: slot}});
       const ink = inkOf(button, page);
       const ground = groundOf(button, page);
       const other = ink.hex("rgb") === "#000000" ? chroma("#ffffff") : chroma("#000000");
@@ -207,20 +264,30 @@ describe("sample page", () => {
   });
 
 
-  it("leaves the disabled label and the red uncorrected, which is the point of them", () => {
+  it("leaves the disabled label and the red uncorrected until the visitor says otherwise", () => {
     // A control nobody can press and a red that means what it means are meant
-    // to fail where the page makes them fail. Only the filled button's label
-    // follows its ground.
+    // to fail where the page makes them fail, and neither corrects itself
+    // against the ground it ended up on. That defends the default, not the
+    // absence of an override: an ink placed on either of them replaces it.
     const palette = generatePalette("harmonic");
     const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
     const unplaced = samplePage(pair, palette, {});
-    const placed = samplePage(pair, palette, {disabledButton: "color3", errorLine: "color3"});
+    const groundPlaced = samplePage(pair, palette, {
+      disabledButton: {ground: "color3"},
+      errorLine: {ground: "color3"}
+    });
+    const inkPlaced = samplePage(pair, palette, {
+      disabledButton: {ink: "color3"},
+      errorLine: {ink: "color3"}
+    });
 
     for (const key of ["disabledButton", "errorLine"]) {
       const element = sampleElement(key);
 
-      expect(inkOf(element, placed).hex("rgb"), key)
+      expect(inkOf(element, groundPlaced).hex("rgb"), key)
         .toBe(inkOf(element, unplaced).hex("rgb"));
+      expect(inkOf(element, inkPlaced).hex("rgb"), key)
+        .toBe(palette.color3.color.hex("rgb"));
     }
   });
 
@@ -231,7 +298,7 @@ describe("sample page", () => {
     // both the disabled button and the picture, `nav` is three elements.
     const palette = generatePalette("triadic");
     const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
-    const page = samplePage(pair, palette, {disabledButton: "color1"});
+    const page = samplePage(pair, palette, {disabledButton: {ground: "color1"}});
 
     expect(groundOf(sampleElement("disabledButton"), page)).toBe(palette.color1.color);
     expect(groundOf(sampleElement("imageLabel"), page)).toBe(page.colors.muted);
@@ -244,7 +311,7 @@ describe("sample page", () => {
     // new palette hands the element the new colour of the same slot rather
     // than freezing the page at the one it was placed in.
     const pair = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
-    const placements = {headline: "color2"} as const;
+    const placements = {headline: {ink: "color2"}} as const;
     const first = generatePalette("triadic");
     const second = generatePalette("complementary");
     const headline = sampleElement("headline");
@@ -263,7 +330,10 @@ describe("sample page", () => {
     const palette = generatePalette("triadic");
     const first = createContrastColors(chroma("#111111"), chroma("#EEEEEE"));
     const second = createContrastColors(chroma("#111111"), chroma("#204080"));
-    const placements = {headline: "background", filledButton: "text"} as const;
+    const placements = {
+      headline: {ink: "background"},
+      filledButton: {ground: "text"}
+    } as const;
     const headline = sampleElement("headline");
     const filledButton = sampleElement("filledButton");
 
@@ -271,8 +341,8 @@ describe("sample page", () => {
       .toBe("#eeeeee");
     expect(inkOf(headline, samplePage(second, palette, placements)).hex("rgb"))
       .toBe("#204080");
-    // `filledButton` takes a colour as its fill, not as its label - which is
-    // `SampleElement.placement`, and it holds for a pair source too.
+    // The filled button's placement was made on its ground, so it is the fill
+    // that follows the pair - the side travels with the placement.
     expect(groundOf(filledButton, samplePage(first, palette, placements)).hex("rgb"))
       .toBe("#111111");
   });
@@ -285,7 +355,7 @@ describe("sample page", () => {
     const palette = generatePalette("triadic");
     const ground = palette.color2.color;
     const pair = createContrastColors(chroma("#111111"), ground);
-    const page = samplePage(pair, palette, {bodyText: "color2"});
+    const page = samplePage(pair, palette, {bodyText: {ink: "color2"}});
     const bodyText = sampleElement("bodyText");
 
     expect(inkOf(bodyText, page).hex("rgb")).toBe(groundOf(bodyText, page).hex("rgb"));

@@ -3,13 +3,38 @@
      viewport cap, so the two read as one card split by a rule rather than as
      two popups that happened to line up. -->
 <div class="w-96 max-w-[calc(100vw-2rem)] rounded-xs border border-line bg-panel p-4 text-text shadow-lg">
-  <!-- Which element, and which of its two colours a chip would take. The side
-       is worth naming: on the filled button and the error line a chip lands
-       on what the text sits on, not on the text. -->
+  <!-- Which element the popup is about. The side is the toggle's below, not a
+       word beside the caption: it is a choice now rather than a statement. -->
   <p class="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-    <span class="font-mono text-sm tracking-widest">{{ caption() }} · {{ sideWord() }}</span>
+    <span class="font-mono text-sm tracking-widest">{{ caption() }}</span>
     <span class="font-mono text-sm text-dim">ESC</span>
   </p>
+
+  <!-- Which of the element's two colours the chips place on. The app's own
+       segmented control - see `TypeRoles` for the idiom: `divide-x` draws the
+       hairline between the two, the group's border closes the box,
+       `overflow-hidden` clips the pressed fill to the corners, and the
+       inversion plus `aria-pressed` is what carries the selection without
+       leaning on a hue.
+
+       `BACKGROUND` on an element that has a box of its own and `HIGHLIGHT` on
+       one that has not: a colour placed behind running text is a band drawn
+       for that one paragraph, and `background` would have promised a repainted
+       page. `SampleElement.boxed` says the rest. -->
+  <div role="group"
+       class="mt-3 grid grid-cols-2 divide-x divide-line overflow-hidden rounded-xs border border-line"
+       [attr.aria-label]="sidesLabel()">
+    @for (option of sides(); track option.side) {
+      <button type="button"
+              class="flex h-11 min-w-0 cursor-pointer items-center justify-center px-2 font-mono text-sm tracking-widest focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              [class.bg-text]="option.selected"
+              [class.text-bg]="option.selected"
+              [class.text-dim]="!option.selected"
+              [class.hover:text-text]="!option.selected"
+              [attr.aria-pressed]="option.selected"
+              (click)="selectSide(option.side)">{{ option.caption }}</button>
+    }
+  </div>
 
   <!-- A toolbar, because the arrow keys move between the chips and a press
        places: the row is seven commands, not a list something else applies.
@@ -93,5 +118,5 @@
   <button type="button"
           class="mt-3 flex h-11 w-full items-center justify-center rounded-xs border border-line text-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-text disabled:text-dim"
           [disabled]="!placedSource()"
-          (click)="reset()">Reset to default</button>
+          (click)="reset()">{{ resetLabel() }}</button>
 </div>

@@ -94,3 +94,44 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+@layer components {
+  /* The hairline a carried chip draws across an element, splitting it into the
+     half whose release takes the text color and the half whose release takes
+     the ground. `PlacementGesture` measures the release against this same box
+     - it looks the attribute up - so what the visitor aims either side of is
+     what decides the side.
+
+     Here rather than in a component, because both halves of the page's chrome
+     have to draw one line: `VerdictMark` could render a child span, but
+     `PlaceTarget` is a directive on the caller's own element and can add no
+     children, and two mechanisms for one line is the pair that drifts.
+
+     A pseudo-element rather than a background gradient: the element's own
+     ground is painted on the markup inside the mark's wrapper, and a gradient
+     behind that would be hidden by it. `::after` paints after the in-flow
+     child, so the line stays visible whatever was placed.
+
+     The color is measured against the page and arrives as a custom property -
+     `VerdictMark` says why a neutral token is guaranteed against none of the
+     visitor's colors.
+
+     **The value, not the presence.** The attribute is on every element while a
+     chip is carried, because that is what `PlacementGesture` measures a
+     release against - and thirty hairlines through the page's own words is a
+     page nobody can read while they aim at it. So the line waits for `over`,
+     the element the pointer is on. `VerdictMark.placeSides` says why the two
+     tests cannot be one. */
+  [data-place-sides="over"] {
+    position: relative;
+  }
+
+  [data-place-sides="over"]::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    border-top: 1px solid var(--place-split-color);
+    pointer-events: none;
+  }
+}

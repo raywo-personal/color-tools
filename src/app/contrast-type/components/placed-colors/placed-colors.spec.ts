@@ -10,7 +10,7 @@ import {createContrastColors} from "@engine/contrast/contrast-colors.model";
 import {colorName} from "@engine/color/color-name.helper";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
 import {ChipSource} from "@contrast-type/models/chip-source.model";
-import {samplePage} from "@contrast-type/models/sample-page.model";
+import {SamplePlacement, samplePage} from "@contrast-type/models/sample-page.model";
 import {
   verdictFor,
   verdictMark,
@@ -46,8 +46,10 @@ describe("PlacedColors", () => {
 
     const host = fixture.nativeElement as HTMLElement;
 
-    async function place(elementKey: string, source: ChipSource) {
-      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, source}));
+    async function place(elementKey: string,
+                         source: ChipSource,
+                         side: SamplePlacement = "ink") {
+      dispatcher.dispatch(contrastEvents.colorPlaced({elementKey, side, source}));
       await fixture.whenStable();
     }
 
@@ -276,16 +278,42 @@ describe("PlacedColors", () => {
 
 
     it("says which of the element's two colours the placement took", async () => {
-      // The two words the row above the chips uses for the pair. The filled
-      // button is one of the three elements whose lever is the ground, so a
-      // colour lands there as its fill and its label stays computed.
+      // `sideName()`'s words, the same ones the announcement uses. The filled
+      // button draws a box of its own, so a colour lands there as its
+      // background; behind running text the same side is a band drawn for that
+      // one paragraph, which is a highlight.
       const {place, texts} = await ledger();
 
       await place("headline", "color2");
-      await place("filledButton", "color2");
+      await place("filledButton", "color2", "ground");
+      await place("bodyText", "color3", "ground");
 
-      expect(texts()[0]).toContain("as the text color");
-      expect(texts()[1]).toContain("as the background");
+      expect(texts()[0]).toContain("as its text color");
+      expect(texts()[1]).toContain("as its background");
+      expect(texts()[2]).toContain("as its highlight");
+    });
+
+
+    it("gives an element a row per side, so either can be taken back alone", async () => {
+      // An ink and a ground are two placements: the paragraph a visitor
+      // coloured and then put a band behind stands here twice, and each row
+      // undoes its own half. The verdict is the element's and is the same on
+      // both, because there is one pairing on the page and both made it.
+      const {store, place, press, resets, names, texts} = await ledger();
+
+      await place("bodyText", "color2");
+      await place("bodyText", "color4", "ground");
+
+      expect(names()).toEqual(["Body text", "Body text"]);
+      // The ink first, which is the order the chooser's toggle and the drag's
+      // own split are both in.
+      expect(texts()[0]).toContain("as its text color");
+      expect(texts()[1]).toContain("as its highlight");
+
+      await press(resets()[0]);
+
+      expect(store.placements()).toEqual({bodyText: {ground: "color4"}});
+      expect(names()).toEqual(["Body text"]);
     });
 
 
@@ -319,14 +347,15 @@ describe("PlacedColors", () => {
 
     it("names which element the row's reset undoes", async () => {
       // `↺` names nothing, and the wording is the announcement's: six
-      // elements default to a palette colour, so "its default color" is the
-      // one phrase true of all of them.
+      // elements default to a palette colour, so "its default" is the one
+      // phrase true of all of them. It names the side as well - two rows of
+      // one element would otherwise offer two buttons with one name.
       const {place, resets} = await ledger();
 
       await place("smallPrint", "color1");
 
       expect(resets()[0].getAttribute("aria-label"))
-        .toBe("Reset Small print to its default color");
+        .toBe("Reset Small print's text color to its default");
     });
 
 
@@ -352,7 +381,7 @@ describe("PlacedColors", () => {
       const label = resetPage()!.getAttribute("aria-label")!;
       const caption = resetPage()!.textContent!.trim();
 
-      expect(label).toBe("RESET PAGE: every element back to its default color");
+      expect(label).toBe("RESET PAGE: every element back to its default colors");
       expect(caption).toBe("RESET PAGE");
       expect(label).toContain(caption);
     });
@@ -375,7 +404,7 @@ describe("PlacedColors", () => {
       await place("smallPrint", "color1");
       await press(resets()[0]);
 
-      expect(store.placements()).toEqual({smallPrint: "color1"});
+      expect(store.placements()).toEqual({smallPrint: {ink: "color1"}});
       expect(names()).toEqual(["Small print"]);
     });
 

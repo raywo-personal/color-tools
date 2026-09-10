@@ -3,6 +3,7 @@ import {type} from "@ngrx/signals";
 import {Color} from "chroma-js";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 import {ChipSource} from "@contrast-type/models/chip-source.model";
+import {SamplePlacement} from "@contrast-type/models/sample-page.model";
 
 
 export const contrastEvents = eventGroup({
@@ -23,17 +24,23 @@ export const contrastEvents = eventGroup({
      */
     verdictToggled: type<string>(),
     /**
-     * A chip was put on one element of the sample page: the element's
-     * `SAMPLE_ELEMENTS` key and the chip it takes its colour from.
+     * A chip was put on one side of one element of the sample page: the
+     * element's `SAMPLE_ELEMENTS` key, which of its two colours the chip
+     * takes, and the chip itself.
      *
      * The source rather than the colour, so repainting the palette or typing
      * a new pair keeps the placement and hands the element the new colour of
      * the same chip - `ElementPlacements` says why.
      *
+     * **The side travels with the event.** A drop reads it off the half of
+     * the element the chip was released on and the chooser off its own
+     * toggle, so neither the reducer nor the announcement has to ask what a
+     * placement was for.
+     *
      * Not persisted: the placements are part of the result, and carrying
      * them across a reload is #68's.
      */
-    colorPlaced: type<{elementKey: string; source: ChipSource}>(),
+    colorPlaced: type<{elementKey: string; side: SamplePlacement; source: ChipSource}>(),
     /**
      * A drag of a chip started, and that chip is now in hand.
      *
@@ -49,8 +56,12 @@ export const contrastEvents = eventGroup({
      * ended without one.
      */
     chipPutDown: type<void>(),
-    /** One element goes back to the colour the page gives it by default. */
-    placementReset: type<string>(),
+    /**
+     * One side of one element goes back to the colour the page gives it by
+     * default. The other side keeps whatever it was given: they are two
+     * placements and the ledger resets them a row at a time.
+     */
+    placementReset: type<{elementKey: string; side: SamplePlacement}>(),
     /** `RESET PAGE`: every element goes back to the default assignment. */
     placementsReset: type<void>()
   }

@@ -21,7 +21,7 @@ import {injectDispatch} from "@ngrx/signals/events";
 import {AppStateStore} from "@core/app-state.store";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
-import {SampleGround, samplePage} from "@contrast-type/models/sample-page.model";
+import {SampleGround, samplePage, sideCaption} from "@contrast-type/models/sample-page.model";
 import {
   elementName,
   missedRequirement,
@@ -70,10 +70,10 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * **Its rim and its focus ring are still computed against the page.** They are
  * the edge between the app's badge and the visitor's colour, and a neutral
  * token is guaranteed against none of them - so both take black or white,
- * whichever APCA puts further from that surface. `surface` is usually the
- * element's own ground and is given separately where it is not - the label on
- * the filled button sits on the accent while its mark sits beside the button,
- * on the page.
+ * whichever APCA puts further from that surface. Which surface that is comes
+ * from `surface`, named on every mark: the element's own ground is what a
+ * placement moves, and this chrome is drawn outside the element, where it
+ * cannot follow.
  *
  * **The mark is a disclosure, and its name carries the verdict.** A screen
  * reader hears the element and how it fares before deciding whether to open
@@ -108,20 +108,44 @@ import {VerdictPanel} from "@contrast-type/components/verdict-panel/verdict-pane
  * table's marks wrap a few characters and one wraps a word inside a line.
  * `PlacementGesture` reads the attribute; do not move it onto the copy.
  *
+ * **The element takes both of its colours, and a release has one point, so the
+ * outlined box splits.** A hairline appears across it while a chip is over it:
+ * release in the upper half and the chip becomes the element's text colour, in
+ * the lower half its ground. The split is measured against the outlined copy
+ * rather than against the drop target, because the target is this whole row -
+ * badge and gutter included - and a midline through that would fall somewhere
+ * other than the middle of the words. `data-place-sides` is the one attribute
+ * both jobs run off: `src/styles.css` draws the line and `PlacementGesture`
+ * measures against the same box.
+ *
+ * **And the name says which side the release is on.** The halves are geometry
+ * and geometry explains nothing; the badge under the element names the side
+ * beside the element's own name rather than as a second label inside each half
+ * - which is also the only thing that would fit on a word inside a line. The
+ * chooser asks the same question outright, in words, for whoever is not
+ * dragging.
+ *
+ * **The outline is on every element at once; the name and the hairline only on
+ * the one under the pointer.** `labelled()` and `placeSides()` say why: the
+ * offer has to be visible across the whole page before the pointer arrives
+ * anywhere, and an explanation of it does not - twenty-two badges were a page
+ * of labels over the page they were about, and as many hairlines were lines
+ * through its words.
+ *
  * **The mark is one occurrence of the element, and the others are
  * `PlaceTarget`.** Five elements appear more than once, and a mark wraps one
  * of them: the rest carry the directive, which draws this same outline and
  * takes the same drop without adding a second mark, a second name or a second
  * tab stop. The two are seen side by side on one element, so a change to what
- * `dashed()` means here belongs there as well. `named()` does not port whole -
- * an occurrence with no badge has no name to show, and `PlaceTarget` says why
- * it therefore answers a carried chip only.
+ * `outlined()` and `dashed()` mean here belongs there as well. `labelled()`
+ * does not port - an occurrence with no badge has no name to show, and
+ * `PlaceTarget` says why it therefore answers a carried chip only.
  *
  * **What is drawn while a chip is carried is the app's chrome on the visitor's
  * page**, so the outline and the name take the same APCA foreground the rim
  * takes, against the same `surface`. That is why `surface` has to be right on
- * every mark and not only on the three whose ground is not what is behind
- * them.
+ * every mark and on every `PlaceTarget` beside it, and not only where an
+ * element's ground is not what is behind it.
  *
  * **The popup is also the no-drag way to colour the element**, for a keyboard
  * and for a finger alike: a drag cannot be performed from a keyboard, and
@@ -153,9 +177,22 @@ export class VerdictMark {
   readonly elementKey = input.required<string>();
 
   /**
-   * The page surface the mark itself sits on, which decides what its rim and
-   * its focus ring are drawn in. Defaults to nothing and falls back to the
-   * element's own ground - see `surfaceColor`.
+   * The page surface the mark itself sits on, which decides what its rim, its
+   * focus ring, its outline and its name are drawn in.
+   *
+   * **Every mark on the page names it, and the one that does not is nested.**
+   * The chrome is drawn *outside* the element - `outline-offset-4` puts it on
+   * the surface behind it - while the element's own ground is whatever a
+   * visitor placed there: a band behind the words, or the fill of a box. Left
+   * to the fallback, a dark band on the headline of a light page has the rim
+   * measured white and drawn on the page, where it disappears. So the surface
+   * is named here, out of the six the page paints, and a placement cannot
+   * move it.
+   *
+   * `bodyLink` is the exception and takes the fallback: it is a word inside
+   * the running text, so its chrome sits inside whatever the paragraph is
+   * wearing - see `SampleElement.inside`, which is the step `verdict().ground`
+   * follows for it.
    */
   readonly surface = input<SampleGround | null>(null);
 
@@ -181,7 +218,13 @@ export class VerdictMark {
 
   protected readonly open = computed(() => this.#stateStore.openVerdict() === this.elementKey());
 
-  /** The colour the surface is painted in, so APCA has something to measure. */
+  /**
+   * The colour the surface is painted in, so APCA has something to measure.
+   *
+   * The fallback is the nested element's case and not a default worth
+   * spreading: it reads the element's own ground, which a placement can move -
+   * see `surface`, which says why every other mark names one.
+   */
   readonly #surfaceColor = computed<Color>(() => {
     const surface = this.surface();
 
@@ -199,6 +242,22 @@ export class VerdictMark {
    */
   protected readonly inkHex = computed(() => findOptimalTextColor(this.#surfaceColor()).color.hex("rgb"));
 
+  /**
+   * The hairline that splits the box, measured against the element's own
+   * ground rather than against `surface`.
+   *
+   * **`inkHex()` is the wrong colour for this one line.** The rim, the outline
+   * and the name sit *outside* the element - `outline-offset-4` puts them on
+   * the surface behind it - while `src/styles.css` draws the hairline inside
+   * the box, over whatever the element itself is painted in. On the filled
+   * button that is the accent, and a colour measured against the page lands on
+   * a fill of its own lightness often enough: the one aiming aid gone on the
+   * element a visitor most wants to fill. The same would hold on every mark
+   * that names a `surface` once a ground is placed there.
+   */
+  protected readonly splitHex = computed(() =>
+    findOptimalTextColor(this.verdict().ground).color.hex("rgb"));
+
   protected readonly label = computed(() => {
     const verdict = this.verdict();
 
@@ -212,6 +271,22 @@ export class VerdictMark {
 
   /** The element's all-caps name, as the page's own badge shows it. */
   protected readonly caption = computed(() => this.verdict().element.caption);
+
+  /**
+   * What the badge under the element says: its name, and while a chip is over
+   * this element the side a release would land on.
+   *
+   * The side only while the pointer is on this element, because that is when
+   * the answer is about to be used - the other twenty-one are outlined to say
+   * a colour may go there, not to say where in them.
+   */
+  protected readonly badge = computed(() => {
+    const side = this.#gesture.side();
+
+    if (!this.over() || side === null) return this.caption();
+
+    return `${this.caption()} · ${sideCaption(this.verdict().element, side)}`;
+  });
 
   /**
    * What the popup is, in both of its jobs. The mark's own name stays the
@@ -230,17 +305,62 @@ export class VerdictMark {
   protected readonly over = computed(() => this.#gesture.over() === this.elementKey());
 
   /**
-   * Whether the element shows its outline and its name.
+   * Whether the element shows its outline.
    *
    * Every element at once while a chip is carried, so the visitor can see
    * where a colour may go; at rest only the one under the pointer or holding
    * focus, so nothing marks the page until it is asked.
    */
-  protected readonly named = computed(() =>
+  protected readonly outlined = computed(() =>
     this.carrying() || this.#hovered() || this.#focusedWithin());
 
   /** Solid names the drop; dashed only offers it. */
-  protected readonly dashed = computed(() => this.named() && !this.over());
+  protected readonly dashed = computed(() => this.outlined() && !this.over());
+
+  /**
+   * `data-place-sides`: the attribute the split runs off, and the value that
+   * says whether this is the element being aimed at.
+   *
+   * **The attribute is on every element while a chip is carried, the line only
+   * on the one under the pointer.** `PlacementGesture` looks the attribute up
+   * to measure a release against the same box the line is drawn across, and it
+   * has to find it on whatever element the pointer reaches next - the box is
+   * measured in the very event that works out where the pointer is, so a value
+   * this component has not rendered yet cannot gate it. That is why the
+   * presence carries the measurement and the value carries the drawing:
+   * `src/styles.css` draws the hairline for `over` alone, and `SPLIT_SELECTOR`
+   * there must stay value-agnostic.
+   *
+   * **The line only where the release is about to happen**, for `labelled()`'s
+   * reason: outlined at once, the page says a colour may go anywhere; a
+   * hairline at once was thirty lines through the page's own words, each in the
+   * APCA maximum against what it crossed.
+   */
+  protected readonly placeSides = computed(() => {
+    if (!this.carrying()) return null;
+
+    return this.over() ? "over" : "";
+  });
+
+  /**
+   * Whether the element shows its name - the one element the pointer is on,
+   * never the whole page at once.
+   *
+   * **The outline offers, the name explains, and only one of the two scales to
+   * twenty-two elements.** Every badge at the same time was a page of labels
+   * over the page the visitor is looking at, and each one hangs `-bottom-7`
+   * under its element - further than the gap between two paragraphs, so the
+   * names covered the outlines they were there to explain. The outline alone
+   * says a colour may go here, which is what the whole page has to say at
+   * once; the name says which element it is and which of its two colours a
+   * release would take, and that is only asked where the release is about to
+   * happen.
+   *
+   * Hover and focus keep it at rest, because those are the two ways of asking
+   * about one element without carrying anything.
+   */
+  protected readonly labelled = computed(() =>
+    this.over() || this.#hovered() || this.#focusedWithin());
 
   private readonly markButton = viewChild.required<ElementRef<HTMLElement>>("markButton");
 

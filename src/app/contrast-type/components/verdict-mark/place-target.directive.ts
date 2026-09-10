@@ -12,10 +12,13 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
  * chip released on it, and it draws the outline that says so.
  *
  * **One mark per named element, but a drop target per occurrence.** Five of the
- * page's elements appear more than once - the running text in three
- * paragraphs, the small print beside the copyright line, and each of the
- * table's three roles in a cell per column or per row - and a mark wraps
- * exactly one of them. Without this the biggest block of text on the page
+ * page's elements appear more than once - the running text in the closing
+ * paragraph past the card, the small print beside the copyright line, and each
+ * of the table's three roles in a cell per column or per row - and a mark
+ * wraps exactly one of them. The two paragraphs that sit together are inside
+ * one mark instead, because as two outlined boxes they read as two elements;
+ * `website-preview.html` says why that one could be done and the closing
+ * paragraph cannot. Without this the biggest block of text on the page
  * offered a visitor nothing and answered a release with a cancel, and the
  * block they had aimed at then recoloured from a placement made somewhere
  * else. A second mark would have been the other way out and is the wrong one:
@@ -37,8 +40,22 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
  *
  * **Keep this in step with `VerdictMark`'s own chrome.** The two draw one
  * element and a visitor sees them side by side: change when the mark outlines
- * an element - `named()` there - and change it here, or one paragraph of the
- * running text will offer itself while the next one does not.
+ * an element - `outlined()` there - and change it here, or one paragraph of
+ * the running text will offer itself while the next one does not.
+ *
+ * **It splits the same way the mark does.** A release in the upper half takes
+ * the element's text colour and one in the lower half its ground, and the
+ * hairline that says so is drawn off `data-place-sides` - the one attribute
+ * `src/styles.css` and `PlacementGesture` both run off. Here the attribute is
+ * on the directive's own element, which is the outlined box as well, so the
+ * line and the measurement are the same box without further ado. The line is
+ * drawn on the element under the pointer and nowhere else, as on the mark.
+ *
+ * **What it cannot carry is the word.** The side travels in the mark's badge,
+ * and an occurrence with no badge has nowhere to put it - so a visitor learns
+ * which half is which on the one occurrence that is marked, or from the
+ * chooser, which asks outright. Giving the directive a badge of its own would
+ * be the second name per element that the rule above forbids.
  *
  * **It answers a carried chip and nothing else - no hover, unlike the mark.**
  * The mark outlines *and names* its element under the pointer, and a name is
@@ -55,8 +72,10 @@ import {PlacementGesture} from "@contrast-type/services/placement-gesture.servic
   host: {
     "[attr.data-place-target]": "elementKey()",
     "class": "outline-offset-4",
-    "[class.outline-2]": "named()",
+    "[class.outline-2]": "outlined()",
     "[class.outline-dashed]": "dashed()",
+    "[attr.data-place-sides]": "placeSides()",
+    "[style.--place-split-color]": "splitHex()",
     "[style.outline-color]": "inkHex()",
     "[class.underline]": "missed()",
     "[class.decoration-dotted]": "missed()",
@@ -75,7 +94,9 @@ export class PlaceTarget {
    * The page surface this occurrence sits on, for the reason `VerdictMark`
    * gives for its own input: it decides what the outline is drawn in, and it
    * has to match the mark's - the marked occurrence and this one are one
-   * element and must not be outlined in two colours.
+   * element and must not be outlined in two colours. Which also means it is
+   * named on every occurrence, since a placement moves the element's own
+   * ground and the outline is drawn outside it.
    */
   readonly surface = input<SampleGround | null>(null);
 
@@ -105,13 +126,35 @@ export class PlaceTarget {
   protected readonly inkHex = computed(() =>
     findOptimalTextColor(this.#surfaceColor()).color.hex("rgb"));
 
+  /**
+   * The hairline's own colour, measured against the element's ground rather
+   * than against the surface - `VerdictMark.splitHex` says why the one line
+   * drawn inside the box cannot take the colour the outline around it takes.
+   */
+  protected readonly splitHex = computed(() =>
+    findOptimalTextColor(this.#verdict().ground).color.hex("rgb"));
+
   protected readonly missed = computed(() => missedRequirement(this.#verdict()));
 
   /** Every occurrence at once while a chip is carried, and none of them at rest. */
-  protected readonly named = computed(() => this.#gesture.carrying());
+  protected readonly outlined = computed(() => this.#gesture.carrying());
+
+  /** Whether the pointer carrying a chip is on this element. */
+  protected readonly over = computed(() => this.#gesture.over() === this.elementKey());
 
   /** Solid names the drop; dashed only offers it. */
-  protected readonly dashed = computed(() =>
-    this.named() && this.#gesture.over() !== this.elementKey());
+  protected readonly dashed = computed(() => this.outlined() && !this.over());
+
+  /**
+   * `data-place-sides` on every occurrence while a chip is carried, `over` on
+   * the element the pointer is on - `VerdictMark.placeSides` says why the
+   * presence and the value answer two different questions, and why only the
+   * value may narrow.
+   */
+  protected readonly placeSides = computed(() => {
+    if (!this.outlined()) return null;
+
+    return this.over() ? "over" : "";
+  });
 
 }

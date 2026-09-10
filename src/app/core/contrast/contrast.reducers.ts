@@ -5,6 +5,7 @@ import {findTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {ContrastColors, createContrastColors} from "@engine/contrast/contrast-colors.model";
 import {contrastColorsFromId} from "@engine/contrast/contrast-id.helper";
 import {ChipSource} from "@contrast-type/models/chip-source.model";
+import {SAMPLE_PLACEMENTS, SamplePlacement} from "@contrast-type/models/sample-page.model";
 
 
 export function textColorChangedReducer(
@@ -122,13 +123,21 @@ export function verdictToggledReducer(
  */
 export function colorPlacedReducer(
   this: void,
-  event: EventInstance<"[Contrast] colorPlaced", {elementKey: string; source: ChipSource}>,
+  event: EventInstance<"[Contrast] colorPlaced", {elementKey: string; side: SamplePlacement; source: ChipSource}>,
   state: AppState
 ) {
-  const {elementKey, source} = event.payload;
+  const {elementKey, side, source} = event.payload;
 
   return {
-    placements: {...state.placements, [elementKey]: source},
+    // The element's other side is kept: an ink and a ground are two
+    // placements, and a visitor who colours a paragraph and then puts a band
+    // behind it has made both. Spreading the element's own entry is what says
+    // so - replacing it would take the first placement away as a side effect
+    // of making the second.
+    placements: {
+      ...state.placements,
+      [elementKey]: {...state.placements[elementKey], [side]: source}
+    },
     carriedChip: null
   };
 }
@@ -150,20 +159,29 @@ export function chipPutDownReducer(
 
 
 /**
- * One element back to the colour the page gives it by default.
+ * One side of one element back to the colour the page gives it by default.
  *
- * The key is dropped rather than set to null: an absent key is what
+ * The side is dropped rather than set to null: an absent side is what
  * `samplePage()` reads as "nothing placed", so a null would be a second
- * spelling of the same state.
+ * spelling of the same state. The element's key goes with the last of its two
+ * sides for the same reason - an entry holding neither would be a third.
  */
 export function placementResetReducer(
   this: void,
-  event: EventInstance<"[Contrast] placementReset", string>,
+  event: EventInstance<"[Contrast] placementReset", {elementKey: string; side: SamplePlacement}>,
   state: AppState
 ) {
+  const {elementKey, side} = event.payload;
   const placements = {...state.placements};
+  const sides = {...placements[elementKey]};
 
-  delete placements[event.payload];
+  delete sides[side];
+
+  if (SAMPLE_PLACEMENTS.some(other => sides[other])) {
+    placements[elementKey] = sides;
+  } else {
+    delete placements[elementKey];
+  }
 
   return {placements};
 }
