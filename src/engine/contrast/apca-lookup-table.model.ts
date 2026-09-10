@@ -11,10 +11,17 @@ export const FONT_WEIGHTS = [
 
 export type FontWeight = typeof FONT_WEIGHTS[number];
 
+/**
+ * One cell of the lookup table: the Lc a pair has to reach at that size and
+ * weight, or `null` where no Lc carries text there.
+ *
+ * The Lc is the whole cell. An advisory field - "needs bold", "add Lc 15 for
+ * body copy" - goes in only together with the code that acts on it. Unread it
+ * states a requirement every caller then contradicts, and a verdict names the
+ * cells it would mark as the size and weight that carry the element.
+ */
 export interface APCAContrastValue {
   contrast: number | null;
-  requiresBold?: boolean;
-  requires15pt?: boolean;
 }
 
 export type APCAContrastValueForWeight = Record<FontWeight, APCAContrastValue>;
