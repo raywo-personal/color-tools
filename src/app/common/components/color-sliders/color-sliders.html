@@ -2,7 +2,7 @@
      their h-11 hit area at every width, so in the narrow column the switch
      moves below the caption instead of squeezing past the minimum. -->
 <div class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-  <p class="font-sans text-sm tracking-widest text-dim">PLAY</p>
+  <p class="font-sans text-sm tracking-widest text-dim">{{ caption() }}</p>
 
   <div class="flex overflow-hidden rounded-xs border border-line"
        role="group"
@@ -31,7 +31,7 @@
                [valueText]="hslHueText()"
                [track]="hslHueTrack()"
                (valueChange)="hslHueChanged($event)"
-               (commit)="commit()"/>
+               (commit)="commit.emit()"/>
 
     <ct-slider label="SATURATION"
                [min]="0"
@@ -41,7 +41,7 @@
                [valueText]="hslSaturationText()"
                [track]="hslSaturationTrack()"
                (valueChange)="hslSaturationChanged($event)"
-               (commit)="commit()"/>
+               (commit)="commit.emit()"/>
 
     <ct-slider label="LIGHTNESS"
                [min]="0"
@@ -51,7 +51,7 @@
                [valueText]="hslLightnessText()"
                [track]="hslLightnessTrack()"
                (valueChange)="hslLightnessChanged($event)"
-               (commit)="commit()"/>
+               (commit)="commit.emit()"/>
   } @else {
     <ct-slider label="LIGHTNESS"
                [min]="0"
@@ -61,7 +61,7 @@
                [valueText]="oklchLightnessText()"
                [track]="oklchLightnessTrack()"
                (valueChange)="oklchLightnessChanged($event)"
-               (commit)="commit()"/>
+               (commit)="commit.emit()"/>
 
     <!-- The maximum follows the gamut rather than a constant; see
          `chromaCeiling`. -->
@@ -73,7 +73,7 @@
                [valueText]="oklchChromaText()"
                [track]="oklchChromaTrack()"
                (valueChange)="oklchChromaChanged($event)"
-               (commit)="commit()"/>
+               (commit)="commit.emit()"/>
 
     <ct-slider label="HUE"
                [min]="0"
@@ -83,6 +83,6 @@
                [valueText]="oklchHueText()"
                [track]="oklchHueTrack()"
                (valueChange)="oklchHueChanged($event)"
-               (commit)="commit()"/>
+               (commit)="commit.emit()"/>
   }
 </div>

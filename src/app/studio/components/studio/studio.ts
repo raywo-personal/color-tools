@@ -1,8 +1,12 @@
-import {Component} from "@angular/core";
+import {Component, inject} from "@angular/core";
+import {Color} from "chroma-js";
+import {injectDispatch} from "@ngrx/signals/events";
+import {AppStateStore} from "@core/app-state.store";
+import {converterEvents} from "@core/converter/converter.events";
 import {Swatch} from "@studio/components/swatch/swatch";
 import {ColorControls} from "@studio/components/color-controls/color-controls";
 import {ConversionList} from "@studio/components/conversion-list/conversion-list";
-import {ColorSliders} from "@studio/components/color-sliders/color-sliders";
+import {ColorSliders} from "@common/components/color-sliders/color-sliders";
 import {StylePicker} from "@studio/components/style-picker/style-picker";
 import {PaletteSwatches} from "@studio/components/palette-swatches/palette-swatches";
 import {TintShadeRamps} from "@studio/components/tint-shade-ramps/tint-shade-ramps";
@@ -35,6 +39,12 @@ import {ExportPanel} from "@studio/components/export-panel/export-panel";
  * swatch reads as a band and a ramp step as a stripe. Do not lift the cap to
  * fill a wide screen - the margin `mx-auto` leaves costs nothing, and this
  * column is controls, which do not read better wider.
+ *
+ * **The sliders are wired here, because the panel is host-agnostic.**
+ * `ColorSliders` takes a colour and hands back the two ends of a gesture; the
+ * Studio's colour is the base colour and its events are the converter's, and
+ * Contrast & Type answers the same panel with the contrast domain's. That is
+ * the whole of what this component does besides the grid.
  */
 @Component({
   selector: "ct-studio",
@@ -45,4 +55,26 @@ import {ExportPanel} from "@studio/components/export-panel/export-panel";
   }
 })
 export class Studio {
+
+  readonly #stateStore = inject(AppStateStore);
+  readonly #dispatch = injectDispatch(converterEvents);
+
+  protected readonly currentColor = this.#stateStore.currentColor;
+
+
+  protected adjustColor(color: Color): void {
+    this.#dispatch.colorAdjusted(color);
+  }
+
+
+  /**
+   * Ends a gesture on the color the drag has already put into the store.
+   *
+   * Taken from the store rather than from the panel, so the value that is
+   * persisted is the one the rest of the app has been showing.
+   */
+  protected commitColor(): void {
+    this.#dispatch.colorChanged(this.#stateStore.currentColor());
+  }
+
 }

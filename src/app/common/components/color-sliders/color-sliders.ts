@@ -1,8 +1,5 @@
-import {Component, computed, inject, linkedSignal, signal} from "@angular/core";
+import {Component, computed, input, linkedSignal, output, signal} from "@angular/core";
 import {Color} from "chroma-js";
-import {injectDispatch} from "@ngrx/signals/events";
-import {AppStateStore} from "@core/app-state.store";
-import {converterEvents} from "@core/converter/converter.events";
 import {Slider} from "@common/components/slider/slider";
 import {fromHsl} from "@engine/color/color-from-hsl.helper";
 import {fromOklch} from "@engine/color/color-from-oklch.helper";
@@ -38,6 +35,12 @@ interface Oklch {
   readonly l: number;
   readonly c: number;
   readonly h: number;
+}
+
+/** A colour and whose it is - what the kept values below are compared against. */
+interface ColorSource {
+  readonly color: Color;
+  readonly subject: unknown;
 }
 
 /**
@@ -81,18 +84,21 @@ const HUE_MAX = 359;
 
 
 /**
- * The base color's three axes, in HSL or in OKLch.
+ * One color's three axes, in HSL or in OKLch.
  *
  * **The switch does not touch `displayColorSpace`.** The conversion list writes
  * all four formats whatever is selected here, so the store's field steers
- * nothing on this screen, and the two do not have the same shape: the switch
+ * nothing on either screen, and the two do not have the same shape: the switch
  * has two positions and `ColorSpace` has four values, so anything setting the
  * store to `hex` would leave the switch with no position to be in. The mode is
  * this panel's own view state.
  *
- * **A drag raises `colorAdjusted`, the end of it raises `colorChanged`.** The
- * swatch and the conversion list follow every frame, but only the value the
- * visitor settles on is written to localStorage - see the event's own comment.
+ * **The panel edits the colour it is handed and dispatches nothing.** A drag
+ * raises `colorAdjusted` per frame and the end of the gesture raises `commit`;
+ * which events those become is the host's, so the Studio moves the base colour
+ * and Contrast & Type moves one half of the pair with the same three sliders.
+ * Do not reach for the store from here - a panel bound to `currentColor` is
+ * what kept the second host from existing.
  */
 @Component({
   selector: "ct-color-sliders",
@@ -104,8 +110,45 @@ const HUE_MAX = 359;
 })
 export class ColorSliders {
 
-  readonly #stateStore = inject(AppStateStore);
-  readonly #dispatch = injectDispatch(converterEvents);
+  /** The colour the three axes stand for. */
+  readonly color = input.required<Color>();
+
+  /**
+   * An opaque value naming whose colour that is.
+   *
+   * The kept values below are given up when the colour changes, and two
+   * colours that round to the same three bytes are no change at all - so a
+   * host holding more than one colour hands a value that moves with the one
+   * it is showing. On Contrast & Type a switch to a half of the pair that
+   * happens to coincide with the other half is then still a colour that
+   * arrived from elsewhere, rather than the half no longer being edited
+   * leaving its hue behind. The Studio shows one colour throughout and passes
+   * nothing.
+   */
+  readonly subject = input<unknown>();
+
+  /**
+   * The section's own caption.
+   *
+   * The Studio's `PLAY` is the default. A host whose colour is one of several
+   * says which one it is here: the sliders name their axes and not their
+   * subject, so on Contrast & Type the caption is the visible text that tells
+   * a visitor which half of the pair the tracks below move.
+   */
+  readonly caption = input("PLAY");
+
+  /** A colour the visitor is still setting - every frame of a drag. */
+  readonly colorAdjusted = output<Color>();
+
+  /**
+   * The end of a gesture, without a colour.
+   *
+   * The host has had every frame of the drag already and holds the last of
+   * them in its own state; taking the value from there rather than rebuilding
+   * it here is what makes the persisted colour the one the rest of the app has
+   * been showing.
+   */
+  readonly commit = output<void>();
 
   protected readonly spaceOptions = SPACE_OPTIONS;
 
@@ -113,31 +156,42 @@ export class ColorSliders {
 
   protected readonly space = signal<SliderSpace>("hsl");
 
+  /** The colour and its subject, the pair both kept sets are read against. */
+  readonly #source = computed<ColorSource>(() =>
+    ({color: this.color(), subject: this.subject()}));
+
   /**
    * The three HSL values the sliders stand at.
    *
-   * Kept rather than read off `currentColor()` every time, because the color
-   * cannot hold all three: at a lightness of 0 or 100 every hue and saturation
+   * Kept rather than read off `color()` every time, because the color cannot
+   * hold all three: at a lightness of 0 or 100 every hue and saturation
    * is the same black or white, and at a saturation of 0 every hue is the same
    * grey. Re-deriving would drop the two the visitor is not touching, so
    * pulling lightness down and back up would return a different color than it
    * left.
    *
    * The values are given up as soon as the color no longer agrees with them -
-   * the hex field, the picker or `Random` moving it - which is exactly what the
-   * comparison below asks.
+   * anything but this panel moving it - which is exactly what the comparison
+   * below asks. It asks about `subject` first, because a colour is compared
+   * in three bytes and two colours can agree in those while coming from
+   * different places: switching the half of a pair whose colours coincide
+   * would otherwise leave the values of the half no longer being edited
+   * standing, and pulling lightness back up would hand back the other half's
+   * hue.
    *
    * They are kept unrounded, and `hslShown` rounds them for the control. A
    * value the visitor drags arrives on the slider's step anyway; one that
    * arrived with the color would otherwise be moved before the first touch.
    * That matters for OKLch, see `oklch`, and the two are kept alike.
    */
-  protected readonly hsl = linkedSignal<Color, Hsl>({
-    source: this.#stateStore.currentColor,
-    computation: (color, previous) => {
-      if (previous && sameColor(hslColor(previous.value), color)) return previous.value;
+  protected readonly hsl = linkedSignal<ColorSource, Hsl>({
+    source: this.#source,
+    computation: (source, previous) => {
+      if (previous && sameSource(previous.source, source, hslColor(previous.value))) {
+        return previous.value;
+      }
 
-      return readHsl(color);
+      return readHsl(source.color);
     }
   });
 
@@ -155,12 +209,14 @@ export class ColorSliders {
    * color that just arrived, and the first nudge of lightness would rebuild
    * the color at the lower ceiling - a visible jump for a move of 0.1 %.
    */
-  protected readonly oklch = linkedSignal<Color, Oklch>({
-    source: this.#stateStore.currentColor,
-    computation: (color, previous) => {
-      if (previous && sameColor(oklchColor(previous.value), color)) return previous.value;
+  protected readonly oklch = linkedSignal<ColorSource, Oklch>({
+    source: this.#source,
+    computation: (source, previous) => {
+      if (previous && sameSource(previous.source, source, oklchColor(previous.value))) {
+        return previous.value;
+      }
 
-      return readOklch(color);
+      return readOklch(source.color);
     }
   });
 
@@ -293,20 +349,9 @@ export class ColorSliders {
   }
 
 
-  /**
-   * Ends a gesture on the color the drag has already put into the store.
-   *
-   * Taken from the store rather than rebuilt from the sliders, so the value
-   * that is persisted is the one the rest of the app has been showing.
-   */
-  protected commit(): void {
-    this.#dispatch.colorChanged(this.#stateStore.currentColor());
-  }
-
-
   #adjustHsl(hsl: Hsl): void {
     this.hsl.set(hsl);
-    this.#dispatch.colorAdjusted(hslColor(hsl));
+    this.colorAdjusted.emit(hslColor(hsl));
   }
 
 
@@ -320,7 +365,7 @@ export class ColorSliders {
    */
   #adjustOklch(oklch: Oklch): void {
     this.oklch.set(oklch);
-    this.#dispatch.colorAdjusted(oklchColor(oklch));
+    this.colorAdjusted.emit(oklchColor(oklch));
   }
 
 }
@@ -388,6 +433,18 @@ function oklchColor(oklch: Oklch): Color {
   const chromacity = Math.min(oklch.c, chromaCeilingAt(oklch.l, oklch.h));
 
   return fromOklch({l: oklch.l / 100, c: chromacity, h: oklch.h});
+}
+
+
+/**
+ * Whether the kept values still stand for what the panel is being handed.
+ *
+ * The subject before the colour: two halves of a pair that coincide arrive as
+ * the same three bytes, so the colour alone cannot tell a switch of subject
+ * from the panel's own last frame.
+ */
+function sameSource(previous: ColorSource, source: ColorSource, kept: Color): boolean {
+  return previous.subject === source.subject && sameColor(kept, source.color);
 }
 
 

@@ -11,7 +11,9 @@
 </div>
 
 <div class="min-w-0">
-  <ct-color-sliders/>
+  <ct-color-sliders [color]="currentColor()"
+                    (colorAdjusted)="adjustColor($event)"
+                    (commit)="commitColor()"/>
 
   <!-- The caption and the chips wrap together: the chips keep their h-11 hit
        area at every width, so in the narrow column they take the rows they

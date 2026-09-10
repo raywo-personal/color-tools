@@ -146,6 +146,11 @@ digit; a style beyond that needs a wider index field first, or
   `paletteFollowsColorReducer` rebuilds it on every color event and is
   registered after the converter's reducers, because it reads the color from
   the state. Keep that order
+- The pair's sliders raise `contrastEvents.textColorAdjusted` and
+  `backgroundColorAdjusted`, never the converter's `colorAdjusted`. The
+  converter's events rebuild the palette per frame, which is right for the
+  Studio and wrong here: moving one half of the pair is no statement about
+  the palette the chips are drawn from
 - Picking a style draws a new `paletteSeed`; a color change keeps it
 - What a palette slot is *for* is `roleCaptionFor()`, a function of style and
   slot, not a field on `PaletteColor`: a field would travel into the palette

@@ -31,11 +31,12 @@ describe("ContrastType", () => {
   }
 
 
-  it("holds the pair, the palette chips, the two gestures, the ledger, the type roles, the rating, the type controls and the vision block", async () => {
+  it("holds the pair, the palette chips, the sliders, the two gestures, the ledger, the type roles, the rating, the type controls and the vision block", async () => {
     const host = await contrastType();
 
     expect(host.querySelector("ct-pair-fields")).not.toBeNull();
     expect(host.querySelector("ct-palette-chips")).not.toBeNull();
+    expect(host.querySelector("ct-pair-sliders")).not.toBeNull();
     expect(host.querySelector("ct-pair-actions")).not.toBeNull();
     expect(host.querySelector("ct-type-roles")).not.toBeNull();
     expect(host.querySelector("ct-apca-rating")).not.toBeNull();
@@ -63,6 +64,43 @@ describe("ContrastType", () => {
     // component's own host class is the ledger's business, not this file's.
     expect(Array.from(ledger.classList))
       .toEqual(expect.arrayContaining(["mt-5", "border-t", "border-line", "pt-4"]));
+  });
+
+
+  it("puts the sliders directly under the chips, because one target steers both", async () => {
+    // `APPLY TO` names the half a chip's click applies to and the half the
+    // sliders move. A block between them would put the two controls of one
+    // mode on either side of something unrelated.
+    const host = await contrastType();
+    const order = Array.from(host.querySelectorAll("ct-palette-chips, ct-pair-sliders, ct-pair-actions"))
+      .map(element => element.tagName.toLowerCase());
+
+    expect(order).toEqual(["ct-palette-chips", "ct-pair-sliders", "ct-pair-actions"]);
+  });
+
+
+  it("steers the sliders from the chip row's target, not from a second selector", async () => {
+    // The one mode has one display. Pressing `TEXT` above the chips is what
+    // aims the sliders, and the sliders' own caption is what says so.
+    const fixture = TestBed.createComponent(ContrastType);
+    await fixture.whenStable();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const chips = host.querySelector("ct-palette-chips") as HTMLElement;
+    const caption = () => host
+      .querySelector("ct-pair-sliders p")?.textContent?.trim() ?? "";
+
+    expect(caption()).toBe("ADJUST BACKGROUND");
+
+    const text = Array
+      .from(chips.querySelectorAll<HTMLButtonElement>("[role=group] button"))
+      .find(button => button.textContent?.trim() === "TEXT") as HTMLButtonElement;
+
+    text.click();
+    await fixture.whenStable();
+
+    expect(caption()).toBe("ADJUST TEXT");
+    expect(text.getAttribute("aria-pressed")).toBe("true");
   });
 
 
@@ -157,8 +195,8 @@ describe("ContrastType", () => {
 
     expect(colors).not.toBe(type);
 
-    for (const selector of ["ct-palette-chips", "ct-pair-actions", "ct-page-verdicts",
-      "ct-placed-colors", "ct-color-vision"]) {
+    for (const selector of ["ct-palette-chips", "ct-pair-sliders", "ct-pair-actions",
+      "ct-page-verdicts", "ct-placed-colors", "ct-color-vision"]) {
       expect(columnOf(selector), selector).toBe(colors);
     }
 

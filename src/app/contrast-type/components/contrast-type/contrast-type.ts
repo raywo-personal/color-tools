@@ -1,6 +1,8 @@
-import {Component} from "@angular/core";
+import {Component, signal} from "@angular/core";
+import {ContrastColorRole} from "@engine/contrast/contrast-color.model";
 import {PairFields} from "@contrast-type/components/pair-fields/pair-fields";
 import {PaletteChips} from "@contrast-type/components/palette-chips/palette-chips";
+import {PairSliders} from "@contrast-type/components/pair-sliders/pair-sliders";
 import {PairActions} from "@contrast-type/components/pair-actions/pair-actions";
 import {PageVerdicts} from "@contrast-type/components/page-verdicts/page-verdicts";
 import {TypeRoles} from "@contrast-type/components/type-roles/type-roles";
@@ -21,17 +23,19 @@ import {ColorVision} from "@contrast-type/components/color-vision/color-vision";
  *
  * **What the screen answers decides which column a block goes in.** It answers
  * "these two colours, in this role - what is the Lc, what is the verdict, and
- * this is the page". So the pair, the rating, the sliders and the preview are
- * what has to stay in view, and at `xl` they do: the type block starts at the
- * top of its column instead of below nine blocks' worth of colour.
+ * this is the page". So the pair, the rating, the type's sliders and the
+ * preview are what has to stay in view, and at `xl` they do: the type block
+ * starts at the top of its column instead of below nine blocks' worth of
+ * colour.
  *
- * The colour column is the pair, the palette chips, the two gestures, the
- * page's tally, the ledger of placed colours and the colour-vision block. The
- * type column is the type roles, the rating, the picker, the three sliders and
- * the other roles. **The tally belongs with the colours, the rating with the
- * role.** The tally counts every mark beside the preview and judges the pair,
- * so it closes the colour column's first run; the rating answers about the
- * role the segments select, so it sits directly under them.
+ * The colour column is the pair, the palette chips, the sliders that move one
+ * half of the pair, the two gestures, the page's tally, the ledger of placed
+ * colours and the colour-vision block. The type column is the type roles, the
+ * rating, the picker, the three type sliders and the other roles. **The tally
+ * belongs with the colours, the rating with the role.** The tally counts every
+ * mark beside the preview and judges the pair, so it closes the colour
+ * column's first run; the rating answers about the role the segments select,
+ * so it sits directly under them.
  *
  * **The preview is in the middle at `xl` while the type block follows the
  * colours in the markup.** So a keyboard walks the two control columns one
@@ -79,11 +83,22 @@ import {ColorVision} from "@contrast-type/components/color-vision/color-vision";
  */
 @Component({
   selector: "ct-contrast-type",
-  imports: [PairFields, PaletteChips, PairActions, PageVerdicts, TypeRoles, ApcaRating, TypeControls, PlacedColors, WebsitePreview, ColorVision],
+  imports: [PairFields, PaletteChips, PairSliders, PairActions, PageVerdicts, TypeRoles, ApcaRating, TypeControls, PlacedColors, WebsitePreview, ColorVision],
   templateUrl: "./contrast-type.html",
   host: {
     "class": "grid lg:grid-cols-[minmax(18rem,22rem)_minmax(24rem,1fr)] lg:items-start lg:gap-x-13 xl:grid-cols-[minmax(18rem,20rem)_minmax(24rem,1fr)_minmax(18rem,20rem)]"
   }
 })
 export class ContrastType {
+
+  /**
+   * The half of the pair the chip row applies to and the sliders move.
+   *
+   * Two controls of one mode, so the mode sits above both rather than in
+   * either. `PaletteChips` carries the control that changes it and keeps the
+   * same default for standing on its own - the two-way binding makes this one
+   * the value the screen opens on, so change both or neither.
+   */
+  protected readonly target = signal<ContrastColorRole>("background");
+
 }
