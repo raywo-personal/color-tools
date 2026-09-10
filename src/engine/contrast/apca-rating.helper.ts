@@ -71,10 +71,6 @@ export function getRequiredLc(fontSizeKey: FontSize,
  * the table, not its end, and the requirements do not fall in step across a
  * column.
  *
- * `requiresBold` and `requires15pt` are ignored, as everywhere else in this
- * app: at weight 400 every size from 14px to 36px carries one of them, so
- * honouring them would push every answer past 42px and make the value useless.
- *
  * @param {number} apcaContrast - The APCA contrast value (positive or negative)
  * @param {FontWeight} fontWeight - The weight the size is looked up for
  * @param {APCALookupTable} lookupTable - The APCA lookup table

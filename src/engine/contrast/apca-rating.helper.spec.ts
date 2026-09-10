@@ -111,7 +111,7 @@ describe("APCA Rating Helper", () => {
     describe("font weight variations", () => {
 
       it("should return different ratings for different weights at same size", () => {
-        // 16px/400 requires 90 contrast (with bold requirement)
+        // 16px/400 requires 90 contrast
         // 16px/700 requires 60 contrast
         const contrast = 65;
 
