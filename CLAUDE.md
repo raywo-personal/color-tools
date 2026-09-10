@@ -115,6 +115,13 @@ through them, never through relative `../../` paths.
 - A generator draws its jitter through `randomBetween()`, never `Math.random`
   or `chroma.random()`: the roll is a seed in the state, and a draw outside
   the seed makes the palette flicker while a color is dragged
+- **A column of body copy is held to `BODY_COPY_MIN_LC`.** `apcaLookup` is
+  the table as written, which is what spot text is rated against;
+  `getRequiredLc()` and the two passing searches lift a cell to the floor, and
+  `SampleElement.textKind` classifies every element of the sample page. Do not
+  apply the original's footnote as `+15` under Lc 70 instead: six of the nine
+  weight columns then rise once as the size grows, and `largeOnly` names a
+  size smaller than the text already is. The constant carries the rest
 - **Colour-vision simulation runs in linear light.** `simulateVision()`
   applies the sRGB transfer function before its matrix and undoes it after.
   `chroma.gl()` is not that step: it hands back the encoded bytes over 255,

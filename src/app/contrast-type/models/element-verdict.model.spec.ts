@@ -2,7 +2,7 @@ import {describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {createContrastColors} from "@engine/contrast/contrast-colors.model";
 import {FONT_SIZES, FONT_WEIGHTS, FontWeight} from "@engine/contrast/apca-lookup-table.model";
-import {getRequiredLc} from "@engine/contrast/apca-rating.helper";
+import {BODY_COPY_MIN_LC, getRequiredLc, TEXT_KINDS} from "@engine/contrast/apca-rating.helper";
 import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import {DEFAULT_TYPE_ROLES, TypeRolesMap} from "@common/models/type-role-settings.model";
@@ -109,17 +109,20 @@ describe("elementVerdict", () => {
     // Both miss the requirement at 18px / 400. The grey clears the 21px row,
     // so a slider fixes it; the two near-identical colours clear nothing, so
     // only the colours can move.
+    //
+    // A table cell rather than the running text: the cell is spot text, and
+    // the 21px row's plain Lc 70 is the figure that carries it. A column of
+    // body copy is held to `BODY_COPY_MIN_LC` at every size, so this grey
+    // fails it outright - the test below is that case.
+    const cell = sampleElement("tableCell");
     const larger = elementVerdict(
-      sampleElement("bodyText"),
+      cell,
       pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
-      roles("body", 18, 400)
+      roles("body", 22, 400)
     );
-    const hopeless = elementVerdict(
-      sampleElement("bodyText"),
-      pageOf(ALMOST_ONE_COLOR),
-      roles("body", 18, 400)
-    );
+    const hopeless = elementVerdict(cell, pageOf(ALMOST_ONE_COLOR), roles("body", 22, 400));
 
+    expect(larger.sizeKey).toBe("18px");
     expect(larger.state).toBe("largeOnly");
     expect(larger.carriesAt).toBe("21px");
     expect(verdictMark(larger.state)).toBe("arrow");
@@ -127,6 +130,45 @@ describe("elementVerdict", () => {
     expect(hopeless.state).toBe("fail");
     expect(hopeless.carriesAt).toBeNull();
     expect(verdictMark(hopeless.state)).toBe("cross");
+  });
+
+
+  it("holds a column of body copy to the floor where its own row asks less", () => {
+    // The lead is 22px at the default body size, which the table rates on its
+    // 24px row - Lc 60 for spot text, and the floor for a column of it.
+    const lead = elementVerdict(sampleElement("lead"), pageOf(), roles("body", 18, 400));
+
+    expect(lead.sizeKey).toBe("24px");
+    expect(getRequiredLc("24px", "400", "spotText")).toBe(60);
+    expect(lead.requiredLc).toBe(BODY_COPY_MIN_LC);
+  });
+
+
+  it("calls a column of body copy under the floor a fail, not a largeOnly", () => {
+    // Lc 74 clears the 21px row and would carry a table cell there. For a
+    // column of body copy the floor holds at every size and every weight, so
+    // no slider fixes this one and the mark has to say so.
+    const grey = createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"));
+    const body = elementVerdict(sampleElement("bodyText"), pageOf(grey), roles("body", 18, 400));
+
+    expect(body.lc).toBe(74);
+    expect(body.requiredLc).toBe(BODY_COPY_MIN_LC);
+    expect(body.carriesAt).toBeNull();
+    expect(body.state).toBe("fail");
+    expect(verdictMark(body.state)).toBe("cross");
+  });
+
+
+  it("still calls it largeOnly where the row it misses sits above the floor", () => {
+    // Body text at 16px is rated on a row asking Lc 90, well above the floor:
+    // Lc 80 misses that and clears the 18px row, so a slider still fixes it
+    // and the floor changes nothing about this case.
+    const grey = createContrastColors(chroma("#636363"), chroma("#ffffff"));
+    const body = elementVerdict(sampleElement("bodyText"), pageOf(grey), roles("body", 16, 400));
+
+    expect(body.requiredLc).toBe(90);
+    expect(body.state).toBe("largeOnly");
+    expect(body.carriesAt).toBe("18px");
   });
 
 
@@ -162,16 +204,13 @@ describe("elementVerdict", () => {
   it("keeps the requirement in a largeOnly label and out of a fail's", () => {
     // The number is what a visitor acts on where a size would fix it, and a
     // bar named under a verdict no size reaches would suggest one does.
+    const cell = sampleElement("tableCell");
     const larger = elementVerdict(
-      sampleElement("bodyText"),
+      cell,
       pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
-      roles("body", 18, 400)
+      roles("body", 22, 400)
     );
-    const hopeless = elementVerdict(
-      sampleElement("bodyText"),
-      pageOf(ALMOST_ONE_COLOR),
-      roles("body", 18, 400)
-    );
+    const hopeless = elementVerdict(cell, pageOf(ALMOST_ONE_COLOR), roles("body", 22, 400));
 
     expect(verdictLabel(larger)).toBe("Needs Lc 75");
     expect(verdictLabel(hopeless)).toBe("Fails at any size");
@@ -182,22 +221,31 @@ describe("elementVerdict", () => {
 
 describe("apcaLookup as the verdict states read it", () => {
 
-  it("falls as the size grows in every weight, which is what makes largeOnly mean larger", () => {
+  it("falls as the size grows in every weight and for both kinds of text", () => {
     // `verdictState()` calls a contrast that misses its own row and clears
     // another `largeOnly` without comparing the two sizes. That is only
     // honest while every column is monotone: a retuned table with a
     // requirement that rises with the size would let a *smaller* size be
     // reported as the one that carries it.
-    for (const weight of FONT_WEIGHTS) {
-      let previous: number | null = null;
+    //
+    // The body-copy kind is here because the footnote's own arithmetic does
+    // not hold this - adding Lc 15 below 70 makes six of the nine columns
+    // rise once, which is why it is applied as a floor. `BODY_COPY_MIN_LC`
+    // carries the reasoning; this is what would catch a change back.
+    for (const textKind of TEXT_KINDS) {
+      for (const weight of FONT_WEIGHTS) {
+        let previous: number | null = null;
 
-      for (const size of FONT_SIZES) {
-        const required = getRequiredLc(size, weight as FontWeight);
+        for (const size of FONT_SIZES) {
+          const required = getRequiredLc(size, weight as FontWeight, textKind);
 
-        if (required === null) continue;
-        if (previous !== null) expect(required, `${size} / ${weight}`).toBeLessThanOrEqual(previous);
+          if (required === null) continue;
+          if (previous !== null) {
+            expect(required, `${size} / ${weight} / ${textKind}`).toBeLessThanOrEqual(previous);
+          }
 
-        previous = required;
+          previous = required;
+        }
       }
     }
   });
@@ -313,10 +361,15 @@ describe("verdictFacts", () => {
   it("gives the two figures, the type, and what would carry it", () => {
     // The two Lc figures are what the screen is about; the role, the size and
     // the weight are values the visitor set. Nothing else is theirs to read.
+    //
+    // A table cell, because the rows have to name a size and a weight: it is
+    // spot text on the 18px row, where Lc 74 misses the requirement and the
+    // 21px row carries it. The running text at the same size is a column of
+    // body copy and has no size to name at this contrast.
     const verdict = elementVerdict(
-      sampleElement("bodyText"),
+      sampleElement("tableCell"),
       pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
-      roles("body", 18, 400)
+      roles("body", 22, 400)
     );
     const facts = verdictFacts(verdict, PALETTE);
 

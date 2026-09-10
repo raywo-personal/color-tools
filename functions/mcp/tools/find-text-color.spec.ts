@@ -12,6 +12,7 @@ interface FindTextColorArgs {
   mode?: string;
   fontSize?: string;
   fontWeight?: string;
+  textKind?: string;
 }
 
 function findTextColor(client: Client, args: FindTextColorArgs) {
@@ -246,6 +247,48 @@ describe("find_text_color", () => {
   });
 
 
+  describe("the kind of text", () => {
+
+    it("should aim the minimum search at the floor for a column of body copy", async () => {
+      // The softest grey that passes is a different grey once the
+      // requirement is the floor rather than the 24px row's own Lc 60, and
+      // the whole point of the mode is that the answer demonstrably passes.
+      const args = {backgroundColor: "#ffffff", mode: "minimum", fontSize: "24px", fontWeight: "400"};
+
+      const spot = structured(await findTextColor(client, {...args, textKind: "spotText"}));
+      const body = structured(await findTextColor(client, {...args, textKind: "bodyCopy"}));
+
+      expect(spot["requiredLc"]).toBe(60);
+      expect(body["requiredLc"]).toBe(75);
+      expect(spot["meetsRequirement"]).toBe(true);
+      expect(body["meetsRequirement"]).toBe(true);
+      expect(Math.abs(body["lc"] as number))
+        .toBeGreaterThan(Math.abs(spot["lc"] as number));
+    });
+
+    it("should hold the remedies to the floor too", async () => {
+      // The advice sits in the same payload as the requirement, so a size
+      // answered from the plain table would contradict the verdict beside it.
+      // The stricter kind names the smaller size here because the colour it
+      // came back with is the stronger one - the grey that just clears the
+      // floor carries the 18px row, the one that just clears Lc 60 does not.
+      const args = {
+        backgroundColor: "#ffffff",
+        mode: "minimum",
+        fontSize: "24px",
+        fontWeight: "400"
+      };
+
+      const spot = structured(await findTextColor(client, {...args, textKind: "spotText"}));
+      const body = structured(await findTextColor(client, {...args, textKind: "bodyCopy"}));
+
+      expect(spot["smallestPassingFontSize"]).toBe("24px");
+      expect(body["smallestPassingFontSize"]).toBe("18px");
+    });
+
+  });
+
+
   describe("the remedies", () => {
 
     // The two fields answer "the pair fails, what would make it pass": the
@@ -365,6 +408,21 @@ describe("find_text_color", () => {
 
       expect(structured(result)["appliedMode"]).toBe("harmonic");
       expect(summary(result)).not.toContain("could not answer");
+    });
+
+    it("should name the kind of text it answered for", async () => {
+      // On mid-gray at 24px/400 the stronger pole is readable for spot text
+      // and misses the floor for a column of it. Without the kind the two
+      // sentences deny each other about the same background.
+      const args = {backgroundColor: "#808080", fontSize: "24px", fontWeight: "400"};
+
+      const spot = await findTextColor(client, {...args, textKind: "spotText"});
+      const body = await findTextColor(client, {...args, textKind: "bodyCopy"});
+
+      expect(structured(spot)["meetsRequirement"]).toBe(true);
+      expect(structured(body)["meetsRequirement"]).toBe(false);
+      expect(summary(spot)).toContain("as spot text");
+      expect(summary(body)).toContain("as body copy");
     });
 
   });

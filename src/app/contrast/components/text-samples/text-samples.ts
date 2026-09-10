@@ -63,7 +63,8 @@ export class TextSamples {
     return getAPCARating(
       this.contrast(),
       fontSizeKeyFrom(fontSize),
-      fontWeight
+      fontWeight,
+      "spotText"
     );
   }
 

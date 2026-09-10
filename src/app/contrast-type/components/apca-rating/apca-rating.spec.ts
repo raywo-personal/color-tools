@@ -29,6 +29,17 @@ const IDENTICAL = createContrastColors(chroma("#334455"), chroma("#334455"));
 /** Lc 74.76, which a figure rounded to the nearest would write as 75. */
 const JUST_UNDER_75 = createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"));
 
+/**
+ * Lc 36.17: under what the display role's 48px row asks at weight 500, and
+ * over what its 60px row and its weight 600 ask.
+ *
+ * The headline is the figure element that is spot text, so it is the one whose
+ * advice still names a size and a weight. Body text is a column of body copy
+ * and is held to `BODY_COPY_MIN_LC` at every size, so a pair that misses that
+ * has nothing to name.
+ */
+const CARRIED_BY_A_LARGER_DISPLAY = createContrastColors(chroma("#bcbcbc"), chroma("#ffffff"));
+
 
 describe("ApcaRating", () => {
 
@@ -126,15 +137,15 @@ describe("ApcaRating", () => {
 
 
   it("rounds the figure down, so it never heads a verdict it contradicts", async () => {
-    // Rounded to the nearest, Lc 74.76 would read `Lc 75` over a row asking
-    // for exactly that and marked a fail.
+    // Rounded to the nearest, Lc 74.76 would read `Lc 75` over a body role
+    // held to exactly that and marked a fail.
     const {figureParts, row} = await rating(JUST_UNDER_75, "body");
 
     expect(figureParts()).toEqual(["Lc", "74"]);
-    expect(row().verdict).toBe("Needs Lc 75");
-    // The 21px row asks 70, so a bigger size carries it: the arrow, not the
-    // cross, which is reserved for a pairing no size reaches.
-    expect(row().marker).toBe("arrow");
+    // The running text is a column of body copy, so `BODY_COPY_MIN_LC` holds
+    // at every size and no slider reaches it: the cross, not the arrow.
+    expect(row().verdict).toBe("Fails at any size");
+    expect(row().marker).toBe("cross");
   });
 
 
@@ -184,7 +195,7 @@ describe("ApcaRating", () => {
     await selectRole("body");
 
     expect(row().caption).toBe("BODY TEXT");
-    expect(row().verdict).toBe("Needs Lc 75");
+    expect(row().verdict).toBe("Fails at any size");
   });
 
 
@@ -203,13 +214,16 @@ describe("ApcaRating", () => {
 
 
   it("names the size and the weight that would carry the element, and nothing else", async () => {
-    // Lc 74.76 at 18px / 400: the 21px row asks 70, and weight 500 at 18px
-    // asks 70. Both are the visitor's own sliders, which is why they are the
-    // answer - the APCA table's own rows are not on the page and are not
-    // named here.
-    const {factValue, facts} = await rating(JUST_UNDER_75, "body");
+    // Lc 36.17 with the headline at 44px / 500, rated on the 48px row: the
+    // 60px row asks 35 and weight 600 at 48px asks 35. Both are the visitor's
+    // own sliders, which is why they are the answer - the APCA table's own
+    // rows are not on the page and are not named here.
+    const {factValue, facts, row} = await rating(CARRIED_BY_A_LARGER_DISPLAY, "display");
 
-    expect(factValue("Would pass at")).toBe("21px, or weight 500");
+    // The arrow, not the cross: the cross is reserved for a pairing no size
+    // and no weight reaches.
+    expect(row().marker).toBe("arrow");
+    expect(factValue("Would pass at")).toBe("60px, or weight 600");
     expect(facts().map(fact => fact.label)).toEqual(["Would pass at", "Pair"]);
   });
 
