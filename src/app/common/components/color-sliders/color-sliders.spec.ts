@@ -1,19 +1,56 @@
-import {provideZonelessChangeDetection} from "@angular/core";
+import {Component, provideZonelessChangeDetection, signal} from "@angular/core";
 import {TestBed} from "@angular/core/testing";
-import {Dispatcher} from "@ngrx/signals/events";
 import {beforeEach, describe, expect, it} from "vitest";
-import chroma from "chroma-js";
-import {AppStateStore} from "@core/app-state.store";
-import {converterEvents} from "@core/converter/converter.events";
-import {LOCAL_STORAGE_KEY, SettingsMap} from "@common/models/local-storage.model";
+import chroma, {Color} from "chroma-js";
 import {maxChroma} from "@engine/color/oklch.helper";
-import {ColorSliders} from "@studio/components/color-sliders/color-sliders";
+import {ColorSliders} from "@common/components/color-sliders/color-sliders";
+
+
+/**
+ * A host of the kind the panel is built for: it hands the colour in and writes
+ * back what a drag hands out.
+ *
+ * The write-back is what both real hosts do through the store, and the panel's
+ * kept HSL and OKLch values are only honest against a colour that comes back -
+ * a host that swallowed the adjustment would be testing a panel nobody has.
+ */
+@Component({
+  imports: [ColorSliders],
+  template: `
+    <ct-color-sliders [color]="color()"
+                      [caption]="caption()"
+                      (colorAdjusted)="adjust($event)"
+                      (commit)="commit()"/>
+  `
+})
+class TestHost {
+
+  readonly color = signal<Color>(chroma("#3366CC"));
+  readonly caption = signal("PLAY");
+
+  /** Every colour the panel handed out, in order. */
+  readonly adjustments: Color[] = [];
+
+  /** The colour standing when each gesture ended. */
+  readonly commits: Color[] = [];
+
+
+  adjust(color: Color): void {
+    this.adjustments.push(color);
+    this.color.set(color);
+  }
+
+
+  commit(): void {
+    this.commits.push(this.color());
+  }
+
+}
 
 
 describe("ColorSliders", () => {
 
   beforeEach(() => {
-    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection()]
     });
@@ -21,27 +58,29 @@ describe("ColorSliders", () => {
 
 
   async function panel(start = "#3366CC") {
-    // The store registers its reducers when it is created, so an event
-    // dispatched before that is lost and the initial random color stands.
-    const store = TestBed.inject(AppStateStore);
+    const fixture = TestBed.createComponent(TestHost);
+    const host = fixture.componentInstance;
 
-    TestBed.inject(Dispatcher).dispatch(converterEvents.colorChanged(chroma(start)));
-    const fixture = TestBed.createComponent(ColorSliders);
+    host.color.set(chroma(start));
     await fixture.whenStable();
 
-    const host = fixture.nativeElement as HTMLElement;
+    const element = fixture.nativeElement as HTMLElement;
 
     function sliders(): HTMLInputElement[] {
-      return Array.from(host.querySelectorAll("input[type=range]"));
+      return Array.from(element.querySelectorAll("input[type=range]"));
     }
 
     function labels(): string[] {
-      return Array.from(host.querySelectorAll("label"))
+      return Array.from(element.querySelectorAll("label"))
         .map(label => label.textContent?.trim() ?? "");
     }
 
     function switchButtons(): HTMLButtonElement[] {
-      return Array.from(host.querySelectorAll("[role=group] button"));
+      return Array.from(element.querySelectorAll("[role=group] button"));
+    }
+
+    function caption(): string {
+      return element.querySelector("p")?.textContent?.trim() ?? "";
     }
 
     async function select(label: string) {
@@ -64,7 +103,15 @@ describe("ColorSliders", () => {
       await fixture.whenStable();
     }
 
-    return {fixture, store, host, sliders, labels, switchButtons, select, drag, release};
+    /** The colour the host is holding - what a real host would have stored. */
+    function color(): Color {
+      return host.color();
+    }
+
+    return {
+      fixture, host, element, sliders, labels, switchButtons, caption,
+      select, drag, release, color
+    };
   }
 
 
@@ -75,6 +122,29 @@ describe("ColorSliders", () => {
 
     return new Set(stops.map(stop => stop.toLowerCase())).size;
   }
+
+
+  describe("the caption", () => {
+
+    it("is the Studio's PLAY unless the host says otherwise", async () => {
+      const {caption} = await panel();
+
+      expect(caption()).toBe("PLAY");
+    });
+
+
+    it("is whatever the host names it", async () => {
+      // What pays for a host whose colour is one of several: the sliders name
+      // their axes and never their subject.
+      const {fixture, host, caption} = await panel();
+
+      host.caption.set("ADJUST BACKGROUND");
+      await fixture.whenStable();
+
+      expect(caption()).toBe("ADJUST BACKGROUND");
+    });
+
+  });
 
 
   describe("the switch", () => {
@@ -109,13 +179,16 @@ describe("ColorSliders", () => {
     });
 
 
-    it("leaves displayColorSpace alone - the conversion list writes all four anyway", async () => {
-      const {store, select} = await panel();
+    it("is the panel's own view state and hands the host nothing", async () => {
+      // The space is not a colour change, and the store's `displayColorSpace`
+      // is not what it steers - `studio.spec.ts` pins that half against the
+      // store the panel no longer reaches.
+      const {host, select} = await panel();
 
-      const before = store.displayColorSpace();
       await select("OKLCH");
 
-      expect(store.displayColorSpace()).toBe(before);
+      expect(host.adjustments).toEqual([]);
+      expect(host.commits).toEqual([]);
     });
 
   });
@@ -123,7 +196,7 @@ describe("ColorSliders", () => {
 
   describe("editing", () => {
 
-    it("shows the current color's own values", async () => {
+    it("shows the colour it was handed", async () => {
       const {sliders} = await panel("#3366CC");
 
       const [hue, saturation, lightness] = chroma("#3366CC").hsl();
@@ -136,22 +209,39 @@ describe("ColorSliders", () => {
     });
 
 
-    it("moves the color while the slider is still being dragged", async () => {
-      const {store, drag} = await panel("#3366CC");
+    it("hands out a colour per frame while the slider is still being dragged", async () => {
+      const {host, drag} = await panel("#3366CC");
 
       await drag(0, 0);
+      await drag(0, 10);
 
-      expect(store.currentColor().hsl()[0]).toBeCloseTo(0, 0);
+      expect(host.adjustments.length).toBe(2);
+      expect(host.adjustments[1].hsl()[0]).toBeCloseTo(10, 0);
     });
 
 
-    it("edits in OKLch too, and the hex the app shows agrees with the sliders", async () => {
-      const {store, select, drag} = await panel("#3366CC");
+    it("raises commit at the end of a gesture, and not during it", async () => {
+      const {host, drag, release} = await panel("#3366CC");
+
+      await drag(0, 100);
+      await drag(0, 101);
+
+      expect(host.commits).toEqual([]);
+
+      await release(0);
+
+      expect(host.commits.length).toBe(1);
+      expect(host.commits[0].hsl()[0]).toBeCloseTo(101, 0);
+    });
+
+
+    it("edits in OKLch too, and the colour it hands out agrees with the sliders", async () => {
+      const {color, select, drag} = await panel("#3366CC");
 
       await select("OKLCH");
       await drag(2, 30);
 
-      const [, , hue] = store.currentColor().oklch();
+      const [, , hue] = color().oklch();
 
       expect(hue).toBeCloseTo(30, 0);
     });
@@ -161,16 +251,16 @@ describe("ColorSliders", () => {
       // Black carries neither, so a panel re-reading the color would hand back
       // a grey when the visitor pulls lightness up again - a different color
       // than the one they started from.
-      const {store, sliders, drag} = await panel("#3366CC");
+      const {color, sliders, drag} = await panel("#3366CC");
 
       await drag(2, 0);
 
-      expect(store.currentColor().hex("rgb")).toBe("#000000");
+      expect(color().hex("rgb")).toBe("#000000");
 
       await drag(2, 40);
 
       expect(sliders().map(input => Number(input.value))).toEqual([220, 60, 40]);
-      expect(store.currentColor().hex("rgb")).toBe(chroma.hsl(220, 0.6, 0.4).hex("rgb"));
+      expect(color().hex("rgb")).toBe(chroma.hsl(220, 0.6, 0.4).hex("rgb"));
     });
 
 
@@ -179,7 +269,7 @@ describe("ColorSliders", () => {
       // hold is shown clamped, not stored clamped: at either end of the
       // lightness axis the gamut holds none at any hue, so storing it would
       // leave the visitor with a grey as soon as they came back.
-      const {store, sliders, select, drag} = await panel("#3366CC");
+      const {color, sliders, select, drag} = await panel("#3366CC");
 
       await select("OKLCH");
 
@@ -187,12 +277,12 @@ describe("ColorSliders", () => {
 
       await drag(0, 0);
 
-      expect(store.currentColor().hex("rgb")).toBe("#000000");
+      expect(color().hex("rgb")).toBe("#000000");
 
       await drag(0, lightness);
 
       expect(Number(sliders()[1].value)).toBeCloseTo(chromacity, 3);
-      expect(store.currentColor().oklch()[1]).toBeCloseTo(chromacity, 3);
+      expect(color().oklch()[1]).toBeCloseTo(chromacity, 3);
     });
 
 
@@ -223,11 +313,12 @@ describe("ColorSliders", () => {
     });
 
 
-    it("follows a color that arrived from somewhere else", async () => {
-      const {fixture, sliders} = await panel("#3366CC");
+    it("follows a colour that arrived from somewhere else", async () => {
+      // A hex field, a picker, `Random` - and on Contrast & Type a switch to
+      // the other half of the pair, which reaches the panel as exactly this.
+      const {fixture, host, sliders} = await panel("#3366CC");
 
-      TestBed.inject(Dispatcher)
-        .dispatch(converterEvents.colorChanged(chroma("#FF5733")));
+      host.color.set(chroma("#FF5733"));
       await fixture.whenStable();
 
       const [hue] = chroma("#FF5733").hsl();
@@ -286,7 +377,7 @@ describe("ColorSliders", () => {
       // ceiling read at the rounded hue would have the slider claim less
       // chroma than the conversion list, and the first nudge of lightness
       // would rebuild the color under that lower ceiling.
-      const {store, sliders, select, drag} = await panel("#000FF0");
+      const {color, sliders, select, drag} = await panel("#000FF0");
 
       await select("OKLCH");
 
@@ -296,7 +387,7 @@ describe("ColorSliders", () => {
 
       await drag(0, Math.round(lightness * 1000) / 10 + 0.1);
 
-      expect(store.currentColor().oklch()[1]).toBeCloseTo(chromacity, 2);
+      expect(color().oklch()[1]).toBeCloseTo(chromacity, 2);
     });
 
 
@@ -315,43 +406,6 @@ describe("ColorSliders", () => {
 
       expect(Number(sliders()[1].value)).toBeLessThan(ceiling);
       expect(Number(sliders()[1].value)).toBeLessThanOrEqual(Number(sliders()[1].max));
-    });
-
-  });
-
-
-  describe("persistence", () => {
-
-    function storedColor(): string | undefined {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-      return stored
-        ? (JSON.parse(stored) as Partial<SettingsMap>).currentColor
-        : undefined;
-    }
-
-
-    it("does not write to localStorage on every frame of a drag", async () => {
-      const {drag} = await panel("#3366CC");
-
-      const before = storedColor();
-      await drag(0, 100);
-      await drag(0, 101);
-      await drag(0, 102);
-
-      // A drag fires per pointer move, and the persistence effect writes the
-      // whole settings object each time.
-      expect(storedColor()).toBe(before);
-    });
-
-
-    it("writes the color the gesture ended on", async () => {
-      const {store, drag, release} = await panel("#3366CC");
-
-      await drag(0, 100);
-      await release(0);
-
-      expect(storedColor()).toBe(store.currentColor().hex());
     });
 
   });

@@ -1,4 +1,4 @@
-import {Component, computed, inject, signal} from "@angular/core";
+import {Component, computed, inject, model, signal} from "@angular/core";
 import {CdkDrag, CdkDragEnd, DragStartDelay} from "@angular/cdk/drag-drop";
 import {Color} from "chroma-js";
 import {injectDispatch} from "@ngrx/signals/events";
@@ -69,8 +69,13 @@ const DRAG_START_DELAY: DragStartDelay = {touch: 300, mouse: 0};
  * spoken by the control the visitor is standing on. That is also why setting a
  * color from here is not announced - see `PairFields`.
  *
- * The target is component state, not app state: it is how this row is being
- * used, not something the app has to remember or share.
+ * The target is screen state, not app state: it is how these controls are
+ * being used, not something the app has to remember or share. It is a `model()`
+ * rather than this row's own signal because `PairSliders` moves the same half -
+ * `ContrastType` owns it and hands it to both. Do not add a second selector
+ * there: two ways of setting one mode is what the target was bought to avoid.
+ * The sliders' caption reads the mode without setting it, which is what pays
+ * for a panel that names its axes and never its subject.
  *
  * ## `T` and `BG` are chips like the other five
  *
@@ -175,11 +180,16 @@ export class PaletteChips {
   protected readonly dragStartDelay = DRAG_START_DELAY;
 
   /**
+   * The half of the pair a click applies to, and the half the sliders below
+   * the row move.
+   *
    * The background to begin with, which is the click the draft draws. It is
    * also the half a palette color is usually tried as - the text color then
-   * follows from whether it reads on it.
+   * follows from whether it reads on it. The default is kept here as well as
+   * at the host, so the row still reads as intended when it stands alone; the
+   * host's is the one a screen opens on, so the two have to agree.
    */
-  protected readonly target = signal<ContrastColorRole>("background");
+  readonly target = model<ContrastColorRole>("background");
 
   protected readonly chips = computed<Chip[]>(() => {
     const pair = this.#stateStore.contrastColors();

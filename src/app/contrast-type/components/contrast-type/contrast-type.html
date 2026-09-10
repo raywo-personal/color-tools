@@ -10,7 +10,13 @@
 <div class="min-w-0">
   <ct-pair-fields/>
 
-  <ct-palette-chips class="mt-6"/>
+  <ct-palette-chips class="mt-6" [(target)]="target"/>
+
+  <!-- Directly under the chips, because `APPLY TO` steers both: the half a
+       click applies a chip to is the half these three tracks move. Anything
+       between them would put the two controls of one mode on either side of
+       an unrelated block. -->
+  <ct-pair-sliders class="mt-6" [target]="target()"/>
 
   <ct-pair-actions class="mt-6"/>
 

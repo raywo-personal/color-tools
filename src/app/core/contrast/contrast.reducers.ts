@@ -8,9 +8,16 @@ import {ChipSource} from "@contrast-type/models/chip-source.model";
 import {SAMPLE_PLACEMENTS, SamplePlacement} from "@contrast-type/models/sample-page.model";
 
 
+/**
+ * Takes both the committed text colour and the one a drag is still moving.
+ *
+ * The two events differ in what happens *around* the state change - only
+ * `textColorChanged` is persisted - not in the change itself, so a second
+ * reducer would be the same body twice.
+ */
 export function textColorChangedReducer(
   this: void,
-  event: EventInstance<"[Contrast] textColorChanged", Color>,
+  event: EventInstance<"[Contrast] textColorChanged" | "[Contrast] textColorAdjusted", Color>,
   state: AppState
 ) {
   const textColor = event.payload;
@@ -21,9 +28,10 @@ export function textColorChangedReducer(
 }
 
 
+/** The background half, and its drag, for the reason above. */
 export function backgroundColorChangedReducer(
   this: void,
-  event: EventInstance<"[Contrast] backgroundColorChanged", Color>,
+  event: EventInstance<"[Contrast] backgroundColorChanged" | "[Contrast] backgroundColorAdjusted", Color>,
   state: AppState
 ) {
   const bgColor = event.payload;
