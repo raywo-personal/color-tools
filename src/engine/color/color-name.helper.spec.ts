@@ -8,6 +8,20 @@ const keywordSpellings = new Set(Object.values(CSS_COLOR_KEYWORDS));
 
 
 /**
+ * The candidates the reference search measures against, each hex parsed once.
+ *
+ * `chroma.distance()` parses whichever of its arguments is still a string, so
+ * passing the hex would reparse the whole list per color. Over the sweep below
+ * that is two million parses, and the test then runs into Vitest's five-second
+ * timeout on a loaded machine. Handing it `Color` objects leaves it the same
+ * one `chroma.distance()` per candidate - do not put the hex strings back.
+ */
+const referenceCandidates = colornames
+  .filter(candidate => !keywordSpellings.has(candidate.name.toLowerCase()))
+  .map(candidate => ({name: candidate.name, color: chroma(candidate.hex)}));
+
+
+/**
  * The search as it was first written, one `chroma.distance()` per candidate.
  * The helper now works on precomputed Lab values because a slider drag asks
  * for six names per frame; this is what it has to keep agreeing with. It skips
@@ -18,13 +32,13 @@ function referenceName(hex: string): string {
 
   if (keyword) return keyword;
 
+  const color = chroma(hex);
+
   let closest: {name: string} | undefined;
   let closestDistance = Infinity;
 
-  for (const candidate of colornames) {
-    if (keywordSpellings.has(candidate.name.toLowerCase())) continue;
-
-    const distance = chroma.distance(hex, candidate.hex);
+  for (const candidate of referenceCandidates) {
+    const distance = chroma.distance(color, candidate.color);
 
     if (distance < closestDistance) {
       closest = candidate;
