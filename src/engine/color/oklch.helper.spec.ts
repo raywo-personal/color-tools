@@ -67,9 +67,11 @@ describe("maxChroma", () => {
 
         // Where a cap takes the chroma alone and leaves lightness and hue
         // standing - a high lightness around cyan - a search that watched
-        // those two would run to its ceiling.
+        // those two would run to its ceiling. Below the thousandth the
+        // conversion list writes, so the row never contradicts the slider by
+        // a written step.
         expect(boundary - builtChroma, `L ${lightness}, h ${hue}`)
-          .toBeLessThan(3e-3);
+          .toBeLessThan(1e-3);
       });
     });
 
@@ -101,10 +103,10 @@ describe("maxChroma", () => {
   describe("known boundaries", () => {
 
     it("reports the sRGB maximum per hue", () => {
-      expect(maxChroma(0.5, 145)).toBeCloseTo(0.1588, 3);
-      expect(maxChroma(0.7, 265)).toBeCloseTo(0.1574, 3);
+      expect(maxChroma(0.5, 145)).toBeCloseTo(0.1586, 3);
+      expect(maxChroma(0.7, 265)).toBeCloseTo(0.1569, 3);
       expect(maxChroma(0.3, 320)).toBeCloseTo(0.1447, 3);
-      expect(maxChroma(0.9, 110)).toBeCloseTo(0.1985, 3);
+      expect(maxChroma(0.9, 110)).toBeCloseTo(0.1970, 3);
     });
 
 

@@ -11,14 +11,20 @@ const SEARCH_ITERATIONS = 20;
  * How far clipping may move a coordinate before the color counts as one sRGB
  * cannot hold.
  *
- * Lightness and hue sit above what the gamut's dent costs - see `maxChroma()`
- * - and below the 0.1 % and the whole degree `formatColor()` writes out, so a
- * color clamped to the boundary keeps the lightness and the hue it was asked
+ * All three sit above what the gamut's dent costs - see `maxChroma()` - and
+ * below the 0.1 %, the whole degree and the thousandth `formatColor()` writes
+ * out, so a color clamped to the boundary keeps the coordinates it was asked
  * for as far as anything in the app can tell.
+ *
+ * Chroma is held to half the step that row writes, not to twice it: the
+ * ceiling and the row then differ by the rounding of the last digit and no
+ * more. At 2e-3 the ceiling names a chroma the color does not hold by two
+ * written steps - the slider reads 0.269 for `#14E100` where the row under it
+ * reads 0.267.
  */
 const LIGHTNESS_TOLERANCE = 4e-4;
 const HUE_TOLERANCE = 0.25;
-const CHROMA_TOLERANCE = 2e-3;
+const CHROMA_TOLERANCE = 5e-4;
 
 
 /**
