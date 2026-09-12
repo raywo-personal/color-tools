@@ -18,9 +18,9 @@ const STYLE_OPTIONS: readonly StyleOption[] = PaletteStyles
 /**
  * One chip per palette style; the pressed one is the palette on screen.
  *
- * A wrapping row, not a tab bar: the draft draws six chips and the app has
- * ten, so in the narrow column they take as many rows as they need rather than
- * shrinking below their hit area.
+ * A wrapping row, not a tab bar: the app carries more styles than the draft's
+ * six chips, so in the narrow column they take as many rows as they need
+ * rather than shrinking below their hit area. A new style needs nothing here.
  *
  * Picking a chip sets the style and rolls a palette in it - the pressed chip
  * included, which is how a palette is rolled again at the same style until the
