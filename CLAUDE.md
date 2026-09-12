@@ -71,7 +71,7 @@ including this one, and code comments.
 
 - `src/engine/` – the colour engine: `color/`, `contrast/`, `palette/`,
   `vision/`, and `helpers/` for what serves all three, each model beside the
-  code that uses it. Plain TypeScript on chroma-js and color-namer's lists
+  code that uses it. Plain TypeScript on chroma-js and `color-name-list`
 - `src/app/core/` – the store: `app-state.store.ts`, the state shape in
   `models/app-state.model.ts`, and per domain (`converter`, `palettes`,
   `contrast`, `common`) an `*.events.ts`, `*.reducers.ts` and `*.effects.ts`.
@@ -91,18 +91,24 @@ through them, never through relative `../../` paths.
 
 ## The Engine
 
-- The engine imports chroma-js, color-namer's lists and itself. Nothing from
+- The engine imports chroma-js, `color-name-list` and itself. Nothing from
   `@angular/*`, `@ngrx/*` or `@core/*`: the Worker bundle takes whatever the
   engine imports
 - The app and the MCP server reach it through `@engine/*` alone
 - It stays under `src/`. `@angular/build:unit-test` resolves its `include`
   relative to `sourceRoot`, so a folder beside `src/` would need its own
   include patterns in both tsconfigs
-- `colorName()` imports the six `color-namer/lib/colors/*` lists, never the
-  package's entry point; the comment on `LISTS` in
-  `src/engine/color/color-name.helper.ts` says why. The lists are CommonJS:
-  declared in `src/engine/color-namer-lists.d.ts`, listed in
-  `allowedCommonJsDependencies` in `angular.json`
+- **`colorName()` names from a list in which no name denotes two colours.**
+  `color-name-list/bestof`, not the full list – the comment on `LIST` in
+  `src/engine/color/color-name.helper.ts` says why not. A list that names two
+  colours the same puts two swatches of a monochromatic palette or a tint ramp
+  under one label, and `color-name.helper.spec.ts` fails on a version that
+  reintroduces one
+- An exact hex match takes its name from `CSS_COLOR_KEYWORDS` before the
+  distance search runs. A keyword identifies a colour to whoever pastes it
+  into a stylesheet; the nearest prose name does not. Only exact matches, so
+  no keyword spreads over a region and no name gains a second colour. The
+  keywords stay lower case, which is what marks them as keywords
 - `colorName()` measures from `color.hex()`, not from the `Color` object, and
   stays synchronous – reducers and guards call it. `color-name.helper.spec.ts`
   pins the first
@@ -313,8 +319,6 @@ served under `/mcp` on the app's origin, preview branches included.
   tool uses stays in that tool's file
 - `functions/mcp/test-support/` is for the specs alone; nothing the entry
   imports reaches it, so it never enters the Worker bundle
-- `functions/tsconfig.json` extends the root config and includes
-  `src/engine/color-namer-lists.d.ts`
 
 ### The Fence
 

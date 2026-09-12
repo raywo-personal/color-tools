@@ -1,11 +1,7 @@
 import chroma from "chroma-js";
-import basic from "color-namer/lib/colors/basic";
-import html from "color-namer/lib/colors/html";
-import ntc from "color-namer/lib/colors/ntc";
-import pantone from "color-namer/lib/colors/pantone";
-import roygbiv from "color-namer/lib/colors/roygbiv";
-import x11 from "color-namer/lib/colors/x11";
+import {colornames} from "color-name-list/bestof";
 import {colorName} from "@engine/color/color-name.helper";
+import {CSS_COLOR_KEYWORDS} from "@engine/color/css-color-keywords.model";
 
 
 /**
@@ -14,145 +10,152 @@ import {colorName} from "@engine/color/color-name.helper";
  * for six names per frame; this is what it has to keep agreeing with.
  */
 function referenceName(hex: string): string {
-  const lists = [basic, html, ntc, pantone, roygbiv, x11];
+  const keyword = CSS_COLOR_KEYWORDS[hex];
+
+  if (keyword) return keyword;
+
   let closest: {name: string} | undefined;
   let closestDistance = Infinity;
-  let closestPantone: {name: string} | undefined;
-  let closestPantoneDistance = Infinity;
 
-  for (const list of lists) {
-    for (const candidate of list) {
-      const distance = chroma.distance(hex, candidate.hex);
+  for (const candidate of colornames) {
+    const distance = chroma.distance(hex, candidate.hex);
 
-      if (distance < closestDistance) {
-        closest = candidate;
-        closestDistance = distance;
-      }
-
-      if (list === pantone && distance < closestPantoneDistance) {
-        closestPantone = candidate;
-        closestPantoneDistance = distance;
-      }
+    if (distance < closestDistance) {
+      closest = candidate;
+      closestDistance = distance;
     }
   }
 
-  return closestPantone && closestPantoneDistance <= closestDistance + 5
-    ? closestPantone.name
-    : closest!.name;
+  return closest!.name;
 }
 
 
 describe("Color Name Helper", () => {
 
-  describe("colorName", () => {
+  describe("the name list", () => {
 
-    describe("exact matches from the color lists", () => {
+    // The reason the list was swapped in: a name that denotes two colors puts
+    // two swatches of a monochromatic palette or a tint ramp under one label,
+    // and a screen reader reads the same name twice for colors the eye
+    // separates. A version bump that reintroduces a duplicate fails here.
+    it("gives every color its own name", () => {
+      const names = new Set(colornames.map(entry => entry.name));
 
-      it("should name pure red", () => {
-        expect(colorName(chroma("#ff0000"))).toBe("red");
-      });
-
-      it("should name pure white", () => {
-        expect(colorName(chroma("#ffffff"))).toBe("white");
-      });
-
-      it("should name pure black", () => {
-        expect(colorName(chroma("#000000"))).toBe("black");
-      });
-
-      it("should name an exact x11 color", () => {
-        expect(colorName(chroma("#4682b4"))).toBe("steelblue");
-      });
-
+      expect(names.size).toBe(colornames.length);
     });
 
+    it("gives every name its own color", () => {
+      const hexes = new Set(colornames.map(entry => entry.hex.toLowerCase()));
 
-    describe("Pantone preference", () => {
-
-      it("should prefer a Pantone name that is within the tolerance", () => {
-        // Closest overall is "True V" at 2.75; the closest Pantone entry
-        // "Blue Violet" is at 7.40, still within 2.75 + 5.
-        expect(colorName(chroma("#8474d4"))).toBe("Blue Violet");
-      });
-
-      it("should keep the closest name when Pantone is beyond the tolerance", () => {
-        // Closest overall "Prussian Blue" at 2.40, closest Pantone
-        // "Midnight Blue" at 11.05 - far outside 2.40 + 5.
-        expect(colorName(chroma("#123456"))).toBe("Prussian Blue");
-      });
-
+      expect(hexes.size).toBe(colornames.length);
     });
 
+  });
 
-    describe("channel quantization", () => {
 
-      // `chroma.hsl()` and the Bezier interpolation used for tints, shades and
-      // palettes produce colors with fractional RGB channels. The name must be
-      // derived from the 8-bit color the user actually sees, not from the
-      // unrounded channels - otherwise a color and its shared-palette-ID
-      // round-trip (which goes through 8-bit RGB) get different names.
-      it("should name a fractional color like its rounded hex", () => {
-        const fractional = chroma.hsl(0, 0.2, 0.9);
+  describe("CSS color keywords", () => {
 
-        expect(fractional.hex()).toBe("#ebe0e0");
-        expect(colorName(fractional)).toBe(colorName(chroma("#ebe0e0")));
-        expect(colorName(fractional)).toBe("Timberwolf");
-      });
-
-      it("should name a fractional dark color like its rounded hex", () => {
-        const fractional = chroma.hsl(5, 0.4, 0.2);
-
-        expect(fractional.hex()).toBe("#47221f");
-        expect(colorName(fractional)).toBe(colorName(chroma("#47221f")));
-        expect(colorName(fractional)).toBe("Crater Brown");
-      });
-
-      it("should name a fractional mid-tone like its rounded hex", () => {
-        const fractional = chroma.hsl(10, 0.3, 0.3);
-
-        expect(fractional.hex()).toBe("#633d36");
-        expect(colorName(fractional)).toBe(colorName(chroma("#633d36")));
-        expect(colorName(fractional)).toBe("Congo Brown");
-      });
-
+    // An exact hex gets the keyword CSS defines for it, because the keyword
+    // identifies the color to anyone who can paste it into a stylesheet and
+    // the nearest prose name does not.
+    it("should name pure red", () => {
+      expect(colorName(chroma("#ff0000"))).toBe("red");
     });
 
+    it("should name pure white", () => {
+      expect(colorName(chroma("#ffffff"))).toBe("white");
+    });
 
-    describe("the precomputed search", () => {
+    it("should name pure black", () => {
+      expect(colorName(chroma("#000000"))).toBe("black");
+    });
 
-      it("names every color the way one chroma.distance() per candidate did", () => {
-        // A deterministic sweep, so a disagreement names the same color twice.
-        // Steps of 51 visit every corner and face of the cube plus its centre.
-        for (let r = 0; r < 256; r += 51) {
-          for (let g = 0; g < 256; g += 51) {
-            for (let b = 0; b < 256; b += 51) {
-              const hex = chroma.rgb(r, g, b).hex();
+    it("should name an exact CSS keyword", () => {
+      expect(colorName(chroma("#4682b4"))).toBe("steelblue");
+    });
 
-              expect(colorName(chroma(hex)), hex).toBe(referenceName(hex));
-            }
+    it("should name every keyword in the table", () => {
+      for (const [hex, keyword] of Object.entries(CSS_COLOR_KEYWORDS)) {
+        expect(colorName(chroma(hex)), hex).toBe(keyword);
+      }
+    });
+
+    // One step away from the keyword the distance search takes over, so the
+    // keyword never spreads over a region of the color space.
+    it("should leave a color next to a keyword to the list", () => {
+      expect(colorName(chroma("#4682b5"))).not.toBe("steelblue");
+    });
+
+  });
+
+
+  describe("channel quantization", () => {
+
+    // `chroma.hsl()` and the Bezier interpolation used for tints, shades and
+    // palettes produce colors with fractional RGB channels. The name must be
+    // derived from the 8-bit color the user actually sees, not from the
+    // unrounded channels - otherwise a color and its shared-palette-ID
+    // round-trip (which goes through 8-bit RGB) get different names.
+    it("should name a fractional color like its rounded hex", () => {
+      const fractional = chroma.hsl(0, 0.2, 0.9);
+
+      expect(fractional.hex()).toBe("#ebe0e0");
+      expect(colorName(fractional)).toBe(colorName(chroma("#ebe0e0")));
+      expect(colorName(fractional)).toBe("Milk and Cookies");
+    });
+
+    it("should name a fractional dark color like its rounded hex", () => {
+      const fractional = chroma.hsl(5, 0.4, 0.2);
+
+      expect(fractional.hex()).toBe("#47221f");
+      expect(colorName(fractional)).toBe(colorName(chroma("#47221f")));
+      expect(colorName(fractional)).toBe("Bitter Chocolate");
+    });
+
+    it("should name a fractional mid-tone like its rounded hex", () => {
+      const fractional = chroma.hsl(10, 0.3, 0.3);
+
+      expect(fractional.hex()).toBe("#633d36");
+      expect(colorName(fractional)).toBe(colorName(chroma("#633d36")));
+      expect(colorName(fractional)).toBe("Brunette");
+    });
+
+  });
+
+
+  describe("the precomputed search", () => {
+
+    it("names every color the way one chroma.distance() per candidate did", () => {
+      // A deterministic sweep, so a disagreement names the same color twice.
+      // Steps of 51 visit every corner and face of the cube plus its centre.
+      for (let r = 0; r < 256; r += 51) {
+        for (let g = 0; g < 256; g += 51) {
+          for (let b = 0; b < 256; b += 51) {
+            const hex = chroma.rgb(r, g, b).hex();
+
+            expect(colorName(chroma(hex)), hex).toBe(referenceName(hex));
           }
         }
-      });
-
+      }
     });
 
+  });
 
-    describe("stability across the palette-ID round trip", () => {
 
-      // A shared palette URL stores 8-bit RGB. A color and its restored twin
-      // must therefore always carry the same name.
-      it("should survive an 8-bit RGB round trip", () => {
-        const original = chroma.hsl(210, 0.55, 0.45);
-        const [r, g, b] = original.rgb();
-        const restored = chroma.rgb(r, g, b);
+  describe("stability across the palette-ID round trip", () => {
 
-        expect(colorName(original)).toBe(colorName(restored));
-      });
+    // A shared palette URL stores 8-bit RGB. A color and its restored twin
+    // must therefore always carry the same name.
+    it("should survive an 8-bit RGB round trip", () => {
+      const original = chroma.hsl(210, 0.55, 0.45);
+      const [r, g, b] = original.rgb();
+      const restored = chroma.rgb(r, g, b);
 
-      it("should never return the Unknown fallback for a valid color", () => {
-        expect(colorName(chroma.hsl(137, 0.42, 0.63))).not.toBe("Unknown");
-      });
+      expect(colorName(original)).toBe(colorName(restored));
+    });
 
+    it("should never return the Unknown fallback for a valid color", () => {
+      expect(colorName(chroma.hsl(137, 0.42, 0.63))).not.toBe("Unknown");
     });
 
   });
