@@ -152,9 +152,11 @@ screens have shareable urls of their own. The guards in `src/app/routes/` and
 the navigation effects in `core/common/navigation.effects.ts` wait for that and
 are not registered.
 
-**The palette id has room for ten styles.** The style index is one decimal <!-- durable-ok -->
-digit; a style beyond that needs a wider index field first, or
-`styleFromPaletteId` falls back to a random style and says nothing.
+**The palette id has room for 62 styles.** The style index is one base62 <!-- durable-ok -->
+character, and base62 spells 0 to 9 the way base 10 does, so an id written
+while the index was a decimal digit still names the style it was written with.
+A style beyond that needs a wider index field first, or the id grows past
+`PALETTE_ID_BASE62_LENGTH` and `paletteFromId()` rejects it.
 
 ## The Store
 

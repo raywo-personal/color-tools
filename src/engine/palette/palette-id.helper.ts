@@ -128,7 +128,7 @@ function paletteIdFromColors(colors: Color[],
   });
 
   // Use fixed length to ensure a consistent I D length regardless of color values
-  return `${styleIndex}${bigIntToBase62(bigNumber, PALETTE_ID_BASE62_LENGTH - 1)}`;
+  return `${bigIntToBase62(BigInt(styleIndex))}${bigIntToBase62(bigNumber, PALETTE_ID_BASE62_LENGTH - 1)}`;
 }
 
 
@@ -165,22 +165,39 @@ function pinnedMaskFromId(id: string): number {
 
 
 /**
+ * Reads the style index a palette ID was written with. The index may name a
+ * style this version does not know; the caller decides what to do about that.
+ *
+ * The first character is base62 like the rest of the ID, so one character
+ * carries 62 styles and the ID keeps its length. `BASE62_CHARS` starts with
+ * the ten decimal digits, so every ID written while the index was a decimal
+ * digit reads back as the style it was written with.
+ *
+ * @param {string} id - The unique palette ID used to determine the style.
+ * @return {number} The style index, negative if the first character is outside
+ *                  the base62 alphabet.
+ */
+export function styleIndexFromPaletteId(id: string): number {
+  validateIdLength(id, PALETTE_ID_BASE62_LENGTH);
+
+  return Number(base62ToBigInt(id[0]));
+}
+
+
+/**
  * Retrieves the style associated with the given palette ID.
  * The palette ID is expected to start with a valid style index. If the style
  * could not be determined, a random style is returned instead.
  *
  * @param {string} id - The unique palette ID used to determine the style. Must
- *                      be exactly 42 characters long.
+ *                      be exactly 43 characters long.
  * @return {PaletteStyle} The style object corresponding to the provided
  *                        palette ID or a random style if the ID is invalid.
  */
 function styleFromPaletteId(id: string): PaletteStyle {
-  validateIdLength(id, PALETTE_ID_BASE62_LENGTH);
+  const styleIndex = styleIndexFromPaletteId(id);
 
-  // Erste Stelle ist der Style-Index
-  const styleIndex = parseInt(id[0], 10);
-
-  if (isNaN(styleIndex) || styleIndex < 0 || styleIndex >= PaletteStyles.length) {
+  if (styleIndex < 0 || styleIndex >= PaletteStyles.length) {
     console.info("Style not found. Using random style.");
     return randomStyle();
   }

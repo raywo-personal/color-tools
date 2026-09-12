@@ -1,10 +1,17 @@
 import chroma, {Color} from "chroma-js";
-import {PALETTE_ID_BASE62_LENGTH, paletteFromId} from "./palette-id.helper";
+import {PALETTE_ID_BASE62_LENGTH, paletteFromId, styleIndexFromPaletteId} from "./palette-id.helper";
 import {isWellFormedId} from "@engine/helpers/validate-string-id.helper";
 import {Palette, PALETTE_SLOTS, PaletteColors} from "@engine/palette/palette.model";
 import {paletteColorFrom} from "@engine/palette/palette-color.model";
 import {PaletteStyle, PaletteStyles} from "@engine/palette/palette-style.model";
 import {paletteFrom} from "@engine/palette/palette.helper";
+
+
+/**
+ * Spelled out rather than imported: the compatibility claim is that the id's
+ * style character is *this* alphabet, not whatever the encoder uses today.
+ */
+const BASE62_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 
 describe("Palette ID Helper", () => {
@@ -423,7 +430,7 @@ describe("Palette ID Helper", () => {
 
   describe("ID format validation", () => {
 
-    it("should start with valid style index (0-7)", () => {
+    it("should start with the style index as a base62 character", () => {
       PaletteStyles.forEach((style, index) => {
         const colors = [
           chroma("#FF0000"),
@@ -435,7 +442,29 @@ describe("Palette ID Helper", () => {
         const palette = createTestPalette(colors, colors, style);
         const id = palette.id;
 
-        expect(id[0]).toBe(index.toString());
+        expect(id[0]).toBe(BASE62_ALPHABET[index]);
+      });
+    });
+
+    it("should read a style index past the ten decimal digits", () => {
+      // One base62 character carries 62 styles, which is what keeps the id at
+      // 43 characters once the list grows past ten.
+      const eleventh = `A${"0".repeat(PALETTE_ID_BASE62_LENGTH - 1)}`;
+      const last = `z${"0".repeat(PALETTE_ID_BASE62_LENGTH - 1)}`;
+
+      expect(styleIndexFromPaletteId(eleventh)).toBe(10);
+      expect(styleIndexFromPaletteId(last)).toBe(61);
+      expect(eleventh.length).toBe(PALETTE_ID_BASE62_LENGTH);
+    });
+
+    it("should read an id written with a decimal style index as the same style", () => {
+      // Base62 spells 0 to 9 the way base 10 does, so every id written before
+      // the index was widened still names the style it was written with.
+      PaletteStyles.forEach((style, index) => {
+        const id = `${index}${"0".repeat(PALETTE_ID_BASE62_LENGTH - 1)}`;
+
+        expect(styleIndexFromPaletteId(id)).toBe(index);
+        expect(paletteFromId(id).style).toBe(style);
       });
     });
 
