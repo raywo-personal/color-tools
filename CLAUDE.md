@@ -109,6 +109,10 @@ through them, never through relative `../../` paths.
   into a stylesheet; the nearest prose name does not. Only exact matches, so
   no keyword spreads over a region and no name gains a second colour. The
   keywords stay lower case, which is what marks them as keywords
+- **A list name a keyword also spells never enters the distance search.**
+  `allCandidates()` drops it. A screen reader hears no case, so "Bisque" beside
+  `bisque` is the duplicate the list was swapped in to rule out; the twin
+  leaves the search, not the keyword the table
 - `colorName()` measures from `color.hex()`, not from the `Color` object, and
   stays synchronous – reducers and guards call it. `color-name.helper.spec.ts`
   pins the first

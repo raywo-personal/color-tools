@@ -25,7 +25,26 @@ interface Candidate {
 const LIST: readonly {name: string; hex: string}[] = colornames;
 
 /**
- * The list with each entry's Lab values.
+ * The keyword spellings, lower cased.
+ *
+ * A list name that a keyword also spells - "Olive" against `olive`, "Bisque"
+ * against `bisque` - is one word to a screen reader, which hears no case. The
+ * two sit close enough in the space to land in one tint ramp, and the ramp
+ * then reads the same name twice for colours the eye separates: the duplicate
+ * this list was chosen to rule out, back through the keyword table. Roughly a
+ * third of the keywords have such a twin, and it is the twin that leaves the
+ * search rather than the keyword leaving the table - a keyword is what
+ * identifies a colour to whoever pastes it into a stylesheet, and a twin gives
+ * up one prose name out of thousands.
+ */
+const KEYWORD_SPELLINGS = new Set(
+  Object.values(CSS_COLOR_KEYWORDS)
+    .filter(keyword => keyword !== undefined)
+    .map(keyword => keyword.toLowerCase())
+);
+
+/**
+ * The searchable list with each entry's Lab values.
  *
  * Built on the first call rather than at import, so loading the module costs
  * nothing until a name is asked for. It exists because `chroma.distance()`
@@ -38,10 +57,12 @@ let candidates: readonly Candidate[] | undefined;
 
 
 function allCandidates(): readonly Candidate[] {
-  candidates ??= LIST.map(entry => ({
-    name: entry.name,
-    lab: chroma(entry.hex).lab()
-  }));
+  candidates ??= LIST
+    .filter(entry => !KEYWORD_SPELLINGS.has(entry.name.toLowerCase()))
+    .map(entry => ({
+      name: entry.name,
+      lab: chroma(entry.hex).lab()
+    }));
 
   return candidates;
 }

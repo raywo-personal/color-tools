@@ -4,10 +4,14 @@ import {colorName} from "@engine/color/color-name.helper";
 import {CSS_COLOR_KEYWORDS} from "@engine/color/css-color-keywords.model";
 
 
+const keywordSpellings = new Set(Object.values(CSS_COLOR_KEYWORDS));
+
+
 /**
  * The search as it was first written, one `chroma.distance()` per candidate.
  * The helper now works on precomputed Lab values because a slider drag asks
- * for six names per frame; this is what it has to keep agreeing with.
+ * for six names per frame; this is what it has to keep agreeing with. It skips
+ * the entries a keyword already spells for the same reason the helper does.
  */
 function referenceName(hex: string): string {
   const keyword = CSS_COLOR_KEYWORDS[hex];
@@ -18,6 +22,8 @@ function referenceName(hex: string): string {
   let closestDistance = Infinity;
 
   for (const candidate of colornames) {
+    if (keywordSpellings.has(candidate.name.toLowerCase())) continue;
+
     const distance = chroma.distance(hex, candidate.hex);
 
     if (distance < closestDistance) {
@@ -74,9 +80,29 @@ describe("Color Name Helper", () => {
       expect(colorName(chroma("#4682b4"))).toBe("steelblue");
     });
 
+    // chroma parses the keywords itself, so the table is checked against what
+    // CSS defines rather than against the code that reads it: a hex typed
+    // wrongly into the table would otherwise hand a visitor a keyword CSS
+    // gives to another colour, and every assertion here would still pass.
     it("should name every keyword in the table", () => {
       for (const [hex, keyword] of Object.entries(CSS_COLOR_KEYWORDS)) {
+        expect(chroma(keyword!).hex(), keyword).toBe(hex);
         expect(colorName(chroma(hex)), hex).toBe(keyword);
+      }
+    });
+
+    // A name a keyword also spells is one word to a screen reader, which
+    // hears no case. Left in the search, "Bisque" would name every neighbour
+    // of `bisque`'s own hex, and a tint ramp across the two would read the
+    // same name twice - the duplicate #140 was opened about.
+    it("should keep a name a keyword already spells out of the search", () => {
+      for (const entry of colornames) {
+        if (!keywordSpellings.has(entry.name.toLowerCase())) continue;
+
+        const [r, g, b] = chroma(entry.hex).rgb();
+        const neighbour = chroma.rgb(r === 255 ? r - 1 : r + 1, g, b);
+
+        expect(colorName(neighbour), entry.hex).not.toBe(entry.name);
       }
     });
 
