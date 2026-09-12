@@ -208,8 +208,8 @@ export class ColorSliders {
    * screen.
    *
    * **Unrounded, because the chroma ceiling is evaluated at the hue.** Near
-   * the sRGB cusps the ceiling falls steeply with it: `#000FF0` holds 0.302
-   * at its own hue and 0.253 at the whole degree next to it. Rounding first
+   * the sRGB cusps the ceiling falls steeply with it: `#0000F0` holds 0.300
+   * at its own hue and 0.275 at the whole degree next to it. Rounding first
    * would have the chroma slider read lower than the conversion list for a
    * color that just arrived, and the first nudge of lightness would rebuild
    * the color at the lower ceiling - a visible jump for a move of 0.1 %.

@@ -34,11 +34,16 @@ describe("fromOklch", () => {
 
   it("clamps chroma to the sRGB boundary instead of clipping a channel", () => {
     eachGridPoint((lightness, hue) => {
-      const color = fromOklch({l: lightness, c: 0.4, h: hue});
+      const label = `L ${lightness}, h ${hue}`;
+      const [l, c, h] = fromOklch({l: lightness, c: 0.4, h: hue}).oklch();
 
-      expect(color.clipped(), `L ${lightness}, h ${hue}`).toBe(false);
-      expect(color.oklch()[1], `L ${lightness}, h ${hue}`)
-        .toBeLessThanOrEqual(maxChroma(lightness, hue) + 0.01);
+      // Per-channel clipping moves all three coordinates. The clamp holds
+      // lightness and hue and lets chroma follow the gamut, so those two are
+      // what says it happened - not chroma-js' `clipped()` flag, which the
+      // boundary itself can carry.
+      expect(l, label).toBeCloseTo(lightness, 3);
+      expect(hueDistance(h, hue), label).toBeLessThan(0.5);
+      expect(c, label).toBeLessThanOrEqual(maxChroma(lightness, hue) + 0.01);
     });
   });
 

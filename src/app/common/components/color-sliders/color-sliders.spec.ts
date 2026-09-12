@@ -420,15 +420,16 @@ describe("ColorSliders", () => {
 
     it("holds the chroma of a color that sits near a cusp of the gamut", async () => {
       // Near the sRGB cusps the ceiling falls steeply with hue - for this blue
-      // from 0.302 at its own hue to 0.253 at the whole degree beside it. A
-      // ceiling read at the rounded hue would have the slider claim less
-      // chroma than the conversion list, and the first nudge of lightness
-      // would rebuild the color under that lower ceiling.
-      const {color, sliders, select, drag} = await panel("#000FF0");
+      // from 0.300 at its own hue to 0.275 at the whole degree beside it, and
+      // the color's own chroma of 0.299 sits between the two. A ceiling read
+      // at the rounded hue would have the slider claim less chroma than the
+      // conversion list, and the first nudge of lightness would rebuild the
+      // color under that lower ceiling.
+      const {color, sliders, select, drag} = await panel("#0000F0");
 
       await select("OKLCH");
 
-      const [lightness, chromacity] = chroma("#000FF0").oklch();
+      const [lightness, chromacity] = chroma("#0000F0").oklch();
 
       expect(Number(sliders()[1].value)).toBeCloseTo(chromacity, 3);
 

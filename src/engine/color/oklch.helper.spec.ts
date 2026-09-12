@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import chroma from "chroma-js";
+import chroma, {Color} from "chroma-js";
 import {
   inOklchHueRange,
   inOklchLightnessRange,
@@ -21,25 +21,72 @@ function eachGridPoint(assertion: (lightness: number, hue: number) => void) {
 }
 
 
+/** 16 steps per axis, the same sweep the format specs run. */
+function eachCubeColor(assertion: (color: Color) => void) {
+  for (let red = 0; red <= 255; red += 17) {
+    for (let green = 0; green <= 255; green += 17) {
+      for (let blue = 0; blue <= 255; blue += 17) {
+        assertion(chroma(red, green, blue));
+      }
+    }
+  }
+}
+
+
+function hueGap(built: number, asked: number): number {
+  return Number.isNaN(built)
+    ? 0
+    : Math.abs(((built - asked + 540) % 360) - 180);
+}
+
+
 describe("maxChroma", () => {
 
   describe("the gamut boundary", () => {
 
-    it("returns a chroma that sRGB can still represent", () => {
+    it("returns a chroma whose color keeps the lightness and hue asked for", () => {
       eachGridPoint((lightness, hue) => {
-        const color = chroma.oklch(lightness, maxChroma(lightness, hue), hue);
+        const label = `L ${lightness}, h ${hue}`;
+        const [builtLightness, , builtHue] = chroma
+          .oklch(lightness, maxChroma(lightness, hue), hue)
+          .oklch();
 
-        expect(color.clipped(), `L ${lightness}, h ${hue}`).toBe(false);
+        // Tighter than the 0.1 % and the whole degree the conversion list
+        // writes, so a color clamped to the boundary is the color that was
+        // asked for as far as the app can show it.
+        expect(Math.abs(builtLightness - lightness), label).toBeLessThan(5e-4);
+        expect(hueGap(builtHue, hue), label).toBeLessThan(0.5);
       });
     });
 
 
-    it("returns the boundary itself, not a value below it", () => {
+    it("returns a chroma the color actually holds", () => {
       eachGridPoint((lightness, hue) => {
-        const beyond = maxChroma(lightness, hue) + BEYOND_THE_BOUNDARY;
-        const color = chroma.oklch(lightness, beyond, hue);
+        const boundary = maxChroma(lightness, hue);
+        const [, builtChroma] = chroma.oklch(lightness, boundary, hue).oklch();
 
-        expect(color.clipped(), `L ${lightness}, h ${hue}`).toBe(true);
+        // Where a cap takes the chroma alone and leaves lightness and hue
+        // standing - a high lightness around cyan - a search that watched
+        // those two would run to its ceiling. Below the thousandth the
+        // conversion list writes, so the row never contradicts the slider by
+        // a written step.
+        expect(boundary - builtChroma, `L ${lightness}, h ${hue}`)
+          .toBeLessThan(1e-3);
+      });
+    });
+
+
+    it("leaves no sRGB color above the boundary of its own lightness and hue", () => {
+      // The flag-based search stopped short here: sRGB is not convex in OKLab,
+      // so a color near a corner sits above the chroma at which its own hue
+      // first caps a channel. `#0000FF` was the extreme, at 118 % of it.
+      eachCubeColor(color => {
+        const [lightness, chromacity, hue] = color.oklch();
+
+        if (Number.isNaN(hue) || lightness <= 0 || lightness >= 1) return;
+
+        expect(chromacity, color.hex())
+          .toBeLessThanOrEqual(maxChroma(lightness, hue));
       });
     });
 
@@ -56,10 +103,10 @@ describe("maxChroma", () => {
   describe("known boundaries", () => {
 
     it("reports the sRGB maximum per hue", () => {
-      expect(maxChroma(0.5, 145)).toBeCloseTo(0.1573, 3);
-      expect(maxChroma(0.7, 265)).toBeCloseTo(0.1563, 3);
-      expect(maxChroma(0.3, 320)).toBeCloseTo(0.1440, 3);
-      expect(maxChroma(0.9, 110)).toBeCloseTo(0.1965, 3);
+      expect(maxChroma(0.5, 145)).toBeCloseTo(0.1586, 3);
+      expect(maxChroma(0.7, 265)).toBeCloseTo(0.1569, 3);
+      expect(maxChroma(0.3, 320)).toBeCloseTo(0.1447, 3);
+      expect(maxChroma(0.9, 110)).toBeCloseTo(0.1970, 3);
     });
 
 
