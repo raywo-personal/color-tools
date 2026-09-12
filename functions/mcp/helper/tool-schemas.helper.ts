@@ -1,4 +1,4 @@
-import {isTranslucent, isHex} from "@engine/color/color-format-parser.helper";
+import {isHex, isTranslucent} from "@engine/color/color-format-parser.helper";
 import {FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
 import {BODY_COPY_MIN_LC, TEXT_KINDS, TextKind} from "@engine/contrast/apca-rating.helper";
 import {z} from "zod";
@@ -16,14 +16,17 @@ import chroma from "chroma-js";
  * silently wrong.
  *
  * @param role - How the tool names the color in its message, e.g. "Text color"
+ * @param additionalDescription - A description which is appended to the
+ *                                description of the schema.
  */
-export function opaqueHexColor(role: string) {
+export function opaqueHexColor(role: string,
+                               additionalDescription?: string) {
   return z.string()
     .refine(
       value => isHex(value) && !isTranslucent(chroma(value)),
       {message: `${role} must be a hex color without an alpha channel.`}
     )
-    .describe(`${role} in CSS hex format without alpha channel.`);
+    .describe(`${role} in CSS hex format without alpha channel.${additionalDescription ? " " + additionalDescription : ""}`);
 }
 
 
