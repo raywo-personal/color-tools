@@ -335,14 +335,44 @@ function findSoftestHarmonicColor(
   const end = darkText ? MIN_USABLE_LIGHTNESS : MAX_USABLE_LIGHTNESS;
 
   for (const lightness of generateRange(start, end, HARMONIC_LIGHTNESS_STEP)) {
-    const chromacity = HARMONIC_CHROMA_SHARE * maxChroma(lightness, hue);
-    const color = chroma(fromOklch({l: lightness, c: chromacity, h: hue}).hex());
-    const contrast = chroma.contrastAPCA(color, bg);
+    const match = harmonicCandidate(lightness, hue, bg, sign, requiredContrast);
 
-    if (sign * contrast >= requiredContrast) return {color, contrast};
+    if (match) return match;
   }
 
-  return null;
+  // The walk starts at the background's own lightness, which is no point on
+  // the lattice the pole sits on: `end` is reached only where the two are a
+  // whole number of steps apart, and a measured lightness almost never is.
+  // The pole is the strongest candidate the hue has, so it is measured here
+  // rather than left to the step count - without it a background whose only
+  // passing lightness is the pole comes back empty and the text falls back
+  // to gray.
+  return harmonicCandidate(end, hue, bg, sign, requiredContrast);
+}
+
+
+/**
+ * The harmonic candidate at one lightness, or null where it does not pass.
+ *
+ * @param lightness - The OKLch lightness to build the candidate at
+ * @param hue - The background's OKLch hue, which the candidate keeps
+ * @param bg - The background color to measure against
+ * @param sign - 1 where the text is the darker of the two, -1 where it is lighter
+ * @param requiredContrast - The minimum acceptable contrast value
+ * @returns The color and its contrast, or null where it falls short
+ */
+function harmonicCandidate(
+  lightness: number,
+  hue: number,
+  bg: Color,
+  sign: number,
+  requiredContrast: number
+): { color: Color; contrast: number } | null {
+  const chromacity = HARMONIC_CHROMA_SHARE * maxChroma(lightness, hue);
+  const color = chroma(fromOklch({l: lightness, c: chromacity, h: hue}).hex());
+  const contrast = chroma.contrastAPCA(color, bg);
+
+  return sign * contrast >= requiredContrast ? {color, contrast} : null;
 }
 
 

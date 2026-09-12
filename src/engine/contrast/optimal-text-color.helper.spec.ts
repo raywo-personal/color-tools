@@ -1,5 +1,6 @@
 import chroma, {Color} from "chroma-js";
 
+import {MAX_USABLE_LIGHTNESS} from "@engine/color/oklch.helper";
 import {
   calculateAPCAContrast,
   DEFAULT_COLOR_CONFIG,
@@ -451,6 +452,20 @@ describe("Optimal Text Color Helper", () => {
         expect([r, g, b].every(Number.isInteger), bg).toBe(true);
         expect(result.contrast, bg).toBe(calculateAPCAContrast(chroma(color.hex()), bg));
       }
+    });
+
+    it("should measure the pole itself, not only the step the walk reaches", () => {
+      // The walk starts at the background's lightness and steps by 0.01
+      // towards the pole. #192fd1 sits at 0.4310, so the steps land on 0.9010
+      // to 0.9110 and never on 0.92 - and 0.92 is the only lightness on this
+      // hue that reaches the 75 that 16px/500 asks for. Counting the steps is
+      // what puts the last one on the end; it only does so where start and
+      // end are a whole number of steps apart, which a measured lightness is
+      // not.
+      const result = findHarmonicTextColor("#192fd1", {fontSize: "16px", fontWeight: "500"});
+
+      expect(result.meetsRequirement).toBe(true);
+      expect(colorOf(result).oklch()[0]).toBeCloseTo(MAX_USABLE_LIGHTNESS, 2);
     });
 
     it("should hand a background without a hue to the minimum finder", () => {
