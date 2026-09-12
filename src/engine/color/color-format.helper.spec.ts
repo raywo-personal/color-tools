@@ -108,9 +108,10 @@ describe("formatColor", () => {
   it("keeps lightness and hue through an OKLch round trip, and never gains chroma", () => {
     // Not a deltaE assertion, because chroma is the one component colorFrom()
     // does not promise to return: it clamps a pasted value to what maxChroma()
-    // reports as the sRGB boundary, and that search is conservative where the
-    // boundary comes to a point. Pure blue is the extreme - it comes back as
-    // #0032e3 - and no rounding here would change that.
+    // reports as the sRGB boundary. Written at full precision every color in
+    // the sweep comes back as itself; what still moves one is the whole degree
+    // the row writes the hue to, which around blue is where the gamut narrows
+    // fastest.
     //
     // Lightness and hue are what the parser does promise, so they are what
     // this pins.

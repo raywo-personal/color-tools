@@ -7,15 +7,79 @@ const CHROMA_SEARCH_CEILING = 0.4;
 /** 20 halvings of the search interval resolve to below 1e-6. */
 const SEARCH_ITERATIONS = 20;
 
+/**
+ * How far clipping may move a coordinate before the color counts as one sRGB
+ * cannot hold.
+ *
+ * Lightness and hue sit above what the gamut's dent costs - see `maxChroma()`
+ * - and below the 0.1 % and the whole degree `formatColor()` writes out, so a
+ * color clamped to the boundary keeps the lightness and the hue it was asked
+ * for as far as anything in the app can tell.
+ */
+const LIGHTNESS_TOLERANCE = 4e-4;
+const HUE_TOLERANCE = 0.25;
+const CHROMA_TOLERANCE = 2e-3;
+
+
+/**
+ * Determines whether sRGB holds a set of OKLch coordinates well enough to
+ * leave them standing.
+ *
+ * chroma-js caps every channel it cannot represent, and a cap on one channel
+ * moves the color along all three axes. Reading the coordinates back off the
+ * color it builds therefore says what the cap cost, where its `clipped()` flag
+ * only says that one happened.
+ *
+ * All three axes are read, not just lightness and hue. At a high lightness
+ * around cyan a cap leaves both of those where they were and takes the chroma
+ * alone, so a test that watched lightness and hue would follow the search to
+ * its ceiling and report a boundary two and a half times too high.
+ *
+ * @param {number} lightness - OKLch lightness in the range [0, 1].
+ * @param {number} chromacity - OKLch chroma, unbounded.
+ * @param {number} hue - OKLch hue in degrees.
+ * @return {boolean} True while the coordinates survive the conversion.
+ */
+function survivesClipping(this: void,
+                          lightness: number,
+                          chromacity: number,
+                          hue: number): boolean {
+  const [builtLightness, builtChroma, builtHue] = chroma
+    .oklch(lightness, chromacity, hue)
+    .oklch();
+
+  // A gray has no hue to lose; chroma-js reports `NaN` for it.
+  const hueDrift = Number.isNaN(builtHue)
+    ? 0
+    : Math.abs(((builtHue - hue + 540) % 360) - 180);
+
+  return Math.abs(builtLightness - lightness) <= LIGHTNESS_TOLERANCE
+    && hueDrift <= HUE_TOLERANCE
+    && Math.abs(builtChroma - chromacity) <= CHROMA_TOLERANCE;
+}
+
 
 /**
  * Determines the highest chroma that still fits into the sRGB gamut for a
  * given lightness and hue.
  *
- * The gamut is contiguous along the chroma axis: below the boundary every
- * value is representable, above it none is. A binary search therefore finds
- * the boundary, using chroma-js' clipping flag as the test - it reports
- * whether the conversion to sRGB had to cap a channel.
+ * A binary search along the chroma axis, asking at each step what clipping
+ * costs the color rather than whether it clips at all.
+ *
+ * Do not go back to chroma-js' `clipped()` flag as the test. sRGB is not
+ * convex in OKLab: along blue's own lightness and hue the chroma axis leaves
+ * the gamut at 85 % of pure blue's chroma and touches it again at the corner
+ * itself. Across that dent a channel is capped by two of 255, which moves
+ * lightness by 3e-4 and hue by a sixth of a degree - but the flag reads the
+ * cap as out of gamut and the search stops there. An 8-bit color near a
+ * corner of the cube then sits above the boundary reported at its own
+ * lightness and hue - `#0000FF` by 18 % of it: `fromOklch()` clamps a palette
+ * member below what its hue can hold, and `colorFrom()` hands `#0000FF` back
+ * as `#0032E3`.
+ *
+ * The boundary is therefore the chroma up to which clipping stays within the
+ * tolerances, not the one at which it starts; a color built there can report
+ * `clipped()`, and its coordinates can sit that far from the ones asked for.
  *
  * @param {number} lightness - OKLch lightness in the range [0, 1].
  * @param {number} hue - OKLch hue in degrees.
@@ -30,10 +94,10 @@ export function maxChroma(lightness: number, hue: number): number {
   for (let i = 0; i < SEARCH_ITERATIONS; i++) {
     const candidate = (inGamut + outOfGamut) / 2;
 
-    if (chroma.oklch(lightness, candidate, hue).clipped()) {
-      outOfGamut = candidate;
-    } else {
+    if (survivesClipping(lightness, candidate, hue)) {
       inGamut = candidate;
+    } else {
+      outOfGamut = candidate;
     }
   }
 
