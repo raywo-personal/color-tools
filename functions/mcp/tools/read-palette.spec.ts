@@ -138,20 +138,26 @@ describe("read_palette", () => {
       expect(result.structuredContent).toBeUndefined();
     });
 
-    it("should reject a style index that is not a digit", async () => {
+    it("should reject a style index no style answers to", async () => {
       // styleFromPaletteId answers an unknown index with a random style, so
-      // the same id could otherwise come back as two different palettes.
+      // the same id could otherwise come back as two different palettes. The
+      // style character is base62, so what rules this one out is the index it
+      // reads - 36 - naming no style, not the character being a letter.
       const result = await readPalette(client, `a${"0".repeat(42)}`);
 
       expect(result.isError).toBe(true);
     });
 
     it("should reject an id that is too short or too long", async () => {
+      // The wrong length is answered with the shape the caller asked about,
+      // not with what the decoder says when it is handed one anyway.
       const short = await readPalette(client, "0".repeat(42));
       const long = await readPalette(client, "0".repeat(44));
 
       expect(short.isError).toBe(true);
       expect(long.isError).toBe(true);
+      expect(summary(short)).toContain("43 base62 characters");
+      expect(summary(long)).toContain("43 base62 characters");
     });
 
     it("should reject an empty id", async () => {
