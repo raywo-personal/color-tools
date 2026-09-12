@@ -5,6 +5,7 @@ import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 import {paletteColorFrom} from "@engine/palette/palette-color.model";
 import {generatePalette} from "@engine/palette/palette.helper";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
+import {ANALOG_HUE_JITTER} from "@engine/palette/analogous-based-palette.helper";
 
 
 describe("roleCaptionFor", () => {
@@ -48,22 +49,25 @@ describe("roleCaptionFor", () => {
 
 
   it("claims the hue distance the analogous generators actually keep", () => {
-    // The caption is a number the visitor can check against the HSL row of
-    // the conversion list, so it has to be the generator's number: the analogs
-    // come from `analogRange(h, 28, 2)`, a span of 28 degrees in total, and
-    // each is then jittered by up to 5 degrees.
-    const baseHue = 200;
-    const base = paletteColorFrom(chroma.hsl(baseHue, 0.6, 0.4), "color0");
+    // The caption is a number the visitor can check against the OKLch row of
+    // the conversion list - the space the generator rotates in - so it has to
+    // be the generator's number: the analogs come from `analogRange(h, 28, 2)`,
+    // a span of 28 degrees in total, and each is then jittered.
+    const base = paletteColorFrom(chroma.hsl(200, 0.6, 0.4), "color0");
 
     for (const style of ["analogous", "muted-analog-split"] as const) {
       const palette = generatePalette(style, {color0: base});
+      const baseHue = palette.color0.color.oklch()[2];
 
       for (const slot of ["color1", "color4"] as const) {
         const claimed = Number(roleCaptionFor(style, slot).replace("−", "-"));
-        const actual = signedHueDistance(palette[slot].color.hsl()[0], baseHue);
+        const actual = signedHueDistance(palette[slot].color.oklch()[2], baseHue);
 
         expect(Number.isNaN(claimed), `${style} ${slot} carries no number`).toBe(false);
-        expect(Math.abs(actual - claimed), `${style} ${slot}`).toBeLessThanOrEqual(6);
+        // The jitter, plus the degree clamping to the gamut boundary may
+        // cost - see `maxChroma()`.
+        expect(Math.abs(actual - claimed), `${style} ${slot}`)
+          .toBeLessThanOrEqual(ANALOG_HUE_JITTER + 1);
       }
     }
   });
