@@ -33,7 +33,8 @@ const ROLE_CAPTIONS: Record<PaletteStyle, RoleCaptions> = {
   "high-contrast": ["BASE", "COMP", "INK", "DEEP", "PALE"],
   "triadic": ["BASE", "+120", "+240", "BASE LT", "+120 LT"],
   "complementary": ["BASE", "COMP", "BASE LT", "COMP LT", "PALE"],
-  "split-complementary": ["BASE", "SPLIT A", "SPLIT B", "BASE LT", "COMP LT"]
+  "split-complementary": ["BASE", "SPLIT A", "SPLIT B", "BASE LT", "COMP LT"],
+  "tetradic": ["BASE", "+90", "+180", "+270", "PALE"]
 };
 
 

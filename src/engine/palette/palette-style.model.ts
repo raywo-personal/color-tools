@@ -11,7 +11,8 @@ export const PaletteStyles = [
   "high-contrast",
   "triadic",
   "complementary",
-  "split-complementary"
+  "split-complementary",
+  "tetradic"
 ] as const;
 
 export type PaletteStyle = typeof PaletteStyles[number];
@@ -61,6 +62,8 @@ export function styleCaptionFor(style: PaletteStyle): string {
       return "Complementary";
     case "split-complementary":
       return "Split Complementary";
+    case "tetradic":
+      return "Tetradic";
     default:
       return "";
   }
@@ -89,6 +92,8 @@ export function styleDescriptionFor(style: PaletteStyle): string {
       return "A palette based on two colors positioned opposite each other on the color wheel.";
     case "split-complementary":
       return "A palette using a base color and two colors adjacent to its complement.";
+    case "tetradic":
+      return "A palette of four hues on a rectangle around the color wheel, led by the base color, with one pale tint of it.";
     default:
       return "";
   }
