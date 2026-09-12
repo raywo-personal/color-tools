@@ -2,11 +2,17 @@ import {Palette, PaletteColors} from "@engine/palette/palette.model";
 import {generateAnalogousBasedPalette} from "@engine/palette/analogous-based-palette.helper";
 
 
+/**
+ * The muted half of the family: every member keeps well under half of the
+ * base's chroma, so the base is the one colour that carries and the rest
+ * surround it. The counter lifts a little off the base as well, which is what
+ * keeps it apart from a base it barely differs from in chroma.
+ */
 const MUTED_ANALOG_SPLIT_CONFIG = {
-  analogsSaturationBase: -0.40,
-  pastelSaturationOffset: -0.15,
-  complementSaturationOffset: -0.42,
-  complementLightnessOffset: 0.08
+  analogsChromaFactor: 0.45,
+  pastelChromaFactor: 0.28,
+  splitChromaFactor: 0.32,
+  splitLift: 0.10
 };
 
 

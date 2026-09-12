@@ -2,11 +2,17 @@ import {Palette, PaletteColors} from "@engine/palette/palette.model";
 import {generateAnalogousBasedPalette} from "@engine/palette/analogous-based-palette.helper";
 
 
+/**
+ * The colourful half of the family: the analogs keep the base's chroma whole,
+ * so the three of them read as one colour turned slightly. The counter keeps
+ * half of it and stays at the base's lightness, where it answers the analogs
+ * rather than joining them.
+ */
 const ANALOGOUS_CONFIG = {
-  analogsSaturationBase: 0,
-  pastelSaturationOffset: -0.05,
-  complementSaturationOffset: -0.32,
-  complementLightnessOffset: -0.02
+  analogsChromaFactor: 1,
+  pastelChromaFactor: 0.40,
+  splitChromaFactor: 0.50,
+  splitLift: 0
 };
 
 /**
@@ -15,9 +21,9 @@ const ANALOGOUS_CONFIG = {
  *
  * @param {Partial<PaletteColors>} paletteColors - Optional fixed colors to use
  *                when generating the palette. Each provided color is left
- *                untouched, and the remaining colors are generated based on
- *                the full HSL values of the pinned color. If no colors are
- *                provided, a random neutral color is generated.
+ *                untouched, and the remaining colors are generated from the
+ *                OKLch coordinates of the base color. If no colors are
+ *                provided, a random hue is used.
  * @param {number} [seedHue] - An optional base hue value in degrees (0-360)
  *                             used to generate the color palette. If not
  *                             provided, a random hue is used.
