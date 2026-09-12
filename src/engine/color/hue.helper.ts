@@ -1,5 +1,4 @@
 import {hueWrap} from "./hsl.helper";
-import {rangeToArray} from "@engine/helpers/iterables.helper";
 
 
 /**
@@ -59,10 +58,14 @@ export function analogRange(h: number,
     throw new Error("analogRange: count must be > 1");
   }
 
-  const halfRange = rangeDeg / 2;
-  const start = h - halfRange;
-  const end = h + halfRange;
+  const start = h - rangeDeg / 2;
   const step = rangeDeg / (count - 1);
 
-  return rangeToArray(start, end, step).map(hueWrap);
+  // Counted out, so the count is what is guaranteed - not the end point. A
+  // walk from `start` upwards would compare a floating point sum against the
+  // end, and on some hues `(h - 14) + 28` lands a hair above `h + 14`: the
+  // last hue falls out of the range and the caller is handed fewer hues than
+  // it asked for. `analogRange(h, 28, 2)` feeds two palette slots, and the
+  // generator died on the second.
+  return Array.from({length: count}, (_, i) => hueWrap(start + i * step));
 }
