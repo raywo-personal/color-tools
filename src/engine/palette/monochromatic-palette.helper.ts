@@ -3,7 +3,8 @@ import {paletteColorFrom} from "@engine/palette/palette-color.model";
 import {randomBetween} from "@engine/helpers/random.helper";
 import {paletteFrom} from "@engine/palette/palette.helper";
 import {fromOklch} from "@engine/color/color-from-oklch.helper";
-import {MAX_USABLE_LIGHTNESS, usableLightness} from "@engine/color/oklch.helper";
+import {MAX_USABLE_LIGHTNESS, MIN_USABLE_LIGHTNESS} from "@engine/color/oklch.helper";
+import {clamp01} from "@engine/color/hsl.helper";
 
 
 /**
@@ -44,7 +45,9 @@ export const RESIDUAL_REACH = 0.5;
  * separates five steps, so the residual reach applies wherever it is the
  * larger of the two. The two measures meet rather than switch, which is what
  * keeps a base just short of the band's top from collapsing the ramp onto one
- * color.
+ * color. Above the band the residual measure is all there is, and at white it
+ * reaches zero - nothing sits above white, and the ramp is the base color
+ * five times over.
  */
 function roomAbove(this: void, baseLightness: number): number {
   return Math.max(MAX_USABLE_LIGHTNESS - baseLightness,
@@ -55,7 +58,8 @@ function roomAbove(this: void, baseLightness: number): number {
 /**
  * Generates a monochromatic color palette: five steps of one hue, evenly
  * spaced in perceived lightness, rising from the base color to the top of the
- * lightness band that hue still holds color in.
+ * lightness band that hue still holds color in; a base already above the band
+ * rises into what is left of the room toward white.
  *
  * Built step by step in OKLch, which is what makes the spacing even. The HSL
  * endpoints this replaces snapped saturation and lightness through two step
@@ -95,11 +99,15 @@ export function generateMonochromatic(paletteColors: Partial<PaletteColors> = {}
   const hue = h !== undefined && !Number.isNaN(h)
     ? h
     : seedHue ?? randomBetween(0, 360);
-  // Clamped: a base at a lightness of 1 leaves no room above it, so every step
-  // would come out the same white. At the dark end the clamp only decides how
-  // deep the ramp starts, because the ramp rises away from it - see
-  // `usableLightness()`.
-  const baseLight = usableLightness(l ?? DEFAULT_LIGHTNESS);
+  // The floor is clamped, the ceiling is not. The ramp rises away from the
+  // base, so lifting a near-black start only decides how deep the ramp begins
+  // - see `MIN_USABLE_LIGHTNESS`. Capping a light base at the band's top
+  // instead puts the whole ramp below the color the visitor is on: a base
+  // lighter than the band came back with four steps darker than itself, under
+  // captions that read as rising lightness. `clamp01()` because chroma-js
+  // reports white a shade above 1, which would leave `roomAbove()` negative.
+  const baseLight = Math.max(clamp01(l ?? DEFAULT_LIGHTNESS),
+    MIN_USABLE_LIGHTNESS);
   const baseChroma = c ?? DEFAULT_CHROMA;
 
   const step = roomAbove(baseLight) / (PALETTE_SLOTS.length - 1);

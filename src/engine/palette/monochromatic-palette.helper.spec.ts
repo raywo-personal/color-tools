@@ -294,42 +294,119 @@ describe("generateMonochromatic", () => {
   });
 
 
-  // A pure black or white base color reaches the generator through the
-  // converter and through a contrast background. A white base leaves no room
-  // above it, so without the clamp in `usableLightness()` every step came out
-  // the same white - clipped, and unchanged by a regenerate. A black base
-  // keeps its spread either way; there the clamp only decides how deep the
-  // ramp starts. Both remain neutral palettes; they just stop being one
-  // color.
-  //
-  // The base color itself is pinned and keeps its own lightness, which sits
-  // outside the band the clamp allows - so the ramp the assertions read is the
-  // four generated steps.
-  it.each([
-    ["#000000", MIN_USABLE_LIGHTNESS],
-    ["#ffffff", MAX_USABLE_LIGHTNESS]
-  ])("keeps a spread of lightness for a base color of %s",
-    (hex, clampedLightness) => {
+  // A pure black base color reaches the generator through the converter and
+  // through a contrast background. It sits below the floor the ramp starts
+  // at, so the ramp the assertions read is the four generated steps - a
+  // neutral palette that has simply stopped being one color.
+  it("keeps a spread of lightness for a base color of #000000", () => {
+    const base = chroma("#000000");
+
+    for (let seedHue = 0; seedHue < 360; seedHue += 15) {
+      const palette = generateMonochromatic(
+        {color0: paletteColorFrom(base, "color0", base, true)}, seedHue
+      );
+
+      const generated = PALETTE_SLOTS.filter(slot => slot !== "color0");
+
+      generated.forEach(slot => {
+        expect(palette[slot].color.hex(),
+          `${slot} at seed hue ${seedHue}`).not.toBe("#000000");
+      });
+
+      gapsOf(palette, generated).forEach((gap, index) => {
+        expect(gap, `step ${index + 1} at seed hue ${seedHue}`)
+          .toBeCloseTo(stepFor(MIN_USABLE_LIGHTNESS), 3);
+      });
+    }
+  });
+
+
+  // Nothing sits above white, so the ramp reaches nowhere and every step is
+  // the base color again. The alternative is a ramp built somewhere the
+  // visitor is not: capped at the band's top the four steps came back between
+  // 0.92 and 0.96, all of them darker than the white they were built from.
+  it("hands back the base color itself for a base color of #ffffff", () => {
+    const base = chroma("#ffffff");
+
+    for (let seedHue = 0; seedHue < 360; seedHue += 15) {
+      const palette = generateMonochromatic(
+        {color0: paletteColorFrom(base, "color0", base, true)}, seedHue
+      );
+
+      PALETTE_SLOTS.forEach(slot => {
+        expect(palette[slot].color.hex(),
+          `${slot} at seed hue ${seedHue}`).toBe("#ffffff");
+      });
+    }
+  });
+
+
+  // A base lighter than the band is what the Studio hands over whenever the
+  // visitor is on a pastel, and the ramp has to keep rising from it: the slots
+  // are called BASE, TINT, LIGHT, PALE and MIST and the description promises a
+  // rise. Capping the start at `MAX_USABLE_LIGHTNESS` put all four steps below
+  // the base instead - `#fffacd` came back with TINT darker than BASE, and
+  // `#ffe9e4` repeated the base exactly at PALE.
+  it.each(["#fffacd", "#ffe9e4", "#f0f8ff"])(
+    "rises from a base color lighter than the band, from %s",
+    hex => {
       const base = chroma(hex);
 
-      for (let seedHue = 0; seedHue < 360; seedHue += 15) {
-        const palette = generateMonochromatic(
-          {color0: paletteColorFrom(base, "color0", base, true)}, seedHue
-        );
+      const palette = generateMonochromatic(
+        {color0: paletteColorFrom(base, "color0", base, true)}, 210
+      );
 
-        const generated = PALETTE_SLOTS.filter(slot => slot !== "color0");
+      const steps = lightnessOf(palette);
 
-        generated.forEach(slot => {
-          expect(palette[slot].color.hex(),
-            `${slot} at seed hue ${seedHue}`).not.toBe(hex);
-        });
+      expect(steps[0], "the case under test")
+        .toBeGreaterThan(MAX_USABLE_LIGHTNESS);
 
-        gapsOf(palette, generated).forEach((gap, index) => {
-          expect(gap, `step ${index + 1} at seed hue ${seedHue}`)
-            .toBeCloseTo(stepFor(clampedLightness), 3);
-        });
-      }
+      gapsOf(palette).forEach((gap, index) => {
+        expect(gap, `step ${index + 1}`).toBeGreaterThan(0);
+      });
     });
+
+
+  // The unseeded path is the one a regenerate takes: no seed hue reaches the
+  // generator and `randomBetween()` draws the hue. The draw is the only thing
+  // that varies, and the ramp has to hold whatever it returns.
+  it("holds the ramp when the hue comes from the random draw", () => {
+    for (let draw = 0; draw < 25; draw++) {
+      const palette = generateMonochromatic();
+      const hues = PALETTE_SLOTS.map(slot => palette[slot].color.oklch()[2]);
+
+      expect(lightnessOf(palette)[0], `draw ${draw}`)
+        .toBeCloseTo(DEFAULT_LIGHTNESS, 3);
+
+      gapsOf(palette).forEach((gap, index) => {
+        expect(gap, `step ${index + 1} of draw ${draw}`)
+          .toBeCloseTo(stepFor(DEFAULT_LIGHTNESS), 2);
+      });
+
+      hues.forEach((hue, index) => {
+        expect(hueDistance(hue, hues[0]), `${PALETTE_SLOTS[index]} of draw ${draw}`)
+          .toBeLessThan(HUE_TOLERANCE);
+      });
+    }
+  });
+
+
+  // A base color carries a hue of its own, so the draw decides nothing and the
+  // same base has to give the same palette twice over. A draw that reached
+  // through would make the palette flicker while a color is dragged.
+  it("repeats itself for the same base color without a seed hue", () => {
+    const base = chroma.oklch(0.45, 0.12, 300);
+    const paletteOf = () => generateMonochromatic(
+      {color0: paletteColorFrom(base, "color0")}
+    );
+
+    const first = paletteOf();
+    const second = paletteOf();
+
+    PALETTE_SLOTS.forEach(slot => {
+      expect(second[slot].color.hex(), slot).toBe(first[slot].color.hex());
+    });
+  });
 
 
   it("stays neutral throughout when the base color is a gray", () => {
