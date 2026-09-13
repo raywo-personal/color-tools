@@ -21,9 +21,8 @@ const DEFAULT_CHROMA = 0.18;
  * A share rather than a fixed offset: the accents follow a given base color,
  * so a light base leaves little room above them. A fixed offset runs past 1
  * there and hands back plain white, which is no longer a pale *tint* of the
- * base hue. The draft's `+40` of HSL lightness does not port at all - equal
- * HSL lightness is not equal perceived lightness, so across the rectangle's
- * rotation the same offset landed at a different perceived step.
+ * base hue - the draft's `+40` of HSL lightness does not port for that
+ * reason.
  */
 export const PALE_LIFT = 0.62;
 
