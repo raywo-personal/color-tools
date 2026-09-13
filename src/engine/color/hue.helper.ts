@@ -69,3 +69,17 @@ export function analogRange(h: number,
   // generator died on the second.
   return Array.from({length: count}, (_, i) => hueWrap(start + i * step));
 }
+
+
+/**
+ * Generates the four hues of a rectangle on the color wheel, starting at the
+ * given hue.
+ *
+ * @param {number} h - The base hue value, typically in the range [0, 360).
+ * @return {number[]} An array of four hue values: the base hue and three hues
+ *                    offset by +90, +180 and +270 degrees, each wrapped
+ *                    within the valid hue range.
+ */
+export function tetrad(h: number): number[] {
+  return [hueWrap(h), hueWrap(h + 90), hueWrap(h + 180), hueWrap(h + 270)];
+}

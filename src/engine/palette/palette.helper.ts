@@ -8,6 +8,7 @@ import {generateComplementary} from "@engine/palette/complementary-palette.helpe
 import {generateTriadic} from "@engine/palette/triadic-palette.helper";
 import {generateAnalogous} from "@engine/palette/analogous-palette.helper";
 import {generateSplitComplementary} from "@engine/palette/split-complementary-palette.helper";
+import {generateTetradic} from "@engine/palette/tetradic-palette.helper";
 import {generateHarmonic} from "@engine/palette/harmonic-palette.helper";
 import {generateRandom} from "@engine/palette/random-palette.helper";
 import {paletteIdFrom} from "@engine/palette/palette-id.helper";
@@ -41,6 +42,8 @@ export function generatePalette(style: PaletteStyle,
       return generateComplementary(paletteColors, seedHue);
     case "split-complementary":
       return generateSplitComplementary(paletteColors, seedHue);
+    case "tetradic":
+      return generateTetradic(paletteColors, seedHue);
     default:
       return generateRandom(paletteColors, seedHue);
   }

@@ -13,6 +13,9 @@ import {paletteFrom} from "@engine/palette/palette.helper";
  */
 const BASE62_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
+/** How many styles an id with a decimal style index could name. */
+const DECIMAL_DIGITS = 10;
+
 
 describe("Palette ID Helper", () => {
 
@@ -460,7 +463,11 @@ describe("Palette ID Helper", () => {
     it("should read an id written with a decimal style index as the same style", () => {
       // Base62 spells 0 to 9 the way base 10 does, so every id written before
       // the index was widened still names the style it was written with.
-      PaletteStyles.forEach((style, index) => {
+      //
+      // Only the first ten: an id carrying a decimal index was written while
+      // the list held no more than that, and a two-digit index never fitted
+      // the id in the first place.
+      PaletteStyles.slice(0, DECIMAL_DIGITS).forEach((style, index) => {
         const id = `${index}${"0".repeat(PALETTE_ID_BASE62_LENGTH - 1)}`;
 
         expect(styleIndexFromPaletteId(id)).toBe(index);
