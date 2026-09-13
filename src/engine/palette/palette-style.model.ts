@@ -81,7 +81,7 @@ export function styleDescriptionFor(style: PaletteStyle): string {
     case "harmonic":
       return "A palette based on three colors derived from a triad and two complementary tones.";
     case "monochromatic":
-      return "A palette based on a single color with different saturation levels and lightness levels.";
+      return "A palette of one hue in five even steps of lightness, rising from the base color.";
     case "vibrant-balanced":
       return "A palette with three vibrant accent colors derived from a triad and two light complementary tones.";
     case "high-contrast":
