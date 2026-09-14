@@ -6,6 +6,7 @@ import {
   DARK_HUE_JITTER,
   DEEP_DROP,
   DEEP_HUE_OFFSET,
+  DEFAULT_CHROMA,
   DEFAULT_LIGHTNESS,
   INK_DROP,
   INK_FLOOR,
@@ -203,20 +204,20 @@ describe("generateHighContrast", () => {
 
     // The decision recorded in `fromOklch()`: clamp per hue rather than pull
     // both accents down to the lowest chroma their two hues share.
+    //
+    // Each accent is measured against what its own hue can hold, not against
+    // the pair's highest chroma: levelled, both accents carry that highest
+    // value and every distance to it is 0, so an assertion written that way
+    // passes the very implementation this one forbids - at seed hue 0 the base
+    // accent falls from 0.220 to 0.113 and nothing reads it.
     it("aim for one chroma and drop only where the hue cannot hold it", () => {
       eachSeedHue((palette, seedHue) => {
-        const measured = ACCENT_SLOTS.map(slot => palette[slot].color.oklch());
-        const aimedFor = Math.max(...measured.map(([, c]) => c));
+        ACCENT_SLOTS.forEach(slot => {
+          const [lightness, chromacity, hue] = palette[slot].color.oklch();
+          const aimedFor = Math.min(DEFAULT_CHROMA, maxChroma(lightness, hue));
 
-        measured.forEach(([lightness, chromacity, hue], index) => {
-          const boundary = maxChroma(lightness, hue);
-          const label = `${ACCENT_SLOTS[index]} at seed hue ${seedHue}`;
-
-          expect(chromacity, label)
-            .toBeLessThanOrEqual(boundary + BOUNDARY_TOLERANCE);
-          expect(Math.min(Math.abs(chromacity - aimedFor),
-            Math.abs(chromacity - boundary)), label)
-            .toBeLessThan(BOUNDARY_TOLERANCE);
+          expect(Math.abs(chromacity - aimedFor),
+            `${slot} at seed hue ${seedHue}`).toBeLessThan(BOUNDARY_TOLERANCE);
         });
       });
     });

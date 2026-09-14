@@ -17,7 +17,7 @@ export const DEFAULT_LIGHTNESS = 0.62;
  * sits above what most hues can deliver, which is what the draft asked for
  * with a saturation of 1 - the gamut decides how much of it each hue keeps.
  */
-const DEFAULT_CHROMA = 0.22;
+export const DEFAULT_CHROMA = 0.22;
 
 /** Hue offsets of the three members that are not accents, in degrees. */
 const INK_HUE_OFFSET = 20;
