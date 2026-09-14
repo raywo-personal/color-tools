@@ -540,6 +540,15 @@ describe("generateHighContrast", () => {
       .toBeLessThan(lightnessOf(palette, DEEP_SLOT));
     expect(lightnessOf(palette, DEEP_SLOT)).toBeLessThan(Math.min(...accents));
     expect(lightnessOf(palette, PALE_SLOT)).toBeGreaterThan(Math.max(...accents));
+
+    // Neutral is not the same as distinguishable. The two accents differ from
+    // one another in hue alone, and a gray leaves no chroma for a hue to sit
+    // on - see `fromOklch()` - so they come back on one hex and the palette
+    // shows one swatch under both BASE and COMP. The other three state a
+    // lightness of their own and stay apart, which the order above says.
+    const accentHexes = ACCENT_SLOTS.map(slot => palette[slot].color.hex());
+
+    expect(new Set(accentHexes).size, accentHexes.join(" ")).toBe(1);
   });
 
 });

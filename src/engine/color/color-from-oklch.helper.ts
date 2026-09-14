@@ -21,6 +21,18 @@ import {maxChroma} from "./oklch.helper";
  * `chroma.oklch()` and come back as an arbitrary color, so it is treated as
  * a fully neutral 0.
  *
+ * A chroma near zero takes the hue with it, and that is deliberate. chroma-js
+ * reads `#808080` back at a chroma of 2.33e-5 and `#1c1c1c` at 8.79e-6; on a
+ * circle of that radius every angle sits on the same point. Members that
+ * differ from one another in hue alone therefore come back on one hex, and a
+ * gray base color shows one swatch under two, three or four captions.
+ *
+ * Do not lift a near-zero chroma to a default to pull them apart: a gray base
+ * color would then yield a colored palette, which every generator's `stays
+ * neutral throughout when the base color is a gray` spec forbids. Nor spread
+ * them by lightness instead - a shared lightness is what makes accents read as
+ * siblings, and in the high-contrast style it is what the two accents *are*.
+ *
  * @param {OKLCH} oklch - Lightness in [0, 1], chroma unbounded, hue in degrees.
  * @return {Color} A color inside the sRGB gamut.
  */

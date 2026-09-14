@@ -273,6 +273,14 @@ describe("generateTriadic", () => {
       expect(spread, slot).toBeLessThanOrEqual(NEUTRAL_CHANNEL_SPREAD);
       expect(palette[slot].color.oklch()[1], slot).toBeLessThan(NEUTRAL_CHROMA);
     });
+
+    // Neutral is not the same as distinguishable. The three accents differ
+    // from one another in hue alone, and a gray leaves no chroma for a hue to
+    // sit on - see `fromOklch()` - so they come back on one hex and the
+    // palette shows one swatch under three captions.
+    const accents = ACCENT_SLOTS.map(slot => palette[slot].color.hex());
+
+    expect(new Set(accents).size, accents.join(" ")).toBe(1);
   });
 
 });
