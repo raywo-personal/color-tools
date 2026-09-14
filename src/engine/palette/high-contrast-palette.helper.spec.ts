@@ -8,6 +8,7 @@ import {
   DEEP_HUE_OFFSET,
   DEFAULT_LIGHTNESS,
   INK_DROP,
+  INK_FLOOR,
   PALE_LIFT,
   TRAVEL_JITTER,
   generateHighContrast
@@ -133,6 +134,21 @@ function paleFloor(clampedLightness: number): number {
  */
 function narrowestSpread(clampedLightness: number): number {
   return paleFloor(clampedLightness) - inkCeiling(clampedLightness);
+}
+
+
+/**
+ * Every generated member is a color of its own, not the base color back under
+ * another caption - the line the sibling styles carry at a black and a white
+ * base. Near either end of the range the travels have the least 8-bit room, so
+ * this is where a member collapses onto the base if it is going to.
+ */
+function expectGeneratedOff(palette: Palette,
+                            baseHex: string,
+                            label: string): void {
+  PALETTE_SLOTS.filter(slot => slot !== "color0").forEach(slot => {
+    expect(palette[slot].color.hex(), `${slot} at ${label}`).not.toBe(baseHex);
+  });
 }
 
 
@@ -335,6 +351,34 @@ describe("generateHighContrast", () => {
       }
     });
 
+
+    // The mirror of the pale member's case, and the one the constants cannot
+    // settle on their own: near black one 8-bit step of gray spans more
+    // lightness than the ink's whole travel, so a base color at the bottom of
+    // the band leaves the ink on the hex that base already carries - BASE and
+    // INK then show one swatch twice. Walked over draws rather than seed hues
+    // because the jitter is what decides it; the base color carries the hue.
+    it("never leaves the ink on the base color's own hex", () => {
+      expect(fromOklch({l: INK_FLOOR, c: 0, h: 0}).hex()).not.toBe("#000000");
+
+      ["#000000", "#010101", "#020202"].forEach(hex => {
+        const base = chroma(hex);
+
+        for (let draw = 0; draw < 50; draw++) {
+          const palette = generateHighContrast(
+            {color0: paletteColorFrom(base, "color0", base, true)}
+          );
+          const label = `${hex}, draw ${draw}`;
+
+          expect(palette[INK_SLOT].color.hex(), label).not.toBe(hex);
+          // The step off the base is taken below the dark accent, which is
+          // where the captions put the ink whatever the base color is.
+          expect(lightnessOf(palette, INK_SLOT), label)
+            .toBeLessThan(lightnessOf(palette, DEEP_SLOT));
+        }
+      });
+    });
+
   });
 
 
@@ -402,6 +446,8 @@ describe("generateHighContrast", () => {
       expect(lightnessOf(palette, PALE_SLOT) - lightnessOf(palette, INK_SLOT),
         label).toBeGreaterThan(narrowestSpread(MIN_USABLE_LIGHTNESS)
         - BOUND_TOLERANCE);
+
+      expectGeneratedOff(palette, "#000000", label);
     }
   });
 
@@ -427,6 +473,8 @@ describe("generateHighContrast", () => {
       expect(lightnessOf(palette, PALE_SLOT) - lightnessOf(palette, INK_SLOT),
         label).toBeGreaterThan(narrowestSpread(MAX_USABLE_LIGHTNESS)
         - BOUND_TOLERANCE);
+
+      expectGeneratedOff(palette, "#ffffff", label);
     }
   });
 

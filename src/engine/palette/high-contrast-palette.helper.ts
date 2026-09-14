@@ -6,6 +6,7 @@ import {randomBetween} from "@engine/helpers/random.helper";
 import {paletteFrom} from "@engine/palette/palette.helper";
 import {fromOklch} from "@engine/color/color-from-oklch.helper";
 import {usableLightness} from "@engine/color/oklch.helper";
+import {OKLCH} from "@engine/color/oklch.model";
 
 
 /** OKLch lightness of the two accents when no base color sets one. */
@@ -74,6 +75,25 @@ export const PALE_LIFT = 0.85;
 export const TRAVEL_JITTER = 0.10;
 
 /**
+ * Lightness the ink settles on when a black base color already carries the one
+ * it travelled to.
+ *
+ * Below 0.0535 every near-neutral color renders plain `#000000`, and the ink
+ * travels into that region whenever the base sits at the bottom of the usable
+ * band: `MIN_USABLE_LIGHTNESS` times what `INK_DROP` leaves standing puts it
+ * around 0.05, so a black base hands BASE and INK the same hex and the palette
+ * shows one swatch twice. This is the first step off black - it renders
+ * `#010101`, clear of the base and still clear of the dark accent, which comes
+ * back `#020202` at such a base.
+ *
+ * Keep it below what `INK_DROP` and `TRAVEL_JITTER` leave at
+ * `MIN_USABLE_LIGHTNESS`, or the ink rises past the ceiling those two
+ * guarantee and the spread the style promises is measured from a floor the
+ * constants no longer describe - `inkCeiling()` in the spec derives it.
+ */
+export const INK_FLOOR = 0.056;
+
+/**
  * Share of the accent chroma the two dark members keep.
  *
  * The ink is all but neutral, which is what makes it read as near-black
@@ -114,10 +134,13 @@ const DARK_CHROMA_JITTER = 0.25;
  *
  * The dark members drop by a share of the room below the accents and the pale
  * member rises by a share of the room above, so none of them runs out at a
- * light or a dark base color. Saturation does not port as a number: it becomes
- * a share of the accent chroma, and `fromOklch()` clamps every member to what
- * its own lightness and hue can hold - see there for why the members are not
- * levelled to a common chroma instead.
+ * light or a dark base color. What 8-bit sRGB has no step left for is the ink
+ * at a near-black base, and `ink()` holds it off that base's own hex.
+ *
+ * Saturation does not port as a number: it becomes a share of the accent
+ * chroma, and `fromOklch()` clamps every member to what its own lightness and
+ * hue can hold - see there for why the members are not levelled to a common
+ * chroma instead.
  *
  * @param paletteColors - Optional fixed colors to use when generating the
  *                        palette. Each provided color is left untouched, and
@@ -147,17 +170,49 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
   const accent = (accentHue: number, hueJitter: number) =>
     fromOklch({l: baseLight, c: baseChroma, h: vary(accentHue, hueJitter)});
 
-  const darkMember = (hueOffset: number,
+  const darkTravel = (hueOffset: number,
                       drop: number,
-                      chromaFactor: number) => {
+                      chromaFactor: number): OKLCH => {
     const travel = baseLight * drop;
     const chromacity = baseChroma * chromaFactor;
 
-    return fromOklch({
+    return {
       l: baseLight - vary(travel, travel * TRAVEL_JITTER),
       c: vary(chromacity, chromacity * DARK_CHROMA_JITTER),
       h: vary(hue + hueOffset, DARK_HUE_JITTER)
-    });
+    };
+  };
+
+  const darkMember = (hueOffset: number,
+                      drop: number,
+                      chromaFactor: number) =>
+    fromOklch(darkTravel(hueOffset, drop, chromaFactor));
+
+  /**
+   * The ink, held off the base color's own hex.
+   *
+   * A base color at the bottom of the usable band leaves the ink no 8-bit step
+   * of its own: it travels below `MIN_USABLE_LIGHTNESS` by construction, and
+   * near black one step of gray spans more lightness than the whole travel -
+   * see `INK_FLOOR`. The ink then comes back on the hex the base already
+   * carries, and BASE and INK show the same swatch under two captions.
+   *
+   * Where that happens the ink takes the step next to it. Black, because that
+   * is where an ink belongs and the base is not on it; and where the base is
+   * black itself, the first step above it instead. Both keep the ink below the
+   * dark accent, which is the order the captions promise.
+   */
+  const ink = (baseHex: string) => {
+    const travelled = darkTravel(INK_HUE_OFFSET, INK_DROP, INK_CHROMA_FACTOR);
+    const member = fromOklch(travelled);
+
+    if (member.hex() !== baseHex) return member;
+
+    const black = fromOklch({...travelled, l: 0});
+
+    return black.hex() !== baseHex
+      ? black
+      : fromOklch({...travelled, l: INK_FLOOR});
   };
 
   const pale = () => {
@@ -170,18 +225,23 @@ export function generateHighContrast(paletteColors: Partial<PaletteColors> = {},
     });
   };
 
+  // Built before the literal rather than inside it: the ink is held off this
+  // color's hex and needs it in hand. The order the members are built in stays
+  // the order they are drawn in, which is what the seed holds.
+  const base = paletteColors.color0 ??
+    paletteColorFrom(accent(hue, ACCENT_HUE_JITTER), "color0");
+
   const pColors: PaletteColors = {
     // accent
-    color0: paletteColors.color0 ??
-      paletteColorFrom(accent(hue, ACCENT_HUE_JITTER), "color0"),
+    color0: base,
 
     // complementary accent
     color1: paletteColors.color1 ??
       paletteColorFrom(accent(complement(hue), COMP_HUE_JITTER), "color1"),
 
     // near-black ink
-    color2: paletteColors.color2 ?? paletteColorFrom(
-      darkMember(INK_HUE_OFFSET, INK_DROP, INK_CHROMA_FACTOR), "color2"),
+    color2: paletteColors.color2 ??
+      paletteColorFrom(ink(base.color.hex()), "color2"),
 
     // dark accent
     color3: paletteColors.color3 ?? paletteColorFrom(
