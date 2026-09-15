@@ -34,6 +34,9 @@ const DERIVED_SLOTS: PaletteSlot[] = ["color1", "color2", "color3", "color4"];
 /** The two analogs, one either side of the base hue. */
 const ANALOG_SLOTS: PaletteSlot[] = ["color1", "color4"];
 
+/** The counter, which answers the base from the other side of the wheel. */
+const COUNTER_SLOT: PaletteSlot = "color3";
+
 /** Float noise of the OKLch round trip, far below a visible step. */
 const TOLERANCE = 1e-3;
 
@@ -361,6 +364,41 @@ describe("the analogous-based generators", () => {
           expect(palette[slot].color.oklch()[1], `${style} ${slot}`)
             .toBeLessThan(NEUTRAL_CHROMA);
         });
+
+        // Neutral is not the same as distinguishable. The counter differs
+        // from the base in hue and in a share of its chroma, and a gray has
+        // neither to give - see `fromOklch()`. In the colourful style its
+        // lift is zero on top of that, so it comes back on the base's own hex
+        // and the palette shows one swatch under two captions; the muted
+        // style's `splitLift` is what keeps the two apart there.
+        const counter = palette[COUNTER_SLOT].color.hex();
+
+        if (style === "analogous") {
+          expect(counter, style).toBe(palette.color0.color.hex());
+        } else {
+          expect(counter, style).not.toBe(palette.color0.color.hex());
+        }
+      }
+    });
+
+
+    // Where the collapse above stops. The counter lands on the base's own hex
+    // only while the base's lightness is the one the counter is built at -
+    // below the floor `usableLightness()` raises the counter's and leaves the
+    // base where it is, so even a `splitLift` of zero no longer puts the two
+    // on one swatch.
+    it("lifts the counter off a gray base below the usable floor", () => {
+      const gray = chroma.oklch(MIN_USABLE_LIGHTNESS / 2, 0, 0);
+      expect(gray.oklch()[0], "the base sits below the floor")
+        .toBeLessThan(MIN_USABLE_LIGHTNESS);
+
+      for (const style of ANALOGOUS_STYLES) {
+        const palette = generatePalette(
+          style, {color0: paletteColorFrom(gray, "color0")}, 120
+        );
+
+        expect(palette[COUNTER_SLOT].color.hex(), style)
+          .not.toBe(palette.color0.color.hex());
       }
     });
 

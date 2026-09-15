@@ -3,7 +3,7 @@ import chroma from "chroma-js";
 import {generateVibrantBalanced} from "@engine/palette/vibrant-palette.helper";
 import {paletteColorFrom} from "@engine/palette/palette-color.model";
 import {PALETTE_SLOTS, Palette, PaletteSlot} from "@engine/palette/palette.model";
-import {maxChroma} from "@engine/color/oklch.helper";
+import {MIN_USABLE_LIGHTNESS, maxChroma} from "@engine/color/oklch.helper";
 
 
 /** The three accents; the remaining two are the light colors backing them. */
@@ -326,6 +326,34 @@ describe("generateVibrantBalanced", () => {
       expect(spread, slot).toBeLessThanOrEqual(NEUTRAL_CHANNEL_SPREAD);
       expect(palette[slot].color.oklch()[1], slot).toBeLessThan(NEUTRAL_CHROMA);
     });
+
+    // Neutral is not the same as distinguishable. The three accents differ
+    // from one another in hue alone, and a gray leaves no chroma for a hue to
+    // sit on - see `fromOklch()` - so they come back on one hex and the
+    // palette shows one swatch under three captions.
+    const accents = ACCENT_SLOTS.map(slot => palette[slot].color.hex());
+
+    expect(new Set(accents).size, accents.join(" ")).toBe(1);
+  });
+
+
+  // Where the collapse above stops. It puts the base on the same hex as its
+  // accents, which holds only while the base's own lightness is one the
+  // accents are built at - below the floor `usableLightness()` raises theirs
+  // and leaves the base where it is. They still collapse onto one another, so
+  // the palette shows two swatches rather than one.
+  it("lifts its accents off a gray base below the usable floor", () => {
+    const gray = chroma.oklch(MIN_USABLE_LIGHTNESS / 2, 0, 0);
+    expect(gray.oklch()[0], "the base sits below the floor")
+      .toBeLessThan(MIN_USABLE_LIGHTNESS);
+
+    const palette = generateVibrantBalanced(
+      {color0: paletteColorFrom(gray, "color0")}, 120
+    );
+    const [base, ...lifted] = ACCENT_SLOTS.map(slot => palette[slot].color.hex());
+
+    expect(new Set(lifted).size, lifted.join(" ")).toBe(1);
+    expect(lifted[0], `base ${base}`).not.toBe(base);
   });
 
 });

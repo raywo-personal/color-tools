@@ -540,6 +540,34 @@ describe("generateHighContrast", () => {
       .toBeLessThan(lightnessOf(palette, DEEP_SLOT));
     expect(lightnessOf(palette, DEEP_SLOT)).toBeLessThan(Math.min(...accents));
     expect(lightnessOf(palette, PALE_SLOT)).toBeGreaterThan(Math.max(...accents));
+
+    // Neutral is not the same as distinguishable. The two accents differ from
+    // one another in hue alone, and a gray leaves no chroma for a hue to sit
+    // on - see `fromOklch()` - so they come back on one hex and the palette
+    // shows one swatch under both BASE and COMP. The other three state a
+    // lightness of their own and stay apart, which the order above says.
+    const accentHexes = ACCENT_SLOTS.map(slot => palette[slot].color.hex());
+
+    expect(new Set(accentHexes).size, accentHexes.join(" ")).toBe(1);
+  });
+
+
+  // Where the collapse above stops. It puts the base on the same hex as its
+  // complement, which holds only while the base's own lightness is the one
+  // the complement is built at - below the floor `usableLightness()` raises
+  // the complement's and leaves the base where it is, so the palette shows
+  // two swatches rather than one.
+  it("lifts the complement off a gray base below the usable floor", () => {
+    const gray = chroma.oklch(MIN_USABLE_LIGHTNESS / 2, 0, 0);
+    expect(gray.oklch()[0], "the base sits below the floor")
+      .toBeLessThan(MIN_USABLE_LIGHTNESS);
+
+    const palette = generateHighContrast(
+      {color0: paletteColorFrom(gray, "color0")}, 120
+    );
+    const [base, comp] = ACCENT_SLOTS.map(slot => palette[slot].color.hex());
+
+    expect(comp, `base ${base}`).not.toBe(base);
   });
 
 });
