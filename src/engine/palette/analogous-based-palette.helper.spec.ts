@@ -381,6 +381,27 @@ describe("the analogous-based generators", () => {
       }
     });
 
+
+    // Where the collapse above stops. The counter lands on the base's own hex
+    // only while the base's lightness is the one the counter is built at -
+    // below the floor `usableLightness()` raises the counter's and leaves the
+    // base where it is, so even a `splitLift` of zero no longer puts the two
+    // on one swatch.
+    it("lifts the counter off a gray base below the usable floor", () => {
+      const gray = chroma.oklch(MIN_USABLE_LIGHTNESS / 2, 0, 0);
+      expect(gray.oklch()[0], "the base sits below the floor")
+        .toBeLessThan(MIN_USABLE_LIGHTNESS);
+
+      for (const style of ANALOGOUS_STYLES) {
+        const palette = generatePalette(
+          style, {color0: paletteColorFrom(gray, "color0")}, 120
+        );
+
+        expect(palette[COUNTER_SLOT].color.hex(), style)
+          .not.toBe(palette.color0.color.hex());
+      }
+    });
+
   });
 
 
