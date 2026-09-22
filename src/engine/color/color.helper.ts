@@ -29,8 +29,3 @@ export function toColor(color: Color | string): Color {
 export function isLightColor(color: Color): boolean {
   return Math.abs(chroma.contrastAPCA(WHITE, color)) <= Math.abs(chroma.contrastAPCA(BLACK, color));
 }
-
-
-export function sameColor(color1: Color, color2: Color): boolean {
-  return color1.hex() === color2.hex();
-}
