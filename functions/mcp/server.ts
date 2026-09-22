@@ -7,6 +7,7 @@ import {registerGeneratePalette} from "./tools/generate-palette";
 import {registerReadPalette} from "./tools/read-palette";
 import {registerPaletteStyles} from "./resources/palette-styles";
 import {registerTintsAndShades} from "./tools/tints-and-shades";
+import {registerAuditPairs} from "./tools/audit-pairs";
 
 
 export function createMcpServer(): McpServer {
@@ -19,6 +20,7 @@ export function createMcpServer(): McpServer {
   registerGeneratePalette(server);
   registerReadPalette(server);
   registerTintsAndShades(server);
+  registerAuditPairs(server);
 
   // Resources
   registerPaletteStyles(server);
