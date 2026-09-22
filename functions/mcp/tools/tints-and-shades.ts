@@ -1,10 +1,11 @@
 import {z} from "zod";
 import {opaqueHexColor} from "../helper/tool-schemas.helper";
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
-import chroma from "chroma-js";
 import {colorName} from "@engine/color/color-name.helper";
 import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
+import {toColor} from "@engine/color/color.helper";
+import {formatColor} from "@engine/color/color-format.helper";
 
 
 const ARRAY_LENGTH = 11;
@@ -42,23 +43,23 @@ const outputSchema = {
 
 const callback: ToolCallback<typeof inputSchema> =
   ({color}) => {
-    const clr = chroma(color);
+    const clr = toColor(color);
     const baseColorName = colorName(clr);
     const tints = createTints(clr, true, true, ARRAY_LENGTH)
       .map((color, index): ColorObject => ({
         step: index,
-        hex: color.hex(),
+        hex: formatColor(color, "hex", false),
         name: colorName(color)
       }));
     const shades = createShades(clr, true, true, ARRAY_LENGTH)
       .map((color, index): ColorObject => ({
         step: index,
-        hex: color.hex(),
+        hex: formatColor(color, "hex", false),
         name: colorName(color)
       }));
 
     const structuredContent = {
-      baseColor: clr.hex(),
+      baseColor: formatColor(clr, "hex", false),
       baseColorName: baseColorName,
       tints,
       shades

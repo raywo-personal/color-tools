@@ -1,11 +1,11 @@
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {z} from "zod";
 import {colorName} from "@engine/color/color-name.helper";
-import chroma from "chroma-js";
 import {formatColor} from "@engine/color/color-format.helper";
 import {maxChroma, usableLightness} from "@engine/color/oklch.helper";
 import {opaqueHexColor} from "../helper/tool-schemas.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
+import {toColor} from "@engine/color/color.helper";
 
 
 const inputSchema = {
@@ -27,7 +27,7 @@ const outputSchema = {
 
 const callback: ToolCallback<typeof inputSchema> =
   ({color}) => {
-    const clr = chroma(color);
+    const clr = toColor(color);
     const name = colorName(clr);
     const hex = formatColor(clr, "hex");
     const oklchElements = clr.oklch();
