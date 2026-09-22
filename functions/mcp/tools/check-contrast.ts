@@ -5,13 +5,14 @@ import {colorName} from "@engine/color/color-name.helper";
 import {FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
 import {
   APCA_POLARITIES,
+  calculateAPCAContrast,
   getAPCAPolarity,
   getAPCARating,
   getAPCARatingLabel,
   getRequiredLc,
+  meetsAPCARequirement,
   TEXT_KINDS
 } from "@engine/contrast/apca-rating.helper";
-import {calculateAPCAContrast, meetsAPCARequirement} from "@engine/contrast/optimal-text-color.helper";
 import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
 import {
   fontSizeInput,

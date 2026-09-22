@@ -5,6 +5,7 @@ import {getRequiredLc, TextKind} from "@engine/contrast/apca-rating.helper";
 import {generateRange} from "@engine/helpers/iterables.helper";
 import {fromOklch} from "@engine/color/color-from-oklch.helper";
 import {MAX_USABLE_LIGHTNESS, maxChroma, MIN_USABLE_LIGHTNESS} from "@engine/color/oklch.helper";
+import {BLACK, isLightColor, toColor, WHITE} from "@engine/color/color.helper";
 
 
 /**
@@ -81,9 +82,6 @@ export type GuaranteedOptimalTextColorResult =
 export type TextColorFinder = (bgColor: Color | string, config?: Partial<OptimalColorConfigOptions>) => OptimalTextColorResult
 
 
-const WHITE = chroma("#ffffff");
-const BLACK = chroma("#000000");
-
 /**
  * The share of the chroma sRGB can hold at a lightness and hue that a
  * harmonic text color takes. Half reads as the hue without competing with
@@ -93,49 +91,6 @@ const HARMONIC_CHROMA_SHARE = 0.5;
 
 /** OKLch lightness between two harmonic candidates. */
 const HARMONIC_LIGHTNESS_STEP = 0.01;
-
-
-/**
- * Calculates the APCA contrast ratio between text and background colors.
- *
- * @param textColor - The text color
- * @param bgColor - The background color
- * @returns The APCA contrast value (can be negative)
- */
-export function calculateAPCAContrast(
-  textColor: Color | string,
-  bgColor: Color | string
-): number {
-  return chroma.contrastAPCA(toColor(textColor), toColor(bgColor));
-}
-
-
-/**
- * Checks if a text/background color combination meets APCA requirements.
- *
- * @param textColor - The text color
- * @param bgColor - The background color
- * @param fontSize - The font size
- * @param fontWeight - The font weight
- * @param textKind - Whether the text is a column of body copy or spot text
- * @returns True if the combination meets APCA requirements
- */
-export function meetsAPCARequirement(
-  textColor: Color | string,
-  bgColor: Color | string,
-  fontSize: FontSize = "16px",
-  fontWeight: FontWeight = "400",
-  textKind: TextKind = "spotText"
-): boolean {
-  const contrast = calculateAPCAContrast(textColor, bgColor);
-  const requiredContrast = getRequiredLc(fontSize, fontWeight, textKind);
-
-  if (requiredContrast === null) {
-    return false; // Text not readable at this size/weight
-  }
-
-  return Math.abs(contrast) >= requiredContrast;
-}
 
 
 /**
@@ -433,17 +388,6 @@ function findBestContrastColorFromBW(bg: Color): { color: Color; contrast: numbe
     color,
     contrast: chroma.contrastAPCA(color, bg)
   };
-}
-
-
-/** Accepts either spelling of a color and hands back a chroma `Color`. */
-function toColor(color: Color | string): Color {
-  return typeof color === "string" ? chroma(color) : color;
-}
-
-
-function isLightColor(color: Color): boolean {
-  return Math.abs(chroma.contrastAPCA(WHITE, color)) <= Math.abs(chroma.contrastAPCA(BLACK, color));
 }
 
 

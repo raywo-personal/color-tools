@@ -2,15 +2,14 @@ import chroma, {Color} from "chroma-js";
 
 import {MAX_USABLE_LIGHTNESS} from "@engine/color/oklch.helper";
 import {
-  calculateAPCAContrast,
   DEFAULT_COLOR_CONFIG,
   findHarmonicTextColor,
   findMinimumContrastTextColor,
   findOptimalTextColor,
   findTextColor,
-  meetsAPCARequirement,
   OptimalTextColorResult
 } from "./optimal-text-color.helper";
+import {calculateAPCAContrast, meetsAPCARequirement} from "./apca-rating.helper";
 
 
 /**
