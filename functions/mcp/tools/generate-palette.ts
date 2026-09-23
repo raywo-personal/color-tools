@@ -4,11 +4,12 @@ import {opaqueHexColor} from "../helper/tool-schemas.helper";
 import {z} from "zod";
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {generatePaletteFrom} from "@engine/palette/palette.helper";
-import chroma from "chroma-js";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
 import {colorName} from "@engine/color/color-name.helper";
 import {randomSeed} from "@engine/helpers/random.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
+import {toColor} from "@engine/color/color.helper";
+import {formatColor} from "@engine/color/color-format.helper";
 
 
 const inputSchema = {
@@ -49,7 +50,7 @@ const outputSchema = {
 
 const callback: ToolCallback<typeof inputSchema> =
   ({baseColor, style, seed}) => {
-    const base = chroma(baseColor);
+    const base = toColor(baseColor);
     const effectiveSeed = seed ?? randomSeed();
     const palette = generatePaletteFrom(base, style, effectiveSeed);
     const colors = PALETTE_SLOTS.map(slot => {
@@ -58,7 +59,7 @@ const callback: ToolCallback<typeof inputSchema> =
       return {
         slot,
         role: roleCaptionFor(style, slot),
-        hex: paletteColor.hex(),
+        hex: formatColor(paletteColor, "hex", false),
         name: colorName(paletteColor)
       };
     });

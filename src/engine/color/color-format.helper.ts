@@ -18,9 +18,14 @@ import {hueWrap} from "@engine/color/hsl.helper";
  *
  * @param {Color} color - The color to write.
  * @param {ColorSpace} space - The space to write it in.
+ * @param {boolean} upperCase - Determines whether the output for the hex color
+ *                              space is upper case.
  * @return {string} The color as CSS, in the modern space-separated syntax.
  */
-export function formatColor(this: void, color: Color, space: ColorSpace): string {
+export function formatColor(this: void,
+                            color: Color,
+                            space: ColorSpace,
+                            upperCase: boolean = true): string {
   switch (space) {
     case "rgb":
       return `rgb(${color.rgb().join(" ")})`;
@@ -41,7 +46,8 @@ export function formatColor(this: void, color: Color, space: ColorSpace): string
     default:
       // `"rgb"` drops the alpha byte: `.hex()` writes eight digits as soon as a
       // color is not fully opaque, and no field in the app edits alpha.
-      return color.hex("rgb").toUpperCase();
+      const hex = color.hex("rgb");
+      return upperCase ? hex.toUpperCase() : hex;
   }
 }
 

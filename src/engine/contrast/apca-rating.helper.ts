@@ -1,5 +1,7 @@
 import {APCAContrastValue, APCALookupTable, FONT_SIZES, FONT_WEIGHTS, FontSize, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {apcaLookup} from "@engine/contrast/apca-look-up-table.helper";
+import chroma, {Color} from "chroma-js";
+import {toColor} from "@engine/color/color.helper";
 
 
 export type APCARating = 0 | 1 | 2 | 3;
@@ -48,6 +50,74 @@ export type TextKind = typeof TEXT_KINDS[number];
  */
 export const BODY_COPY_MIN_LC = 75;
 
+
+/**
+ * Calculates the APCA rating based on the given luminance contrast and the
+ * required luminance contrast.
+ *
+ * @param {number} lc - The luminance contrast value for the content.
+ * @param {number | null} requiredLc - The required luminance contrast
+ *                                     threshold. If null, the function will
+ *                                     return a default rating of 0.
+ * @return {APCARating} The calculated APCA rating based on the provided values.
+ */
+export function apcaRatingFor(lc: number, requiredLc: number | null): APCARating {
+  if (requiredLc === null) return 0;
+
+  return calculateRating(Math.abs(lc), requiredLc);
+}
+
+
+/**
+ * Calculates the APCA contrast ratio between text and background colors.
+ *
+ * @param textColor - The text color
+ * @param bgColor - The background color
+ * @returns The APCA contrast value (can be negative)
+ */
+export function calculateAPCAContrast(
+  textColor: Color | string,
+  bgColor: Color | string
+): number {
+  return chroma.contrastAPCA(toColor(textColor), toColor(bgColor));
+}
+
+
+/**
+ * Checks if a text/background color combination meets APCA requirements.
+ *
+ * @param textColor - The text color
+ * @param bgColor - The background color
+ * @param fontSize - The font size
+ * @param fontWeight - The font weight
+ * @param textKind - Whether the text is a column of body copy or spot text
+ * @returns True if the combination meets APCA requirements
+ */
+export function meetsAPCARequirement(
+  textColor: Color | string,
+  bgColor: Color | string,
+  fontSize: FontSize = "16px",
+  fontWeight: FontWeight = "400",
+  textKind: TextKind = "spotText"
+): boolean {
+  const contrast = calculateAPCAContrast(textColor, bgColor);
+  const requiredContrast = getRequiredLc(fontSize, fontWeight, textKind);
+
+  if (requiredContrast === null) {
+    return false; // Text not readable at this size/weight
+  }
+
+  return Math.abs(contrast) >= requiredContrast;
+}
+
+
+export function meetsRequiredLc(lc: number, requiredLc: number | null): boolean {
+  if (requiredLc === null) return false;
+
+  return Math.abs(lc) >= requiredLc;
+}
+
+
 /**
  * Calculates the APCA contrast rating based on font size, font weight, and
  * contrast value.
@@ -80,9 +150,7 @@ export function getAPCARating(
   const absContrast = Math.abs(apcaContrast);
   const requiredLc = getRequiredLc(fontSizeKey, fontWeight, textKind, lookupTable);
 
-  if (requiredLc === null) return 0;
-
-  return calculateRating(absContrast, requiredLc);
+  return apcaRatingFor(absContrast, requiredLc);
 }
 
 
@@ -189,11 +257,6 @@ export function getAPCARatingLabel(rating: APCARating): APCARatingLabel {
 }
 
 
-function isAPCARating(value: number): value is APCARating {
-  return Number.isInteger(value) && value >= 0 && value <= 3;
-}
-
-
 /**
  * Calculates the APCA (Accessible Perceptual Contrast Algorithm) rating based
  * on the given absolute contrast value and required contrast value.
@@ -208,7 +271,7 @@ function isAPCARating(value: number): value is APCARating {
  *  - 2 indicates the contrast is close to or slightly above the required threshold.
  *  - 3 indicates the contrast well exceeds the required threshold.
  */
-function calculateRating(absContrast: number, requiredContrast: number): APCARating {
+export function calculateRating(absContrast: number, requiredContrast: number): APCARating {
   if (requiredContrast === 0) return 0;
 
   if (absContrast < requiredContrast * 0.7) return 0;
@@ -339,4 +402,9 @@ function smallestByNumber<T extends string>(keys: readonly T[]): T | null {
         : smallest,
     null
   );
+}
+
+
+function isAPCARating(value: number): value is APCARating {
+  return Number.isInteger(value) && value >= 0 && value <= 3;
 }

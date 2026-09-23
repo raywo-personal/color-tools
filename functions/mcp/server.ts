@@ -6,10 +6,12 @@ import {registerFindTextColor} from "./tools/find-text-color";
 import {registerGeneratePalette} from "./tools/generate-palette";
 import {registerReadPalette} from "./tools/read-palette";
 import {registerPaletteStyles} from "./resources/palette-styles";
+import {registerTintsAndShades} from "./tools/tints-and-shades";
+import {registerAuditPairs} from "./tools/audit-pairs";
 
 
 export function createMcpServer(): McpServer {
-  const server = new McpServer({name: "colortools", version: "0.0.1"});
+  const server = new McpServer({name: "colortools", version: "0.0.6"});
 
   // Tools
   registerDescribeColor(server);
@@ -17,6 +19,8 @@ export function createMcpServer(): McpServer {
   registerFindTextColor(server);
   registerGeneratePalette(server);
   registerReadPalette(server);
+  registerTintsAndShades(server);
+  registerAuditPairs(server);
 
   // Resources
   registerPaletteStyles(server);

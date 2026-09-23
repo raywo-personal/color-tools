@@ -1,25 +1,14 @@
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {z} from "zod";
 import {FONT_SIZES, FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
-import {
-  APCA_POLARITIES,
-  getAPCAPolarity,
-  lightestPassingFontWeight,
-  smallestPassingFontSize,
-  TEXT_KINDS
-} from "@engine/contrast/apca-rating.helper";
+import {APCA_POLARITIES, getAPCAPolarity, lightestPassingFontWeight, smallestPassingFontSize, TEXT_KINDS} from "@engine/contrast/apca-rating.helper";
 import {colorName} from "@engine/color/color-name.helper";
-import chroma from "chroma-js";
 import {findTextColor, MODES} from "@engine/contrast/optimal-text-color.helper";
 import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
-import {
-  fontSizeInput,
-  fontWeightInput,
-  opaqueHexColor,
-  textKindInput,
-  textKindPhrase
-} from "../helper/tool-schemas.helper";
+import {fontSizeInput, fontWeightInput, opaqueHexColor, textKindInput, textKindPhrase} from "../helper/tool-schemas.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
+import {toColor} from "@engine/color/color.helper";
+import {formatColor} from "@engine/color/color-format.helper";
 
 
 const inputSchema = {
@@ -68,7 +57,7 @@ export function registerFindTextColor(server: McpServer) {
 
 const callback: ToolCallback<typeof inputSchema> =
   ({backgroundColor, mode, fontSize, fontWeight, textKind}) => {
-    const backgroundClr = chroma(backgroundColor);
+    const backgroundClr = toColor(backgroundColor);
     const backgroundColorName = colorName(backgroundClr);
     const fontSizeKey = fontSizeKeyFrom(fontSize);
 
@@ -80,7 +69,7 @@ const callback: ToolCallback<typeof inputSchema> =
     const meetsRequirement = foundResult.meetsRequirement;
 
     const structuredContent = {
-        textColor: textColor.hex(),
+        textColor: formatColor(textColor, "hex", false),
         textColorName,
         backgroundColorName,
         lc: foundResult.contrast,

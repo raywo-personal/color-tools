@@ -7,6 +7,7 @@ import {colorName} from "@engine/color/color-name.helper";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
 import {base62ToBigInt} from "@engine/helpers/base62.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
+import {formatColor} from "@engine/color/color-format.helper";
 
 
 /**
@@ -82,7 +83,7 @@ const callback: ToolCallback<typeof inputSchema> =
       return {
         slot,
         role: roleCaptionFor(palette.style, slot),
-        hex: paletteColor.hex(),
+        hex: formatColor(paletteColor, "hex", false),
         name: colorName(paletteColor)
       };
     });

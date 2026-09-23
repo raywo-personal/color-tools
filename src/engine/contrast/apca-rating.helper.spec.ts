@@ -2,12 +2,14 @@ import {
   APCA_RATING_LABELS,
   APCARating,
   BODY_COPY_MIN_LC,
+  calculateAPCAContrast,
   findClosestSizeKey,
   getAPCAPolarity,
   getAPCARating,
   getAPCARatingLabel,
   getRequiredLc,
   lightestPassingFontWeight,
+  meetsAPCARequirement,
   NEGATIVE_MAX_APCA_CONTRAST,
   smallestPassingFontSize,
   TEXT_KINDS
@@ -18,10 +20,6 @@ import {
   FONT_WEIGHTS
 } from "@engine/contrast/apca-lookup-table.model";
 import {apcaLookup} from "@engine/contrast/apca-look-up-table.helper";
-import {
-  calculateAPCAContrast,
-  meetsAPCARequirement
-} from "@engine/contrast/optimal-text-color.helper";
 
 
 describe("APCA Rating Helper", () => {
