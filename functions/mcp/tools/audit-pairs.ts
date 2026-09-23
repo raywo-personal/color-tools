@@ -165,7 +165,7 @@ const callback: ToolCallback<typeof inputSchema> =
 export function registerAuditPairs(server: McpServer) {
   server.registerTool("audit_pairs", {
       title: "Audit Pairs",
-      description: "Audit pairs of text and background color for contrast ratio. If harmonic contrast is not met, a color is suggested. If no color passes the test White or Black are suggested.",
+      description: "Audits pairs of text and background color against the APCA Lc requirement of each pair's size, weight and kind of text. A failing pair gets a suggested text color: a muted color on the background's hue where one passes, black or white otherwise. The suggestion's meetsRequirement says whether it passes.",
       inputSchema,
       outputSchema,
       annotations: TOOL_ANNOTATION
