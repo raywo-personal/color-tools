@@ -17,6 +17,7 @@ interface Pair {
   backgroundColor: string;
   fontSize?: string;
   fontWeight?: string;
+  textKind?: string;
 }
 
 interface Suggestion {
@@ -33,6 +34,7 @@ interface AuditResult {
   backgroundColor: string;
   fontSize: string;
   fontWeight: string;
+  textKind: string;
   lc: number;
   requiredLc: number | null;
   meetsRequirement: boolean;
@@ -132,6 +134,29 @@ describe("audit_pairs", () => {
       expect(result.requiredLc).toBeNull();
       expect(result.meetsRequirement).toBe(false);
       expect(result.suggestion!.meetsRequirement).toBe(false);
+    });
+
+    it("should rate a pair as spot text unless told otherwise, and say so", async () => {
+      const result = await auditOne(client, {textColor: "#000000", backgroundColor: "#ffffff"});
+
+      expect(result.textKind).toBe("spotText");
+    });
+
+    it("should hold body copy to a higher requirement than spot text of the same size", async () => {
+      // A gray that clears the spot-text row at 24px/400 but not the
+      // body-copy floor, so only the kind of text decides the verdict.
+      const pair = {textColor: "#757575", backgroundColor: "#ffffff", fontSize: "24px", fontWeight: "400"};
+      const [spot, body] = results(structured(await auditPairs(client, [
+        {...pair, textKind: "spotText"},
+        {...pair, textKind: "bodyCopy"}
+      ])));
+
+      expect(spot.meetsRequirement).toBe(true);
+      expect(body.textKind).toBe("bodyCopy");
+      expect(body.requiredLc!).toBeGreaterThan(spot.requiredLc!);
+      expect(body.meetsRequirement).toBe(false);
+      expect(body.suggestion!.meetsRequirement).toBe(true);
+      expect(Math.abs(body.suggestion!.lc)).toBeGreaterThanOrEqual(body.requiredLc!);
     });
 
     it("should answer the hex values in lower case, as the other tools do", async () => {

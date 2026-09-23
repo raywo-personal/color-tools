@@ -1,10 +1,10 @@
 import {z} from "zod";
-import {fontSizeInput, fontWeightInput, opaqueHexColor} from "../helper/tool-schemas.helper";
+import {fontSizeInput, fontWeightInput, opaqueHexColor, textKindInput} from "../helper/tool-schemas.helper";
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 import {Color} from "chroma-js";
 import {fontSizeKeyFrom} from "@engine/helpers/font-size.helper";
-import {calculateAPCAContrast, getRequiredLc, meetsRequiredLc, TextKind} from "@engine/contrast/apca-rating.helper";
+import {BODY_COPY_MIN_LC, calculateAPCAContrast, getRequiredLc, meetsRequiredLc, TEXT_KINDS, TextKind} from "@engine/contrast/apca-rating.helper";
 import {FontSize, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {toColor} from "@engine/color/color.helper";
 import {formatColor} from "@engine/color/color-format.helper";
@@ -20,14 +20,15 @@ const PAIR = z.object({
   textColor: opaqueHexColor("Text color"),
   backgroundColor: opaqueHexColor("Background color"),
   fontSize: fontSizeInput,
-  fontWeight: fontWeightInput
+  fontWeight: fontWeightInput,
+  textKind: textKindInput
 });
 
 const inputSchema = {
   pairs: z.array(PAIR)
     .min(1)
     .max(50)
-    .describe("At most 50 pairs. Size and weight decide the requirement: 16px/400 asks for Lc 90, 24px/400 for 60.")
+    .describe(`At most 50 pairs. Size, weight and kind of text decide the requirement: as spot text 16px/400 asks for Lc 90, 24px/400 for 60; body copy asks for at least Lc ${BODY_COPY_MIN_LC}.`)
 };
 
 
@@ -37,6 +38,7 @@ const auditResultSchema = z.object({
   backgroundColor: z.string(),
   fontSize: z.string(),          // the snapped table row
   fontWeight: z.string(),
+  textKind: z.enum(TEXT_KINDS),
   lc: z.number(),
   requiredLc: z.number().nullable(),
   meetsRequirement: z.boolean(),
@@ -95,6 +97,7 @@ function evaluatePair(label: string | undefined,
     backgroundColor: formatColor(backgroundColor, "hex", false),
     fontSize,
     fontWeight,
+    textKind,
     lc,
     requiredLc,
     meetsRequirement,
@@ -111,7 +114,7 @@ const callback: ToolCallback<typeof inputSchema> =
     const results: AuditResult[] = pairs.map((pair) => {
       const fontSize = fontSizeKeyFrom(pair.fontSize);
       const fontWeight = pair.fontWeight;
-      const textKind: TextKind = "spotText";
+      const textKind = pair.textKind;
 
       const evalResult = evaluatePair(
         pair.label,
