@@ -79,7 +79,7 @@ export function styleDescriptionFor(style: PaletteStyle): string {
     case "muted-analog-split":
       return "A muted palette featuring neutral, analogous, pastel and complementary colors with reduced saturation.";
     case "harmonic":
-      return "A palette based on three colors derived from a triad and two complementary tones.";
+      return "A palette of the base color and its complement as accents, with two analogous neighbours and one tone near the complement.";
     case "monochromatic":
       return "A palette of one hue in five even steps of lightness, rising from the base color.";
     case "vibrant-balanced":
