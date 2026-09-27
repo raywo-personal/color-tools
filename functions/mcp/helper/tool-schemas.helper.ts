@@ -4,7 +4,6 @@ import {BODY_COPY_MIN_LC, TEXT_KINDS, TextKind} from "@engine/contrast/apca-rati
 import {z} from "zod";
 import {PIXEL_FONT_SIZE_PATTERN} from "@engine/helpers/font-size.helper";
 import chroma from "chroma-js";
-import {AdjustableColor} from "@engine/contrast/contrast-adjustment.helper";
 
 
 /**
@@ -68,15 +67,4 @@ export const textKindInput = z.enum(TEXT_KINDS)
  */
 export function textKindPhrase(textKind: TextKind): string {
   return textKind === "bodyCopy" ? "as body copy" : "as spot text";
-}
-
-
-/**
- * How a tool's sentence names the kind of adjustment it made.
- *
- * @param {AdjustableColor} adjust Specifies the type of adjustment.
- * @return {string} Returns the phrase a tool can use in a sentence.
- */
-export function adjustPhrase(adjust: AdjustableColor): string {
-  return adjust === "text" ? "the text" : "the background";
 }

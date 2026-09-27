@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {adjustPhrase, fontSizeInput, fontWeightInput, opaqueHexColor, textKindInput, textKindPhrase} from "../helper/tool-schemas.helper";
+import {fontSizeInput, fontWeightInput, opaqueHexColor, textKindInput, textKindPhrase} from "../helper/tool-schemas.helper";
 import {APCA_POLARITIES, calculateAPCAContrast, getAPCAPolarity, getRequiredLc, TextKind} from "@engine/contrast/apca-rating.helper";
 import {FONT_SIZES, FONT_WEIGHTS, FontSize, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -95,6 +95,16 @@ function handleImpossibleLc(adjust: AdjustableColor,
   const text = `No color is readable at ${fontSizeKey}, weight ${fontWeight}, ${textKindPhrase(textKind)} – moving ${clrName} would not change that. A larger size${differentWeight} would.`;
 
   return {structuredContent, text};
+}
+
+
+/**
+ * How the sentence names the color that may move.
+ *
+ * @param adjust - Which of the two colors the tool was allowed to move
+ */
+function adjustPhrase(adjust: AdjustableColor): string {
+  return adjust === "text" ? "the text" : "the background";
 }
 
 
