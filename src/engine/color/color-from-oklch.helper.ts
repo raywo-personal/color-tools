@@ -29,10 +29,9 @@ import {maxChroma} from "./oklch.helper";
  *
  * Do not lift a near-zero chroma to a default to pull them apart: a gray base
  * color would then yield a colored palette, which the `stays neutral
- * throughout when the base color is a gray` spec of every generator built in
- * OKLch forbids - the styles still built in HSL carry the same degeneracy at
- * a saturation of 0 and take the pin with them when they move. Nor spread
- * them by lightness instead - a shared lightness is what makes accents read as
+ * throughout when the base color is a gray` spec of every generator that
+ * derives its members from the base color forbids. Nor spread them by
+ * lightness instead - a shared lightness is what makes accents read as
  * siblings, and in the high-contrast style it is what the two accents *are*.
  *
  * @param {OKLCH} oklch - Lightness in [0, 1], chroma unbounded, hue in degrees.
