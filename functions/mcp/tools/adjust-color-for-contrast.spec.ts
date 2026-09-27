@@ -4,6 +4,7 @@ import {beforeEach, describe, expect, it} from "vitest";
 import {BODY_COPY_MIN_LC, calculateAPCAContrast, meetsAPCARequirement, TEXT_KINDS} from "@engine/contrast/apca-rating.helper";
 import {FONT_SIZES, FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
 import {connectedClient, structured, summary} from "../test-support/connected-client";
+import {movedColorName} from "./adjust-color-for-contrast";
 
 
 interface AdjustColorArgs {
@@ -106,25 +107,19 @@ describe("adjust_color_for_contrast", () => {
       expect(text).not.toContain("#");
     });
 
-    it("should name the direction where a short move keeps the color's name", async () => {
-      // A small move often lands on the same nearest name, and "from X to X"
-      // reads as no move at all. White on these grounds sits close to Lc 75,
-      // so body copy at 24px/400 moves some of them a little.
+    it("should never read as a move from a name to the same name", async () => {
+      // Whether a short move keeps its name is up to the name list, so the
+      // case itself is pinned on movedColorName() below. White on these
+      // grounds sits close to Lc 75, so body copy at 24px/400 moves some of
+      // them a little.
       const grounds = ["#d35400", "#e84393", "#16a085", "#c0392b", "#8e44ad"];
-      const kept = [];
 
       for (const backgroundColor of grounds) {
         const response = await adjustColor(client, {textColor: "#ffffff", backgroundColor, fontSize: "24px", textKind: "bodyCopy"});
-        const result = structured(response);
+        const name = structured(response)["originalColorName"] as string;
 
-        if (result["lightnessDelta"] === 0 || result["colorName"] !== result["originalColorName"]) continue;
-
-        kept.push(backgroundColor);
-        expect(summary(response)).toContain(`to a darker ${result["colorName"]}`);
+        expect(summary(response)).not.toContain(`from ${name} to ${name} makes`);
       }
-
-      // The case has to occur, or it tests nothing.
-      expect(kept.length).toBeGreaterThan(0);
     });
 
   });
@@ -242,6 +237,24 @@ describe("adjust_color_for_contrast", () => {
       expect(result.isError).toBe(true);
     });
 
+  });
+
+});
+
+
+describe("movedColorName", () => {
+
+  it("should name the direction where the move kept the name", () => {
+    expect(movedColorName("Sail On", "Sail On", 0.02)).toBe("a lighter Sail On");
+    expect(movedColorName("Sail On", "Sail On", -0.02)).toBe("a darker Sail On");
+  });
+
+  it("should take the new name where the move changed it", () => {
+    expect(movedColorName("Sail On", "Glacier", 0.02)).toBe("Glacier");
+  });
+
+  it("should add no direction where nothing moved", () => {
+    expect(movedColorName("Sail On", "Sail On", 0)).toBe("Sail On");
   });
 
 });

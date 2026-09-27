@@ -114,13 +114,17 @@ function adjustPhrase(adjust: AdjustableColor): string {
  * A small move often keeps the nearest name, and "from Sail On to Sail On"
  * reads as no move at all, so a shared name carries the direction instead.
  *
+ * Exported for the spec alone. Whether a real move keeps its name is up to
+ * the name list, so a call through the protocol cannot be relied on to reach
+ * this case.
+ *
  * @param originalName - The name of the color before the move
  * @param newName - The name of the color after the move
  * @param lightnessDelta - The signed OKLch lightness move
  */
-function movedColorName(originalName: string,
-                        newName: string,
-                        lightnessDelta: number): string {
+export function movedColorName(originalName: string,
+                               newName: string,
+                               lightnessDelta: number): string {
   if (lightnessDelta === 0 || newName !== originalName) return newName;
 
   return `a ${lightnessDelta > 0 ? "lighter" : "darker"} ${newName}`;
