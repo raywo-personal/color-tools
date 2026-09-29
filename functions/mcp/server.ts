@@ -9,6 +9,7 @@ import {registerPaletteStyles} from "./resources/palette-styles";
 import {registerTintsAndShades} from "./tools/tints-and-shades";
 import {registerAuditPairs} from "./tools/audit-pairs";
 import {registerAdjustColorForContrast} from "./tools/adjust-color-for-contrast";
+import {registerSimulateColorVision} from "./tools/simulate-color-vision";
 
 
 export function createMcpServer(): McpServer {
@@ -22,7 +23,8 @@ export function createMcpServer(): McpServer {
   registerReadPalette(server);
   registerTintsAndShades(server);
   registerAuditPairs(server);
-  registerAdjustColorForContrast(server)
+  registerAdjustColorForContrast(server);
+  registerSimulateColorVision(server);
 
   // Resources
   registerPaletteStyles(server);
