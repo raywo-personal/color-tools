@@ -199,32 +199,41 @@ describe("simulate_color_vision", () => {
       );
     });
 
-    it("should say that the other simulations lose no difference", async () => {
+    it("should say that the other simulations merge none", async () => {
       const response = await simulate(client, {colors: [RED, TEAL, BLUE]});
       const text = summary(response);
 
       expect(text).toMatch(/^Under deuteranopia, /);
-      expect(text).toMatch(/; the other (simulation loses|two simulations lose|three simulations lose) no difference\.$/);
+      expect(text).toMatch(/; the other (simulation merges|two simulations merge|three simulations merge) none\.$/);
       expect(text).not.toContain("#");
     });
 
     it("should say so where no deficiency merges anything", async () => {
       const text = summary(await simulate(client, {colors: ["#000000", "#ffffff"]}));
 
-      expect(text).toBe("Both colors stay as distinct under every simulated deficiency as in normal vision.");
+      expect(text).toBe("No simulated deficiency merges two of these colors that normal vision tells apart.");
+    });
+
+    it("should not call colors as distinct as before that a deficiency only brings closer", async () => {
+      // Red and green on a deutan confusion line: far closer under
+      // deuteranopia, yet not close enough to count as one.
+      const text = summary(await simulate(client, {colors: ["#d62728", "#2ca02c"]}));
+
+      expect(text).not.toContain("distinct");
+      expect(text).toBe("No simulated deficiency merges two of these colors that normal vision tells apart.");
     });
 
     it("should not call colors distinguishable that normal vision already merges", async () => {
       const text = summary(await simulate(client, {colors: ["#ff0000", "#ff0000", "#109d7b"], deficiency: "tritanopia"}));
 
       expect(text).not.toContain("distinguishable");
-      expect(text).toBe("All three colors stay as distinct under tritanopia as in normal vision.");
+      expect(text).toBe("Tritanopia merges none of these colors that normal vision tells apart.");
     });
 
     it("should name the one deficiency asked for where nothing merges", async () => {
       const text = summary(await simulate(client, {colors: ["#000000", "#777777", "#ffffff"], deficiency: "protanopia"}));
 
-      expect(text).toBe("All three colors stay as distinct under protanopia as in normal vision.");
+      expect(text).toBe("Protanopia merges none of these colors that normal vision tells apart.");
     });
 
     it("should not call a single color distinguishable from others", async () => {

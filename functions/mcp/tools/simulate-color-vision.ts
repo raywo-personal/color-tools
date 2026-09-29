@@ -89,12 +89,6 @@ function joinWords(this: void, words: readonly string[], conjunction = " and "):
 }
 
 
-/** `both`, `all five`. */
-function allOf(this: void, count: number): string {
-  return count === 2 ? "both" : `all ${COUNT_WORDS[count]}`;
-}
-
-
 function capitalized(this: void, text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
@@ -102,24 +96,25 @@ function capitalized(this: void, text: string): string {
 
 /**
  * The collisions and nothing else: which colors merge under which
- * deficiency, and that the rest lose no difference. Indices and distances
- * stay in the payload.
+ * deficiency, and that the rest merge none. Indices and distances stay in
+ * the payload.
  *
  * Measured against normal vision, never stated outright: "stay
  * distinguishable" would call two identical inputs distinguishable, because
  * `collapsedGroups()` does not report what normal vision already merged.
+ * And it says what was measured, merging, not that no difference shrank:
+ * red and green come far closer under deuteranopia without merging, and
+ * "as distinct as in normal vision" reads as a yes to using them together.
  */
 function summaryOf(this: void, names: readonly string[], simulations: readonly Simulation[]): string {
   if (names.length === 1) return "A single color has no other to merge with.";
 
-  const where = simulations.length === 1
-    ? `under ${simulations[0].deficiency}`
-    : "under every simulated deficiency";
-
   const colliding = simulations.filter(simulation => simulation.collisions.length > 0);
 
   if (colliding.length === 0) {
-    return `${capitalized(allOf(names.length))} colors stay as distinct ${where} as in normal vision.`;
+    return simulations.length === 1
+      ? `${capitalized(simulations[0].deficiency)} merges none of these colors that normal vision tells apart.`
+      : "No simulated deficiency merges two of these colors that normal vision tells apart.";
   }
 
   const clauses = colliding.map(simulation => {
@@ -133,8 +128,8 @@ function summaryOf(this: void, names: readonly string[], simulations: readonly S
   const lossless = rest === 0
     ? []
     : [rest === 1
-      ? "the other simulation loses no difference"
-      : `the other ${COUNT_WORDS[rest]} simulations lose no difference`];
+      ? "the other simulation merges none"
+      : `the other ${COUNT_WORDS[rest]} simulations merge none`];
 
   return `${capitalized([...clauses, ...lossless].join("; "))}.`;
 }
