@@ -3,7 +3,12 @@ import {z} from "zod";
 import {VISION_MODELS} from "@engine/vision/vision.model";
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
-import {COLLAPSE_DISTANCE} from "@engine/vision/vision-collapse.helper";
+import {COLLAPSE_DISTANCE, collapsedGroups} from "@engine/vision/vision-collapse.helper";
+import {simulateVision} from "@engine/vision/simulate-vision.helper";
+import {toColor} from "@engine/color/color.helper";
+import {formatColor} from "@engine/color/color-format.helper";
+import {colorName} from "@engine/color/color-name.helper";
+import {Color} from "chroma-js";
 
 
 const DEFICIENCIES = VISION_MODELS
@@ -32,7 +37,7 @@ const deficiencySimulationDetails = z.object({
       members: z.array(z.number().int()).min(2)
         .describe("Indices into the input list, ascending.")
     })
-  ).describe(`Groups of input colors that read as one under this deficiency although normal vision tells them apart. Members are linked in a chain, each within an Oklab distance of ${COLLAPSE_DISTANCE} of another, so the ends of a group can lie further apart. Empty when every color stays distinguishable.`)
+  ).describe(`Groups of input colors that read as one under this deficiency although normal vision tells them apart. Members are linked in a chain, each within an Oklab distance of ${COLLAPSE_DISTANCE} of another, so the ends of a group can lie further apart. Empty when the deficiency merges nothing that normal vision tells apart.`)
 });
 
 const outputSchema = {
@@ -43,11 +48,112 @@ const outputSchema = {
 };
 
 type Output = z.infer<z.ZodObject<typeof outputSchema>>;
+type Simulation = Output["simulations"][number];
+
+
+const COUNT_WORDS = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+
+
+function colorTupleOf(this: void, color: Color): {hex: string; name: string} {
+  return {hex: formatColor(color, "hex", false), name: colorName(color)};
+}
+
+
+/**
+ * How the sentence names each input color.
+ *
+ * The name alone where it is unique in the list. Two inputs can take the
+ * same nearest name without sitting close enough to count as one, and
+ * `Cerulean and Cerulean become the same color` leaves the assistant unable
+ * to say which two - so a repeated name carries its hex.
+ *
+ * Exported for the spec alone. Which inputs share a nearest name is up to
+ * the name list, so a call through the protocol cannot be relied on to reach
+ * this case.
+ */
+export function sentenceNames(this: void, tuples: readonly {hex: string; name: string}[]): string[] {
+  return tuples.map(({hex, name}) =>
+    tuples.filter(other => other.name === name).length > 1 ? `${name} (${hex})` : name
+  );
+}
+
+
+/**
+ * `A and B`, `A, B and C` - or with `, and` before the last, where the
+ * parts already contain an `and` of their own.
+ */
+function joinWords(this: void, words: readonly string[], conjunction = " and "): string {
+  if (words.length < 2) return words.join("");
+
+  return `${words.slice(0, -1).join(", ")}${conjunction}${words[words.length - 1]}`;
+}
+
+
+/** `both`, `all five`. */
+function allOf(this: void, count: number): string {
+  return count === 2 ? "both" : `all ${COUNT_WORDS[count]}`;
+}
+
+
+function capitalized(this: void, text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+
+/**
+ * The collisions and nothing else: which colors merge under which
+ * deficiency, and that the rest lose no difference. Indices and distances
+ * stay in the payload.
+ *
+ * Measured against normal vision, never stated outright: "stay
+ * distinguishable" would call two identical inputs distinguishable, because
+ * `collapsedGroups()` does not report what normal vision already merged.
+ */
+function summaryOf(this: void, names: readonly string[], simulations: readonly Simulation[]): string {
+  if (names.length === 1) return "A single color has no other to merge with.";
+
+  const where = simulations.length === 1
+    ? `under ${simulations[0].deficiency}`
+    : "under every simulated deficiency";
+
+  const colliding = simulations.filter(simulation => simulation.collisions.length > 0);
+
+  if (colliding.length === 0) {
+    return `${capitalized(allOf(names.length))} colors stay as distinct ${where} as in normal vision.`;
+  }
+
+  const clauses = colliding.map(simulation => {
+    const groups = simulation.collisions
+      .map(({members}) => `${joinWords(members.map(index => names[index]))} become the same color`);
+
+    return `under ${simulation.deficiency}, ${joinWords(groups, ", and ")}`;
+  });
+
+  const rest = simulations.length - colliding.length;
+  const lossless = rest === 0
+    ? []
+    : [rest === 1
+      ? "the other simulation loses no difference"
+      : `the other ${COUNT_WORDS[rest]} simulations lose no difference`];
+
+  return `${capitalized([...clauses, ...lossless].join("; "))}.`;
+}
+
 
 const callback: ToolCallback<typeof inputSchema> =
   ({colors, deficiency}) => {
-    const structuredContent: Output = {} as Output;
-    const text = "This is a placeholder text.";
+    const inputs = colors.map(color => toColor(color));
+    const tuples = inputs.map(color => colorTupleOf(color));
+    const deficiencies: readonly Deficiency[] = deficiency === undefined ? DEFICIENCIES : [deficiency];
+
+    const simulations: Simulation[] = deficiencies.map(simulated => ({
+      deficiency: simulated,
+      colors: inputs.map(color => colorTupleOf(simulateVision(color, simulated))),
+      collisions: collapsedGroups(inputs, simulated).map(members => ({members}))
+    }));
+
+    const structuredContent: Output = {colors: tuples, simulations};
+    const text = summaryOf(sentenceNames(tuples), simulations);
 
     return {
       content: [
