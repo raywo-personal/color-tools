@@ -15,6 +15,32 @@ export const CONTRAST_ID_LENGTH = 9;
 
 
 /**
+ * What the 9 characters may carry: 6 bytes, so any value below 256^6. 9
+ * base62 characters reach about 48 times as far, and a value beyond the
+ * limit has no reading - the bytes it decodes into are one too many, so the
+ * two colors would come from a window shifted by a byte.
+ */
+export const CONTRAST_ID_LIMIT = 256n ** 6n;
+
+
+/**
+ * Whether `contrastColorsFromId()` can restore the given id: the right
+ * length, the base62 alphabet, and a value below `CONTRAST_ID_LIMIT`. Length
+ * and alphabet alone let nearly every string of the right length through
+ * that the decoder cannot read, so a caller deciding whether to restore asks
+ * this, not `isWellFormedId()`.
+ *
+ * @param {string} id - The contrast ID to check.
+ * @return {boolean} True if `contrastColorsFromId()` restores the id without
+ *                   throwing.
+ */
+export function isRestorableContrastId(id: string): boolean {
+  return isWellFormedId(id, CONTRAST_ID_LENGTH)
+    && base62ToBigInt(id) < CONTRAST_ID_LIMIT;
+}
+
+
+/**
  * Generates a contrast ID based on the RGB values of the provided text and
  * background colors.
  *
@@ -45,11 +71,11 @@ export function contrastIdFromColors(
  *                      the operation.
  * @return {Color[]} An array of contrasting Color objects. The array will
  *                   contain exactly two colors.
- * @throws {Error} If the provided ID is invalid or cannot be used to derive
- *                 the required colors.
+ * @throws {Error} If the provided ID is not restorable - see
+ *                 `isRestorableContrastId()`.
  */
 export function contrastColorsFromId(id: string): ContrastColors {
-  if (!isWellFormedId(id, CONTRAST_ID_LENGTH)) {
+  if (!isRestorableContrastId(id)) {
     throw new Error("Invalid contrast ID");
   }
 

@@ -1,5 +1,12 @@
 import chroma, {Color} from "chroma-js";
-import {PALETTE_ID_BASE62_LENGTH, paletteFromId, styleIndexFromPaletteId} from "./palette-id.helper";
+import {
+  isRestorablePaletteId,
+  PALETTE_ID_BASE62_LENGTH,
+  PALETTE_ID_LIMIT,
+  paletteFromId,
+  styleIndexFromPaletteId
+} from "./palette-id.helper";
+import {bigIntToBase62} from "@engine/helpers/base62.helper";
 import {isWellFormedId} from "@engine/helpers/validate-string-id.helper";
 import {Palette, PALETTE_SLOTS, PaletteColors} from "@engine/palette/palette.model";
 import {paletteColorFrom} from "@engine/palette/palette-color.model";
@@ -524,6 +531,49 @@ describe("Palette ID Helper", () => {
       const malformedId = "0!!!invalid!!!";
 
       expect(() => paletteFromId(malformedId)).toThrow();
+    });
+
+  });
+
+  describe("Range", () => {
+
+    /** A well-formed id whose 42 color characters spell the given value. */
+    function idWithValue(value: bigint): string {
+      return `0${bigIntToBase62(value, PALETTE_ID_BASE62_LENGTH - 1)}`;
+    }
+
+    it("restores the largest value 31 bytes hold", () => {
+      const id = idWithValue(PALETTE_ID_LIMIT - 1n);
+
+      expect(isRestorablePaletteId(id)).toBe(true);
+
+      const restored = paletteFromId(id);
+      PALETTE_SLOTS.forEach(slot => {
+        expect(restored[slot].color.hex("rgb")).toBe("#ffffff");
+        expect(restored[slot].isPinned).toBe(true);
+      });
+    });
+
+    it("rejects the first value 31 bytes cannot hold, though its shape is right", () => {
+      // Length and alphabet pass: what the decoder cannot read is the value.
+      const id = idWithValue(PALETTE_ID_LIMIT);
+
+      expect(isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)).toBe(true);
+      expect(isRestorablePaletteId(id)).toBe(false);
+      expect(() => paletteFromId(id)).toThrow();
+    });
+
+    it("rejects the largest value 42 base62 characters spell", () => {
+      const id = "0" + "z".repeat(PALETTE_ID_BASE62_LENGTH - 1);
+
+      expect(isRestorablePaletteId(id)).toBe(false);
+      expect(() => paletteFromId(id)).toThrow();
+    });
+
+    it("rejects what has the wrong shape before it reads a value", () => {
+      expect(isRestorablePaletteId("")).toBe(false);
+      expect(isRestorablePaletteId("0" + "!".repeat(PALETTE_ID_BASE62_LENGTH - 1))).toBe(false);
+      expect(isRestorablePaletteId(idWithValue(0n) + "0")).toBe(false);
     });
 
   });

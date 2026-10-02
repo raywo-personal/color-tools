@@ -2,36 +2,30 @@ import {z} from "zod";
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {PaletteStyles} from "@engine/palette/palette-style.model";
 import {PALETTE_SLOTS} from "@engine/palette/palette.model";
-import {paletteFromId, styleIndexFromPaletteId} from "@engine/palette/palette-id.helper";
+import {isRestorablePaletteId, paletteFromId, styleIndexFromPaletteId} from "@engine/palette/palette-id.helper";
 import {colorName} from "@engine/color/color-name.helper";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
-import {base62ToBigInt} from "@engine/helpers/base62.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
 import {formatColor} from "@engine/color/color-format.helper";
 
 
 /**
- * What a palette id carries after the style character: 30 RGB channels and the
- * pinned mask, one byte each.
- */
-const PALETTE_ID_LIMIT = 256n ** 31n;
-
-/**
- * The id's shape is the whole guard. `paletteFromId()` restores any string of
- * the right length and alphabet, and answers a style index it does not know
- * with a random style rather than an error - a malformed id would decode into
- * an invented palette, and the same id twice into two different ones. Rejected
- * here, nothing reaches the decoder that it cannot restore, so the handler
- * needs no try/catch: keep all three checks if the handler stays that way.
+ * The id's shape is the whole guard. `paletteFromId()` throws on an id it
+ * cannot read, and answers a style index it does not know with a random style
+ * rather than an error - that id would decode into an invented palette, and
+ * the same id twice into two different ones. Rejected here, nothing reaches
+ * the decoder that it cannot restore, so the handler needs no try/catch: keep
+ * all three checks if the handler stays that way.
  *
  * The style index is one base62 character like the rest of the id, so the
  * alphabet alone says nothing about it: what makes it a guard is the index
  * naming a style this version holds.
  *
  * The length alone does not make the guard either: 42 base62 characters reach
- * past `PALETTE_ID_LIMIT`, and the decoder pads a value that is too short but
- * never truncates one that is too long. A value above the limit would be
- * read from a window shifted by a byte, with the pinned mask fallen to 0.
+ * past the 31 bytes the colors and the pinned mask fill, and
+ * `isRestorablePaletteId()` is the check the decoder itself applies. Asked
+ * here, an id out of range is answered with the sentence that says so rather
+ * than with the decoder's error.
  *
  * The shape check aborts: zod runs the refinements even after a check failed,
  * and both of them read an id of this length - `styleIndexFromPaletteId()`
@@ -49,7 +43,7 @@ const inputSchema = {
     .refine(id => styleIndexFromPaletteId(id) < PaletteStyles.length,
       {message: "This palette id names a style that does not exist."}
     )
-    .refine(id => base62ToBigInt(id.substring(1)) < PALETTE_ID_LIMIT,
+    .refine(id => isRestorablePaletteId(id),
       {message: "This palette id is out of range: the 42 characters after the style character encode more than 31 bytes."}
     )
 };

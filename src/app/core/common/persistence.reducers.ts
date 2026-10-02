@@ -2,14 +2,13 @@ import {EventInstance} from "@ngrx/signals/events";
 import {inject} from "@angular/core";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {generatePaletteFrom} from "@engine/palette/palette.helper";
-import {PALETTE_ID_BASE62_LENGTH, paletteFromId} from "@engine/palette/palette-id.helper";
+import {isRestorablePaletteId, paletteFromId} from "@engine/palette/palette-id.helper";
 import chroma, {Color} from "chroma-js";
 import {Palette} from "@engine/palette/palette.model";
 import {PaletteStyle} from "@engine/palette/palette-style.model";
 import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
 import {AppState} from "@core/models/app-state.model";
-import {isWellFormedId} from "@engine/helpers/validate-string-id.helper";
-import {CONTRAST_ID_LENGTH, contrastColorsFromId} from "@engine/contrast/contrast-id.helper";
+import {contrastColorsFromId, isRestorableContrastId} from "@engine/contrast/contrast-id.helper";
 import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 import {TypeSettings} from "@engine/contrast/type-settings.model";
 import {normalizedTypeSettingsFor, TYPE_ROLES, TypeRole} from "@engine/contrast/type-role.model";
@@ -32,7 +31,10 @@ export function loadAppStateReducer(
   const shadeColors = createShades(currentColor, state.useBezier, state.correctLightness);
 
   const paletteId = persistence.get("currentPaletteId") ?? "";
-  const restorableId = isWellFormedId(paletteId, PALETTE_ID_BASE62_LENGTH);
+  // An id the decoder cannot read is generated over like a missing one, the
+  // same answer the palette guard gives: `paletteFromId()` throws on it, and
+  // nothing on the way to the first paint would catch that.
+  const restorableId = isRestorablePaletteId(paletteId);
   const style = state.paletteStyle;
 
   // The id carries the style, so the restored palette says which chip is
@@ -42,10 +44,11 @@ export function loadAppStateReducer(
   const currentPalette = restorePalette(paletteId, restorableId, currentColor, style, paletteSeed);
 
   const contrastId = persistence.get("contrastId") ?? "";
-  const contrastRestorableId = isWellFormedId(contrastId, CONTRAST_ID_LENGTH);
+  const contrastRestorableId = isRestorableContrastId(contrastId);
   // The stored pair, or one out of the palette that was just restored - see
   // `contrastPairFromPalette()`. A rolled pair would leave a first-time
-  // visitor with a page unrelated to the color beside it.
+  // visitor with a page unrelated to the color beside it. An id the decoder
+  // cannot read takes the same way as a missing one, for the reason above.
   const contrastColors = contrastRestorableId
     ? contrastColorsFromId(contrastId)
     : contrastPairFromPalette(currentPalette);

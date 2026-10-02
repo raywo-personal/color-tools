@@ -1,5 +1,14 @@
 import chroma from "chroma-js";
-import {CONTRAST_ID_LENGTH, contrastColorsFromId, contrastIdFromColors, generateRandomContrastColors} from "./contrast-id.helper";
+import {
+  CONTRAST_ID_LENGTH,
+  CONTRAST_ID_LIMIT,
+  contrastColorsFromId,
+  contrastIdFromColors,
+  generateRandomContrastColors,
+  isRestorableContrastId
+} from "./contrast-id.helper";
+import {bigIntToBase62} from "@engine/helpers/base62.helper";
+import {isWellFormedId} from "@engine/helpers/validate-string-id.helper";
 import {ContrastColors} from "@engine/contrast/contrast-colors.model";
 
 
@@ -290,6 +299,47 @@ describe("Contrast ID Helper", () => {
       expect(typeof restoredColors.contrast).toBe("number");
       // APCA contrast for black on white should be around 106
       expect(Math.abs(restoredColors.contrast)).toBeGreaterThan(100);
+    });
+
+  });
+
+  describe("range", () => {
+
+    /** A well-formed id that spells the given value. */
+    function idWithValue(value: bigint): string {
+      return bigIntToBase62(value, CONTRAST_ID_LENGTH);
+    }
+
+    it("restores the largest value 6 bytes hold", () => {
+      const id = idWithValue(CONTRAST_ID_LIMIT - 1n);
+
+      expect(isRestorableContrastId(id)).toBe(true);
+
+      const {text, background} = contrastColorsFromId(id);
+      expect(text.hex("rgb")).toBe("#ffffff");
+      expect(background.hex("rgb")).toBe("#ffffff");
+    });
+
+    it("rejects the first value 6 bytes cannot hold, though its shape is right", () => {
+      // Length and alphabet pass: what the decoder cannot read is the value.
+      const id = idWithValue(CONTRAST_ID_LIMIT);
+
+      expect(isWellFormedId(id, CONTRAST_ID_LENGTH)).toBe(true);
+      expect(isRestorableContrastId(id)).toBe(false);
+      expect(() => contrastColorsFromId(id)).toThrow();
+    });
+
+    it("rejects the largest value 9 base62 characters spell", () => {
+      const id = "z".repeat(CONTRAST_ID_LENGTH);
+
+      expect(isRestorableContrastId(id)).toBe(false);
+      expect(() => contrastColorsFromId(id)).toThrow();
+    });
+
+    it("rejects what has the wrong shape before it reads a value", () => {
+      expect(isRestorableContrastId("")).toBe(false);
+      expect(isRestorableContrastId("!".repeat(CONTRAST_ID_LENGTH))).toBe(false);
+      expect(isRestorableContrastId(idWithValue(0n) + "0")).toBe(false);
     });
 
   });
