@@ -64,6 +64,9 @@ export function allEffects(
         palettesEvents.paletteChanged,
         palettesEvents.paletteChangedWithoutNav,
         palettesEvents.styleChanged,
+        // A restore from the url wins over the storage loaded before it, and
+        // is saved so the next reload opens on what the link showed.
+        palettesEvents.restorePalette,
         contrastEvents.switchColors,
         contrastEvents.textColorChanged,
         contrastEvents.backgroundColorChanged,

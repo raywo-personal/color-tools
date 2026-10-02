@@ -2,10 +2,12 @@ import {EventInstance} from "@ngrx/signals/events";
 import {generatePalette, generatePaletteFrom, paletteFrom} from "@engine/palette/palette.helper";
 import {Palette, PALETTE_SLOTS, PaletteColors} from "@engine/palette/palette.model";
 import {PaletteStyle, randomStyle} from "@engine/palette/palette-style.model";
-import {paletteFromId} from "@engine/palette/palette-id.helper";
+import {paletteFromSegment} from "@engine/palette/palette-segment.helper";
 import {PaletteColor} from "@engine/palette/palette-color.model";
 import {AppState} from "@core/models/app-state.model";
 import {randomSeed} from "@engine/helpers/random.helper";
+import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
+import {contrastingColor} from "@engine/contrast/contrasting-color.helper";
 
 
 export function newRandomPaletteReducer(
@@ -47,19 +49,56 @@ export function newPaletteWithNavReducer(
 }
 
 
+/**
+ * Restores the Studio from a palette segment - see `paletteSegmentFrom()`.
+ *
+ * As a whole, through `restoredPaletteState()`: the palette alone would leave
+ * the visitor's own color beside a BASE swatch of another, and the next move
+ * of that color would rebuild the palette on it and drop the restored one.
+ */
 export function restorePaletteReducer(
   this: void,
-  event: EventInstance<"[Palettes] restorePalette", string>
+  event: EventInstance<"[Palettes] restorePalette", string>,
+  state: AppState
 ) {
   try {
-    const paletteId = event.payload;
-    const palette = paletteFromId(paletteId);
+    const {palette, seed} = paletteFromSegment(event.payload);
 
-    return {currentPalette: palette};
+    return restoredPaletteState(palette, seed, state);
   } catch (e) {
     console.error("Failed to restore palette ", e);
     return {};
   }
+}
+
+
+/**
+ * Everything a restored palette decides: the current color is its BASE, the
+ * converter's derived colors follow that color, and style and seed are the
+ * palette's own.
+ *
+ * The one place a restore is written, for the url and the local storage
+ * alike. Do not restore a palette by setting `currentPalette` alone: without the
+ * color the BASE swatch disagrees with the swatch above it, and without the
+ * seed `paletteFollowsColorReducer` rebuilds the palette under another roll,
+ * so the first drag re-rolls the derived swatches instead of moving them.
+ */
+export function restoredPaletteState(
+  palette: Palette,
+  seed: number,
+  state: Pick<AppState, "useBezier" | "correctLightness">
+) {
+  const currentColor = palette.color0.color;
+
+  return {
+    currentColor,
+    textColor: contrastingColor(currentColor),
+    tintColors: createTints(currentColor, state.useBezier, state.correctLightness),
+    shadeColors: createShades(currentColor, state.useBezier, state.correctLightness),
+    currentPalette: palette,
+    paletteStyle: palette.style,
+    paletteSeed: seed
+  };
 }
 
 

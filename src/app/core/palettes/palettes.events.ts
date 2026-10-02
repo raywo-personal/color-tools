@@ -19,7 +19,8 @@ export const palettesEvents = eventGroup({
      */
     newPaletteWithNav: type<void>(),
     /**
-     * Fired when a palette should be restored from a n ID.
+     * Fired when the Studio should be restored from a palette segment - the
+     * palette id followed by its seed, see `paletteSegmentFrom()`.
      */
     restorePalette: type<string>(),
     /**
