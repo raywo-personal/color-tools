@@ -6,7 +6,6 @@ import {isRestorablePaletteId, paletteFromId} from "@engine/palette/palette-id.h
 import chroma, {Color} from "chroma-js";
 import {Palette} from "@engine/palette/palette.model";
 import {PaletteStyle} from "@engine/palette/palette-style.model";
-import {createShades, createTints} from "@engine/helpers/tints-and-shades.helper";
 import {AppState} from "@core/models/app-state.model";
 import {contrastColorsFromId, isRestorableContrastId} from "@engine/contrast/contrast-id.helper";
 import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
@@ -14,6 +13,7 @@ import {TypeSettings} from "@engine/contrast/type-settings.model";
 import {normalizedTypeSettingsFor, TYPE_ROLES, TypeRole} from "@engine/contrast/type-role.model";
 import {SelectedFont} from "@common/models/google-font.model";
 import {TypeRoleSettings, TypeRolesMap, weightStopsForRole} from "@common/models/type-role-settings.model";
+import {restoredPaletteState} from "@core/palettes/palettes.reducers";
 
 
 export function loadAppStateReducer(
@@ -25,10 +25,7 @@ export function loadAppStateReducer(
   const persistence = inject(LocalStorage);
 
   const colorFromStorage = persistence.get("currentColor");
-  const currentColor = colorFromStorage ? chroma(colorFromStorage) : chroma.random();
-
-  const tintColors = createTints(currentColor, state.useBezier, state.correctLightness);
-  const shadeColors = createShades(currentColor, state.useBezier, state.correctLightness);
+  const storedColor = colorFromStorage ? chroma(colorFromStorage) : chroma.random();
 
   const paletteId = persistence.get("currentPaletteId") ?? "";
   // An id the decoder cannot read is generated over like a missing one, the
@@ -37,11 +34,13 @@ export function loadAppStateReducer(
   const restorableId = isRestorablePaletteId(paletteId);
   const style = state.paletteStyle;
 
-  // The id carries the style, so the restored palette says which chip is
-  // pressed. Left at the initial value, the style picker would press "random"
-  // over a triadic palette, and the next regenerate would build a random one.
   const paletteSeed = persistence.getOrDefault("paletteSeed", state.paletteSeed);
-  const currentPalette = restorePalette(paletteId, restorableId, currentColor, style, paletteSeed);
+  const storedPalette = restorePalette(paletteId, restorableId, storedColor, style, paletteSeed);
+  // Through the same function as a restore from the url, so the two cannot
+  // drift. The id carries the style, so the restored palette says which chip
+  // is pressed; left at the initial value, the style picker would press
+  // "random" over a triadic palette.
+  const paletteState = restoredPaletteState(storedPalette, paletteSeed, state);
 
   const contrastId = persistence.get("contrastId") ?? "";
   const contrastRestorableId = isRestorableContrastId(contrastId);
@@ -51,7 +50,7 @@ export function loadAppStateReducer(
   // cannot read takes the same way as a missing one, for the reason above.
   const contrastColors = contrastRestorableId
     ? contrastColorsFromId(contrastId)
-    : contrastPairFromPalette(currentPalette);
+    : contrastPairFromPalette(paletteState.currentPalette);
 
   // Body text falls back to the single typeface and its three axes from
   // before the roles, so a visitor who set their type then keeps it.
@@ -67,12 +66,7 @@ export function loadAppStateReducer(
 
   return {
     colorTheme: persistence.getOrDefault("colorTheme", state.colorTheme),
-    currentColor,
-    tintColors,
-    shadeColors,
-    currentPalette,
-    paletteStyle: currentPalette.style,
-    paletteSeed,
+    ...paletteState,
     contrastColors,
     typeRoles
   };
