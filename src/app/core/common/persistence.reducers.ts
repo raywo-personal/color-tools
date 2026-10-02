@@ -2,7 +2,7 @@ import {EventInstance} from "@ngrx/signals/events";
 import {inject} from "@angular/core";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {generatePaletteFrom} from "@engine/palette/palette.helper";
-import {PALETTE_ID_BASE62_LENGTH, paletteFromId} from "@engine/palette/palette-id.helper";
+import {isRestorablePaletteId, paletteFromId} from "@engine/palette/palette-id.helper";
 import chroma, {Color} from "chroma-js";
 import {Palette} from "@engine/palette/palette.model";
 import {PaletteStyle} from "@engine/palette/palette-style.model";
@@ -32,7 +32,10 @@ export function loadAppStateReducer(
   const shadeColors = createShades(currentColor, state.useBezier, state.correctLightness);
 
   const paletteId = persistence.get("currentPaletteId") ?? "";
-  const restorableId = isWellFormedId(paletteId, PALETTE_ID_BASE62_LENGTH);
+  // An id the decoder cannot read is generated over like a missing one, the
+  // same answer the palette guard gives: `paletteFromId()` throws on it, and
+  // nothing on the way to the first paint would catch that.
+  const restorableId = isRestorablePaletteId(paletteId);
   const style = state.paletteStyle;
 
   // The id carries the style, so the restored palette says which chip is

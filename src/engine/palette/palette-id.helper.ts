@@ -16,6 +16,36 @@ export const PALETTE_ID_BASE62_LENGTH = 42 + 1;
 
 
 /**
+ * What the 42 characters after the style index may carry: 31 bytes, so any
+ * value below 256^31. 42 base62 characters reach about 4.2 times as far, and
+ * a value beyond the limit has no reading - the bytes it decodes into are one
+ * too many, so the colors would come from a window shifted by a byte and the
+ * pinned mask would fall to 0.
+ */
+export const PALETTE_ID_LIMIT = 256n ** 31n;
+
+
+/**
+ * Whether `paletteFromId()` can restore the given id: the right length, the
+ * base62 alphabet, and a value below `PALETTE_ID_LIMIT`. Length and alphabet
+ * alone let three in four strings of the right length through that the
+ * decoder cannot read, so a caller deciding whether to restore asks this, not
+ * `isWellFormedId()`.
+ *
+ * A style index this version does not know still passes; `paletteFromId()`
+ * answers it with a random style.
+ *
+ * @param {string} id - The palette ID to check.
+ * @return {boolean} True if `paletteFromId()` restores the id without
+ *                   throwing.
+ */
+export function isRestorablePaletteId(id: string): boolean {
+  return isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)
+    && base62ToBigInt(id.substring(1)) < PALETTE_ID_LIMIT;
+}
+
+
+/**
  * Generates a unique palette ID based on the provided colors and style.
  *
  * @param {PaletteColors} paletteColors - The PaletteColors object, the palette
@@ -53,10 +83,11 @@ export function paletteIdFrom(paletteColors: PaletteColors,
  * @param {string} id - The unique identifier of the palette to restore.
  * @return {Palette} An object containing the restored palette information
  *                   including colors, style, and name.
- * @throws {Error} If the provided palette ID is not restorable.
+ * @throws {Error} If the provided palette ID is not restorable - see
+ *                 `isRestorablePaletteId()`.
  */
 export function paletteFromId(id: string): Palette {
-  if (!isWellFormedId(id, PALETTE_ID_BASE62_LENGTH)) {
+  if (!isRestorablePaletteId(id)) {
     throw new Error("Palette ID is not restorable");
   }
 

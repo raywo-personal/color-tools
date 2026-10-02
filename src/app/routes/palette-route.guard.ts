@@ -1,8 +1,7 @@
 import {injectDispatch} from "@ngrx/signals/events";
 import {ActivatedRouteSnapshot, CanActivateFn, Router, UrlTree} from "@angular/router";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {isWellFormedId} from "@engine/helpers/validate-string-id.helper";
-import {PALETTE_ID_BASE62_LENGTH} from "@engine/palette/palette-id.helper";
+import {isRestorablePaletteId} from "@engine/palette/palette-id.helper";
 import {inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 import {generatePalette} from "@engine/palette/palette.helper";
@@ -14,8 +13,8 @@ import {generatePalette} from "@engine/palette/palette.helper";
  *
  * - If a valid paletteId is present: restores the palette and allows
  *   navigation (returns true)
- * - If no or invalid paletteId: generates new palette and redirects to
- *   the new ID (returns UrlTree)
+ * - If no paletteId, or one `isRestorablePaletteId()` rejects: generates a
+ *   new palette and redirects to the new ID (returns UrlTree)
  * @param {ActivatedRouteSnapshot} route - The current activated route snapshot
  *                                         containing route parameters.
  * @returns {boolean} Returns `true` to allow route activation.
@@ -27,7 +26,7 @@ export const paletteGuard: CanActivateFn = (route: ActivatedRouteSnapshot): bool
 
   const routePaletteId = route.params["paletteId"]
     ?? route.firstChild?.params["paletteId"];
-  const restorable = !!routePaletteId && isWellFormedId(routePaletteId, PALETTE_ID_BASE62_LENGTH);
+  const restorable = !!routePaletteId && isRestorablePaletteId(routePaletteId);
 
   if (restorable) {
     dispatch.restorePalette(routePaletteId);

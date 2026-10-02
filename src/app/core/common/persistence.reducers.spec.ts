@@ -150,6 +150,19 @@ describe("loadAppStateReducer", () => {
   });
 
 
+  it("builds a palette on the stored color when the stored id is out of range", () => {
+    // Right length and alphabet, but a value 31 bytes cannot hold. Read as it
+    // stands it would invent a palette, and the decoder throws on it - on the
+    // way to the first paint.
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+      currentColor: "#3366cc",
+      currentPaletteId: "0" + "z".repeat(42)
+    }));
+
+    expect(loaded().currentPalette.color0.color.hex("rgb")).toBe("#3366cc");
+  });
+
+
   it("reports the stored roll, so the first drag after a reload continues the palette", () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({paletteSeed: 11}));
 
