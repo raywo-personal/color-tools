@@ -217,6 +217,20 @@ describe("loadAppStateReducer", () => {
   });
 
 
+  it("takes the pair out of the palette when the stored contrast id is out of range", () => {
+    // Right length and alphabet, but a value 6 bytes cannot hold. The decoder
+    // throws on it - on the way to the first paint.
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({contrastId: "z".repeat(9)}));
+
+    const state = loaded();
+    const members = PALETTE_SLOTS
+      .map(slot => state.currentPalette[slot].color.hex("rgb"));
+
+    expect(members).toContain(state.contrastColors.text.hex("rgb"));
+    expect(members).toContain(state.contrastColors.background.hex("rgb"));
+  });
+
+
   it("keeps the initial type roles for a visitor who has none stored", () => {
     // They are deliberately absent from `EMPTY_SETTINGS`, so this fallback is
     // reachable - see the note there.
