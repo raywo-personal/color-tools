@@ -1,38 +1,30 @@
 import {ColorTheme} from "./color-theme.model";
 import {SelectedFont} from "@common/models/google-font.model";
-import {TypeRolesMap} from "@common/models/type-role-settings.model";
 
 
 export const LOCAL_STORAGE_KEY = "color-tools";
 
 export interface SettingsMap {
-  currentColor: string;
   colorTheme: ColorTheme;
-  currentPaletteId: string;
-  /** The roll behind `currentPaletteId`, so a drag after a reload continues it. */
-  paletteSeed: number;
-  contrastId: string;
   /**
-   * The four type roles as one entry, face and settings per role. Nested
-   * where the map is otherwise flat, because the alternative is sixteen keys
-   * that only ever change together.
+   * The state of both views as the Contrast & Type address carries it - see
+   * `contrastTypeAddressFrom()`. It opens with the Studio's palette segment,
+   * so it holds the Studio as well.
    *
-   * Deliberately absent from `EMPTY_SETTINGS` - see the note there. The
-   * fallback is `initialState.typeRoles`, so the preview and the rating open
-   * on the same values a first-time visitor gets.
+   * The same format as the url, read through the same restore, so a reload
+   * opens on what a link would. Do not add keys beside it for what the
+   * address already carries; two formats for one state drift apart.
    */
-  typeRoles: TypeRolesMap;
-  /**
-   * The single typeface and its three axes, from before the type roles. Read
-   * as body text's face and settings where `typeRoles` holds no entry for
-   * body, never written: a visitor who set their type before the roles keeps
-   * it. Remove the four together, and only once no storage still carries
-   * them.
+  address: string;
+  /*
+   * The v1 keys. Read where no address is stored, so a visitor coming from
+   * v1 keeps their colour, palette, pair and typeface; never written. Remove
+   * them together, once no storage still carries them.
    */
+  currentColor?: string;
+  currentPaletteId?: string;
+  contrastId?: string;
   selectedFont?: SelectedFont | null;
-  fontSize?: number;
-  fontWeight?: number;
-  lineHeight?: number;
 }
 
 export type SettingKey = keyof SettingsMap;
@@ -47,6 +39,5 @@ export type SettingKey = keyof SettingsMap;
  * default should live.
  */
 export const EMPTY_SETTINGS: Partial<SettingsMap> = {
-  currentPaletteId: "",
-  contrastId: ""
+  address: ""
 };

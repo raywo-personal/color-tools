@@ -54,10 +54,8 @@ export type AppState = {
    * `SAMPLE_ELEMENTS` key - see `ElementPlacements` for why a source and not
    * a colour.
    *
-   * Not persisted: the placements are part of the result, so carrying them
-   * across a reload and into a shared link is real work with a shape of its
-   * own, and it is #68's. Until then a reload opens on the default
-   * assignment, which is the page the palette alone produces.
+   * Part of the result, so the Contrast & Type address carries them, and
+   * the storage with it.
    */
   placements: ElementPlacements;
   /**

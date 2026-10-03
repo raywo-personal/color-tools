@@ -41,7 +41,7 @@ describe("LocalStorage", () => {
 
 
   it("reports the EMPTY_SETTINGS value for a key it does carry", () => {
-    expect(service.get("currentPaletteId")).toBe(EMPTY_SETTINGS.currentPaletteId);
+    expect(service.get("address")).toBe(EMPTY_SETTINGS.address);
   });
 
 
@@ -63,17 +63,17 @@ describe("LocalStorage", () => {
 
     const corrupted = TestBed.inject(LocalStorage);
 
-    expect(corrupted.get("currentPaletteId")).toBe(EMPTY_SETTINGS.currentPaletteId);
+    expect(corrupted.get("address")).toBe(EMPTY_SETTINGS.address);
     expect(corrupted.get("colorTheme")).toBeNull();
   });
 
 
   it("keeps the other keys when one is written", () => {
     service.set("colorTheme", "dark");
-    service.set("currentColor", "#123456");
+    service.set("address", "an-address");
 
     expect(service.get("colorTheme")).toBe("dark");
-    expect(service.get("currentColor")).toBe("#123456");
+    expect(service.get("address")).toBe("an-address");
   });
 
 });

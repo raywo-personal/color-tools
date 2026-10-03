@@ -5,7 +5,7 @@ import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
-import {LOCAL_STORAGE_KEY, SettingsMap} from "@common/models/local-storage.model";
+import {storedPage} from "@testing/stored-address";
 import {Studio} from "@studio/components/studio/studio";
 
 
@@ -75,12 +75,9 @@ describe("Studio", () => {
   }
 
 
+  /** The stored colour: the BASE of the stored palette, which a reload makes current. */
   function storedColor(): string | undefined {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-    return stored
-      ? (JSON.parse(stored) as Partial<SettingsMap>).currentColor
-      : undefined;
+    return storedPage()?.palette.color0.color.hex();
   }
 
 

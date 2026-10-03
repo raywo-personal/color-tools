@@ -4,7 +4,7 @@ import {Dispatcher} from "@ngrx/signals/events";
 import {beforeEach, describe, expect, it} from "vitest";
 import {AppStateStore} from "@core/app-state.store";
 import {commonEvents} from "@core/common/common.events";
-import {LOCAL_STORAGE_KEY, SettingsMap} from "@common/models/local-storage.model";
+import {storedPage} from "@testing/stored-address";
 import {DEFAULT_TYPE_SETTINGS, TypeSettings} from "@engine/contrast/type-settings.model";
 import {DEFAULT_TYPE_SETTINGS_BY_ROLE, DISPLAY_FONT_SIZE_RANGE, TypeRole} from "@engine/contrast/type-role.model";
 import {SelectedFont} from "@common/models/google-font.model";
@@ -129,10 +129,8 @@ describe("TypeControls", () => {
       await fixture.whenStable();
     }
 
-    function stored(): Partial<SettingsMap> {
-      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-      return raw ? (JSON.parse(raw) as Partial<SettingsMap>) : {};
+    function stored() {
+      return storedPage();
     }
 
     return {
@@ -353,7 +351,7 @@ describe("TypeControls", () => {
     localStorage.clear();
     await drag(2, 1.9);
 
-    expect(stored().typeRoles).toBeUndefined();
+    expect(stored()).toBeNull();
   });
 
 
@@ -365,7 +363,7 @@ describe("TypeControls", () => {
     await drag(2, 1.9);
     await release(2);
 
-    expect(stored().typeRoles?.body.settings.lineHeight).toBe(1.9);
+    expect(stored()?.type.body.settings.lineHeight).toBe(1.9);
   });
 
 

@@ -91,6 +91,27 @@ export function getRegularFont(font: GoogleFont): SelectedFont {
 
 
 /**
+ * A family known by its name alone, as an address or a v1 storage entry
+ * carries it: no category and no weights, until the catalogue answers.
+ *
+ * The family stands at once, so the preview loads it before the catalogue
+ * has arrived; `needsCatalogue()` marks it for the effect that completes it.
+ */
+export function fontNamed(family: string): SelectedFont {
+  return {family, category: "", variant: REGULAR, weights: []};
+}
+
+
+/**
+ * Whether a selection still lacks what only the catalogue says: the weights
+ * the family ships, and with them the stops the WEIGHT slider stands on.
+ */
+export function needsCatalogue(font: SelectedFont | null): font is SelectedFont {
+  return font !== null && font.weights.length === 0;
+}
+
+
+/**
  * The upright weights a family ships, as numbers and ascending.
  *
  * The italics are left out: they are the same weights in another style, and

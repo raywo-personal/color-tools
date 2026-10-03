@@ -3,9 +3,14 @@ import {AppState} from "@core/models/app-state.model";
 import chroma, {Color} from "chroma-js";
 import {findTextColor} from "@engine/contrast/optimal-text-color.helper";
 import {ContrastColors, createContrastColors} from "@engine/contrast/contrast-colors.model";
-import {contrastColorsFromId} from "@engine/contrast/contrast-id.helper";
 import {ChipSource} from "@contrast-type/models/chip-source.model";
 import {SAMPLE_PLACEMENTS, SamplePlacement} from "@contrast-type/models/sample-page.model";
+import {AddressedType, ContrastTypePage, contrastTypePageFromAddress} from "@contrast-type/models/contrast-type-address.model";
+import {restoredPaletteState} from "@core/palettes/palettes.reducers";
+import {normalizedTypeSettingsFor, TYPE_ROLES, TypeRole} from "@engine/contrast/type-role.model";
+import {WEIGHT_STOPS} from "@engine/contrast/type-settings.model";
+import {TypeRoleSettings, TypeRolesMap, weightStopsForRole} from "@common/models/type-role-settings.model";
+import {fontNamed, needsCatalogue} from "@common/models/google-font.model";
 
 
 /**
@@ -78,19 +83,90 @@ export function switchColorsReducer(
 }
 
 
-export function restoreContrastColorsReducer(
+/**
+ * Restores Contrast & Type from its address - see `contrastTypeAddressFrom()`.
+ *
+ * As a whole, through `restoredContrastTypeState()`, which the load from
+ * local storage uses as well.
+ */
+export function restoreContrastTypeReducer(
   this: void,
-  event: EventInstance<"[Contrast] restoreContrastColors", string>
+  event: EventInstance<"[Contrast] restoreContrastType", string>,
+  state: AppState
 ) {
   try {
-    const contrastId = event.payload;
-    const contrastColors = contrastColorsFromId(contrastId);
-
-    return {contrastColors};
+    return restoredContrastTypeState(contrastTypePageFromAddress(event.payload), state);
   } catch (e) {
-    console.error("Failed to restore contrast colors ", e);
+    console.error("Failed to restore the Contrast & Type address ", e);
     return {};
   }
+}
+
+
+/**
+ * Everything a restored page decides: the palette as a whole, the pair, the
+ * type of every role and the placements.
+ *
+ * The one place a page is restored, for the url and the local storage alike.
+ * Not the pair alone: a placement is a palette slot, so without the palette
+ * the receiver's own colours would fill the sender's placements.
+ */
+export function restoredContrastTypeState(
+  page: ContrastTypePage,
+  state: Pick<AppState, "useBezier" | "correctLightness" | "typeRoles">
+) {
+  return {
+    ...restoredPaletteState(page.palette, page.seed, state),
+    contrastColors: createContrastColors(page.text, page.background),
+    typeRoles: restoredTypeRoles(page.type, state.typeRoles),
+    placements: page.placements
+  };
+}
+
+
+/** The page the state shows, as the address carries it. */
+export function contrastTypePageOf(
+  state: Pick<AppState, "currentPalette" | "paletteSeed" | "contrastColors" | "typeRoles" | "placements">
+): ContrastTypePage {
+  const type = Object.fromEntries(TYPE_ROLES.map(role => {
+    const {font, settings} = state.typeRoles[role];
+
+    return [role, {family: font?.family ?? null, settings}];
+  })) as Record<TypeRole, AddressedType>;
+
+  return {
+    palette: state.currentPalette,
+    seed: state.paletteSeed,
+    text: state.contrastColors.text,
+    background: state.contrastColors.background,
+    type,
+    placements: state.placements
+  };
+}
+
+
+/**
+ * The roles an address names, with the faces the state already knows kept.
+ *
+ * A family the role is already set in keeps its selection, category and
+ * weights included, so a restore of the page the visitor is on loads nothing
+ * again. Any other family stands by name until the catalogue completes it.
+ *
+ * **A face known by name alone keeps the address's weight.** Its own weights
+ * are not known yet, and normalizing against the app's type instead would
+ * move a weight the face does ship; the catalogue's answer normalizes it.
+ */
+function restoredTypeRoles(type: ContrastTypePage["type"], current: TypeRolesMap): TypeRolesMap {
+  const entries = TYPE_ROLES.map(role => {
+    const {family, settings} = type[role];
+    const known = current[role].font;
+    const font = family === null ? null : known?.family === family ? known : fontNamed(family);
+    const stops = needsCatalogue(font) ? WEIGHT_STOPS : weightStopsForRole(role, font);
+
+    return [role, {font, settings: normalizedTypeSettingsFor(role, settings, stops)}];
+  });
+
+  return Object.fromEntries(entries) as Record<TypeRole, TypeRoleSettings>;
 }
 
 

@@ -90,9 +90,17 @@ export const DEFAULT_TYPE_ROLES: TypeRolesMap = Object.fromEntries(
 ) as Record<TypeRole, TypeRoleSettings>;
 
 
-/** The `font-family` value a role's text is set in. */
+/**
+ * The `font-family` value a role's text is set in.
+ *
+ * A face known by name alone has no category yet - see `fontNamed()` - and
+ * falls back to the app's own type for the role rather than to an empty
+ * generic family, which would void the whole declaration.
+ */
 export function fontFamilyFor(role: TypeRole, font: SelectedFont | null): string {
-  return font ? `"${font.family}", ${font.category}` : appTypeFor(role).fontFamily;
+  if (!font) return appTypeFor(role).fontFamily;
+
+  return `"${font.family}", ${font.category || appTypeFor(role).fontFamily}`;
 }
 
 

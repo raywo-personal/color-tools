@@ -33,12 +33,18 @@ describe("FakeGoogleFonts", () => {
   });
 
 
-  it("hands back nothing while the request is out or has failed", () => {
+  it("hands back nothing while the request is out, and throws once it has failed", () => {
     const catalog = fakeGoogleFonts();
 
-    catalog.fail();
+    catalog.loading.set(true);
 
     expect(catalog.googleFonts.value()).toBeUndefined();
+
+    // As the real `httpResource` does, so a reader that skips `error()`
+    // fails in the specs and not first in the browser.
+    catalog.fail();
+
+    expect(() => catalog.googleFonts.value()).toThrow();
     expect(catalog.googleFonts.error()).toBeDefined();
 
     catalog.succeed();
