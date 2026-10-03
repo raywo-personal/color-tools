@@ -105,7 +105,8 @@ It needs two repository secrets: `CLOUDFLARE_API_TOKEN` (permission *Cloudflare
 Pages: Edit*) and `CLOUDFLARE_ACCOUNT_ID`. The Pages project must
 be named `color-tools`; the name is hardcoded in the workflow's deploy call.
 SPA routing is handled by `public/_redirects`, which rewrites every path to
-`index.html`; Functions run before static assets, so the rewrite never reaches
+`index.html` except the v1 paths `/convert` and `/palettes`, answered with a
+301 to `/`; Functions run before static assets, so the rewrite never reaches
 `/mcp`.
 
 ### Running wrangler locally

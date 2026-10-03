@@ -6,6 +6,7 @@ import {inject} from "@angular/core";
 import {AppStateStore} from "@core/app-state.store";
 import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import {randomSeed} from "@engine/helpers/random.helper";
+import {AppState} from "@core/models/app-state.model";
 
 
 /** The route param that holds the palette segment. `studioMatcher` sets it. */
@@ -55,9 +56,24 @@ export const paletteGuard: CanActivateFn = (route: ActivatedRouteSnapshot): bool
   if (segment === undefined) {
     target = current;
   } else {
-    const seed = randomSeed();
-    target = paletteSegmentFrom(generatePaletteFrom(store.currentColor(), store.paletteStyle(), seed), seed);
+    const {currentPalette, paletteSeed} = rolledPalette(store);
+    target = paletteSegmentFrom(currentPalette, paletteSeed);
   }
 
   return router.createUrlTree(["/", target], {fragment: route.fragment ?? undefined});
 };
+
+
+/**
+ * A palette freshly rolled on the current color in the current style: what
+ * an address that does not restore lands on, in either view and from a v1
+ * link alike.
+ */
+export function rolledPalette(store: AppStateStore): Pick<AppState, "currentPalette" | "paletteSeed"> {
+  const seed = randomSeed();
+
+  return {
+    currentPalette: generatePaletteFrom(store.currentColor(), store.paletteStyle(), seed),
+    paletteSeed: seed
+  };
+}

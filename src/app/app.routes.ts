@@ -5,6 +5,7 @@ import {NotFound} from "@common/components/not-found/not-found";
 import {studioMatcher} from "./routes/studio-route.matcher";
 import {paletteGuard} from "./routes/palette-route.guard";
 import {contrastGuard} from "./routes/contrast-route.guard";
+import {v1ContrastMatcher, v1ContrastRedirect, v1PaletteMatcher, v1PaletteRedirect} from "./routes/v1-link.redirect";
 
 
 export const routes: Routes = [
@@ -40,6 +41,20 @@ export const routes: Routes = [
     pathMatch: "full",
     title: "ColorTools – Contrast & Type",
     data: {addressOf: "contrast"}
+  },
+
+  // v1 links that carry an id. They redirect and never render, so they need
+  // no title. The two v1 paths without an id - `/convert` and a bare
+  // `/palettes` - are answered with a 301 in `public/_redirects` before the
+  // app loads.
+  {
+    matcher: v1PaletteMatcher,
+    redirectTo: v1PaletteRedirect
+  },
+
+  {
+    matcher: v1ContrastMatcher,
+    redirectTo: v1ContrastRedirect
   },
 
   {
