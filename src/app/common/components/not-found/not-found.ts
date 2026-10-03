@@ -1,10 +1,12 @@
 import {Component, computed, inject, signal} from "@angular/core";
 import {Router, RouterLink} from "@angular/router";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
-import chroma from "chroma-js";
+import chroma, {Color} from "chroma-js";
 import {PALETTE_SLOTS} from "@engine/palette/palette.model";
-import {paletteColorFrom} from "@engine/palette/palette-color.model";
-import {generatePalette} from "@engine/palette/palette.helper";
+import {PaletteStyle} from "@engine/palette/palette-style.model";
+import {generatePalette, generatePaletteFrom} from "@engine/palette/palette.helper";
+import {paletteSegmentFrom, PaletteWithSeed} from "@engine/palette/palette-segment.helper";
+import {randomSeed} from "@engine/helpers/random.helper";
 import {colorName} from "@engine/color/color-name.helper";
 
 
@@ -13,12 +15,14 @@ const SWATCH_COUNT = 8;
 
 const MISSING_SLOT_COUNT = SWATCH_COUNT - PALETTE_SLOTS.length;
 
+const STYLE: PaletteStyle = "muted-analog-split";
+
 /**
  * The v1 accent, opening the page on a known color rather than a rolled one.
- * It is a plain seed now: v2 has no themed accent, so there is no token to
+ * It is a plain constant now: v2 has no themed accent, so there is no token to
  * read it from and nothing it could drift out of step with.
  */
-const ACCENT = "hsl(38.66, 100%, 49.61%)";
+const ACCENT = chroma("hsl(38.66, 100%, 49.61%)");
 
 
 /**
@@ -33,19 +37,26 @@ interface Swatch {
 
 
 /**
- * A muted analogous palette. Given a base color it varies the four members
- * around it; given none it rolls the base as well, which is what makes a
- * second palette look like a different palette rather than a reshuffle of
- * the same hue.
+ * A muted analogous palette and the seed it was rolled with. Given a base
+ * color it varies the four members around it; given none it rolls the base
+ * as well, which is what makes a second palette look like a different
+ * palette rather than a reshuffle of the same hue.
+ *
+ * The members come from `generatePaletteFrom()` under a seed of their own,
+ * never from `generatePalette()` alone: the Studio rebuilds a palette under
+ * its seed on every move of the base color, so a palette drawn without one
+ * opens through the link as shown and re-rolls on the first drag. The base
+ * is the generator's own roll, which keeps it in the muted range.
+ *
+ * The base is taken as the id carries it, in hex: the Studio rebuilds on the
+ * restored base, and an unrounded one here would derive members a step off
+ * the ones it derives there.
  */
-function mutedPalette(base?: string): Swatch[] {
-  const color0 = base ? paletteColorFrom(chroma(base), "color0") : undefined;
-  const palette = generatePalette("muted-analog-split", color0 ? {color0} : {});
+function mutedPalette(base?: Color): PaletteWithSeed {
+  const seed = randomSeed();
+  const color0 = chroma((base ?? generatePalette(STYLE).color0.color).hex());
 
-  return PALETTE_SLOTS.map(slot => ({
-    hex: palette[slot].color.hex().toUpperCase(),
-    name: colorName(palette[slot].color)
-  }));
+  return {palette: generatePaletteFrom(color0, STYLE, seed), seed};
 }
 
 
@@ -64,7 +75,9 @@ function mutedPalette(base?: string): Swatch[] {
  * The picture below the text is a ColorTools palette that stops short: five
  * colors, then the slots it never reached. A visitor who mistyped a path
  * needs no color theory to read that, and it says what actually happened -
- * something in a sequence is missing.
+ * something in a sequence is missing. The picture is a link as well: it opens
+ * the five colors in the Studio, so a palette the visitor likes is not lost
+ * with the page.
  *
  * `OUT OF GAMUT` therefore reads figuratively: the requested page lies
  * outside the gamut of the pages that exist. It is not a claim about sRGB,
@@ -80,7 +93,7 @@ export class NotFound {
   readonly #announcer = inject(LiveAnnouncer);
   readonly #router = inject(Router);
 
-  readonly #swatches = signal(mutedPalette(ACCENT));
+  readonly #mixed = signal(mutedPalette(ACCENT));
 
   /**
    * `Router.url`, not `ActivatedRoute.url`: the segments carry the path alone,
@@ -99,7 +112,21 @@ export class NotFound {
     return this.#router.url;
   });
 
-  protected readonly swatches = this.#swatches.asReadonly();
+  protected readonly swatches = computed<Swatch[]>(() => {
+    const {palette} = this.#mixed();
+
+    return PALETTE_SLOTS.map(slot => ({
+      hex: palette[slot].color.hex().toUpperCase(),
+      name: colorName(palette[slot].color)
+    }));
+  });
+
+  /** The Studio's address for the palette on show, seed included. */
+  protected readonly studioLink = computed(() => {
+    const {palette, seed} = this.#mixed();
+
+    return ["/", paletteSegmentFrom(palette, seed)];
+  });
 
   /**
    * The empty slots trailing the palette. A ColorTools palette holds exactly
@@ -125,9 +152,9 @@ export class NotFound {
    * the outcome is announced rather than left to be discovered.
    */
   protected mixAnother(): void {
-    this.#swatches.set(mutedPalette());
+    this.#mixed.set(mutedPalette());
 
-    const names = this.#swatches().map(swatch => swatch.name).join(", ");
+    const names = this.swatches().map(swatch => swatch.name).join(", ");
 
     void this.#announcer.announce(`New palette: ${names}`);
   }
