@@ -299,7 +299,7 @@ describe("app routes", () => {
         .map(line => line.split(/\s+/));
       const fallback = rules.findIndex(([from]) => from === "/*");
 
-      for (const path of ["/convert", "/palettes"]) {
+      for (const path of ["/convert", "/convert/", "/palettes", "/palettes/"]) {
         const index = rules.findIndex(([from]) => from === path);
 
         expect(rules[index]).toEqual([path, "/", "301"]);
