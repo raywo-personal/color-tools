@@ -10,10 +10,6 @@ const stylistic = require("@stylistic/eslint-plugin");
 const ts = require("typescript");
 const tseslint = require("typescript-eslint");
 
-// Shared with tools/lint-sizes.js so both halves of `pnpm lint` skip the same
-// folders. The file says why they are skipped and when to take an entry out.
-const V1_SCREENS = require("./tools/v1-screens");
-
 // Every path alias tsconfig.json declares, except the engine's own. The fence
 // around functions/ below forbids them all, and it reads them from the file so
 // that a new alias is fenced the moment it exists - a copy kept here would let
@@ -40,7 +36,6 @@ module.exports = defineConfig(
     "dist/**",
     "tmp/**",
     "resources/**",
-    ...V1_SCREENS,
   ]),
   {
     files: ["src/**/*.ts"],

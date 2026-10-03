@@ -21,14 +21,11 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const V1_SCREENS = require("./v1-screens");
-
 const ROOT = path.join(__dirname, "..");
 
 // Every place a Tailwind class can appear: .html templates, the inline
 // `template` and `host: {class: "..."}` of a component, and the global
-// stylesheet. The remaining .scss files are v1 leftovers that go with their
-// screens, and CLAUDE.md forbids adding more, so new styling is always covered.
+// stylesheet. CLAUDE.md forbids Sass, so styling is always covered.
 const SCANNED_EXTENSIONS = [".html", ".ts", ".css"];
 const SCANNED_ROOT = "src";
 
@@ -204,24 +201,6 @@ function ringOffsetFindings(file, text) {
   return findings;
 }
 
-/** Turns the glob patterns of v1-screens.js into matchers over posix paths. */
-function ignoreMatchers(patterns) {
-  return patterns.map((pattern) => {
-    const source = pattern
-      .split("**")
-      .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-      .join(".*");
-
-    return new RegExp(`^${source}$`);
-  });
-}
-
-const IGNORED = ignoreMatchers(V1_SCREENS);
-
-function isIgnored(relativePath) {
-  return IGNORED.some((matcher) => matcher.test(relativePath));
-}
-
 function collectFiles(directory, found = []) {
   for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
     const absolute = path.join(directory, entry.name);
@@ -235,7 +214,7 @@ function collectFiles(directory, found = []) {
 
     const relative = path.relative(ROOT, absolute).split(path.sep).join("/");
 
-    if (!isIgnored(relative)) found.push({absolute, relative});
+    found.push({absolute, relative});
   }
 
   return found;

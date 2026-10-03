@@ -79,12 +79,9 @@ including this one, and code comments.
   copy here
 - `src/app/shell/`, `src/app/studio/`, `src/app/contrast-type/` – the routed
   screens, declared in `app.routes.ts`
-- `src/app/common/` – shared components, services and the four app models
+- `src/app/common/` – shared components, services and app models
 - `src/testing/` – test helpers, reachable as `@testing/*`
 - `functions/mcp/` – the MCP server, a Cloudflare Pages Function
-- `tools/v1-screens.js` – the v1 code, excluded from lint. It is no longer
-  routed and no longer reaches the bundle; do not extend it and do not build
-  new screens inside it
 
 Path aliases are declared in `tsconfig.json`, one per top-level folder. Import
 through them, never through relative `../../` paths.
@@ -287,7 +284,7 @@ differ, this file wins because it describes what this codebase does.
 ## Styles
 
 Tailwind CSS v4 is the only styling framework. Utilities go in the template;
-a component's own style file stays minimal or empty. No Sass in new styles.
+a component's own style file stays minimal or empty. No Sass.
 
 - No `@apply` and no `@reference` in component styles. Reach the element from
   the template, put the host's utilities in `host: {class: "..."}`, or add an
@@ -330,10 +327,6 @@ Its comments say which convention each rule mirrors.
   own `quotes` in v11
 - A leading underscore marks a binding that only holds a position; the idiom
   needs no disable comment
-- `tools/v1-screens.js` is the one list of v1 code, read by both halves of
-  `pnpm lint`. Remove an entry together with the folder it names. The v1
-  widgets under `common/components/` are listed one by one, so the next v2
-  component written there is linted rather than swallowed
 
 ## MCP Server
 

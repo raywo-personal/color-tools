@@ -21,12 +21,6 @@
       "@engine/*":  [
         "./src/engine/*"
       ],
-      "@converter/*": [
-        "./src/app/converter/*"
-      ],
-      "@header/*": [
-        "./src/app/header/*"
-      ],
       "@shell/*": [
         "./src/app/shell/*"
       ],
@@ -36,14 +30,8 @@
       "@contrast-type/*": [
         "./src/app/contrast-type/*"
       ],
-      "@palettes/*": [
-        "./src/app/palettes/*"
-      ],
       "@core/*": [
         "./src/app/core/*"
-      ],
-      "@contrast/*": [
-        "./src/app/contrast/*"
       ],
       "@environments/*": [
         "./src/environments/*"
