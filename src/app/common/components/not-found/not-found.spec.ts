@@ -4,6 +4,9 @@ import {Component, provideZonelessChangeDetection} from "@angular/core";
 import {beforeEach, describe, expect, it} from "vitest";
 import chroma from "chroma-js";
 import {colorName} from "@engine/color/color-name.helper";
+import {PALETTE_SLOTS} from "@engine/palette/palette.model";
+import {generatePaletteFrom} from "@engine/palette/palette.helper";
+import {isRestorablePaletteSegment, paletteFromSegment} from "@engine/palette/palette-segment.helper";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {NotFound} from "./not-found";
 
@@ -68,6 +71,23 @@ describe("NotFound", () => {
 
     expect(destinations).toContain("/");
     expect(destinations).toContain("/contrast");
+  });
+
+
+  it("points the footer at the sections the Studio has, and at Contrast & Type", async () => {
+    const {page} = await renderAt("/does-not-exist");
+
+    const destinations = Array.from(page().querySelectorAll("nav a"))
+      .map(link => [link.textContent?.trim(), link.getAttribute("href")]);
+
+    // A bare `/` with the section's id: the guard sends it on to the
+    // visitor's own palette and keeps the fragment.
+    expect(destinations).toEqual([
+      ["Converter", "/#converter"],
+      ["Palettes", "/#palette"],
+      ["Tints & shades", "/#tints-and-shades"],
+      ["Contrast & type", "/contrast"]
+    ]);
   });
 
 
@@ -158,6 +178,67 @@ describe("NotFound", () => {
     await fixture.whenStable();
 
     expect(swatchLabels(page())).not.toEqual(before);
+  });
+
+
+  describe("the palette link", () => {
+
+    /** The palette segment the picture links to, the leading `/` taken off. */
+    function linkedSegment(page: HTMLElement): string {
+      const link = page.querySelector("ul")?.closest("a");
+
+      return (link?.getAttribute("href") ?? "").replace(/^\//, "");
+    }
+
+
+    it("opens the palette on show in the Studio", async () => {
+      const {page} = await renderAt("/does-not-exist");
+
+      const segment = linkedSegment(page());
+      const {palette} = paletteFromSegment(segment);
+
+      expect(isRestorablePaletteSegment(segment)).toBe(true);
+      expect(PALETTE_SLOTS.map(slot => palette[slot].color.hex().toUpperCase()))
+        .toEqual(swatchLabels(page()).slice(0, 5));
+    });
+
+
+    it("carries the seed the palette was rolled with, so the first drag moves it rather than re-rolling it", async () => {
+      const {page} = await renderAt("/does-not-exist");
+
+      const {palette, seed} = paletteFromSegment(linkedSegment(page()));
+
+      // What the Studio does on every move of the base color.
+      const rebuilt = generatePaletteFrom(palette.color0.color, palette.style, seed);
+
+      expect(rebuilt.id).toBe(palette.id);
+    });
+
+
+    it("follows a newly mixed palette", async () => {
+      const {fixture, page} = await renderAt("/does-not-exist");
+      const before = linkedSegment(page());
+
+      page().querySelector("button")?.click();
+      await fixture.whenStable();
+
+      const {palette} = paletteFromSegment(linkedSegment(page()));
+
+      expect(linkedSegment(page())).not.toBe(before);
+      expect(PALETTE_SLOTS.map(slot => palette[slot].color.hex().toUpperCase()))
+        .toEqual(swatchLabels(page()).slice(0, 5));
+    });
+
+
+    it("is named by its caption, not by the hex codes it holds", async () => {
+      const {page} = await renderAt("/does-not-exist");
+
+      const link = page().querySelector("ul")?.closest("a");
+      const caption = page().querySelector(`#${link?.getAttribute("aria-labelledby")}`);
+
+      expect(caption?.textContent?.trim()).toBe("OPEN THIS PALETTE IN THE STUDIO");
+    });
+
   });
 
 
