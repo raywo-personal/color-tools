@@ -95,22 +95,43 @@ describe("GoogleFontLoaderService", () => {
 
   it("asks for the weights the family ships and no others", () => {
     // The same set the WEIGHT slider stands on. `css2` would tolerate a wider
-    // ladder - it serves what the family has and drops the rest - but then the
-    // request asks for faces that do not exist and says nothing about which
-    // weights the visitor actually got.
+    // ladder - it serves what the family has and drops the rest, as long as
+    // one of the weights exists - but then the request asks for faces that do
+    // not exist and says nothing about which weights the visitor actually got.
     loader().loadFonts([selection("Merriweather", [300, 400, 700, 900])]);
 
     expect(hrefs()[0]).toContain("family=Merriweather:wght@300;400;700;900");
   });
 
 
-  it("asks for no weight axis at all where none is known", () => {
-    // A selection stored before the weights existed. The family's default is
-    // the honest answer; a guessed list could be rejected outright.
+  it("asks a face known by name alone for every weight on the grid", () => {
+    // A face restored from an address or v1 storage, before the catalogue has
+    // said which weights it ships. Without an axis Google serves the default
+    // weight alone, and a role set at 700 is drawn in synthesised bold. The
+    // whole grid rather than the role's weight: `css2` rejects a request in
+    // which no weight exists, so a single 700 would load nothing at all for
+    // a family that ships 400 alone.
     loader().loadFonts([selection("Lobster", [])]);
 
-    expect(hrefs()[0]).toContain("family=Lobster&");
-    expect(hrefs()[0]).not.toContain("wght");
+    expect(hrefs()[0]).toContain("family=Lobster:wght@100;200;300;400;500;600;700;800;900&");
+  });
+
+
+  it("keeps a face's link standing once the catalogue completes it", () => {
+    // The grid already holds every weight the family ships. Replacing the link
+    // would fetch the stylesheet again and flash the preview through its
+    // fallback on every reload.
+    const service = loader();
+
+    service.loadFonts([selection("Lobster", [])]);
+    const first = stub.links[0];
+    const href = first.href;
+
+    service.loadFonts([selection("Lobster", [400])]);
+
+    expect(stub.links).toHaveLength(1);
+    expect(stub.links[0]).toBe(first);
+    expect(stub.links[0].href).toBe(href);
   });
 
 
@@ -176,13 +197,13 @@ describe("GoogleFontLoaderService", () => {
 
   it("brings a standing link up to the weights the roles now ask for", () => {
     // The id keys the family alone while the url carries the weight axis. A
-    // selection stored before the weights existed asks for none, so a second
+    // v1 selection may carry fewer weights than the family ships, so a second
     // role in that family would otherwise stand on a weight the head never
     // loaded, in the browser's synthesised face, with the rating measuring it.
     const service = loader();
 
-    service.loadFonts([selection("Lobster", [])]);
-    service.loadFonts([selection("Lobster", []), selection("Lobster", [400, 700])]);
+    service.loadFonts([selection("Lobster", [400])]);
+    service.loadFonts([selection("Lobster", [400]), selection("Lobster", [400, 700])]);
 
     expect(hrefs()).toHaveLength(1);
     expect(hrefs()[0]).toContain("family=Lobster:wght@400;700");

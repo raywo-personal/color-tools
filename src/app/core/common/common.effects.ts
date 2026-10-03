@@ -132,9 +132,9 @@ export function fontAnnouncedEffect(
  * Completes the faces that stand by name alone - after a reload and after a
  * restore from the address, which carry a family's name and nothing else.
  *
- * Without it a restored face keeps no weights: the loader asks Google for the
- * family's default weight alone, and a role the sender set at 700 is drawn
- * in the browser's synthesised bold.
+ * Without it a restored face keeps no weights: the WEIGHT slider offers the
+ * whole grid, weights the family does not ship included, and the rating
+ * judges a face the browser synthesised.
  *
  * The catalogue is asked for only when a face needs it, through the
  * injector: `GoogleFontsService` requests it the moment it is created, and a

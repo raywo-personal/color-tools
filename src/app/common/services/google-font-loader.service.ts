@@ -1,6 +1,7 @@
 import {DOCUMENT} from "@angular/common";
 import {inject, Service} from "@angular/core";
 import {SelectedFont} from "@common/models/google-font.model";
+import {FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
 
 
 /**
@@ -8,6 +9,14 @@ import {SelectedFont} from "@common/models/google-font.model";
  * exactly the stylesheets it added and nothing the head carried before.
  */
 const LINK_PREFIX = "ct-google-font-";
+
+
+/**
+ * What a face known by name alone is asked for: every weight on the grid,
+ * not the slider's narrower range, so a family that ships only weights
+ * outside it still gets a stylesheet.
+ */
+const WEIGHT_GRID: readonly number[] = FONT_WEIGHTS.map(Number);
 
 
 /**
@@ -31,21 +40,27 @@ export class GoogleFontLoaderService {
    *
    * **The request asks for the family's own weights and no others.** `css2`
    * tolerates a `wght` axis naming weights a family does not have - it serves
-   * what it has and drops the rest, and rejects only a family name it does
-   * not know - so a fixed 100..900 ladder is not an error. It is a request for
-   * faces that do not exist, made once per family, and it hides which weights
-   * the visitor actually got. The list asked for here is the one the WEIGHT
-   * slider stands on, so what is loaded and what can be selected are the same
-   * set by construction. A selection that carries no weights asks for none,
-   * which gets the family's default.
+   * what it has and drops the rest - and rejects a family name it does not
+   * know or a list in which no weight exists. The list asked for here is the
+   * one the WEIGHT slider stands on, so what is loaded and what can be
+   * selected are the same set by construction.
    *
-   * **A family already in the head is left alone while its url still holds.**
-   * Replacing the link makes the browser fetch the stylesheet again and the
-   * preview flashes through its fallback, so what decides is the url and not
-   * the id: the id keys the family alone, and a selection stored before the
-   * weights existed asks for none - without the comparison a second role in
-   * that family would stand on a weight the head never loaded, in the
-   * browser's synthesised face, with the rating measuring it.
+   * **A face known by name alone asks for the whole grid.** Its weights come
+   * from the catalogue, which arrives after the first paint. Without an axis
+   * Google serves the default weight alone and a role set at 700 is drawn in
+   * synthesised bold until the catalogue answers, and for good where it never
+   * does. Not the role's weight alone: a family that does not ship it would
+   * get no stylesheet at all.
+   *
+   * **A family already in the head is left alone while its link covers the
+   * weights asked for.** Replacing the link makes the browser fetch the
+   * stylesheet again and the preview flashes through its fallback, so a link
+   * that asked for the grid stays when the catalogue completes the face. A
+   * link that lacks a weight is replaced: the id keys the family alone, and a
+   * v1 selection may carry fewer weights than a second role in that family
+   * asks for - without the replacement that role would stand on a weight the
+   * head never loaded, in the browser's synthesised face, with the rating
+   * measuring it.
    *
    * @param fonts - The faces the roles are set in; nulls are skipped
    */
@@ -67,7 +82,7 @@ export class GoogleFontLoaderService {
       const link = standing.get(id);
 
       if (link) {
-        if (link.href !== href) link.href = href;
+        if (!covers(link.href, requestedWeights(font))) link.href = href;
         continue;
       }
 
@@ -111,11 +126,27 @@ function linkIdFor(font: SelectedFont): string {
 }
 
 
+/**
+ * The weights the stylesheet for a selection asks for, ascending - the grid
+ * for a face that carries none, as `needsCatalogue()` marks it.
+ */
+function requestedWeights(font: SelectedFont): readonly number[] {
+  return font.weights.length > 0 ? [...font.weights].sort((a, b) => a - b) : WEIGHT_GRID;
+}
+
+
 /** The `css2` url for a selection, weights and all. */
 function fontStylesheetUrl(font: SelectedFont): string {
   const familyParam = font.family.replace(/ /g, "+");
-  const weights = [...font.weights].sort((a, b) => a - b);
-  const axis = weights.length > 0 ? `:wght@${weights.join(";")}` : "";
 
-  return `https://fonts.googleapis.com/css2?family=${familyParam}${axis}&display=swap`;
+  return `https://fonts.googleapis.com/css2?family=${familyParam}:wght@${requestedWeights(font).join(";")}&display=swap`;
+}
+
+
+/** Whether a stylesheet url this service wrote asks for every given weight. */
+function covers(href: string, weights: readonly number[]): boolean {
+  const axis = new URL(href).searchParams.get("family")?.split(":wght@")[1] ?? "";
+  const loaded = new Set(axis.split(";").map(Number));
+
+  return weights.every(weight => loaded.has(weight));
 }

@@ -52,9 +52,9 @@ export interface SelectedFont {
    * the loader asks Google for the same set, so what is loaded and what can be
    * selected cannot drift apart.
    *
-   * Empty where the selection predates the field. Both readers fall back:
-   * `weightStopsFor()` to the full grid, the loader to the family's default
-   * weight.
+   * Empty where the selection predates the field or stands by name alone.
+   * Both readers fall back to a grid: `weightStopsFor()` to the slider's, the
+   * loader to every weight `css2` knows.
    */
   weights: readonly number[];
 }
@@ -141,9 +141,9 @@ export function fontWeightsOf(font: GoogleFont): number[] {
  *
  * **The fallback is the one place the loader and this function disagree.**
  * `fontWeightsOf()` leaves the italics out, so an italic-only family arrives
- * here empty; the loader asks for no `wght` axis in that case and gets the
- * family's default alone, while the slider offers the whole grid. Moving it
- * then rates a weight the browser synthesised. Narrowing the grid instead
+ * here empty; the loader asks for upright weights in that case, which `css2`
+ * refuses, while the slider offers the whole grid. Moving it then rates a
+ * face the browser never loaded. Narrowing the grid instead
  * would leave the slider standing on a single weight and say the family ships
  * one, which is no truer.
  */
