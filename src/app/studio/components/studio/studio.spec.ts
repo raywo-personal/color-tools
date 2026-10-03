@@ -109,6 +109,39 @@ describe("Studio", () => {
   });
 
 
+  describe("the sections", () => {
+
+    // The ids are addresses: a link elsewhere in the app and a visitor's
+    // bookmark name one after the `#`. A renamed id sends both to the top.
+    const SECTIONS = ["converter", "sliders", "palette", "tints-and-shades", "export"];
+
+
+    it("names every section with the id a link points at, in the order the page shows them", async () => {
+      const host = await studio();
+
+      const ids = Array.from(host.querySelectorAll("section[id]"), section => section.id);
+
+      expect(ids).toEqual(SECTIONS);
+    });
+
+
+    it.each(SECTIONS)("lets a link into #%s take focus along, under a name", async id => {
+      // The router focuses the anchor it scrolls to, and an element that is
+      // not focusable ignores the call - the page would move and a screen
+      // reader stay where it was.
+      const host = await studio();
+      const section = host.querySelector<HTMLElement>(`#${id}`);
+
+      section?.focus();
+
+      expect(section?.getAttribute("tabindex")).toBe("-1");
+      expect(document.activeElement).toBe(section);
+      expect(section?.getAttribute("aria-label")).toBeTruthy();
+    });
+
+  });
+
+
   describe("the sliders", () => {
 
     it("stands the panel on the base colour", async () => {

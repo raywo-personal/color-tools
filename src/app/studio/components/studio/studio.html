@@ -1,4 +1,12 @@
-<div class="min-w-0">
+<!-- Every section carries an id, and the id is an address: a link elsewhere
+     and a visitor's bookmark name it after the `#`. Do not rename one.
+
+     tabindex="-1" is what lets a link land: the router's anchor scrolling
+     moves focus to the target as well, and only a focusable element takes it.
+     Without it the page moves and a screen reader stays where it was. The ring
+     stays off - the section is a destination, never a tab stop, and a ring
+     around a whole column says nothing about where to act. -->
+<section id="converter" aria-label="Converter" tabindex="-1" class="min-w-0 outline-none">
   <ct-swatch/>
 
   <ct-color-controls class="mt-3"/>
@@ -8,17 +16,19 @@
   <!-- Not wired to the list with aria-describedby: every row's accessible name
        already begins with "Copy", so speech would hear the same thing twice. -->
   <p class="mt-3 text-sm text-dim text-pretty">Click the row to copy its value.</p>
-</div>
+</section>
 
 <div class="min-w-0">
-  <ct-color-sliders [color]="currentColor()"
-                    (colorAdjusted)="adjustColor($event)"
-                    (commit)="commitColor()"/>
+  <section id="sliders" aria-label="Sliders" tabindex="-1" class="outline-none">
+    <ct-color-sliders [color]="currentColor()"
+                      (colorAdjusted)="adjustColor($event)"
+                      (commit)="commitColor()"/>
+  </section>
 
   <!-- The caption and the chips wrap together: the chips keep their h-11 hit
        area at every width, so in the narrow column they take the rows they
        need rather than squeezing past the minimum. -->
-  <section class="mt-8">
+  <section id="palette" aria-label="Palette" tabindex="-1" class="mt-8 outline-none">
     <div class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
       <p class="font-sans text-sm tracking-widest text-dim">PALETTE</p>
 
@@ -28,9 +38,13 @@
     <ct-palette-swatches/>
   </section>
 
-  <ct-tint-shade-ramps class="mt-8"/>
+  <section id="tints-and-shades" aria-label="Tints and shades" tabindex="-1" class="mt-8 outline-none">
+    <ct-tint-shade-ramps/>
+  </section>
 
   <!-- A rule above it, as the draft draws it: the export is the foot of the
        column, not a fourth section of the palette. -->
-  <ct-export-panel class="mt-11 border-t border-line pt-4"/>
+  <section id="export" aria-label="Export palette" tabindex="-1" class="mt-11 border-t border-line pt-4 outline-none">
+    <ct-export-panel/>
+  </section>
 </div>

@@ -1,6 +1,6 @@
 import {ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection} from "@angular/core";
 import {provideHttpClient} from "@angular/common/http";
-import {provideRouter, withComponentInputBinding} from "@angular/router";
+import {provideRouter, withComponentInputBinding, withInMemoryScrolling} from "@angular/router";
 
 import {routes} from "./app.routes";
 import {injectDispatch} from "@ngrx/signals/events";
@@ -21,9 +21,13 @@ export const appConfig: ApplicationConfig = {
     // which injects `HttpClient`. Nothing asked for it while the typeahead was
     // gone, so the app ran without the provider.
     provideHttpClient(),
+    // Anchor scrolling alone. `scrollPositionRestoration` scrolls on every
+    // navigation, and a navigation that only keeps the address in step with
+    // the state must leave the page where the visitor has it.
     provideRouter(
       routes,
-      withComponentInputBinding()
+      withComponentInputBinding(),
+      withInMemoryScrolling({anchorScrolling: "enabled"})
     ),
     provideAppInitializer(initializeApp)
   ]
