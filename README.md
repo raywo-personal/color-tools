@@ -39,8 +39,13 @@ session and no authentication.
 
 ### Prerequisites
 
-- Node.js 24 (the Angular 22 CLI requires `^22.22.3 || ^24.15.0 || >=26.0.0`)
 - pnpm
+
+`pnpm install` downloads the Node.js that `devEngines.runtime` in
+`package.json` declares, and every `pnpm run` and `pnpm exec` uses it,
+whatever Node the shell has. Run the tools through pnpm, not through `npx` or
+a bare `node`: under Node 26 its own `localStorage` hides happy-dom's and the
+app's tests fail.
 
 ### Commands
 
@@ -64,7 +69,7 @@ than TypeScript and Vitest do. Before pushing a change under `functions/`, run
 the bundle once:
 
 ```bash
-npx wrangler pages functions build --outdir /tmp/mcp-bundle
+pnpm exec wrangler pages functions build --outdir /tmp/mcp-bundle
 ```
 
 Conventions for the code are in `CLAUDE.md`.

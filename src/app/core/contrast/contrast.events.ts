@@ -35,7 +35,12 @@ export const contrastEvents = eventGroup({
     contrastColorsChangedWithoutNav: type<ContrastColors>(),
     switchColors: type<void>(),
     newRandomColorsWithNav: type<void>(),
-    restoreContrastColors: type<string>(),
+    /**
+     * The Contrast & Type address - see `contrastTypeAddressFrom()`. Restores
+     * the page as a whole: the palette with its seed, the pair, the type and
+     * the placements.
+     */
+    restoreContrastType: type<string>(),
     /**
      * A mark beside the preview was pressed: the key of the element whose
      * verdict opens, or the one that closes because it was already open.
@@ -58,8 +63,8 @@ export const contrastEvents = eventGroup({
      * toggle, so neither the reducer nor the announcement has to ask what a
      * placement was for.
      *
-     * Not persisted: the placements are part of the result, and carrying
-     * them across a reload is #68's.
+     * Persisted, like the reset of one and of all: the placements are part
+     * of the result the address and the reload carry.
      */
     colorPlaced: type<{elementKey: string; side: SamplePlacement; source: ChipSource}>(),
     /**

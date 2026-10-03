@@ -52,9 +52,9 @@ export interface SelectedFont {
    * the loader asks Google for the same set, so what is loaded and what can be
    * selected cannot drift apart.
    *
-   * Empty where the selection predates the field. Both readers fall back:
-   * `weightStopsFor()` to the full grid, the loader to the family's default
-   * weight.
+   * Empty where the selection predates the field or stands by name alone.
+   * Both readers fall back to a grid: `weightStopsFor()` to the slider's, the
+   * loader to every weight `css2` knows.
    */
   weights: readonly number[];
 }
@@ -91,6 +91,27 @@ export function getRegularFont(font: GoogleFont): SelectedFont {
 
 
 /**
+ * A family known by its name alone, as an address or a v1 storage entry
+ * carries it: no category and no weights, until the catalogue answers.
+ *
+ * The family stands at once, so the preview loads it before the catalogue
+ * has arrived; `needsCatalogue()` marks it for the effect that completes it.
+ */
+export function fontNamed(family: string): SelectedFont {
+  return {family, category: "", variant: REGULAR, weights: []};
+}
+
+
+/**
+ * Whether a selection still lacks what only the catalogue says: the weights
+ * the family ships, and with them the stops the WEIGHT slider stands on.
+ */
+export function needsCatalogue(font: SelectedFont | null): font is SelectedFont {
+  return font !== null && font.weights.length === 0;
+}
+
+
+/**
  * The upright weights a family ships, as numbers and ascending.
  *
  * The italics are left out: they are the same weights in another style, and
@@ -120,9 +141,9 @@ export function fontWeightsOf(font: GoogleFont): number[] {
  *
  * **The fallback is the one place the loader and this function disagree.**
  * `fontWeightsOf()` leaves the italics out, so an italic-only family arrives
- * here empty; the loader asks for no `wght` axis in that case and gets the
- * family's default alone, while the slider offers the whole grid. Moving it
- * then rates a weight the browser synthesised. Narrowing the grid instead
+ * here empty; the loader asks for upright weights in that case, which `css2`
+ * refuses, while the slider offers the whole grid. Moving it then rates a
+ * face the browser never loaded. Narrowing the grid instead
  * would leave the slider standing on a single weight and say the family ships
  * one, which is no truer.
  */

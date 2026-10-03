@@ -7,7 +7,7 @@ import {AppStateStore} from "@core/app-state.store";
 import {converterEvents} from "@core/converter/converter.events";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {ContrastColorRole} from "@engine/contrast/contrast-color.model";
-import {LOCAL_STORAGE_KEY, SettingsMap} from "@common/models/local-storage.model";
+import {storedPage} from "@testing/stored-address";
 import {fakeLiveAnnouncer, provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {PairSliders} from "@contrast-type/components/pair-sliders/pair-sliders";
 
@@ -90,12 +90,11 @@ describe("PairSliders", () => {
   }
 
 
-  function storedContrastId(): string | undefined {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+  /** The stored pair, text then background, as hex. */
+  function storedPair(): string | undefined {
+    const page = storedPage();
 
-    return stored
-      ? (JSON.parse(stored) as Partial<SettingsMap>).contrastId
-      : undefined;
+    return page ? `${page.text.hex()} ${page.background.hex()}` : undefined;
   }
 
 
@@ -254,7 +253,7 @@ describe("PairSliders", () => {
     it("does not write to localStorage on every frame", async () => {
       const {drag} = await panel("background");
 
-      const before = storedContrastId();
+      const before = storedPair();
 
       await drag(0, 100);
       await drag(0, 101);
@@ -262,7 +261,7 @@ describe("PairSliders", () => {
 
       // A drag fires per pointer move, and the persistence effect writes the
       // whole settings object each time.
-      expect(storedContrastId()).toBe(before);
+      expect(storedPair()).toBe(before);
     });
 
 
@@ -285,7 +284,7 @@ describe("PairSliders", () => {
       await drag(0, 100);
       await release(0);
 
-      expect(storedContrastId()).toBe(store.contrastColors().id);
+      expect(storedPair()).toBe(`${store.contrastColors().text.hex()} ${store.contrastColors().background.hex()}`);
     });
 
   });

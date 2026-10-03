@@ -7,8 +7,9 @@ import {initialState} from "@core/models/app-state.model";
 import {LOCAL_STORAGE_KEY} from "@common/models/local-storage.model";
 import {generatePalette, generatePaletteFrom} from "@engine/palette/palette.helper";
 import {EventInstance} from "@ngrx/signals/events";
-import {FONT_SIZE_RANGE, LINE_HEIGHT_RANGE} from "@engine/contrast/type-settings.model";
-import {DISPLAY_FONT_SIZE_RANGE} from "@engine/contrast/type-role.model";
+import {DEFAULT_TYPE_SETTINGS_BY_ROLE} from "@engine/contrast/type-role.model";
+import {ContrastTypePage, contrastTypeAddressFrom} from "@contrast-type/models/contrast-type-address.model";
+import {storePage} from "@testing/stored-address";
 import {contrastIdFromColors} from "@engine/contrast/contrast-id.helper";
 import {PALETTE_SLOTS} from "@engine/palette/palette.model";
 
@@ -124,28 +125,26 @@ describe("loadAppStateReducer", () => {
     const stored = generatePaletteFrom(chroma("#3366cc"), "complementary", 11);
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
       currentColor: "#3366cc",
-      currentPaletteId: stored.id,
-      paletteSeed: 11
+      currentPaletteId: stored.id
     }));
 
     expect(loaded().currentPalette.id).toBe(stored.id);
   });
 
 
-  it("rebuilds a stored palette that is not built on the stored color, in its style and roll", () => {
+  it("rebuilds a stored palette that is not built on the stored color, in its style", () => {
     // Storage from before the palette followed the color: the BASE swatch would
     // otherwise show a different color than the swatch above it until the
     // visitor happens to touch the color.
     const stored = generatePaletteFrom(chroma("#ff5733"), "complementary", 11);
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
       currentColor: "#3366cc",
-      currentPaletteId: stored.id,
-      paletteSeed: 11
+      currentPaletteId: stored.id
     }));
 
     const {currentPalette, paletteStyle} = loaded();
 
-    expect(currentPalette.id).toBe(generatePaletteFrom(chroma("#3366cc"), "complementary", 11).id);
+    expect(currentPalette.id).toBe(generatePaletteFrom(chroma("#3366cc"), "complementary", initialState.paletteSeed).id);
     expect(paletteStyle).toBe("complementary");
   });
 
@@ -160,13 +159,6 @@ describe("loadAppStateReducer", () => {
     }));
 
     expect(loaded().currentPalette.color0.color.hex("rgb")).toBe("#3366cc");
-  });
-
-
-  it("reports the stored roll, so the first drag after a reload continues the palette", () => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({paletteSeed: 11}));
-
-    expect(loaded().paletteSeed).toBe(11);
   });
 
 
@@ -232,141 +224,97 @@ describe("loadAppStateReducer", () => {
 
 
   it("keeps the initial type roles for a visitor who has none stored", () => {
-    // They are deliberately absent from `EMPTY_SETTINGS`, so this fallback is
-    // reachable - see the note there.
     expect(loaded().typeRoles).toEqual(initialState.typeRoles);
   });
 
 
-  it("reports stored type roles as they are", () => {
-    const display = {font: null, settings: {fontSize: 60, fontWeight: 700, lineHeight: 1.05}};
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({typeRoles: {display}}));
-
-    expect(loaded().typeRoles.display).toEqual(display);
-  });
-
-
-  it("opens a role the storage does not carry at the role's defaults", () => {
-    // Storage written while the page had fewer roles, or edited by hand.
+  it("reads v1's one typeface as body text's, by name until the catalogue answers", () => {
+    // v1 stored no weights. Empty rather than guessed: both readers of the
+    // field fall back on an empty list, and `resolveFontsEffect` completes it.
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      typeRoles: {display: {font: null, settings: {fontSize: 60, fontWeight: 700, lineHeight: 1.05}}}
+      selectedFont: {family: "Lobster", category: "display", variant: "regular"}
     }));
 
     const {typeRoles} = loaded();
 
-    expect(typeRoles.ui).toEqual(initialState.typeRoles.ui);
-    expect(typeRoles.mono).toEqual(initialState.typeRoles.mono);
-  });
-
-
-  it("repairs stored type settings the controls could not have produced", () => {
-    // The entry carries plain numbers and localStorage is editable by hand. A
-    // weight off the `FONT_WEIGHTS` grid has no row in `apcaLookup`, so the
-    // rating would read `.contrast` off nothing at all.
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      typeRoles: {body: {font: null, settings: {fontSize: 400, fontWeight: 437, lineHeight: 0}}}
-    }));
-
-    expect(loaded().typeRoles.body.settings).toEqual({
-      fontSize: FONT_SIZE_RANGE.max,
-      fontWeight: 400,
-      lineHeight: LINE_HEIGHT_RANGE.min
-    });
-  });
-
-
-  it("repairs a display size against the display range, not body text's", () => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      typeRoles: {display: {font: null, settings: {fontSize: 400, fontWeight: 500, lineHeight: 1.1}}}
-    }));
-
-    expect(loaded().typeRoles.display.settings.fontSize).toBe(DISPLAY_FONT_SIZE_RANGE.max);
-  });
-
-
-  it("restores a role's typeface with the weights it was stored with", () => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      typeRoles: {
-        display: {
-          font: {family: "Merriweather", category: "serif", variant: "regular", weights: [300, 400, 700, 900]},
-          settings: {fontSize: 44, fontWeight: 700, lineHeight: 1.1}
-        }
-      }
-    }));
-
-    expect(loaded().typeRoles.display.font?.weights).toEqual([300, 400, 700, 900]);
-  });
-
-
-  it("gives a typeface stored before the weights existed an empty list", () => {
-    // Both readers of the field fall back on an empty list - the slider to the
-    // app's own weights, the loader to the family's default weight - and
-    // neither survives an `undefined`.
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      typeRoles: {
-        body: {
-          font: {family: "Lobster", category: "display", variant: "regular"},
-          settings: {fontSize: 18, fontWeight: 400, lineHeight: 1.6}
-        }
-      }
-    }));
-
-    expect(loaded().typeRoles.body.font?.weights).toEqual([]);
-  });
-
-
-  it("puts the stored weight on a stop the restored family actually ships", () => {
-    // A reload has to land where the picker would have left the visitor, not
-    // on a weight the browser would synthesise.
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      typeRoles: {
-        body: {
-          font: {family: "Merriweather", category: "serif", variant: "regular", weights: [300, 400, 700, 900]},
-          settings: {fontSize: 18, fontWeight: 500, lineHeight: 1.6}
-        }
-      }
-    }));
-
-    expect(loaded().typeRoles.body.settings.fontWeight).toBe(400);
-  });
-
-
-  it("reads the single typeface and its axes from before the roles as body text", () => {
-    // A visitor who set their type before the roles keeps it; the other roles
-    // open at their defaults.
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      selectedFont: {family: "Merriweather", category: "serif", variant: "regular", weights: [300, 400, 700, 900]},
-      fontSize: 14,
-      fontWeight: 700,
-      lineHeight: 1.35
-    }));
-
-    const {typeRoles} = loaded();
-
-    expect(typeRoles.body).toEqual({
-      font: {family: "Merriweather", category: "serif", variant: "regular", weights: [300, 400, 700, 900]},
-      settings: {fontSize: 14, fontWeight: 700, lineHeight: 1.35}
-    });
+    expect(typeRoles.body.font).toEqual({family: "Lobster", category: "display", variant: "regular", weights: []});
+    expect(typeRoles.body.settings).toEqual(initialState.typeRoles.body.settings);
     expect(typeRoles.display).toEqual(initialState.typeRoles.display);
   });
 
 
-  it("fills a half-written legacy entry from body text's defaults", () => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({fontSize: 14}));
+  describe("from a stored address", () => {
 
-    expect(loaded().typeRoles.body.settings).toEqual({...initialState.typeRoles.body.settings, fontSize: 14});
-  });
+    const palette = generatePaletteFrom(chroma("#3366cc"), "complementary", 11);
+
+    const page: ContrastTypePage = {
+      palette,
+      seed: 11,
+      text: chroma("#123456"),
+      background: chroma("#fedcba"),
+      type: {
+        display: {family: "Merriweather", settings: {fontSize: 60, fontWeight: 700, lineHeight: 1.05}},
+        body: {family: null, settings: {fontSize: 14, fontWeight: 300, lineHeight: 1.35}},
+        mono: {family: null, settings: DEFAULT_TYPE_SETTINGS_BY_ROLE.mono},
+        ui: {family: null, settings: DEFAULT_TYPE_SETTINGS_BY_ROLE.ui}
+      },
+      placements: {headline: {ink: "color2"}, quote: {ground: "background"}}
+    };
 
 
-  it("lets a stored body role win over the legacy keys", () => {
-    // Both may be present in a storage written across the change; the newer
-    // shape is the one the app wrote last.
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-      fontSize: 14,
-      typeRoles: {body: {font: null, settings: {fontSize: 21, fontWeight: 400, lineHeight: 1.6}}}
-    }));
+    it("restores the page as a link does: palette, seed, pair, type and placements", () => {
+      storePage(page);
 
-    expect(loaded().typeRoles.body.settings.fontSize).toBe(21);
+      const state = loaded();
+
+      expect(state.currentPalette.id).toBe(palette.id);
+      expect(state.paletteStyle).toBe("complementary");
+      expect(state.paletteSeed).toBe(11);
+      expect(state.contrastColors.text.hex()).toBe("#123456");
+      expect(state.contrastColors.background.hex()).toBe("#fedcba");
+      expect(state.typeRoles.display.font?.family).toBe("Merriweather");
+      expect(state.typeRoles.display.settings).toEqual(page.type.display.settings);
+      expect(state.typeRoles.body).toEqual({font: null, settings: page.type.body.settings});
+      expect(state.placements).toEqual(page.placements);
+    });
+
+
+    it("makes the palette's BASE the current color, so the two agree", () => {
+      storePage(page);
+
+      expect(loaded().currentColor.hex()).toBe(palette.color0.color.hex());
+    });
+
+
+    it("wins over the v1 keys stored beside it", () => {
+      storePage(page, {currentColor: "#ff0000", contrastId: "000000000"});
+
+      const state = loaded();
+
+      expect(state.currentPalette.id).toBe(palette.id);
+      expect(state.contrastColors.text.hex()).toBe("#123456");
+    });
+
+
+    it("keeps the stored theme", () => {
+      storePage(page, {colorTheme: "light"});
+
+      expect(loaded().colorTheme).toBe("light");
+    });
+
+
+    it("reads the v1 keys where the stored address is unreadable", () => {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+        address: contrastTypeAddressFrom(page).replace(/\/[^/]+\//, "/0/"),
+        currentColor: "#3366cc"
+      }));
+
+      const state = loaded();
+
+      expect(state.currentColor.hex()).toBe("#3366cc");
+      expect(state.placements).toEqual(initialState.placements);
+    });
+
   });
 
 });

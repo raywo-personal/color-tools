@@ -43,8 +43,8 @@ The README lists the everyday commands. The ones with a catch:
   `pnpm run build:cloudflare` first
 - `pnpm run cf <args>` – wrangler against this project's account; sources the
   untracked `.cloudflare.env`
-- `npx wrangler pages functions build --outdir <tmp>` – the only local run
-  that resolves the Worker's imports the way the deploy does (see "MCP
+- `pnpm exec wrangler pages functions build --outdir <tmp>` – the only local
+  run that resolves the Worker's imports the way the deploy does (see "MCP
   Server")
 
 ## Claude Code Agents And Skills
@@ -145,17 +145,35 @@ through them, never through relative `../../` paths.
 
 ### Shareable Ids
 
-`paletteIdFrom()` and `contrastIdFromColors()` encode a palette and a contrast
-pair into fixed-length base62 ids; their helpers document the layout.
-The ids are generated and persisted, but no route takes one until the new
-screens have shareable urls of their own. The guards in `src/app/routes/` and
-the navigation effects in `core/common/navigation.effects.ts` wait for that and
-are not registered.
+`paletteIdFrom()` encodes a palette into a fixed-length base62 id; its helper
+documents the layout. `contrastIdFromColors()` is the v1 pair encoding: read
+for v1 links and v1 storage, written into nothing new. No route takes an
+address until the new screens have shareable urls of their own. The guards in
+`src/app/routes/` and the navigation effects in
+`core/common/navigation.effects.ts` wait for that and are not registered.
 
 The Studio's address is the palette segment: `paletteSegmentFrom()` appends
-the seed to the palette id. A restore, from the url or from local storage,
-goes through `restoredPaletteState()` and sets color, palette, style and seed
-together – never `currentPalette` alone.
+the seed to the palette id. A restore goes through `restoredPaletteState()` and
+sets color, palette, style and seed together – never `currentPalette` alone.
+
+The Contrast & Type address is the palette segment, the view segment and the
+typefaces – `contrastTypeAddressFrom()` in
+`src/app/contrast-type/models/contrast-type-address.model.ts` documents the
+format.
+
+- Local storage holds the theme and this address and nothing else, restored
+  through `restoredContrastTypeState()` like a link. Do not add a key beside it
+  for something the address carries. The v1 keys are read where no address is
+  stored and never written
+- The field widths are literals, never derived from the lists they index: a
+  derived width moves every field behind it once a list grows
+- `SAMPLE_ELEMENTS` and `CHIP_SOURCES` are indexed by the address. A new entry
+  goes at the end; the spec pins both orders
+- Every field is checked against its valid range, not its width. There is no
+  check digit, and the ranges are the better integrity check
+- A family travels by name through `encodeURIComponent`, which is what keeps
+  `,` and `/` unambiguous. A face known by name alone is `fontNamed()`;
+  `resolveFontsEffect` completes it from the catalogue
 
 **The palette id has room for 62 styles.** The style index is one base62 <!-- durable-ok -->
 character, and base62 spells 0 to 9 the way base 10 does, so an id written
@@ -371,8 +389,8 @@ itself, so the entry does no routing.
 `import ... from "@modelcontextprotocol/sdk/server/mcp.js"` – with the
 extension. The SDK's exports map adds nothing, so esbuild in Wrangler cannot
 resolve the bare path while TypeScript and Vitest resolve it silently. Only
-`npx wrangler pages functions build --outdir <tmp>` catches the omission before
-the deploy does.
+`pnpm exec wrangler pages functions build --outdir <tmp>` catches the omission
+before the deploy does.
 
 There is no `nodejs_compat` flag and no `wrangler.jsonc`; add either only when a
 bundle actually asks for it.

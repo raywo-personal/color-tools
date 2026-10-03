@@ -64,11 +64,17 @@ export class FakeGoogleFonts {
   reloads = 0;
 
   readonly googleFonts = {
-    value: computed<GoogleFontsApiResponse | undefined>(() =>
-      this.failure() || this.loading()
+    // A failed request throws on `value()`, as the real `httpResource` does:
+    // a reader that does not ask `error()` first must fail here as well.
+    value: computed<GoogleFontsApiResponse | undefined>(() => {
+      const failure = this.failure();
+
+      if (failure && !this.loading()) throw failure;
+
+      return this.loading()
         ? undefined
-        : {kind: "webfonts#webfontList", items: [...this.items()]}
-    ),
+        : {kind: "webfonts#webfontList", items: [...this.items()]};
+    }),
     isLoading: this.loading.asReadonly(),
     error: this.failure.asReadonly(),
     reload: () => {

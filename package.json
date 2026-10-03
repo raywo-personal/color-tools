@@ -1,7 +1,14 @@
 {
   "name": "color-tools",
   "version": "1.0.0",
-  "packageManager": "pnpm@11.21.0",
+  "packageManager": "pnpm@12.8.1",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "24",
+      "onFail": "download"
+    }
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

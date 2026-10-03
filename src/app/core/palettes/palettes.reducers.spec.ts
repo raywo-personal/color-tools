@@ -14,6 +14,7 @@ import {createTints} from "@engine/helpers/tints-and-shades.helper";
 import {persistenceEvents} from "@core/common/persistence.events";
 import {LOCAL_STORAGE_KEY} from "@common/models/local-storage.model";
 import {provideSilentFontLoader} from "@testing/font-loader.fake";
+import {storedPage} from "@testing/stored-address";
 
 
 /**
@@ -245,8 +246,7 @@ describe("restoring a palette segment", () => {
   it("wins over the storage loaded before it, and saves what the link showed", () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
       currentColor: "#ff5733",
-      currentPaletteId: generatePaletteFrom(chroma("#ff5733"), "triadic", 5).id,
-      paletteSeed: 5
+      currentPaletteId: generatePaletteFrom(chroma("#ff5733"), "triadic", 5).id
     }));
     const store = TestBed.inject(AppStateStore);
     const dispatcher = TestBed.inject(Dispatcher);
@@ -259,10 +259,10 @@ describe("restoring a palette segment", () => {
     dispatcher.dispatch(palettesEvents.restorePalette(segment));
 
     expect(store.currentPalette().id).toBe(shared.id);
-    const saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) ?? "{}");
-    expect(saved.currentColor).toBe("#3366cc");
-    expect(saved.currentPaletteId).toBe(shared.id);
-    expect(saved.paletteSeed).toBe(11);
+    const saved = storedPage();
+    expect(saved?.palette.color0.color.hex()).toBe("#3366cc");
+    expect(saved?.palette.id).toBe(shared.id);
+    expect(saved?.seed).toBe(11);
   });
 
 });

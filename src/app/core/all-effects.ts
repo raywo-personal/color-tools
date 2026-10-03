@@ -3,12 +3,12 @@ import {persistenceEvents} from "@core/common/persistence.events";
 import {commonEvents} from "@core/common/common.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {inject} from "@angular/core";
+import {inject, Injector} from "@angular/core";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {AnnouncementService} from "@common/services/announcement.service";
 import {ColorThemeService} from "@common/services/color-theme.service";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
-import {colorThemeChangeEffect, fontAnnouncedEffect, loadFontsEffect} from "@core/common/common.effects";
+import {colorThemeChangeEffect, fontAnnouncedEffect, loadFontsEffect, resolveFontsEffect} from "@core/common/common.effects";
 import {colorChangedEffect, randomColorAnnouncedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
 import {newPaletteAnnouncedEffect} from "@core/palettes/palettes.effects";
 import {contrastPairAnnouncedEffect, placementAnnouncedEffect} from "@core/contrast/contrast.effects";
@@ -30,12 +30,15 @@ export function allEffects(
   // Every polite sentence the effects raise goes through this one service,
   // which decides between a gesture's own sentence and the page's tally -
   // `AnnouncementService` says why. Do not inject `LiveAnnouncer` here.
-  announcements = inject(AnnouncementService)
+  announcements = inject(AnnouncementService),
+  injector = inject(Injector)
 ) {
   return {
     setColorTheme$: colorThemeChangeEffect(events, themeService),
 
     loadFonts$: loadFontsEffect(events, fontLoaderService, store),
+
+    resolveFonts$: resolveFontsEffect(events, injector, store),
 
     fontAnnounced$: fontAnnouncedEffect(events, announcements, store),
 
@@ -49,15 +52,13 @@ export function allEffects(
 
     contrastPairAnnounced$: contrastPairAnnouncedEffect(events, announcements, store),
 
-    // Announced, not persisted: the placements are part of the result, and
-    // carrying them across a reload is #68's - so none of the three events
-    // below joins the persistable list.
     placementAnnounced$: placementAnnouncedEffect(events, announcements, store),
 
     anyPersistableEvents$: events
       .on(
         commonEvents.colorThemeChanged,
         commonEvents.fontSelected,
+        commonEvents.fontsResolved,
         commonEvents.typeSettingsChanged,
         converterEvents.newRandomColorWithNav,
         converterEvents.colorChanged,
@@ -67,11 +68,15 @@ export function allEffects(
         // A restore from the url wins over the storage loaded before it, and
         // is saved so the next reload opens on what the link showed.
         palettesEvents.restorePalette,
+        contrastEvents.restoreContrastType,
         contrastEvents.switchColors,
         contrastEvents.textColorChanged,
         contrastEvents.backgroundColorChanged,
         contrastEvents.contrastColorsChangedWithoutNav,
         contrastEvents.newRandomColorsWithNav,
+        contrastEvents.colorPlaced,
+        contrastEvents.placementReset,
+        contrastEvents.placementsReset,
         transferEvents.sendColorToContrast,
         transferEvents.sendPaletteToContrast
       )

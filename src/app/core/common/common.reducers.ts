@@ -48,6 +48,24 @@ export function fontSelectedReducer(
 
 
 /**
+ * The faces the catalogue completed, each with its weight snapped onto what
+ * the family ships - the same invariant as `fontSelectedReducer()`.
+ */
+export function fontsResolvedReducer(
+  this: void,
+  event: EventInstance<"[Common] fontsResolved", readonly RoleFont[]>,
+  state: AppState
+) {
+  const typeRoles = event.payload.reduce((roles, {role, font}) => withRole(roles, role, {
+    font,
+    settings: normalizedTypeSettingsFor(role, roles[role].settings, weightStopsForRole(role, font))
+  }), state.typeRoles);
+
+  return {typeRoles};
+}
+
+
+/**
  * One role's type settings, normalized on the way in against the face that
  * role is set in.
  *

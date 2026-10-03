@@ -17,6 +17,14 @@ export const commonEvents = eventGroup({
     /** A face for one role; null puts that role back on the app's own type. */
     fontSelected: type<RoleFont>(),
     /**
+     * Faces that stood by name alone, completed from the catalogue - see
+     * `fontNamed()`. A family the catalogue does not carry comes back as
+     * null, the app's own type.
+     *
+     * Not `fontSelected`: nobody picked these, so nothing is announced.
+     */
+    fontsResolved: type<readonly RoleFont[]>(),
+    /**
      * A drag of a type slider, raised per frame.
      *
      * Not persisted: it is not in `anyPersistableEvents$`, so a drag does not

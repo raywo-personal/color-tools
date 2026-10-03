@@ -167,6 +167,12 @@ const BODY_TEXT_SIZE_RATIO = 1;
  * under a picture, a column of figures. They are the smallest and the weakest
  * text on the page on purpose - the disabled label is set lighter than the
  * dim ink, and the caption sits at the small print's size.
+ *
+ * **A new element goes at the end.** The Contrast & Type address names an
+ * element by its index here, so one inserted mid-list shifts every placement
+ * in every address already written; `contrast-type-address.model.spec.ts`
+ * pins the order. The index field holds 32, and a 33rd element needs a new
+ * address format - see `ELEMENT_BITS`.
  */
 export const SAMPLE_ELEMENTS: readonly SampleElement[] = [
   {key: "navActive", caption: "ACTIVE NAV ITEM", role: "ui", sizeRatio: 0.87, textKind: "spotText", ink: "text", ground: "nav", figure: false, boxed: false},

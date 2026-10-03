@@ -6,7 +6,7 @@ import {persistenceEvents} from "./common/persistence.events";
 import {palettesEvents} from "./palettes/palettes.events";
 import {loadAppStateReducer} from "./common/persistence.reducers";
 import {commonEvents} from "./common/common.events";
-import {colorThemeChangedReducer, fontSelectedReducer, typeRoleSelectedReducer, typeSettingsReducer} from "./common/common.reducers";
+import {colorThemeChangedReducer, fontSelectedReducer, fontsResolvedReducer, typeRoleSelectedReducer, typeSettingsReducer} from "./common/common.reducers";
 import {
   newPaletteWithNavReducer,
   newRandomPaletteWithNavReducer,
@@ -31,7 +31,7 @@ import {
   newRandomContrastColorsWithNavReducer,
   placementResetReducer,
   placementsResetReducer,
-  restoreContrastColorsReducer,
+  restoreContrastTypeReducer,
   switchColorsReducer,
   textColorChangedReducer,
   verdictToggledReducer
@@ -48,6 +48,7 @@ export const AppStateStore = signalStore(
     on(commonEvents.colorThemeChanged, colorThemeChangedReducer),
     on(commonEvents.typeRoleSelected, typeRoleSelectedReducer),
     on(commonEvents.fontSelected, fontSelectedReducer),
+    on(commonEvents.fontsResolved, fontsResolvedReducer),
     on(
       commonEvents.typeSettingsAdjusted,
       commonEvents.typeSettingsChanged,
@@ -87,7 +88,7 @@ export const AppStateStore = signalStore(
     on(contrastEvents.contrastColorsChangedWithoutNav, contrastColorsChangedWithoutNavReducer),
     on(contrastEvents.newRandomColorsWithNav, newRandomContrastColorsWithNavReducer),
     on(contrastEvents.switchColors, switchColorsReducer),
-    on(contrastEvents.restoreContrastColors, restoreContrastColorsReducer),
+    on(contrastEvents.restoreContrastType, restoreContrastTypeReducer),
     on(contrastEvents.verdictToggled, verdictToggledReducer),
     // Last, and order-free: nothing else reads the placements or the carried
     // chip, and these read nothing else. Keep them here rather than between
