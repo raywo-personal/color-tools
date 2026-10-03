@@ -1,4 +1,9 @@
 # The 301s stand ahead of the fallback: the first rule that matches wins.
-/convert    /    301
-/palettes   /    301
+# Pages matches a path literally, so the slashed form needs a rule of its
+# own. Without it the fallback serves the app, which has no route for a
+# bare v1 path and shows the not-found page.
+/convert     /    301
+/convert/    /    301
+/palettes    /    301
+/palettes/   /    301
 /*    /index.html   200
