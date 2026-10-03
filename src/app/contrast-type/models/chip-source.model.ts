@@ -31,6 +31,11 @@ export type ChipSource = PaletteSlot | ContrastColorRole;
  * The pair comes last and in the pair's own order - text, then background - so
  * the last two chips stand under the two fields that set them, in the order
  * those fields are in.
+ *
+ * **The order is part of the Contrast & Type address**, which names a source
+ * by its index here: reordering it repaints every placement in every address
+ * already written. The index field holds eight, so a sixth palette slot fills
+ * it - see `SOURCE_BITS`.
  */
 export const CHIP_SOURCES: readonly ChipSource[] = [...PALETTE_SLOTS, "text", "background"];
 
