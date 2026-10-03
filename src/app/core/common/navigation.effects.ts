@@ -139,7 +139,7 @@ function follow(router: Router, url: UrlTree, view: View): void {
 
 
 /**
- * The view the activated route declares through `data: {view}`, or null.
+ * The view the activated route declares through `data: {addressOf}`, or null.
  *
  * The activated route and not the url: before the first navigation, and on
  * the not-found page, no view is showing, and a navigation from there would
@@ -149,7 +149,7 @@ function viewShowing(router: Router): View | null {
   let route = router.routerState.snapshot.root;
   while (route.firstChild) route = route.firstChild;
 
-  const view: unknown = route.data["view"];
+  const view: unknown = route.data["addressOf"];
 
   return view === "studio" || view === "contrast" ? view : null;
 }

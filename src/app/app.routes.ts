@@ -15,8 +15,11 @@ export const routes: Routes = [
     component: Studio,
     canActivate: [paletteGuard],
     title: "ColorTools – Studio",
-    // Which address the navigation effects keep in step with the state.
-    data: {view: "studio"}
+    // Which address the navigation effects keep in step with the state. Not
+    // `view`: input binding lets data win over params, and an input named
+    // after the `:view` param below would receive "contrast" instead of the
+    // address's view segment.
+    data: {addressOf: "studio"}
   },
 
   {
@@ -27,7 +30,7 @@ export const routes: Routes = [
     canActivate: [contrastGuard],
     pathMatch: "full",
     title: "ColorTools – Contrast & Type",
-    data: {view: "contrast"}
+    data: {addressOf: "contrast"}
   },
 
   {
@@ -36,7 +39,7 @@ export const routes: Routes = [
     canActivate: [contrastGuard],
     pathMatch: "full",
     title: "ColorTools – Contrast & Type",
-    data: {view: "contrast"}
+    data: {addressOf: "contrast"}
   },
 
   {
