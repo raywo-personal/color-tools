@@ -15,6 +15,7 @@ import {isRestorablePaletteSegment, PALETTE_SEGMENT_LENGTH, paletteSegmentFrom} 
 import {
   ADDRESS_SEPARATOR,
   contrastTypeAddressFrom,
+  ContrastTypePage,
   isRestorableContrastTypeAddress
 } from "@contrast-type/models/contrast-type-address.model";
 import {DEFAULT_TYPE_SETTINGS_BY_ROLE} from "@engine/contrast/type-role.model";
@@ -27,6 +28,8 @@ import {contrastTypePageOf} from "@core/contrast/contrast.reducers";
 import {fontNamed} from "@common/models/google-font.model";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
 import {SilentFontLoader} from "@testing/font-loader.fake";
+import {GoogleFontsService} from "@common/services/google-fonts.service";
+import {FakeGoogleFonts} from "@testing/google-fonts.fake";
 
 
 describe("app routes", () => {
@@ -61,7 +64,7 @@ describe("app routes", () => {
 
   const palette = generatePaletteFrom(chroma("#3366cc"), "triadic", 11);
   const studioSegment = paletteSegmentFrom(palette, 11);
-  const contrastAddress = contrastTypeAddressFrom({
+  const contrastPage: ContrastTypePage = {
     palette,
     seed: 11,
     text: chroma("#102030"),
@@ -73,7 +76,8 @@ describe("app routes", () => {
       ui: {family: null, settings: DEFAULT_TYPE_SETTINGS_BY_ROLE.ui}
     },
     placements: {headline: {ink: "color3"}}
-  });
+  };
+  const contrastAddress = contrastTypeAddressFrom(contrastPage);
 
 
   describe("the two views", () => {
@@ -417,6 +421,32 @@ describe("app routes", () => {
 
         expect(router.url).toBe(contrastUrlOf(store));
         expect(restores()).toBe(0);
+      });
+
+
+      it("drops a face the catalogue does not list, in the same history entry", async () => {
+        // A link naming a family Google does not serve: the catalogue sets the
+        // role back to the app's type, and the address follows without a
+        // gesture. Back must not lead to the address that named it.
+        const fonts = new FakeGoogleFonts();
+        fonts.loading.set(true);
+        TestBed.overrideProvider(GoogleFontsService, {useValue: fonts});
+        TestBed.overrideProvider(GoogleFontLoaderService, {useValue: new SilentFontLoader()});
+        const unlisted = contrastTypeAddressFrom({
+          ...contrastPage,
+          type: {...contrastPage.type, body: {...contrastPage.type.body, family: "Not A Google Face"}}
+        });
+
+        const {store, router, pushes, replaces} = await openAt(`/contrast/${unlisted}`);
+        expect(store.typeRoles().body.font?.family).toBe("Not A Google Face");
+
+        fonts.succeed();
+        await TestBed.inject(ApplicationRef).whenStable();
+
+        expect(store.typeRoles().body.font).toBeNull();
+        expect(router.url).toBe(contrastUrlOf(store));
+        expect(pushes).not.toHaveBeenCalled();
+        expect(replaces).toHaveBeenCalled();
       });
 
 
