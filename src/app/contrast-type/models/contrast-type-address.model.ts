@@ -404,12 +404,18 @@ function hasControlCharacter(text: string): boolean {
 function familiesFromSegment(segment: string): Record<TypeRole, string | null> | null {
   const fields = segment.split(FAMILY_SEPARATOR);
 
-  if (fields.length !== TYPE_ROLES.length) return null;
+  // Fewer fields than roles is a link cut short, not a corrupted one: chat
+  // clients and GitHub's autolinks leave trailing commas out of the link, and
+  // the app's own type writes an address ending in `,,,`. The count of roles
+  // is fixed, so a missing field can only be a trailing one and only mean the
+  // app's own type. Do not drop the separators from the encoder instead - a
+  // segment of nothing but the app's own type would then be empty.
+  if (fields.length > TYPE_ROLES.length) return null;
 
   const families: Partial<Record<TypeRole, string | null>> = {};
 
   for (const [index, role] of TYPE_ROLES.entries()) {
-    const field = fields[index];
+    const field = fields[index] ?? "";
 
     if (field === "") {
       families[role] = null;

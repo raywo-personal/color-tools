@@ -121,6 +121,18 @@ describe("app routes", () => {
     });
 
 
+    it("opens a contrast & type link whose trailing commas a chat client cut off", async () => {
+      expect(contrastAddress.endsWith(",,,")).toBe(true);
+
+      const {component} = await activatedComponentFor(`/contrast/${contrastAddress.slice(0, -3)}`);
+      const store = TestBed.inject(AppStateStore);
+
+      expect(component).toBe(ContrastType);
+      expect(store.currentPalette().id).toBe(palette.id);
+      expect(store.placements()).toEqual({headline: {ink: "color3"}});
+    });
+
+
     it("opens a tab on the state the visitor already has", async () => {
       await activatedComponentFor(`/contrast/${contrastAddress}`);
 
