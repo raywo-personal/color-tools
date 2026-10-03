@@ -16,6 +16,8 @@ import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {transferEvents} from "@core/common/transfer.events";
+import {Router} from "@angular/router";
+import {contrastTypeAddressEffect, studioAddressEffect} from "@core/common/navigation.effects";
 
 
 export function allEffects(
@@ -31,7 +33,8 @@ export function allEffects(
   // which decides between a gesture's own sentence and the page's tally -
   // `AnnouncementService` says why. Do not inject `LiveAnnouncer` here.
   announcements = inject(AnnouncementService),
-  injector = inject(Injector)
+  injector = inject(Injector),
+  router = inject(Router)
 ) {
   return {
     setColorTheme$: colorThemeChangeEffect(events, themeService),
@@ -53,6 +56,10 @@ export function allEffects(
     contrastPairAnnounced$: contrastPairAnnouncedEffect(events, announcements, store),
 
     placementAnnounced$: placementAnnouncedEffect(events, announcements, store),
+
+    studioAddress$: studioAddressEffect(events, router, store),
+
+    contrastTypeAddress$: contrastTypeAddressEffect(events, router, store),
 
     anyPersistableEvents$: events
       .on(

@@ -14,7 +14,9 @@ export const routes: Routes = [
     matcher: studioMatcher,
     component: Studio,
     canActivate: [paletteGuard],
-    title: "ColorTools – Studio"
+    title: "ColorTools – Studio",
+    // Which address the navigation effects keep in step with the state.
+    data: {view: "studio"}
   },
 
   {
@@ -24,7 +26,8 @@ export const routes: Routes = [
     component: ContrastType,
     canActivate: [contrastGuard],
     pathMatch: "full",
-    title: "ColorTools – Contrast & Type"
+    title: "ColorTools – Contrast & Type",
+    data: {view: "contrast"}
   },
 
   {
@@ -32,7 +35,8 @@ export const routes: Routes = [
     component: ContrastType,
     canActivate: [contrastGuard],
     pathMatch: "full",
-    title: "ColorTools – Contrast & Type"
+    title: "ColorTools – Contrast & Type",
+    data: {view: "contrast"}
   },
 
   {
