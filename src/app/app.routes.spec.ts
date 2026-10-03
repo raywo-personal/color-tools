@@ -30,8 +30,9 @@ import {GoogleFontLoaderService} from "@common/services/google-font-loader.servi
 import {SilentFontLoader} from "@testing/font-loader.fake";
 import {GoogleFontsService} from "@common/services/google-fonts.service";
 import {FakeGoogleFonts} from "@testing/google-fonts.fake";
-import {isRestorablePaletteId, PALETTE_ID_BASE62_LENGTH, paletteIdFrom} from "@engine/palette/palette-id.helper";
-import {CONTRAST_ID_LENGTH, contrastIdFromColors, isRestorableContrastId} from "@engine/contrast/contrast-id.helper";
+import {isRestorablePaletteId, PALETTE_ID_BASE62_LENGTH} from "@engine/palette/palette-id.helper";
+import {PALETTE_SLOTS} from "@engine/palette/palette.model";
+import {CONTRAST_ID_LENGTH, isRestorableContrastId} from "@engine/contrast/contrast-id.helper";
 import {readFileSync} from "node:fs";
 
 
@@ -197,16 +198,33 @@ describe("app routes", () => {
 
   describe("the v1 links", () => {
 
-    it("opens a v1 palette link on the palette it was written with", async () => {
-      const v1Id = paletteIdFrom(palette, palette.style);
+    /**
+     * Written by v1's encoder, not by today's: a link someone bookmarked
+     * carries these characters, so a change to the id layout has to fail
+     * here rather than round-trip through its own decoder. A triadic palette
+     * of #3366cc, #cc3366, #66cc33, #f0e8d8 and #202830, the fourth started
+     * from #ffffff and the third pinned.
+     */
+    const V1_PALETTE_ID = "72x1ThS6PDxAxgwnsB7LUxMwXpfZZB9GB2gDKrzeMLc";
 
-      const {component, url} = await activatedComponentFor(`/palettes/${v1Id}`);
+    /** Written by v1's encoder: #203040 on #e0f0d0. */
+    const V1_PAIR_ID = "0A35XGZhg";
+
+
+    it("opens a v1 palette link on the palette it was written with", async () => {
+      const {component, url} = await activatedComponentFor(`/palettes/${V1_PALETTE_ID}`);
       const [segment] = segmentsOf(url);
+      const restored = TestBed.inject(AppStateStore).currentPalette();
 
       expect(component).toBe(Studio);
       expect(isRestorablePaletteSegment(segment)).toBe(true);
-      expect(segment.startsWith(v1Id)).toBe(true);
-      expect(TestBed.inject(AppStateStore).currentPalette().id).toBe(v1Id);
+      expect(restored.style).toBe("triadic");
+      expect(PALETTE_SLOTS.map(slot => restored[slot].color.hex()))
+        .toEqual(["#3366cc", "#cc3366", "#66cc33", "#f0e8d8", "#202830"]);
+      expect(PALETTE_SLOTS.map(slot => restored[slot].startingColor.hex()))
+        .toEqual(["#3366cc", "#cc3366", "#66cc33", "#ffffff", "#202830"]);
+      expect(PALETTE_SLOTS.map(slot => restored[slot].isPinned))
+        .toEqual([false, false, true, false, false]);
     });
 
 
@@ -214,9 +232,8 @@ describe("app routes", () => {
       await activatedComponentFor(`/contrast/${contrastAddress}`);
       const store = TestBed.inject(AppStateStore);
       const typeRoles = store.typeRoles();
-      const v1Id = contrastIdFromColors({text: chroma("#203040"), background: chroma("#e0f0d0")});
 
-      const {component, url} = await activatedComponentFor(`/contrast/${v1Id}`);
+      const {component, url} = await activatedComponentFor(`/contrast/${V1_PAIR_ID}`);
       const [, ...address] = segmentsOf(url);
 
       expect(component).toBe(ContrastType);
@@ -255,11 +272,8 @@ describe("app routes", () => {
 
 
     it("keeps the fragment through the redirect", async () => {
-      const v1Palette = paletteIdFrom(palette, palette.style);
-      const v1Pair = contrastIdFromColors({text: chroma("#203040"), background: chroma("#e0f0d0")});
-
-      const studio = await activatedComponentFor(`/palettes/${v1Palette}#palette`);
-      const contrast = await activatedComponentFor(`/contrast/${v1Pair}#preview`);
+      const studio = await activatedComponentFor(`/palettes/${V1_PALETTE_ID}#palette`);
+      const contrast = await activatedComponentFor(`/contrast/${V1_PAIR_ID}#preview`);
 
       expect(studio.url.endsWith("#palette")).toBe(true);
       expect(contrast.url.endsWith("#preview")).toBe(true);
