@@ -43,8 +43,8 @@ The README lists the everyday commands. The ones with a catch:
   `pnpm run build:cloudflare` first
 - `pnpm run cf <args>` – wrangler against this project's account; sources the
   untracked `.cloudflare.env`
-- `npx wrangler pages functions build --outdir <tmp>` – the only local run
-  that resolves the Worker's imports the way the deploy does (see "MCP
+- `pnpm exec wrangler pages functions build --outdir <tmp>` – the only local
+  run that resolves the Worker's imports the way the deploy does (see "MCP
   Server")
 
 ## Claude Code Agents And Skills
@@ -389,8 +389,8 @@ itself, so the entry does no routing.
 `import ... from "@modelcontextprotocol/sdk/server/mcp.js"` – with the
 extension. The SDK's exports map adds nothing, so esbuild in Wrangler cannot
 resolve the bare path while TypeScript and Vitest resolve it silently. Only
-`npx wrangler pages functions build --outdir <tmp>` catches the omission before
-the deploy does.
+`pnpm exec wrangler pages functions build --outdir <tmp>` catches the omission
+before the deploy does.
 
 There is no `nodejs_compat` flag and no `wrangler.jsonc`; add either only when a
 bundle actually asks for it.
