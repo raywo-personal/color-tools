@@ -10,8 +10,8 @@ import {
   isRestorableContrastTypeAddress
 } from "@contrast-type/models/contrast-type-address.model";
 import {contrastTypePageOf} from "@core/contrast/contrast.reducers";
-import {generatePaletteFrom} from "@engine/palette/palette.helper";
-import {randomSeed} from "@engine/helpers/random.helper";
+import {AppState} from "@core/models/app-state.model";
+import {rolledPalette} from "./palette-route.guard";
 
 
 /**
@@ -48,7 +48,6 @@ export const CONTRAST_ADDRESS_PARAMS = ["palette", "view", "faces"] as const;
 export const contrastGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boolean | UrlTree => {
   const dispatch = injectDispatch(contrastEvents);
   const store = inject(AppStateStore);
-  const router = inject(Router);
 
   const address = addressIn(route.params) ?? addressIn(route.firstChild?.params ?? {});
 
@@ -59,30 +58,39 @@ export const contrastGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boo
     return true;
   }
 
-  let palette = store.currentPalette();
-  let seed = store.paletteSeed();
+  return contrastTypeUrlTree(address === null ? {} : rolledPalette(store), route.fragment);
+};
 
-  if (address !== null) {
-    seed = randomSeed();
-    palette = generatePaletteFrom(store.currentColor(), store.paletteStyle(), seed);
-  }
+
+/** What a redirect into Contrast & Type may set apart from the state. */
+export type ContrastTypeChanges = Partial<Pick<AppState, "currentPalette" | "paletteSeed" | "contrastColors" | "placements">>;
+
+
+/**
+ * The url of Contrast & Type on the state as it stands, with the given parts
+ * replaced. Runs in an injection context.
+ *
+ * Parsed rather than built from commands. The family names are already
+ * written through `encodeURIComponent`, and `createUrlTree()` would encode
+ * them a second time: a shared link would read `Open%2520Sans`. Parsed, the
+ * router decodes the segment once and `addressIn()` encodes it again.
+ */
+export function contrastTypeUrlTree(changes: ContrastTypeChanges, fragment: string | null): UrlTree {
+  const store = inject(AppStateStore);
+  const router = inject(Router);
 
   const target = contrastTypeAddressFrom(contrastTypePageOf({
-    currentPalette: palette,
-    paletteSeed: seed,
+    currentPalette: store.currentPalette(),
+    paletteSeed: store.paletteSeed(),
     contrastColors: store.contrastColors(),
     typeRoles: store.typeRoles(),
-    placements: store.placements()
+    placements: store.placements(),
+    ...changes
   }));
-
-  // Parsed rather than built from commands. The family names are already
-  // written through `encodeURIComponent`, and `createUrlTree()` would encode
-  // them a second time: a shared link would read `Open%2520Sans`. Parsed, the
-  // router decodes the segment once and `addressIn()` encodes it again.
   const parsed = router.parseUrl(`/contrast/${target}`);
 
-  return new UrlTree(parsed.root, parsed.queryParams, route.fragment);
-};
+  return new UrlTree(parsed.root, parsed.queryParams, fragment);
+}
 
 
 /** The address of the page the state shows. */

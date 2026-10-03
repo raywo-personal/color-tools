@@ -30,6 +30,9 @@ import {GoogleFontLoaderService} from "@common/services/google-font-loader.servi
 import {SilentFontLoader} from "@testing/font-loader.fake";
 import {GoogleFontsService} from "@common/services/google-fonts.service";
 import {FakeGoogleFonts} from "@testing/google-fonts.fake";
+import {isRestorablePaletteId, PALETTE_ID_BASE62_LENGTH, paletteIdFrom} from "@engine/palette/palette-id.helper";
+import {CONTRAST_ID_LENGTH, contrastIdFromColors, isRestorableContrastId} from "@engine/contrast/contrast-id.helper";
+import {readFileSync} from "node:fs";
 
 
 describe("app routes", () => {
@@ -192,6 +195,121 @@ describe("app routes", () => {
   });
 
 
+  describe("the v1 links", () => {
+
+    it("opens a v1 palette link on the palette it was written with", async () => {
+      const v1Id = paletteIdFrom(palette, palette.style);
+
+      const {component, url} = await activatedComponentFor(`/palettes/${v1Id}`);
+      const [segment] = segmentsOf(url);
+
+      expect(component).toBe(Studio);
+      expect(isRestorablePaletteSegment(segment)).toBe(true);
+      expect(segment.startsWith(v1Id)).toBe(true);
+      expect(TestBed.inject(AppStateStore).currentPalette().id).toBe(v1Id);
+    });
+
+
+    it("opens a v1 contrast link on its pair, with the visitor's palette and type and no placements", async () => {
+      await activatedComponentFor(`/contrast/${contrastAddress}`);
+      const store = TestBed.inject(AppStateStore);
+      const typeRoles = store.typeRoles();
+      const v1Id = contrastIdFromColors({text: chroma("#203040"), background: chroma("#e0f0d0")});
+
+      const {component, url} = await activatedComponentFor(`/contrast/${v1Id}`);
+      const [, ...address] = segmentsOf(url);
+
+      expect(component).toBe(ContrastType);
+      expect(isRestorableContrastTypeAddress(address.join(ADDRESS_SEPARATOR))).toBe(true);
+      expect(store.contrastColors().text.hex()).toBe("#203040");
+      expect(store.contrastColors().background.hex()).toBe("#e0f0d0");
+      expect(store.currentPalette().id).toBe(palette.id);
+      expect(store.paletteSeed()).toBe(11);
+      expect(store.typeRoles()).toEqual(typeRoles);
+      expect(store.placements()).toEqual({});
+    });
+
+
+    it("lands a v1 palette link it cannot read on a freshly rolled palette", async () => {
+      const unreadable = "z".repeat(PALETTE_ID_BASE62_LENGTH);
+      expect(isRestorablePaletteId(unreadable)).toBe(false);
+
+      const {component, url} = await activatedComponentFor(`/palettes/${unreadable}`);
+      const [segment] = segmentsOf(url);
+
+      expect(component).toBe(Studio);
+      expect(isRestorablePaletteSegment(segment)).toBe(true);
+    });
+
+
+    it("lands a v1 contrast link it cannot read on a freshly rolled palette", async () => {
+      const unreadable = "z".repeat(CONTRAST_ID_LENGTH);
+      expect(isRestorableContrastId(unreadable)).toBe(false);
+
+      const {component, url} = await activatedComponentFor(`/contrast/${unreadable}`);
+      const [, ...address] = segmentsOf(url);
+
+      expect(component).toBe(ContrastType);
+      expect(isRestorableContrastTypeAddress(address.join(ADDRESS_SEPARATOR))).toBe(true);
+    });
+
+
+    it("keeps the fragment through the redirect", async () => {
+      const v1Palette = paletteIdFrom(palette, palette.style);
+      const v1Pair = contrastIdFromColors({text: chroma("#203040"), background: chroma("#e0f0d0")});
+
+      const studio = await activatedComponentFor(`/palettes/${v1Palette}#palette`);
+      const contrast = await activatedComponentFor(`/contrast/${v1Pair}#preview`);
+
+      expect(studio.url.endsWith("#palette")).toBe(true);
+      expect(contrast.url.endsWith("#preview")).toBe(true);
+    });
+
+
+    it("leaves a path that was never a v1 link to the not-found page", async () => {
+      const {component} = await activatedComponentFor("/palettes/extra");
+
+      expect(component).toBe(NotFound);
+    });
+
+  });
+
+
+  describe("the files the server reads first", () => {
+
+    it("answers the v1 paths without an id with a 301 to the start page, ahead of the app", () => {
+      const rules = readFileSync("public/_redirects", "utf8")
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line !== "" && !line.startsWith("#"))
+        .map(line => line.split(/\s+/));
+      const fallback = rules.findIndex(([from]) => from === "/*");
+
+      for (const path of ["/convert", "/palettes"]) {
+        const index = rules.findIndex(([from]) => from === path);
+
+        expect(rules[index]).toEqual([path, "/", "301"]);
+        expect(index).toBeLessThan(fallback);
+      }
+    });
+
+
+    it("lists only addresses the app answers in the sitemap", async () => {
+      const paths = [...readFileSync("public/sitemap.xml", "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)]
+        .map(([, loc]) => new URL(loc).pathname);
+
+      expect(paths.length).toBeGreaterThan(0);
+
+      for (const path of paths) {
+        const {component} = await activatedComponentFor(path);
+
+        expect(component, path).not.toBe(NotFound);
+      }
+    });
+
+  });
+
+
   describe("the wildcard route", () => {
 
     it("catches an unknown top level path", async () => {
@@ -224,7 +342,7 @@ describe("app routes", () => {
     });
 
 
-    it("catches a v1 url", async () => {
+    it("catches a v1 path without an id, which the server redirects before the app loads", async () => {
       const {component} = await activatedComponentFor("/convert");
 
       expect(component).toBe(NotFound);

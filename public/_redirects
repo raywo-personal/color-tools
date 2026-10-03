@@ -1,1 +1,4 @@
+# The 301s stand ahead of the fallback: the first rule that matches wins.
+/convert    /    301
+/palettes   /    301
 /*    /index.html   200
