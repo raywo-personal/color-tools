@@ -25,6 +25,10 @@ export const CONTRAST_ADDRESS_PARAMS = ["palette", "view", "faces"] as const;
 /**
  * Guard function that restores Contrast & Type from its address.
  *
+ * - If the params spell the address of the state as it stands: allows
+ *   navigation and restores nothing (returns true). That is the address
+ *   `contrastTypeAddressEffect` has just written, and every change would
+ *   otherwise be restored a second time
  * - If the params spell a restorable address: restores the page as a whole
  *   and allows navigation (returns true)
  * - If the path carries no address: redirects to the address of the state as
@@ -35,8 +39,8 @@ export const CONTRAST_ADDRESS_PARAMS = ["palette", "view", "faces"] as const;
  *   placements, and redirects to that page's address, as the Studio does for
  *   a segment it cannot read
  *
- * Either redirect passes this guard again and restores the same page, so it
- * never loops, and keeps the fragment.
+ * Either redirect passes this guard again, so it never loops, and keeps the
+ * fragment.
  *
  * @param route - The active route snapshot
  * @returns true to allow navigation, or UrlTree to redirect to an address
@@ -47,6 +51,8 @@ export const contrastGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boo
   const router = inject(Router);
 
   const address = addressIn(route.params) ?? addressIn(route.firstChild?.params ?? {});
+
+  if (address !== null && address === currentAddress(store)) return true;
 
   if (address !== null && isRestorableContrastTypeAddress(address)) {
     dispatch.restoreContrastType(address);
@@ -77,6 +83,18 @@ export const contrastGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boo
 
   return new UrlTree(parsed.root, parsed.queryParams, route.fragment);
 };
+
+
+/** The address of the page the state shows. */
+function currentAddress(store: AppStateStore): string {
+  return contrastTypeAddressFrom(contrastTypePageOf({
+    currentPalette: store.currentPalette(),
+    paletteSeed: store.paletteSeed(),
+    contrastColors: store.contrastColors(),
+    typeRoles: store.typeRoles(),
+    placements: store.placements()
+  }));
+}
 
 
 /**

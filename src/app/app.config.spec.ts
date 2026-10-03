@@ -3,6 +3,9 @@ import {bootstrapApplication} from "@angular/platform-browser";
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import {appConfig} from "./app.config";
 import {App} from "./app";
+import {Dispatcher} from "@ngrx/signals/events";
+import chroma from "chroma-js";
+import {converterEvents} from "@core/converter/converter.events";
 
 
 describe("app config", () => {
@@ -59,6 +62,23 @@ describe("app config", () => {
       await nextFrame();
 
       expect(scrollTo).not.toHaveBeenCalled();
+    });
+
+
+    it("keeps focus on the control the visitor used when the address follows a change", async () => {
+      await boot("/#palette");
+      await vi.waitFor(() => expect(document.activeElement?.id).toBe("palette"));
+
+      const control = document.querySelector<HTMLElement>("ct-studio button");
+      control?.focus();
+      const before = location.pathname;
+
+      app?.injector.get(Dispatcher).dispatch(converterEvents.colorChanged(chroma("#3366cc")));
+      await app?.whenStable();
+      await nextFrame();
+
+      expect(location.pathname).not.toBe(before);
+      expect(document.activeElement).toBe(control);
     });
 
   });

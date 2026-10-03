@@ -17,9 +17,6 @@ import {transferEvents} from "@core/common/transfer.events";
  * neighbouring questions - what does my palette hold, and show me something
  * else entirely - and apart from the chip row above, which sets one half at a
  * time and leaves the other alone.
- *
- * The `WithNav` in the random pair's event name is v1's: the navigation
- * effects are not registered, so the event changes the state and nothing else.
  */
 @Component({
   selector: "ct-pair-actions",
