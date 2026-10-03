@@ -3,6 +3,7 @@ import {provideRouter, Router} from "@angular/router";
 import {provideZonelessChangeDetection} from "@angular/core";
 import {beforeEach, describe, expect, it} from "vitest";
 import {AppHeader} from "@shell/components/app-header/app-header";
+import {PALETTE_SEGMENT_LENGTH} from "@engine/palette/palette-segment.helper";
 
 
 describe("AppHeader", () => {
@@ -12,7 +13,8 @@ describe("AppHeader", () => {
       providers: [
         provideZonelessChangeDetection(),
         // Only the paths matter here: the tabs read the url, not the route
-        // table. `app.routes.spec.ts` pins that these paths exist.
+        // table, and the wildcard takes the addresses. `app.routes.spec.ts`
+        // pins that these paths exist.
         provideRouter([
           {path: "", pathMatch: "full", children: []},
           {path: "contrast", children: []},
@@ -53,6 +55,24 @@ describe("AppHeader", () => {
 
     expect(studio.getAttribute("aria-current")).toBe("page");
     expect(contrast.getAttribute("aria-current")).toBeNull();
+  });
+
+
+  it("marks the studio tab on the studio's address", async () => {
+    const header = await headerAt(`/${"0".repeat(PALETTE_SEGMENT_LENGTH)}`);
+    const [studio, contrast] = tabs(header);
+
+    expect(studio.getAttribute("aria-current")).toBe("page");
+    expect(contrast.getAttribute("aria-current")).toBeNull();
+  });
+
+
+  it("marks the contrast tab on the contrast address", async () => {
+    const header = await headerAt("/contrast/a/b/,,,");
+    const [studio, contrast] = tabs(header);
+
+    expect(studio.getAttribute("aria-current")).toBeNull();
+    expect(contrast.getAttribute("aria-current")).toBe("page");
   });
 
 

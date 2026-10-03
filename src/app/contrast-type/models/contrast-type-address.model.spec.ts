@@ -204,6 +204,36 @@ describe("Contrast & Type address", () => {
   });
 
 
+  describe("a link cut short at the end", () => {
+
+    const view = rawView(validTypeIndices, []);
+    const withFaces = (faces: string) => [paletteSegmentFrom(palette, 11), view, faces].join("/");
+
+
+    it("reads the family fields a link lost at its end as the app's own type", () => {
+      for (const faces of ["", ",", ",,"]) {
+        const restored = contrastTypePageFromAddress(withFaces(faces));
+
+        expect(TYPE_ROLES.map(role => restored.type[role].family)).toEqual([null, null, null, null]);
+      }
+    });
+
+
+    it("keeps the families that stand before the lost fields", () => {
+      const restored = contrastTypePageFromAddress(withFaces("Open%20Sans,Inter"));
+
+      expect(TYPE_ROLES.map(role => restored.type[role].family)).toEqual(["Open Sans", "Inter", null, null]);
+    });
+
+
+    it("reads the same page as the address the encoder wrote", () => {
+      expect(contrastTypePageFromAddress(withFaces("Open%20Sans")))
+        .toEqual(contrastTypePageFromAddress(withFaces("Open%20Sans,,,")));
+    });
+
+  });
+
+
   describe("what the decoder rejects", () => {
 
     const valid = contrastTypeAddressFrom(page);
@@ -278,8 +308,7 @@ describe("Contrast & Type address", () => {
         .toBe(false);
     });
 
-    it("a typeface segment with a field too few or too many", () => {
-      expect(isRestorableContrastTypeAddress(addressWithView(rawView(validTypeIndices, [])).replace(/,,,$/, ",,"))).toBe(false);
+    it("a typeface segment with a field too many", () => {
       expect(isRestorableContrastTypeAddress(addressWithView(rawView(validTypeIndices, [])).replace(/,,,$/, ",,,,"))).toBe(false);
     });
 
