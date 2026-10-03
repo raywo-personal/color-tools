@@ -2,19 +2,35 @@ import {Routes} from "@angular/router";
 import {Studio} from "@studio/components/studio/studio";
 import {ContrastType} from "@contrast-type/components/contrast-type/contrast-type";
 import {NotFound} from "@common/components/not-found/not-found";
+import {studioMatcher} from "./routes/studio-route.matcher";
+import {paletteGuard} from "./routes/palette-route.guard";
+import {contrastGuard} from "./routes/contrast-route.guard";
 
 
 export const routes: Routes = [
   {
-    path: "",
+    // `/` and `/<palette segment>`. The guard sends a bare `/` on to the
+    // address of the state the visitor already has.
+    matcher: studioMatcher,
     component: Studio,
-    pathMatch: "full",
+    canActivate: [paletteGuard],
     title: "ColorTools – Studio"
   },
 
   {
+    // A bare `/contrast` is what the tabs link to; the guard sends it on to
+    // the address below.
     path: "contrast",
     component: ContrastType,
+    canActivate: [contrastGuard],
+    pathMatch: "full",
+    title: "ColorTools – Contrast & Type"
+  },
+
+  {
+    path: "contrast/:palette/:view/:faces",
+    component: ContrastType,
+    canActivate: [contrastGuard],
     pathMatch: "full",
     title: "ColorTools – Contrast & Type"
   },

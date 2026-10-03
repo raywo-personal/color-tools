@@ -1,6 +1,7 @@
-import {Component, inject} from "@angular/core";
-import {isActive, Router, RouterLink} from "@angular/router";
+import {Component, computed, inject} from "@angular/core";
+import {isActive, PRIMARY_OUTLET, Router, RouterLink} from "@angular/router";
 import {ThemeControl} from "@shell/components/theme-control/theme-control";
+import {isStudioPath} from "@studio/models/studio-address.model";
 
 
 @Component({
@@ -21,10 +22,19 @@ export class AppHeader {
   readonly #router = inject(Router);
 
   /**
-   * `paths: "exact"` because the start page is the empty path: with the
-   * default "subset" every url would activate the studio tab.
+   * By the path's shape, as the Studio's route matches it: `isActive("/")`
+   * cannot tell `/<palette segment>` from any other one-segment path, exact
+   * or not. `router.url` is not a signal, so the completed navigation is what
+   * makes it readable again.
    */
-  protected readonly studioActive = isActive("/", this.#router, {paths: "exact"});
+  protected readonly studioActive = computed(() => {
+    this.#router.lastSuccessfulNavigation();
+
+    const segments = this.#router.parseUrl(this.#router.url).root.children[PRIMARY_OUTLET]?.segments ?? [];
+
+    return isStudioPath(segments.map(segment => segment.path));
+  });
+
   protected readonly contrastActive = isActive("/contrast", this.#router);
 
 }

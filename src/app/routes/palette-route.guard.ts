@@ -8,36 +8,49 @@ import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import {randomSeed} from "@engine/helpers/random.helper";
 
 
+/** The route param that holds the palette segment. `studioMatcher` sets it. */
+export const PALETTE_SEGMENT_PARAM = "palette";
+
+
 /**
- * A route guard function that ensures the necessary palette data is prepared
- * before activation.
+ * Guard function that restores the Studio from its address.
  *
- * - If a valid palette segment is present: restores the palette with its
- *   seed and allows navigation (returns true)
- * - If no segment, or one `isRestorablePaletteSegment()` rejects: rolls a
- *   new palette on the current color and redirects to its segment (returns
- *   UrlTree). The redirect passes this guard again and restores the palette
- *   as a whole; a bare palette id there would be rejected and loop.
- * @param {ActivatedRouteSnapshot} route - The current activated route snapshot
- *                                         containing route parameters.
- * @returns {boolean} Returns `true` to allow route activation.
+ * - If the path carries a restorable palette segment: restores the palette
+ *   with its seed and allows navigation (returns true)
+ * - If the path carries no segment: redirects to the segment of the state as
+ *   it stands (returns UrlTree). The header's tab and the not-found page link
+ *   to a bare `/`; a fresh palette there would roll one on every tab click
+ * - If the path carries a segment `isRestorablePaletteSegment()` rejects:
+ *   rolls a new palette on the current color and redirects to its segment
+ *
+ * Either redirect passes this guard again and restores the palette as a
+ * whole, so it never loops, and keeps the fragment, so a link into one of the
+ * Studio's sections still lands there.
+ *
+ * @param route - The active route snapshot
+ * @returns true to allow navigation, or UrlTree to redirect to an address
  */
 export const paletteGuard: CanActivateFn = (route: ActivatedRouteSnapshot): boolean | UrlTree => {
   const dispatch = injectDispatch(palettesEvents);
-  const stateStore = inject(AppStateStore);
+  const store = inject(AppStateStore);
   const router = inject(Router);
 
-  const routePaletteId = route.params["paletteId"]
-    ?? route.firstChild?.params["paletteId"];
-  const restorable = !!routePaletteId && isRestorablePaletteSegment(routePaletteId);
+  const segment: unknown = route.params[PALETTE_SEGMENT_PARAM]
+    ?? route.firstChild?.params[PALETTE_SEGMENT_PARAM];
 
-  if (restorable) {
-    dispatch.restorePalette(routePaletteId);
+  if (typeof segment === "string" && isRestorablePaletteSegment(segment)) {
+    dispatch.restorePalette(segment);
     return true;
   }
 
-  const seed = randomSeed();
-  const palette = generatePaletteFrom(stateStore.currentColor(), stateStore.paletteStyle(), seed);
+  let target: string;
 
-  return router.createUrlTree(["/palettes", paletteSegmentFrom(palette, seed)]);
+  if (segment === undefined) {
+    target = paletteSegmentFrom(store.currentPalette(), store.paletteSeed());
+  } else {
+    const seed = randomSeed();
+    target = paletteSegmentFrom(generatePaletteFrom(store.currentColor(), store.paletteStyle(), seed), seed);
+  }
+
+  return router.createUrlTree(["/", target], {fragment: route.fragment ?? undefined});
 };

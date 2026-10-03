@@ -147,10 +147,19 @@ through them, never through relative `../../` paths.
 
 `paletteIdFrom()` encodes a palette into a fixed-length base62 id; its helper
 documents the layout. `contrastIdFromColors()` is the v1 pair encoding: read
-for v1 links and v1 storage, written into nothing new. No route takes an
-address until the new screens have shareable urls of their own. The guards in
-`src/app/routes/` and the navigation effects in
-`core/common/navigation.effects.ts` wait for that and are not registered.
+for v1 links and v1 storage, written into nothing new.
+
+Both views take their state from the url through the guards in
+`src/app/routes/`.
+
+- The Studio answers `/` and `/<palette segment>` through `studioMatcher`,
+  which matches the segment's shape. Never a bare `:palette` param: it takes
+  every one-segment path, and a mistyped one opens the Studio instead of
+  `NotFound`
+- A path without an address redirects to the state the visitor already has;
+  the tabs link to bare paths, so a fresh state there rolls on every click.
+  Only an unreadable address gets a freshly rolled palette
+- A redirect keeps the fragment
 
 The Studio's address is the palette segment: `paletteSegmentFrom()` appends
 the seed to the palette id. A restore goes through `restoredPaletteState()` and
@@ -267,8 +276,9 @@ differ, this file wins because it describes what this codebase does.
   for layout: the implicit `NgForm` breaks `ngModel` registration across
   component boundaries (NG01354)
 - Routes are eager, every route carries a `title` (Angular leaves the previous
-  one standing otherwise), feature routes carry `pathMatch: "full"`, and the
-  router already binds route params to component inputs
+  one standing otherwise), feature routes carry `pathMatch: "full"` or a
+  matcher that matches whole paths, and the router already binds route
+  params to component inputs
 - A route opts out of the app header through `data: {appHeader: false}`, and
   only on `NotFound`'s terms: it has to carry a way off the page itself.
   `app.spec.ts` and `not-found.spec.ts` pin both

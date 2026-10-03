@@ -57,7 +57,7 @@ export const ADDRESS_SEPARATOR = "/";
  * through `encodeURIComponent`**, which turns a `,` into `%2C`. That is part of
  * the format: a name written without it splits into a field too many.
  */
-const FAMILY_SEPARATOR = ",";
+export const FAMILY_SEPARATOR = ",";
 
 /** How many placements a page can hold: one per side of every element. */
 export const MAX_PLACEMENTS = SAMPLE_ELEMENTS.length * SAMPLE_PLACEMENTS.length;
