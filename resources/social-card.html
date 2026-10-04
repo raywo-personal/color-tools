@@ -1,0 +1,126 @@
+<!doctype html>
+<!--
+  The source of public/social-media.png, the card og:image and
+  twitter:image point at. Render it at exactly 1200 x 630 CSS pixels and
+  a device pixel ratio of 1: the meta tags in src/index.html promise that
+  size. studio.png and contrast-type.png beside it are the two views shot
+  at 1440 x 1000 and twice the pixel density, in the light theme.
+
+  Colours are the light tokens of src/styles.css, so the card looks like
+  the app it advertises.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Color Tools - social media card</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500&display=block">
+  <style>
+    :root {
+      --bg: #FAF8F4;
+      --text: #1B1917;
+      --dim: #7A736A;
+      --line: #E4DED4;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans", sans-serif;
+    }
+
+    .card { position: relative; width: 1200px; height: 630px; }
+
+    .intro { position: absolute; left: 64px; top: 64px; width: 380px; }
+
+    .wordmark {
+      margin: 0;
+      font-family: "Instrument Serif", serif;
+      font-weight: 400;
+      font-size: 96px;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+    }
+
+    .views { margin: 28px 0 0; padding: 0; list-style: none; }
+
+    .views li { margin-bottom: 14px; font-size: 21px; line-height: 1.35; }
+
+    .views strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+    }
+
+    .window {
+      position: absolute;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--bg);
+      box-shadow: 0 24px 60px rgb(27 25 23 / 0.14), 0 2px 6px rgb(27 25 23 / 0.06);
+    }
+
+    .window .bar {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      height: 30px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .window .bar i {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--line);
+    }
+
+    .window .shot { overflow: hidden; }
+
+    .window img { display: block; }
+
+    /* The Studio from its header down to the palette. */
+    .studio { left: 488px; top: 48px; width: 760px; height: 640px; }
+
+    .studio img { width: 760px; margin-top: -8px; }
+
+    /* Contrast & Type without its right-hand column, whose font search
+       has no catalogue to answer from where these shots are taken. */
+    .contrast { left: 64px; top: 318px; width: 500px; height: 360px; }
+
+    .contrast .shot { width: 500px; }
+
+    .contrast img { width: 812px; margin: -60px 0 0 -48px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="intro">
+      <h1 class="wordmark">Color Tools</h1>
+      <ul class="views">
+        <li><strong>STUDIO</strong>Build a palette from one color.</li>
+        <li><strong>CONTRAST &amp; TYPE</strong>Read it on a real page, rated by APCA.</li>
+      </ul>
+    </div>
+
+    <div class="window studio">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="shot"><img src="studio.png" alt=""></div>
+    </div>
+
+    <div class="window contrast">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="shot"><img src="contrast-type.png" alt=""></div>
+    </div>
+  </div>
+</body>
+</html>
