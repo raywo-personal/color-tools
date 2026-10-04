@@ -18,23 +18,26 @@
       "@common/*": [
         "./src/app/common/*"
       ],
-      "@converter/*": [
-        "./src/app/converter/*"
+      "@engine/*":  [
+        "./src/engine/*"
       ],
-      "@header/*": [
-        "./src/app/header/*"
+      "@shell/*": [
+        "./src/app/shell/*"
       ],
-      "@palettes/*": [
-        "./src/app/palettes/*"
+      "@studio/*": [
+        "./src/app/studio/*"
+      ],
+      "@contrast-type/*": [
+        "./src/app/contrast-type/*"
       ],
       "@core/*": [
         "./src/app/core/*"
       ],
-      "@contrast/*": [
-        "./src/app/contrast/*"
-      ],
       "@environments/*": [
         "./src/environments/*"
+      ],
+      "@testing/*": [
+        "./src/testing/*"
       ]
     }
   },

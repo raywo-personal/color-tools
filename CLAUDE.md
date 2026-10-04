@@ -1,417 +1,475 @@
 # CLAUDE.md
 
-Guidance for coding agents working in this repository. This is the single source
-of truth for project conventions - `AGENTS.md` in the repository root is a
-symlink to this file, so any agent that looks for either name reads the same
-content.
+Guidance for coding agents working in this repository. `AGENTS.md` in the
+repository root is a symlink to this file, so any agent that looks for either
+name reads the same content.
+
+Rules here say what to do and, where a plausible mistake is at stake, why. The
+longer story behind a rule sits as a comment at the place in the code that it
+protects – read it there, and put a new one there too.
 
 ## Questions Are Not Work Orders
 
-- A question asks for an answer, not for a change. Diagnose the cause, explain the reasoning, name the options, recommend one - then stop.
-- Editing files, adding or removing dependencies, running migrations and committing require an explicit instruction to do it, however obvious or small the change looks.
-- Reading files, searching the codebase and running read-only commands is always fine.
+- A question asks for an answer, not for a change. Diagnose the cause, explain
+  the reasoning, name the options, recommend one – then stop.
+- Editing files, adding or removing dependencies, running migrations and
+  committing require an explicit instruction to do it, however obvious or small
+  the change looks.
+- Reading files, searching the codebase, and running read-only commands is
+  always fine.
 
 ## Project Overview
 
-ColorTools is an Angular 22 web application for color manipulation and analysis, featuring a color converter, a palette generator and a contrast checker. The app uses signals-based state management with @ngrx/signals and deploys to Cloudflare Pages.
-
-The app is zoneless (`provideZonelessChangeDetection()` in `src/app/app.config.ts`) and fully signal-based. There is no zone.js and no `ChangeDetectionStrategy` annotation anywhere in `src/` - Angular 22 makes OnPush the default.
+ColorTools is an Angular 22 web application for color manipulation and
+analysis: a color studio and a contrast checker. State is a signal store on
+@ngrx/signals, the app is zoneless, and it deploys to Cloudflare Pages together
+with an MCP server on the same colour engine.
 
 Live site: https://color-tools.skillbird.de/
 
-## Development Commands
+## Commands
 
-### Basic Commands
+The README lists the everyday commands. The ones with a catch:
 
-- `pnpm install` - Install dependencies
-- `pnpm start` - Start dev server (defaults to development configuration)
-- `pnpm build` - Build for production
-- `pnpm test` - Run tests with Vitest
-- `pnpm run build:cloudflare` - Build for the Cloudflare Pages deployment
-- `pnpm run test:ci` - Single test run (no watch), as used in CI
-- `pnpm run cf <args>` - Run wrangler against this project's Cloudflare account; sources the untracked `.cloudflare.env` (see README)
-
-### Build Configurations
-
-The project has four build configurations:
-
-- `production` - Production build with optimization and output hashing
-- `cloudflare` - Cloudflare Pages deployment (same as production but without localization)
-- `development` - Dev build with source maps, no optimization
-- `testing` - Build target consumed by the `test` target; not meant to be built directly
+- `pnpm lint` – ESLint plus `tools/lint-sizes.js`. Both halves always run and
+  the exit codes are combined; do not join them with `&&`, or a sizing finding
+  hides behind the first ESLint one
+- `pnpm test` – the app's specs under `src/**`, through
+  `@angular/build:unit-test` with Vitest and happy-dom; `pnpm run test:ci` for
+  a single run
+- `pnpm run mcp:test` – the MCP server's specs under `functions/**`, through
+  `vitest.config.mcp.ts` in node. The two runs do not overlap
+- `pnpm run mcp:dev` – serves `dist/` plus the MCP server; needs a
+  `pnpm run build:cloudflare` first
+- `pnpm run cf <args>` – wrangler against this project's account; sources the
+  untracked `.cloudflare.env`
+- `pnpm exec wrangler pages functions build --outdir <tmp>` – the only local
+  run that resolves the Worker's imports the way the deploy does (see "MCP
+  Server")
 
 ## Claude Code Agents And Skills
 
-The skills and agents this project relies on come from the `rw` plugin
-(marketplace `raywo-personal`, repository
-`raywo-personal/claude-agents-and-skills`). The plugin is installed per user,
-not vendored into this repository - there is nothing under `.claude/` to
-commit, and `.claude/settings.local.json` stays untracked.
-
-That plugin is **shared across projects**, so a change to a skill affects every
-project using it. Project-specific rules therefore do not belong there: if a
-convention only holds for ColorTools, it goes in this file. The skills describe
-general practice; this file describes what this codebase actually does, and it
+Skills and agents come from the `rw` plugin (marketplace `raywo-personal`,
+repository `raywo-personal/claude-agents-and-skills`), installed per user.
+Nothing under `.claude/` is committed. The plugin is shared across projects, so
+a convention that only holds for ColorTools goes in this file – and this file
 wins where the two differ.
 
 ## Writing Text For GitHub
 
-Anything GitHub renders as HTML is **not** hard-wrapped - its UI does the
-wrapping, and a hard wrap produces ragged paragraphs and breaks quoting in
-comments. This covers issue bodies and comments, PR descriptions, PR and review
-comments, replies to review comments, and release notes.
-
-One paragraph is one line. Break only where the break carries meaning: between
-paragraphs, per list item, per table row, and around code blocks.
-
-Hard-wrapping stays for anything read in monospace without reflow: commit
-messages (subject at most 50 characters, body wrapped at 72), files in this
-repository including this one, and code comments.
-
-This is the convention from the `rw` plugin's README, adopted here because
-that README asks each project to adopt it explicitly - the rule applies
-whenever GitHub text is written, including when no skill is running.
-
-## Architecture
-
-### State Management
-
-The app uses a centralized state management system built on @ngrx/signals:
-
-- **AppStateStore** (`src/app/core/app-state.store.ts`) - Central signal store configured with:
-  - Initial state from `src/app/core/models/app-state.model.ts`
-  - Reducers that handle state updates via events
-  - Effects that trigger side effects (localStorage persistence, routing, theme changes)
-
-- **Events** - Domain-specific event emitters located in `src/app/core/{domain}/{domain}.events.ts`:
-  - `converterEvents` - Color conversion and manipulation
-  - `palettesEvents` - Palette generation and updates
-  - `contrastEvents` - Contrast color management (text/background color changes, color switching, random generation, restoration)
-  - `commonEvents` - Theme changes and common actions
-  - `transferEvents` - Cross-domain color transfers (palette starters, contrast colors)
-  - `persistenceEvents` - State persistence to localStorage
-
-- **Reducers** – Pure functions in `src/app/core/{domain}/{domain}.reducers.ts` that update state based on events
-
-- **Effects** – Side effect handlers in `src/app/core/{domain}/{domain}.effects.ts`, all registered in `allEffects()` in `src/app/core/all-effects.ts`:
-  - `setColorTheme$` - Theme application via ColorThemeService
-  - `loadFont$` - Google font loading via GoogleFontLoaderService
-  - `setBackgroundColor$` - Background color updates
-  - `navigateToPalette$` - Navigation to palette URLs
-  - `navigateToContrast$` - Navigation to contrast URLs
-  - `colorChanged$` - Theme reaction to a changed converter color
-  - `anyPersistableEvents$` - Maps every persistable event to `saveAppState()`
-  - `persist$` - State persistence to localStorage
-
-### Application Structure
-
-State is divided into four domains:
-
-1. **Converter** (`src/app/converter/`) - Color conversion and tint/shade generation
-
-- Manages current color, display format (RGB/HSL/HEX/OKLCH), and color space
-  settings
-- Generates tints and shades using Bezier interpolation when enabled
-- State: `currentColor`, `textColor`, `useAsBackground`, `correctLightness`, `useBezier`, `displayColorSpace`, `tintColors`, `shadeColors`
-
-2. **Palettes** (`src/app/palettes/`) - Color palette generation
-
-- Ten palette styles, defined in `PaletteStyles` (`src/app/palettes/models/palette-style.model.ts`): random, analogous, muted-analog-split, harmonic, monochromatic, vibrant-balanced, high-contrast, triadic, complementary, split-complementary
-- `generatePalette()` in `src/app/palettes/helper/palette.helper.ts` dispatches the style to its generator
-- Each style has a dedicated generator in `src/app/palettes/helper/*-palette.helper.ts`
-- Palettes support pinned colors that remain fixed during regeneration
-- State: `paletteStyle`, `useRandomStyle`, `currentPalette`
-
-3. **Contrast** (`src/app/contrast/`) - Color contrast analysis and accessibility
-
-- Analyzes text and background color combinations for readability
-- Uses APCA (Accessible Perceptual Contrast Algorithm) for contrast calculation
-- Supports color switching, random generation, and restoration from IDs
-- State: `contrastColors` (text color, background color, contrast value)
-
-4. **Common** (`src/app/common/`) - Shared utilities and theme management
-
-- State: `colorTheme` (light/dark/system), `selectedFont`
-
-### Palette ID System
-
-Palettes can be encoded into shareable URLs via a compact ID system:
-
-- **Encoding** (`paletteIdFromPalette`) - Converts palette to a fixed-length 43-character string:
-  - First character: style index as a single decimal digit, parsed with `parseInt(id[0], 10)`
-  - Remaining 42 characters: base62-encoded payload of 31 bytes - 30 RGB bytes for 10 colors (5 current + 5 starting colors) plus one trailing byte holding the pinned-colors bitmask
-  - The payload is fixed-length, so the pinned bitmask is always encoded, even when nothing is pinned
-
-- **Decoding** (`paletteFromId`) - Restores palette from ID:
-  - Extracts style, colors, and pinned state
-  - Reconstructs full palette with starting colors for regeneration
-
-This allows palettes to be shared via URL: `/palettes/{paletteId}`
-
-**Known limit:** the style index occupies exactly one decimal digit, so at most
-ten styles are representable. `PaletteStyles` currently holds ten entries - the
-format is at capacity. An eleventh style would need a wider index field;
-`styleFromPaletteId` would otherwise silently fall back to a random style.
-
-### Contrast ID System
-
-Contrast color pairs can be encoded into shareable URLs via a compact ID system:
-
-- **Encoding** (`contrastIdFromColors`) - Converts two colors to base62-encoded string:
-  - 6 bytes (2 colors × 3 RGB channels) encoded in base62
-  - Fixed length: 9 characters
-  - Encodes text color RGB + background color RGB
-
-- **Decoding** (`contrastColorsFromId`) - Restores colors from ID:
-  - Extracts RGB values for both text and background colors
-  - Calculates APCA contrast value between the colors
-  - Returns ContrastColors object with text, background, and contrast value
-
-- **Random Generation** (`generateRandomContrastColors`) - Creates random color pairs:
-  - Generates random background color
-  - Finds harmonizing text color for optimal readability
-  - Calculates APCA contrast
-
-This allows contrast color pairs to be shared via URL: `/contrast/{contrastId}`
-
-### Color Libraries
-
-The app uses two main color libraries:
-
-- **chroma-js** - Primary color manipulation (conversions, interpolation, color math)
-- **color-namer** - Color name identification, used for its color lists only
-
-`src/app/common/helpers/color-name.helper.ts` deliberately does **not** call
-`color-namer`'s own entry point. It imports the six color lists
-(`color-namer/lib/colors/*`) and does the nearest-color search with the app's
-own chroma-js. Importing the package proper pulls in a second, much older
-chroma-js (1.4.1) plus `es6-weak-map` and its `es5-ext` tail - 59 kB of raw
-bundle for a `WeakMap` cache that never hits, because `color-namer` keys it on a
-freshly allocated object on every call.
-
-Both variants produce identical names. The deep imports are declared in
-`src/types/color-namer-lists.d.ts` and listed in `allowedCommonJsDependencies`
-in `angular.json`, because the lists are CommonJS.
-
-**The distance must be measured from `color.hex()`, not from the `Color`
-object.** `color-namer` was always handed a hex string, so it compared the
-rounded 8-bit color; a chroma `Color` carries unrounded channels, and
-`chroma.hsl()` plus the Bezier interpolation used for tints, shades and palettes
-produce fractional ones. Passing the object through renames roughly 5 % of those
-colors and makes a palette disagree with its own shared-URL round trip, which
-goes through 8-bit RGB. A sweep over the integer RGB cube cannot detect this -
-there the two agree exactly. `color-name.helper.spec.ts` pins the behaviour.
-
-Note that `colorName()` must stay synchronous: `generatePalette()` and
-`paletteFromId()` call it from reducer and route-guard code paths.
-
-### Palette Generators Build Colors In OKLch
-
-A generator that holds lightness and rotates hue must build its colors with
-`fromOklch()` (`src/app/common/helpers/color-from-oklch.helper.ts`), not with
-`fromHsl()`. Equal HSL lightness is not equal perceived lightness: at the
-default saturation a triad's members land up to 0.34 OKLch lightness apart, so
-one member glows and another sinks.
-
-**Chroma is clamped per hue, never levelled to a common floor.** sRGB does not
-offer the same chroma everywhere - at `L = 0.60` the boundary sits at 0.104 for
-cyan and 0.273 for magenta. `fromOklch()` therefore keeps lightness and hue
-exact and lowers only the chroma the hue cannot hold. Do not instead pull every
-member down to the lowest chroma its hues share: that ties a palette's vibrancy
-to its unluckiest hue and makes one style look different from one seed to the
-next.
-
-HSL constants do not port. Offsets such as `baseSat - 0.65` were tuned by eye
-against HSL's distortion; applied in OKLch they correct twice and have to be
-re-tuned against the result.
-
-**A member that sits lighter than the accents is lifted by a share of the room
-above them, not by a fixed offset.** The accents follow a given base color, so
-a light base leaves little room. A fixed offset runs past 1 there, `fromOklch()`
-clamps it, and the member comes back as plain white - neither a color nor
-distinguishable from its sibling. Express the lift as a share of `1 - baseLight`
-and the jitter as a share of the lift.
-
-**A generator passes a base color's lightness through `usableLightness()`
-before it builds anything from it.** `maxChroma()` returns 0 at a lightness of
-0 and 1, so a pure black or white base gives every member the same black or
-white whatever its hue, and a regenerate repeats it unchanged. Both extremes
-are reachable: a converter color and a contrast background each arrive as a
-pinned `color0`.
-
-### Bundle Budget
-
-The initial budget is 1 MB warning / 1.2 MB error. It is meant to catch
-regressions, so keep it close to the actual size rather than raising it to make
-a warning go away - `pnpm build` prints the current initial total.
-
-### Path Aliases
-
-TypeScript path aliases are configured in `tsconfig.json`:
-
-- `@common/*` → `src/app/common/*`
-- `@converter/*` → `src/app/converter/*`
-- `@header/*` → `src/app/header/*`
-- `@palettes/*` → `src/app/palettes/*`
-- `@contrast/*` → `src/app/contrast/*`
-- `@core/*` → `src/app/core/*`
-- `@environments/*` → `src/environments/*`
-
-Always use these aliases for imports within the codebase.
-
-## Angular and TypeScript Conventions
-
-These are the binding conventions for this repository. The
-`angular-development` skill from the `rw` plugin carries the general Angular
-guidance; where the two differ, this file wins because it describes what this
-codebase actually does.
-
-### Component Standards
-
-- Keep components small and focused on a single responsibility
-- Use standalone components (default, do NOT set `standalone: true`)
-- Do NOT set `changeDetection` - OnPush is the Angular 22 default. Setting
-  `ChangeDetectionStrategy.Eager` opts out of it and needs a written reason
-- Use signals for state management via `signal()`, `computed()`, and `effect()`
-- Use `input()` and `output()` functions instead of decorators
-- `model()` already provides an `xChange` output. Do NOT add a second manual
-  `output()` next to it - consumers bind `(xChange)`, and a component that
-  writes to its own model signal emits it automatically (see the sliders in
-  `src/app/common/components/`)
-- Prefer signal queries (`viewChild()`, `contentChild()`) over the decorators
-- Prefer inline templates for tiny components
-- Use native control flow (`@if`, `@for`, `@switch`) instead of structural directives
-- Do NOT use `@HostBinding`/`@HostListener` - use the `host` object in decorators
-- Do NOT use `ngClass` - use `[class.foo]` bindings
-- Do NOT use `ngStyle` - use `[style.foo]` bindings
-- Use `NgOptimizedImage` for static images (not inline base64)
-
-### Templates
-
-- Keep templates simple and free of complex logic - move it into a `computed()`
-- No arrow functions in templates; they are not supported
-- Do not rely on globals such as `new Date()` being available
-- The app is signal-based throughout: there are no observables in templates.
-  If one ever needs to reach a template, use `toSignal()` from
-  `@angular/core/rxjs-interop` rather than the `async` pipe
-
-### Forms
-
-Only template-driven forms are in use:
-
-- `FormsModule` with `ngModel` for every value input - the numeric and text
-  fields (RGB, HSL, hex, OKLCH), the sliders and the font selector typeahead
-- `ReactiveFormsModule` is deliberately absent. There is no `FormControl`,
-  `FormGroup` or `formControl` binding anywhere in `src`. Do not add the import
-  "just in case" - add it only together with an actual reactive control
-- Do NOT wrap inputs in a `<form>` element for layout only. An implicit
-  `NgForm` breaks `ngModel` registration across component boundaries and
-  Angular 22 reports it as NG01354 (see commit `d03d83f`)
-
-### Routing
-
-- Routes are declared eagerly in `src/app/app.routes.ts`; there is no lazy
-  loading. With three feature routes it would add indirection without benefit
-- `withComponentInputBinding()` is active, so route params (`:paletteId`,
-  `:contrastId`) arrive as component `input()`s
-- Route guards live in `src/app/routes/` (`palette-route.guard.ts`,
-  `contrast-route.guard.ts`)
-- A trailing `**` route renders `NotFound`
-  (`src/app/common/components/not-found/`). The SPA rewrite in
-  `public/_redirects` answers every path with `index.html` and HTTP 200, so an
-  unknown path cannot produce a real 404 status. The page makes the miss
-  visible to the visitor instead of leaving the viewport blank
-- Every route carries a `title`. Angular's `DefaultTitleStrategy` leaves the
-  previous title standing when a route has none, so a route without one shows
-  the tab title of wherever the visitor came from
-
-**An invalid id and an unknown path answer differently, on purpose.**
-`/palettes/garbage` matches `:paletteId`, so `paletteGuard` runs, finds the id
-unrestorable and redirects to a freshly generated palette - the visitor lands on
-a working tool. `/palettes/garbage/more` matches no route at all, falls through
-to `**` and gets the not-found page. The asymmetry is the intended reading of
-the two cases: an unrestorable id is recoverable input, because the route itself
-exists and the tool works without it; a path that names nothing is not. Do not
-"harmonize" the two by sending invalid ids to the not-found page - that would
-trade a working palette for a dead end. `app.routes.spec.ts` pins both halves.
-
-### Services
-
-- Use the Angular 22 `@Service()` decorator for singleton services. It is
-  auto-provided in the root injector, so `@Injectable({providedIn: 'root'})` is
-  no longer needed - there is no `@Injectable` left in `src`
-- Use `@Injectable()` only where a class genuinely must not be root-provided
-  (or `@Service({autoProvided: false})` and an explicit `providers` entry)
-- Use the `inject()` function instead of constructor injection
-- Design services around a single responsibility
-
-### TypeScript
-
-- Use strict type checking (`strict`, `strictTemplates`,
-  `typeCheckHostBindings`, `noImplicitReturns`, `noImplicitOverride` are all on)
-- Prefer type inference when obvious
-- Avoid `any` - use `unknown` when type is uncertain
-- Use double quotes for strings (`quote_type = double` in `.editorconfig`)
-- Import through the path aliases above, never through relative `../../` paths
-
-### State Management
-
-- Use signals for local component state
-- Use `computed()` for derived state
-- Do NOT use `mutate()` on signals - use `update()` or `set()`
-- Keep state transformations pure
-- App-wide state goes through the central store, not into component state -
-  see the State Management section above and the
-  `ngrx-signals-state-management` skill
-
-## Component Style Guidelines
-
-- Schematics set `inlineStyle: true` by default, so a new component starts with
-  an inline `styles` block. Keep it there only for very short passages - a
-  handful of declarations that stay readable inside the decorator. Everything
-  beyond that belongs in the component's own `.scss` file next to it,
-  referenced through `styleUrl` (see `not-found.scss`, `color-area.scss`,
-  `color-picker.scss`)
-- The `angular-development` skill asks for centralized topic files plus
-  component-specific overrides in the component's own style file. That override
-  file is either the inline `styles` block or the sibling `.scss` - whichever
-  the length calls for; the split is about size, not about which mechanism is
-  the standard
-- Budget limits: 4kB warning, 8kB error per component (`anyComponentStyle`).
-  The budget counts either form, so moving a block out of the decorator does
-  not buy room
-- Global entry point is `src/styles.scss`
-- Cross-cutting styles live in `src/app/styles/` as topic-separated partials
-  (`_variables.scss`, `_dark-mode.scss`, `_bootstrap-custom.scss`,
-  `_bootstrap-subset.scss`, `converter.scss`, `contrast.scss`,
-  `color-palette.scss`, `sliders.scss`, `drag-n-drop.scss`)
-- Uses Bootstrap 5.3 and Bootstrap Icons
-
-### Bootstrap Is Imported As A Subset
-
-`src/app/styles/_bootstrap-subset.scss` replaces `bootstrap/scss/bootstrap`. It
-mirrors Bootstrap's own import stack but leaves out the fourteen components
-nothing in `src` renders, which saves ~51 kB of raw CSS.
-
-**Adding a Bootstrap component means adding its partial to that file.** A
-missing partial does not fail the build - the component renders unstyled, which
-only shows up visually. The same applies to anything ng-bootstrap draws at
-runtime: `NgbDropdown`, `NgbTooltip` and `NgbTypeahead` need `dropdown`,
-`tooltip` and `transitions`, none of which appear in any template.
-
-The file uses `@import` rather than `@use`, because Bootstrap 5.3's partials
-read variables and mixins from the global scope and are not `@use`-able in
-isolation. That is why `angular.json` sets
-`stylePreprocessorOptions.sass.silenceDeprecations: ["import"]` - without it the
-build emits 21 deprecation warnings for our own file, while Bootstrap's
-identical `@import`s stay quiet as a dependency. Configuration still flows
-through `@use "./bootstrap-subset" with (...)` in `_bootstrap-custom.scss`.
+Anything GitHub renders as HTML is **not** hard-wrapped – its UI wraps, and a
+hard wrap produces ragged paragraphs and breaks quoting. One paragraph is one
+line; break only between paragraphs, per list item, per table row, and around
+code blocks. This covers issue bodies and comments, PR descriptions, review
+comments, replies, and release notes.
+
+Hard-wrapping stays where text is read in monospace without reflow: commit
+messages (subject at most 50 characters, body at 72), files in this repository
+including this one, and code comments.
+
+## Map
+
+- `src/engine/` – the colour engine: `color/`, `contrast/`, `palette/`,
+  `vision/`, and `helpers/` for what serves all three, each model beside the
+  code that uses it. Plain TypeScript on chroma-js and `color-name-list`
+- `src/app/core/` – the store: `app-state.store.ts`, the state shape in
+  `models/app-state.model.ts`, and per domain (`converter`, `palettes`,
+  `contrast`, `common`) an `*.events.ts`, `*.reducers.ts` and `*.effects.ts`.
+  `all-effects.ts` is the list of registered effects; read it rather than a
+  copy here
+- `src/app/shell/`, `src/app/studio/`, `src/app/contrast-type/` – the routed
+  screens, declared in `app.routes.ts`
+- `src/app/common/` – shared components, services and app models
+- `src/testing/` – test helpers, reachable as `@testing/*`
+- `functions/mcp/` – the MCP server, a Cloudflare Pages Function
+
+Path aliases are declared in `tsconfig.json`, one per top-level folder. Import
+through them, never through relative `../../` paths.
+
+## The Engine
+
+- The engine imports chroma-js, `color-name-list` and itself. Nothing from
+  `@angular/*`, `@ngrx/*` or `@core/*`: the Worker bundle takes whatever the
+  engine imports
+- The app and the MCP server reach it through `@engine/*` alone
+- It stays under `src/`. `@angular/build:unit-test` resolves its `include`
+  relative to `sourceRoot`, so a folder beside `src/` would need its own
+  include patterns in both tsconfigs
+- **`colorName()` names from a list in which no name denotes two colours.**
+  `color-name-list/bestof`, not the full list – the comment on `LIST` in
+  `src/engine/color/color-name.helper.ts` says why not. A list that names two
+  colours the same puts two swatches of a monochromatic palette or a tint ramp
+  under one label, and `color-name.helper.spec.ts` fails on a version that
+  reintroduces one
+- An exact hex match takes its name from `CSS_COLOR_KEYWORDS` before the
+  distance search runs. A keyword identifies a colour to whoever pastes it
+  into a stylesheet; the nearest prose name does not. Only exact matches, so
+  no keyword spreads over a region and no name gains a second colour. The
+  keywords stay lower case, which is what marks them as keywords
+- **A list name a keyword also spells never enters the distance search.**
+  `allCandidates()` drops it. A screen reader hears no case, so "Bisque" beside
+  `bisque` is the duplicate the list was swapped in to rule out; the twin
+  leaves the search, not the keyword the table
+- `colorName()` measures from `color.hex()`, not from the `Color` object, and
+  stays synchronous – reducers and guards call it. `color-name.helper.spec.ts`
+  pins the first
+- Palette generators build colors with `fromOklch()`, not `fromHsl()`; equal
+  HSL lightness is not equal perceived lightness. `fromOklch()` clamps chroma
+  per hue and never levels it to a common floor. HSL constants do not port
+- A generator lifts a member that sits lighter than the accents by a share of
+  the room above them, not by a fixed offset, and passes the base lightness
+  through `usableLightness()` first. The reasons are on both functions
+- A generator draws its jitter through `randomBetween()`, never `Math.random`
+  or `chroma.random()`: the roll is a seed in the state, and a draw outside
+  the seed makes the palette flicker while a color is dragged
+- **A column of body copy is held to `BODY_COPY_MIN_LC`.** `apcaLookup` is
+  the table as written, which is what spot text is rated against;
+  `getRequiredLc()` and the two passing searches lift a cell to the floor, and
+  `SampleElement.textKind` classifies every element of the sample page. Do not
+  apply the original's footnote as `+15` under Lc 70 instead: six of the nine
+  weight columns then rise once as the size grows, and `largeOnly` names a
+  size smaller than the text already is. The constant carries the rest
+- **Colour-vision simulation runs in linear light.** `simulateVision()`
+  applies the sRGB transfer function before its matrix and undoes it after.
+  `chroma.gl()` is not that step: it hands back the encoded bytes over 255,
+  and a matrix applied to those returns a colour visibly too light. Every
+  matrix is a projection – row sums of one, squaring to itself – and
+  `simulate-vision.helper.spec.ts` pins both, which is what catches a
+  mistyped coefficient
+- A collapse is what a vision model *cost*, not what sits close: a group of
+  palette members counts only where normal vision did not already show it as
+  one band
+
+### Shareable Ids
+
+`paletteIdFrom()` encodes a palette into a fixed-length base62 id; its helper
+documents the layout. `contrastIdFromColors()` is the v1 pair encoding: read
+for v1 links and v1 storage, written into nothing new.
+
+Both views take their state from the url through the guards in
+`src/app/routes/`.
+
+- The Studio answers `/` and `/<palette segment>` through `studioMatcher`,
+  which matches the segment's shape. Never a bare `:palette` param: it takes
+  every one-segment path, and a mistyped one opens the Studio instead of
+  `NotFound`
+- A path without an address redirects to the state the visitor already has;
+  the tabs link to bare paths, so a fresh state there rolls on every click.
+  Only an unreadable address gets a freshly rolled palette
+- A redirect keeps the fragment
+
+The Studio's address is the palette segment: `paletteSegmentFrom()` appends
+the seed to the palette id. A restore goes through `restoredPaletteState()` and
+sets color, palette, style and seed together – never `currentPalette` alone.
+
+The Contrast & Type address is the palette segment, the view segment and the
+typefaces – `contrastTypeAddressFrom()` in
+`src/app/contrast-type/models/contrast-type-address.model.ts` documents the
+format.
+
+- Local storage holds the theme and this address and nothing else, restored
+  through `restoredContrastTypeState()` like a link. Do not add a key beside it
+  for something the address carries. The v1 keys are read where no address is
+  stored and never written
+- The field widths are literals, never derived from the lists they index: a
+  derived width moves every field behind it once a list grows
+- `SAMPLE_ELEMENTS` and `CHIP_SOURCES` are indexed by the address. A new entry
+  goes at the end; the spec pins both orders
+- Every field is checked against its valid range, not its width. There is no
+  check digit, and the ranges are the better integrity check
+- A family travels by name through `encodeURIComponent`, which is what keeps
+  `,` and `/` unambiguous. A face known by name alone is `fontNamed()`;
+  `resolveFontsEffect` completes it from the catalogue
+
+**The palette id has room for 62 styles.** The style index is one base62 <!-- durable-ok -->
+character, and base62 spells 0 to 9 the way base 10 does, so an id written
+while the index was a decimal digit still names the style it was written with.
+A style beyond that needs a wider index field first, or the id grows past
+`PALETTE_ID_BASE62_LENGTH` and `paletteFromId()` rejects it.
+
+## The Store
+
+- App-wide state goes through the store, not into component state
+- The palette is built on the current color and follows it live:
+  `paletteFollowsColorReducer` rebuilds it on every color event and is
+  registered after the converter's reducers, because it reads the color from
+  the state. Keep that order
+- The pair's sliders raise `contrastEvents.textColorAdjusted` and
+  `backgroundColorAdjusted`, never the converter's `colorAdjusted`. The
+  converter's events rebuild the palette per frame, which is right for the
+  Studio and wrong here: moving one half of the pair is no statement about
+  the palette the chips are drawn from
+- Picking a style draws a new `paletteSeed`; a color change keeps it
+- What a palette slot is *for* is `roleCaptionFor()`, a function of style and
+  slot, not a field on `PaletteColor`: a field would travel into the palette
+  id, whose payload is full
+- Which preview element belongs to which type role, at what share of the
+  role's size and in which ink on which ground, is `SAMPLE_ELEMENTS` in
+  `src/app/contrast-type/models/sample-page.model.ts`. The preview draws it,
+  the rating measures it and the marks judge it; a new element goes into that
+  list, never into a component alone, or the figure stops being about the page
+- What the APCA table says about one element is `elementVerdict()` in
+  `models/element-verdict.model.ts`, and it is the only place that says it:
+  the marks beside the preview, the page's tally in `page-verdicts` and the
+  rating's own row all read it, so two of them cannot disagree about the same
+  element. A new state needs both a shape in `verdict-shape` and a word in
+  `verdictWord()`
+- **A shape is never the only carrier of a verdict.** A tick and a cross can
+  be read off a page; the arrow and the dash cannot, and a visitor asked. So
+  the word travels with the shape: in a mark's accessible name, in an opened
+  verdict's header, and in the page's tally, which is the one place all four
+  stand together and is why every state there keeps its word rather than
+  standing as the draft's bare row of glyphs
+- **A mark is a badge in the app's colours, not a glyph in the page's.** Drawn
+  in the page's own ink it was punctuation the visitor had apparently set and
+  nobody pressed it. Only the badge's rim and its focus ring are measured
+  against the page - they are the edge that meets the visitor's colour, and a
+  token is guaranteed against none of it
+- **A verdict is rows of label and value, never prose.** `verdictFacts()` is
+  the whole of it, and it carries only what a visitor can already name: the
+  two Lc figures, the role with the size and weight they set, and a palette
+  colour they can see in the chip row. Which row of the APCA table rated a
+  size, and what the inks and grounds are called, is true of the derivation
+  and not of the page - it read as an answer to a question nobody asked
+- **A verdict opens as a popup, in the app's colours.** A CDK overlay off
+  `verdict-mark.html`, so nothing in the preview moves and the preview's own
+  `overflow-hidden` cannot clip it; in the flow it pushed the page it was
+  about downwards, and inside a table cell it re-apportioned the columns. The
+  popup takes `panel`, `line`, `text` and `dim` - it is the app looking at the
+  visitor's page from outside, and in the page's own palette it read as part
+  of the sample content. The mark itself still takes its colour from APCA,
+  because it does sit on the page
+- One mark per named element, not per occurrence. The running text, the nav
+  items, the table's cells and the small print each appear more than once and
+  are one ink on one ground at one size – a mark per occurrence would count
+  the page twice
+- A role's face, size, weight and leading are `typeRoles[role]`; nothing
+  derives one role's type from another's. The headline's weight is the display
+  role's, not a step up from body text's – a display face that ships one
+  weight must not be set in a synthesised semibold
+
+## Angular Conventions
+
+The `angular-development` skill carries the general guidance; where the two
+differ, this file wins because it describes what this codebase does.
+
+- Standalone is the default: do not set `standalone: true`. OnPush is the
+  default: do not set `changeDetection`. `ChangeDetectionStrategy.Eager` needs
+  a written reason
+- `signal()`, `computed()`, `effect()`; `input()`, `output()`, `model()`;
+  `viewChild()`, `contentChild()` – no decorators. A property holding a signal
+  is `readonly`
+- `model()` already provides its `xChange` output; do not add a manual one
+- `@Service()` for singletons, `inject()` over constructor injection.
+  `@Injectable()` only where a class must not be root-provided
+- Native control flow; `[class.foo]` and `[style.foo]` bindings, no `ngClass`
+  or `ngStyle`; the `host` object, no `@HostBinding`/`@HostListener`;
+  `NgOptimizedImage` for static images
+- Templates hold no logic – move it into a `computed()`. No arrow functions,
+  no globals such as `new Date()`, no observables: `toSignal()` where one must
+  reach a template
+- Forms are template-driven: `FormsModule` with `ngModel`. `ReactiveFormsModule`
+  arrives only together with an actual reactive control. No `<form>` element
+  for layout: the implicit `NgForm` breaks `ngModel` registration across
+  component boundaries (NG01354)
+- Routes are eager, every route carries a `title` (Angular leaves the previous
+  one standing otherwise), feature routes carry `pathMatch: "full"` or a
+  matcher that matches whole paths, and the router already binds route
+  params to component inputs
+- A route opts out of the app header through `data: {appHeader: false}`, and
+  only on `NotFound`'s terms: it has to carry a way off the page itself.
+  `app.spec.ts` and `not-found.spec.ts` pin both
+- Double quotes, strict TypeScript, `unknown` over `any`
+
+## Styles
+
+Tailwind CSS v4 is the only styling framework. Utilities go in the template;
+a component's own style file stays minimal or empty. No Sass.
+
+- No `@apply` and no `@reference` in component styles. Reach the element from
+  the template, put the host's utilities in `host: {class: "..."}`, or add an
+  `@layer components` class to `src/styles.css`
+- The component style budget counts inline and file alike; moving a block out
+  of the decorator buys no room
+- **Sizes are relative, never pixels.** Every length a visitor can scale comes
+  from Tailwind's scale. The drafts are drawn in pixels: divide by 16 and take
+  the nearest step. `border` is the one hairline that stays 1px
+- **Layouts are mobile-first.** The unprefixed utility is the narrow column,
+  `sm:` and `lg:` widen it; no `max-*:` variants. No fixed width or height on
+  anything that holds content; `min-w-0` where a flex child refuses to shrink
+- **The six neutral tokens are the whole palette** – `bg`, `panel`, `text`,
+  `dim`, `line`, `field`. The token flips with the theme, so write `bg-panel`,
+  never `bg-white dark:bg-neutral-900`. There is no accent color; the only
+  saturated color on screen is the one the visitor works on. `danger` and
+  `on-danger` belong to the failed copy alone
+- The dark neutrals keep their OKLch lightness distance from `bg`; move `bg`
+  and the others move with it. `@theme` is `static` and Tailwind scans only
+  `src/app` and `src/index.html` through `source(none)` – `src/styles.css`
+  says why for both. Add an `@source` line rather than dropping `source(none)`
+- The theme attribute lives on `<html>` as `data-theme="light"` or `"dark"`,
+  written by the boot script in `src/index.html` before the first paint and
+  by `ColorThemeService` afterwards. **Critical CSS inlining stays off**: it
+  would inline the light theme only, and `boot-theme.spec.ts` fails on any
+  configuration that turns it back on
+
+`tools/lint-sizes.js` enforces the sizes, the mobile-first variant, the type
+floor and the ring offset; plain CSS in a component `.css` is not covered.
+
+## Linting
+
+`eslint.config.js` is CommonJS on purpose – package.json declares no `type`.
+Its comments say which convention each rule mirrors.
+
+- **Linting is not type-aware.** A rule that needs type information fails the
+  whole run with a parser error. Turning it on is a separate decision and slows
+  `pnpm lint` down by roughly an order of magnitude
+- Double quotes come from `@stylistic/eslint-plugin`; ESLint core drops its
+  own `quotes` in v11
+- A leading underscore marks a binding that only holds a position; the idiom
+  needs no disable comment
+
+## MCP Server
+
+`functions/mcp/` is deployed as a Cloudflare Pages Function beside the app and
+served under `/mcp` on the app's origin, preview branches included.
+
+### Layout
+
+- `functions/mcp/[[path]].ts` is the entry and knows only Pages: it hands the
+  request to `handleMcpRequest()`. Swapping the host means replacing this file
+- `functions/mcp/server.ts` holds `createMcpServer()`, which registers every
+  tool and resource, and `handleMcpRequest()`, which wraps it in the HTTP
+  transport. Keep them separate: the tests connect the server to an in-memory
+  transport
+- One file per tool under `functions/mcp/tools/`, exporting
+  `register<Tool>(server)`
+- One file per resource under `functions/mcp/resources/`, exporting
+  `register<Resource>(server)`. `server.ts` registers the resources after the
+  tools
+- `functions/mcp/helper/` holds what more than one tool asks for: the hex
+  input with its one wording, the font size and weight inputs. A schema one
+  tool uses stays in that tool's file
+- `functions/mcp/test-support/` is for the specs alone; nothing the entry
+  imports reaches it, so it never enters the Worker bundle
+
+### The Fence
+
+`functions/**` imports the engine through `@engine/*` and nothing else from
+`src/`. `eslint.config.js` reads the aliases from `tsconfig.json` and forbids
+every one but `@engine/*`, plus `@angular/*`, `@ngrx/*` and any relative path
+into `src/`; a new alias is fenced the moment it is declared. Anything past the
+fence drags an Angular runtime into a Worker that cannot use it.
+
+`@modelcontextprotocol/sdk` and `zod` are runtime dependencies of the Worker
+and sit in `dependencies`. Nothing in `src/app` imports them; do not add an
+import there to share a schema.
+
+### Stateless, Streamable HTTP Only
+
+Every request gets a new `McpServer` and a new
+`WebStandardStreamableHTTPServerTransport` without a session id. No Durable
+Object, no `agents` SDK, no SSE transport. `enableJsonResponse: true` makes a
+POST answer with a JSON body, so a stateless server loses nothing and the
+response reads with `curl`. The transport answers the HTTP half of the protocol
+itself, so the entry does no routing.
+
+### Every Tool Is Read-Only And Typed
+
+- Names in `snake_case`, `annotations.readOnlyHint: true`
+- A Zod `inputSchema` as a raw shape, not `z.object()`; hex inputs go through
+  `isHex()`, lists carry a size cap
+- An `outputSchema`, and the result carries the same object as
+  `structuredContent` – the SDK rejects a declared schema without content, so
+  every call fails, not just the validation
+- `content` holds one text block: a sentence the assistant can quote. The
+  numbers are in `structuredContent`; do not repeat them in the text
+- **`NaN` never reaches `structuredContent`.** chroma-js reports a grey's hue
+  as `NaN`, which JSON cannot carry. A field that can be undefined for some
+  colours is `nullable()` in the schema and `null` in the result
+
+### SDK Imports Carry The `.js` Suffix
+
+`import ... from "@modelcontextprotocol/sdk/server/mcp.js"` – with the
+extension. The SDK's exports map adds nothing, so esbuild in Wrangler cannot
+resolve the bare path while TypeScript and Vitest resolve it silently. Only
+`pnpm exec wrangler pages functions build --outdir <tmp>` catches the omission
+before the deploy does.
+
+There is no `nodejs_compat` flag and no `wrangler.jsonc`; add either only when a
+bundle actually asks for it.
+
+### Tests And Deploy
+
+- A tool is tested the way Claude calls it: `connectedClient()` links an SDK
+  `Client` to `createMcpServer()` in memory and the spec calls
+  `client.callTool()`. `server.spec.ts` covers the HTTP half
+- **Pin behaviour, not colours.** Assert determinism, roles, round trips and
+  shapes – never a concrete hex value a retuned generator would change
+- The deploy job checks out and installs before it downloads the built app,
+  because `wrangler pages deploy` bundles `functions/` from the working
+  directory. Without that step the deployment succeeds and `/mcp` answers
+  with the SPA's `index.html`
+
+## Accessibility
+
+This app judges color contrast, so its own interface has to hold up. Each rule
+says how it is held: **Lint** through `angular-eslint`'s accessibility preset
+and `tools/lint-sizes.js`, **Test** through a helper in `src/testing/`,
+**Review** where only rendered pixels or judgement can tell. A green `pnpm test`
+and a green `pnpm lint` say nothing about the review-only rules. `@angular/cdk`
+is already a dependency, so `LiveAnnouncer` needs no new package.
+
+- **Type floor (Lint).** Text is at least `text-base`; `text-sm` is for
+  secondary labels and nothing goes below it, in any spelling
+- **Hit area (Review).** A control that gets clicked or tapped is at least
+  `h-11` tall and as wide; an icon-only button pads the glyph out to that size
+- **Accessible name (Review).** An icon-only control carries an `aria-label`,
+  the icon is `aria-hidden="true"`. A swatch a visitor can focus or activate is
+  named with `colorName()`. `valid-aria` checks the attribute it finds, not the
+  one that is missing
+- **Color is never the only carrier (Review).** A verdict, a value, a pinned
+  swatch, a selected tab each needs text or shape beside the color. Where a
+  carrier exists, a spec pins its value, as `theme-control.spec.ts` and
+  `app-header.spec.ts` do. Whether the carrier says anything is the review
+- **Focus ring offset (Lint for the offset, Review for visibility).** A
+  focusable element binding a visitor color carries `outline-offset-*` or
+  `ring-offset-*` in its own class list; a ring in a token vanishes on a color
+  of the same lightness. The check reads one element at a time, so put the
+  utility on the element itself
+- **Copying goes through `CopyService` (Review).** `copyColor()` or
+  `copyText()`, never `navigator.clipboard` directly: the service writes,
+  confirms through the shell's toast and announces. A failure is not a success
+  with other wording – it stands longer, carries the `danger` pair, a sign and
+  a semibold message; `copy.service.spec.ts` pins the durations and
+  `copy-confirmation.ts` says why the weight
+- **`role="list"` on every announced list (Review).** Tailwind's Preflight
+  removes the list style and Safari with VoiceOver then stops treating the
+  element as a list. On the element itself, or in `host` where the selector is
+  the list. A list a spec already renders gets the role pinned there
+- **A regenerated result is announced (Test).** Regenerating, rolling random
+  colors and switching text against background replace content without moving
+  focus. Announce through `LiveAnnouncer` and pin it with
+  `provideFakeLiveAnnouncer()` from `@testing/live-announcer.fake`. The
+  politeness is part of the assertion; `color-controls.spec.ts` is the worked
+  example
+- **Chrome on a visitor color takes its foreground from APCA (Test).** A token
+  is only guaranteed against the six neutral surfaces. `expectApcaForeground()`
+  from `@testing/apca-foreground.expectation` pins it, `swatch.spec.ts` is the
+  worked example. The assertion is the maximum, not the threshold – on a
+  mid-lightness color neither black nor white reaches it
 
 ## Testing
 
-- Test framework: Vitest, run through the `@angular/build:unit-test` builder
-  (`runner: "vitest"`, `tsConfig: tsconfig.spec.json`, `buildTarget: :build:testing`)
-- DOM environment: happy-dom, picked up from devDependencies - there is no
-  explicit environment setting and no `vitest.config.*` in the repo
-- Run all tests: `ng test` (or `pnpm test`); `ng test --watch=false` for a single run
-- Component generation skips test files by default (configured in angular.json schematics)
+- Component generation skips test files (`angular.json` schematics)
+- Test helpers live in `src/testing/`, reachable as `@testing/*` and excluded
+  in `tsconfig.app.json`. The exclusion does not stop an import – TypeScript
+  follows it and ships `vitest` with the app – so `pnpm lint` forbids it
+  outside the specs
+
+## Bundle Budget
+
+The initial budget in `angular.json` is there to catch regressions. Keep it
+close to the actual size rather than raising it to make a warning go away, and
+do not lower it to the size the app has before the v2 screens have all landed:
+the v1 screens left the bundle with their routes, and the figure the budget has
+to catch is the one after the new screens are in.

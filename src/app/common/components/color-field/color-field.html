@@ -1,0 +1,27 @@
+@if (label()) {
+  <label class="mb-2 block font-sans text-sm tracking-widest text-dim"
+         [attr.for]="inputId">{{ label() }}</label>
+}
+
+<div class="flex items-center gap-2">
+  <!-- The native picker. Its own swatch shows the visitor's color, so the focus
+       ring is offset off the control rather than drawn on it. -->
+  <input type="color"
+         class="h-11 w-11 shrink-0 cursor-pointer rounded-xs border border-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+         [attr.aria-label]="pickerLabel()"
+         [(ngModel)]="pickerValue"
+         (change)="commitPicker()">
+
+  <input type="text"
+         class="h-11 min-w-0 flex-1 rounded-xs border border-line bg-field px-3 font-mono text-base tracking-wide focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+         [id]="inputId"
+         [attr.aria-label]="fieldLabel()"
+         placeholder="#RRGGBB"
+         autocomplete="off"
+         spellcheck="false"
+         [(ngModel)]="fieldValue"
+         (blur)="commitField()"
+         (keydown.enter)="commitField()">
+
+  <ng-content/>
+</div>

@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - redesign-v2
   pull_request:
     types: [ opened, synchronize, reopened ]
     branches:
       - "main"
+      - "redesign-v2"
 
 permissions:
   contents: read
@@ -23,16 +25,29 @@ jobs:
 
       - name: Install pnpm and Node.js
         uses: pnpm/setup@v2
+        # No `runtime`: the action installs the Node.js that
+        # `devEngines.runtime` in package.json declares, so CI and a local
+        # `pnpm install` run the same version.
         with:
-          runtime: node@24
           cache: true
           install: false
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint
+        run: pnpm run lint
+
       - name: Run tests
         run: pnpm run test:ci
+
+      - name: Run the MCP server tests
+        run: pnpm run mcp:test
+
+      - name: Type-check and bundle the MCP server
+        run: |
+          pnpm exec tsc -p functions/tsconfig.json --noEmit
+          pnpm exec wrangler pages functions build --outdir tmp/functions-build
 
       - name: Build the app
         run: pnpm run build:cloudflare
@@ -55,15 +70,50 @@ jobs:
     if: github.event_name != 'pull_request'
 
     steps:
+      # `pages deploy` bundles the Pages Function from functions/ in the
+      # working directory, and that bundle imports from node_modules - so the
+      # deploy job needs the checkout and the dependencies, not just the
+      # built app.
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@v2
+        # No `runtime`: the action installs the Node.js that
+        # `devEngines.runtime` in package.json declares, so CI and a local
+        # `pnpm install` run the same version.
+        with:
+          cache: true
+          install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Download build output
         uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/ColorTools/browser
 
+      # The Pages project's production branch is main, so every other branch
+      # listed above deploys as a preview under its own branch alias.
       - name: Deploy to Cloudflare Pages
+        id: deploy
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist/ColorTools/browser --project-name=color-tools --branch=main
+          command: pages deploy dist/ColorTools/browser --project-name=color-tools --branch=${{ github.ref_name }}
+
+      - name: Report the deployment URLs
+        env:
+          BRANCH: ${{ github.ref_name }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          ALIAS_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url }}
+        run: |
+          {
+            echo "### Deployed \`$BRANCH\`"
+            echo ""
+            echo "- Deployment: $DEPLOYMENT_URL"
+            echo "- Alias: $ALIAS_URL"
+          } >> "$GITHUB_STEP_SUMMARY"

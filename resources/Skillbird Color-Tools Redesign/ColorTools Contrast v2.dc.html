@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" />
+<style>
+html, body { margin: 0; padding: 0; }
+* { box-sizing: border-box; }
+body { background: #ECE7DE; color: #1B1917; font-family: 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #1B1917; text-decoration: underline; text-underline-offset: 3px; }
+a:hover { color: #7A736A; }
+</style>
+</helmet>
+
+<section style="padding: 48px; display: grid; gap: 72px">
+
+  <!-- ============ 1a  DEFAULT · LIGHT · DESKTOP ============ -->
+  <div id="1a" style="display: grid; gap: 14px">
+    <div style="display: flex; gap: 14px; align-items: baseline">
+      <a href="#1a" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none">1a</a>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #5B554D">CONTRAST &amp; TYPE · DEFAULT · LIGHT · 1240</span>
+    </div>
+    <div style="--bg: #FAF8F4; --panel: #FFFDFA; --text: #1B1917; --dim: #7A736A; --line: #E4DED4; --field: #F2EDE5; width: 1240px; background: var(--bg); color: var(--text); border: 1px solid #D6CFC4; padding: 34px 34px 60px">
+
+      <div style="display: flex; align-items: center; gap: 28px; padding-bottom: 30px; border-bottom: 1px solid var(--line)">
+        <span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 34px; line-height: 1">Color Tools</span>
+        <div style="display: flex; border: 1px solid var(--line); border-radius: 2px; overflow: hidden">
+          <span style="height: 44px; display: inline-flex; align-items: center; padding: 0 16px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; color: var(--dim)">STUDIO</span>
+          <span style="height: 44px; display: inline-flex; align-items: center; padding: 0 16px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; background: var(--text); color: var(--bg)">CONTRAST &amp; TYPE</span>
+        </div>
+        <span style="margin-left: auto; height: 44px; display: inline-flex; align-items: center; padding: 0 14px; border: 1px solid var(--line); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; color: var(--dim)">DARK UI</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 300px 1fr; gap: 52px; padding-top: 28px; align-items: start">
+
+        <!-- LEFT COLUMN -->
+        <div style="display: grid; gap: 26px">
+
+          <div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: var(--dim); margin-bottom: 10px">PAIR</div>
+            <div style="display: grid; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 10px; height: 44px">
+                <span style="width: 36px; height: 36px; background: #1B1917; border: 1px solid var(--line); border-radius: 2px"></span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; flex: 1">T · #1B1917</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--dim)">text</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; height: 44px">
+                <span style="width: 36px; height: 36px; background: #FAF8F4; border: 1px solid var(--line); border-radius: 2px"></span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; flex: 1">G · #FAF8F4</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--dim)">ground</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 4px; margin-top: 12px">
+              <span style="flex: 1; height: 44px; background: #418F82; border-radius: 2px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #fff">P1</span>
+              <span style="flex: 1; height: 44px; background: #3D758C; border-radius: 2px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #fff">P2</span>
+              <span style="flex: 1; height: 44px; background: #3D5A8C; border-radius: 2px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #fff">P3</span>
+              <span style="flex: 1; height: 44px; background: #40428C; border-radius: 2px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #fff">P4</span>
+              <span style="flex: 1; height: 44px; background: #5E4796; border-radius: 2px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #fff">P5</span>
+              <span style="flex: 1; height: 44px; background: #1B1917; border-radius: 2px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #fff">T</span>
+              <span style="flex: 1; height: 44px; background: #FAF8F4; border: 1px solid var(--line); border-radius: 2px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #1B1917">G</span>
+            </div>
+            <p style="margin: 10px 0 0; font-size: 14px; color: var(--dim); line-height: 1.5">Drag a chip onto the page, or focus an element and press Enter.</p>
+          </div>
+
+          <div style="border-top: 1px solid var(--line); padding-top: 22px">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: var(--dim); margin-bottom: 8px">LOWEST ON PAGE</div>
+            <div style="display: flex; align-items: baseline; gap: 10px">
+              <span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 64px; line-height: 0.9">{{ lcLow }}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; color: var(--dim)">Lc</span>
+            </div>
+            <div style="margin-top: 10px; font-size: 14px; line-height: 1.5">Caption · Plex Sans 13/400 on G — needs 75, has {{ lcLow }}.</div>
+            <div style="margin-top: 14px; display: grid; gap: 6px; font-size: 14px">
+              <div style="display: flex; gap: 10px"><span style="width: 14px">✓</span><span style="color: var(--dim); width: 40px">10</span><span>pass at their own size</span></div>
+              <div style="display: flex; gap: 10px"><span style="width: 14px">–</span><span style="color: var(--dim); width: 40px">1</span><span>passes only as large text</span></div>
+              <div style="display: flex; gap: 10px"><span style="width: 14px">✗</span><span style="color: var(--dim); width: 40px">1</span><span>fails on its ground</span></div>
+            </div>
+            <div style="margin-top: 14px; font-size: 14px; color: var(--dim)">Pair T on G · Lc {{ lcPair }}</div>
+          </div>
+
+          <div style="border-top: 1px solid var(--line); padding-top: 22px">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: var(--dim); margin-bottom: 10px">TYPE ROLE</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); border-radius: 2px; overflow: hidden">
+              <div style="height: 56px; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; background: var(--text); color: var(--bg)">
+                <span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 20px; line-height: 1">Aa</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; margin-top: 3px">DISPLAY</span>
+              </div>
+              <div style="height: 56px; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; border-left: 1px solid var(--line); color: var(--dim)">
+                <span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 18px; line-height: 1">Aa</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; margin-top: 4px">BODY</span>
+              </div>
+              <div style="height: 56px; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; border-left: 1px solid var(--line); color: var(--dim)">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; line-height: 1">Aa</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; margin-top: 4px">MONO</span>
+              </div>
+            </div>
+            <div style="display: grid; gap: 14px; margin-top: 16px">
+              <div style="height: 44px; display: flex; align-items: center; padding: 0 12px; border: 1px solid var(--line); background: var(--field); border-radius: 2px; font-size: 14px; justify-content: space-between"><span>Instrument Serif</span><span style="color: var(--dim)">▾</span></div>
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: var(--dim)">SIZE</span><span>44px</span></div>
+                <div style="position: relative; height: 12px; border: 1px solid var(--line); border-radius: 2px; background: var(--field)"><span style="position: absolute; top: 50%; left: 58%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: var(--panel); border: 1px solid var(--text); border-radius: 2px"></span></div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: var(--dim)">WEIGHT</span><span>500</span></div>
+                <div style="position: relative; height: 12px; border: 1px solid var(--line); border-radius: 2px; background: var(--field)"><span style="position: absolute; top: 50%; left: 50%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: var(--panel); border: 1px solid var(--text); border-radius: 2px"></span></div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: var(--dim)">LEADING</span><span>1.10</span></div>
+                <div style="position: relative; height: 12px; border: 1px solid var(--line); border-radius: 2px; background: var(--field)"><span style="position: absolute; top: 50%; left: 8%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: var(--panel); border: 1px solid var(--text); border-radius: 2px"></span></div>
+              </div>
+            </div>
+            <div style="margin-top: 12px; font-size: 14px; color: var(--dim); line-height: 1.5">Body · Source Serif 4 18/400/1.6 &nbsp;·&nbsp; Mono · Plex Mono 12/400/1.5</div>
+          </div>
+
+          <div style="border-top: 1px solid var(--line); padding-top: 22px">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: var(--dim)">PLACED COLOURS</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--dim)">none yet</span>
+            </div>
+            <p style="margin: 0; font-size: 14px; color: var(--dim); line-height: 1.5">The page uses its default roles: P3 on buttons and wordmark, P1 on eyebrow and labels, T on text.</p>
+          </div>
+
+          <div style="border-top: 1px solid var(--line); padding-top: 22px">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: var(--dim); margin-bottom: 12px">COLOR VISION</div>
+            <div style="display: grid; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 10px"><span style="font-size: 14px; color: var(--dim); width: 110px">Normal</span><span style="flex: 1; height: 20px; background: #418F82"></span><span style="flex: 1; height: 20px; background: #3D758C"></span><span style="flex: 1; height: 20px; background: #3D5A8C"></span><span style="flex: 1; height: 20px; background: #40428C"></span><span style="flex: 1; height: 20px; background: #5E4796"></span></div>
+              <div style="display: flex; align-items: center; gap: 10px"><span style="font-size: 14px; color: var(--dim); width: 110px">Deuteranopia</span><span style="flex: 1; height: 20px; background: #6E8383"></span><span style="flex: 1; height: 20px; background: #62738A"></span><span style="flex: 1; height: 20px; background: #56628A"></span><span style="flex: 1; height: 20px; background: #46498A"></span><span style="flex: 1; height: 20px; background: #4E4E90"></span></div>
+              <div style="display: flex; align-items: center; gap: 10px"><span style="font-size: 14px; color: var(--dim); width: 110px">Protanopia</span><span style="flex: 1; height: 20px; background: #7A8683"></span><span style="flex: 1; height: 20px; background: #66748A"></span><span style="flex: 1; height: 20px; background: #56608A"></span><span style="flex: 1; height: 20px; background: #43468A"></span><span style="flex: 1; height: 20px; background: #47498F"></span></div>
+              <div style="display: flex; align-items: center; gap: 10px"><span style="font-size: 14px; color: var(--dim); width: 110px">Tritanopia</span><span style="flex: 1; height: 20px; background: #44888A"></span><span style="flex: 1; height: 20px; background: #407C82"></span><span style="flex: 1; height: 20px; background: #3F6B6E"></span><span style="flex: 1; height: 20px; background: #3F5B5E"></span><span style="flex: 1; height: 20px; background: #5A5A5D"></span></div>
+              <div style="display: flex; align-items: center; gap: 10px"><span style="font-size: 14px; color: var(--dim); width: 110px">Achromatopsia</span><span style="flex: 1; height: 20px; background: #777777"></span><span style="flex: 1; height: 20px; background: #6A6A6A"></span><span style="flex: 1; height: 20px; background: #5C5C5C"></span><span style="flex: 1; height: 20px; background: #494949"></span><span style="flex: 1; height: 20px; background: #565656"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SAMPLE PAGE WITH GUTTER -->
+        <div style="display: grid; grid-template-columns: 28px 1fr; gap: 10px">
+          <div style="position: relative; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--dim)">
+            <span style="position: absolute; top: 22px; right: 0">✓</span>
+            <span style="position: absolute; top: 122px; right: 0">–</span>
+            <span style="position: absolute; top: 160px; right: 0">✓</span>
+            <span style="position: absolute; top: 290px; right: 0">✓</span>
+            <span style="position: absolute; top: 366px; right: 0">✓</span>
+            <span style="position: absolute; top: 470px; right: 0">✓</span>
+            <span style="position: absolute; top: 610px; right: 0">✓</span>
+            <span style="position: absolute; top: 700px; right: 0">✓</span>
+            <span style="position: absolute; top: 876px; right: 0; color: var(--text); font-weight: 500">✗</span>
+            <span style="position: absolute; top: 960px; right: 0">✓</span>
+          </div>
+
+          <div style="background: #FAF8F4; color: #1B1917; border: 1px solid var(--line); border-radius: 3px; overflow: hidden">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; background: #F2EFE9; border-bottom: 1px solid #DCD8D0">
+              <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 17px; font-weight: 600; color: #3D5A8C">Meridian</span>
+              <div style="display: flex; gap: 22px; align-items: center; font-family: 'Source Serif 4', Georgia, serif; font-size: 14px">
+                <span style="color: #1B1917; border-bottom: 2px solid #3D5A8C; padding-bottom: 2px">Notes</span><span style="color: #6E6960">Palettes</span><span style="color: #6E6960">About</span>
+                <span style="padding: 8px 12px; border: 1px solid #3D5A8C; color: #3D5A8C; border-radius: 2px">Sign in</span>
+              </div>
+            </div>
+            <div style="padding: 48px 48px 36px">
+              <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #418F82; margin-bottom: 14px">FIELD NOTES</span>
+              <h2 style="font-family: 'Instrument Serif', Georgia, serif; font-size: 44px; font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 18px; max-width: 24ch">Reading is a physical act</h2>
+              <p style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; line-height: 1.5; margin: 0; max-width: 52ch; text-wrap: pretty">A contrast ratio tells you whether two colours can be separated by the eye. It does not tell you whether the result is comfortable over a page of text.</p>
+              <div style="display: flex; gap: 12px; align-items: center; margin: 26px 0 40px; flex-wrap: wrap">
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 15px; font-weight: 600; padding: 11px 20px; background: #3D5A8C; color: #FFFFFF; border-radius: 2px">Read the notes</span>
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 15px; font-weight: 600; padding: 11px 20px; border: 1px solid #8F8A80; color: #1B1917; border-radius: 2px">Browse palettes</span>
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 15px; font-weight: 600; padding: 11px 20px; background: #E1DDD5; color: #8A8478; border-radius: 2px">Export (disabled)</span>
+              </div>
+              <p style="font-family: 'Source Serif 4', Georgia, serif; font-size: 18px; line-height: 1.6; margin: 0 0 1.1em; max-width: 66ch; text-wrap: pretty">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you plan to ship, then <span style="color: #3D5A8C; text-decoration: underline; text-underline-offset: 3px">read the way a reader would</span>: quickly, at arm's length, without looking for problems.</p>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin: 30px 0; align-items: start">
+                <div>
+                  <label style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.16em; color: #418F82; margin-bottom: 8px">EMAIL</label>
+                  <div style="height: 44px; border: 1px solid #1B1917; background: #FFFFFF; border-radius: 2px; padding: 0 12px; display: flex; align-items: center; font-family: 'Source Serif 4', Georgia, serif; font-size: 16px; color: #1B1917; box-shadow: 0 0 0 3px #FAF8F4, 0 0 0 5px #1B1917">reader@meridian</div>
+                  <div style="margin-top: 8px; font-family: 'Source Serif 4', Georgia, serif; font-size: 14px; color: #A0402C">✗ This address is already on the list.</div>
+                </div>
+                <div>
+                  <div style="height: 120px; background: #E7E3DB; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #6E6960">IMAGE</div>
+                  <div style="margin-top: 8px; font-family: 'Source Serif 4', Georgia, serif; font-size: 13px; color: #8A8478; line-height: 1.5">Fig. 1 — Type at 13px on the ground. The caption is where most pairings fail first.</div>
+                </div>
+              </div>
+
+              <table style="width: 100%; border-collapse: collapse; font-family: 'Source Serif 4', Georgia, serif; font-size: 15px; margin: 0 0 30px">
+                <thead><tr style="border-bottom: 1px solid #1B1917"><th style="text-align: left; padding: 8px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #418F82; font-weight: 400">ELEMENT</th><th style="text-align: right; padding: 8px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #418F82; font-weight: 400">SIZE</th><th style="text-align: right; padding: 8px 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #418F82; font-weight: 400">LC</th></tr></thead>
+                <tbody>
+                  <tr style="border-bottom: 1px solid #DCD8D0"><td style="padding: 9px 0">Headline</td><td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px">44</td><td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px">{{ lcPair }}</td></tr>
+                  <tr style="border-bottom: 1px solid #DCD8D0"><td style="padding: 9px 0">Body</td><td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px">18</td><td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px">{{ lcPair }}</td></tr>
+                  <tr><td style="padding: 9px 0">Caption</td><td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px">13</td><td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px">{{ lcLow }}</td></tr>
+                </tbody>
+              </table>
+
+              <div style="background: #EFEEEE; border-left: 2px solid #3D5A8C; padding: 20px 24px; margin: 0 0 30px; border-radius: 2px">
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #418F82; margin-bottom: 8px">PULL QUOTE</div>
+                <p style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-style: italic; line-height: 1.35; margin: 0; max-width: 40ch">Adjust one variable at a time and keep the paragraph in view.</p>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #DCD8D0; padding-top: 16px; font-family: 'Source Serif 4', Georgia, serif; font-size: 13px; color: #6E6960"><span>Small print, captions and legal notes.</span><span>© Meridian</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 1b–1d  TYPE ROLE CONTROL ALTERNATIVES ============ -->
+  <div style="display: grid; gap: 14px">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #5B554D">TYPE ROLE CONTROL · THREE ALTERNATIVES · DISPLAY SELECTED IN EACH</span>
+    <div style="display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap">
+
+      <div id="1b" style="width: 360px">
+        <a href="#1b" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1b · SPECIMEN SEGMENTS</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #7A736A; margin-bottom: 10px">TYPE ROLE</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid #E4DED4; border-radius: 2px; overflow: hidden">
+            <div style="height: 56px; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; background: #1B1917; color: #FAF8F4"><span style="font-family: 'Instrument Serif', serif; font-size: 20px; line-height: 1">Aa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; margin-top: 3px">DISPLAY</span></div>
+            <div style="height: 56px; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; border-left: 1px solid #E4DED4; color: #7A736A"><span style="font-family: 'IBM Plex Sans', sans-serif; font-size: 18px; line-height: 1">Aa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; margin-top: 4px">BODY</span></div>
+            <div style="height: 56px; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; border-left: 1px solid #E4DED4; color: #7A736A"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; line-height: 1">Aa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; margin-top: 4px">MONO</span></div>
+          </div>
+          <div style="display: grid; gap: 14px; margin-top: 16px">
+            <div style="height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border: 1px solid #E4DED4; background: #F2EDE5; border-radius: 2px; font-size: 14px"><span>Instrument Serif</span><span style="color: #7A736A">▾</span></div>
+            <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #7A736A">SIZE</span><span>44px</span></div><div style="position: relative; height: 12px; border: 1px solid #E4DED4; border-radius: 2px; background: #F2EDE5"><span style="position: absolute; top: 50%; left: 58%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #FFFDFA; border: 1px solid #1B1917; border-radius: 2px"></span></div></div>
+            <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #7A736A">WEIGHT</span><span>500</span></div><div style="position: relative; height: 12px; border: 1px solid #E4DED4; border-radius: 2px; background: #F2EDE5"><span style="position: absolute; top: 50%; left: 50%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #FFFDFA; border: 1px solid #1B1917; border-radius: 2px"></span></div></div>
+            <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #7A736A">LEADING</span><span>1.10</span></div><div style="position: relative; height: 12px; border: 1px solid #E4DED4; border-radius: 2px; background: #F2EDE5"><span style="position: absolute; top: 50%; left: 8%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #FFFDFA; border: 1px solid #1B1917; border-radius: 2px"></span></div></div>
+          </div>
+          <div style="margin-top: 12px; font-size: 14px; color: #7A736A; line-height: 1.5">Body · Source Serif 4 18/400/1.6<br />Mono · Plex Mono 12/400/1.5</div>
+        </div>
+        <p style="font-size: 14px; line-height: 1.55; color: #3B3733; margin: 12px 0 0; max-width: 46ch"><strong>Costs</strong> one 56px row. <strong>Buys</strong> a glance-readable state: the selected role is inverted, its face shows as a specimen, the other two are summarised in one line under the sliders so nothing is lost. Answers the "which role am I changing" question directly. Clicking a role's element on the page switches the segment too. <strong>Recommended.</strong></p>
+      </div>
+
+      <div id="1c" style="width: 360px">
+        <a href="#1c" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1c · ACCORDION ROWS</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #7A736A; margin-bottom: 10px">TYPE ROLES</div>
+          <div style="border: 1px solid #1B1917; border-radius: 2px; padding: 14px 14px 18px">
+            <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em">▾ DISPLAY</span><span style="font-family: 'Instrument Serif', serif; font-size: 22px; line-height: 1">Instrument Serif</span></div>
+            <div style="display: grid; gap: 12px; margin-top: 14px">
+              <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #7A736A">SIZE</span><span>44px</span></div><div style="position: relative; height: 12px; border: 1px solid #E4DED4; border-radius: 2px; background: #F2EDE5"><span style="position: absolute; top: 50%; left: 58%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #FFFDFA; border: 1px solid #1B1917; border-radius: 2px"></span></div></div>
+              <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #7A736A">WEIGHT</span><span>500</span></div><div style="position: relative; height: 12px; border: 1px solid #E4DED4; border-radius: 2px; background: #F2EDE5"><span style="position: absolute; top: 50%; left: 50%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #FFFDFA; border: 1px solid #1B1917; border-radius: 2px"></span></div></div>
+              <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #7A736A">LEADING</span><span>1.10</span></div><div style="position: relative; height: 12px; border: 1px solid #E4DED4; border-radius: 2px; background: #F2EDE5"><span style="position: absolute; top: 50%; left: 8%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #FFFDFA; border: 1px solid #1B1917; border-radius: 2px"></span></div></div>
+            </div>
+          </div>
+          <div style="height: 52px; display: flex; justify-content: space-between; align-items: center; padding: 0 14px; border-bottom: 1px solid #E4DED4; color: #7A736A"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em">▸ BODY</span><span style="font-size: 14px">Source Serif 4 · 18 / 400 / 1.6</span></div>
+          <div style="height: 52px; display: flex; justify-content: space-between; align-items: center; padding: 0 14px; border-bottom: 1px solid #E4DED4; color: #7A736A"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em">▸ MONO</span><span style="font-size: 14px">Plex Mono · 12 / 400 / 1.5</span></div>
+        </div>
+        <p style="font-size: 14px; line-height: 1.55; color: #3B3733; margin: 12px 0 0; max-width: 46ch"><strong>Costs</strong> two 52px rows extra and a taller column; the sliders move vertically when a different role opens. <strong>Buys</strong> every role's full setting readable at rest, no hidden state at all. Answers the fourth-role question cheaply: a fourth row is just one more line.</p>
+      </div>
+
+      <div id="1d" style="width: 360px">
+        <a href="#1d" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1d · PICK ON THE PAGE</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #7A736A; margin-bottom: 10px">EDITING</div>
+          <div style="border: 1px solid #E4DED4; border-radius: 2px; padding: 14px; display: flex; gap: 14px; align-items: center">
+            <span style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #1B1917; color: #FAF8F4; font-family: 'Instrument Serif', serif; font-size: 22px; border-radius: 2px">Aa</span>
+            <div style="flex: 1"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em">DISPLAY</div><div style="font-size: 14px; color: #7A736A; margin-top: 3px">Headline · click another element to switch</div></div>
+            <span style="color: #7A736A">▾</span>
+          </div>
+          <div style="display: grid; gap: 14px; margin-top: 16px">
+            <div style="height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border: 1px solid #E4DED4; background: #F2EDE5; border-radius: 2px; font-size: 14px"><span>Instrument Serif</span><span style="color: #7A736A">▾</span></div>
+            <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #7A736A">SIZE</span><span>44px</span></div><div style="position: relative; height: 12px; border: 1px solid #E4DED4; border-radius: 2px; background: #F2EDE5"><span style="position: absolute; top: 50%; left: 58%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #FFFDFA; border: 1px solid #1B1917; border-radius: 2px"></span></div></div>
+            <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #7A736A">WEIGHT</span><span>500</span></div><div style="position: relative; height: 12px; border: 1px solid #E4DED4; border-radius: 2px; background: #F2EDE5"><span style="position: absolute; top: 50%; left: 50%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #FFFDFA; border: 1px solid #1B1917; border-radius: 2px"></span></div></div>
+            <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #7A736A">LEADING</span><span>1.10</span></div><div style="position: relative; height: 12px; border: 1px solid #E4DED4; border-radius: 2px; background: #F2EDE5"><span style="position: absolute; top: 50%; left: 8%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #FFFDFA; border: 1px solid #1B1917; border-radius: 2px"></span></div></div>
+          </div>
+          <div style="margin-top: 18px; border: 1px solid #E4DED4; border-radius: 2px; padding: 18px; background: #FFFDFA">
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; color: #418F82">FIELD NOTES</div>
+            <div style="display: inline-block; position: relative; margin-top: 36px; font-family: 'Instrument Serif', serif; font-size: 26px; line-height: 1.1; box-shadow: 0 0 0 3px #FFFDFA, 0 0 0 5px #1B1917; border-radius: 1px">Reading is a physical act<span style="position: absolute; top: -26px; left: -5px; background: #1B1917; color: #FAF8F4; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; padding: 3px 7px; border-radius: 2px">DISPLAY</span></div>
+            <p style="margin: 10px 0 0; font-family: 'Source Serif 4', serif; font-size: 14px; color: #7A736A; line-height: 1.5">Body text sits here, dimmed while another role is selected.</p>
+          </div>
+        </div>
+        <p style="font-size: 14px; line-height: 1.55; color: #3B3733; margin: 12px 0 0; max-width: 46ch"><strong>Costs</strong> the smallest footprint but the least visible state: the dropdown is the only list of roles, and picking-on-the-page competes with the colouring gesture on the same elements. <strong>Buys</strong> the tightest link between control and thing controlled. Best as the secondary path inside <a href="#1b">1b</a>, not alone.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 1e–1g  VERDICT ALTERNATIVES ============ -->
+  <div style="display: grid; gap: 14px">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #5B554D">PER-ELEMENT VERDICTS · THREE ALTERNATIVES · SAME CROP, CAPTION FAILING</span>
+    <div style="display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap">
+
+      <div id="1e" style="width: 400px">
+        <a href="#1e" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1e · GUTTER MARKS</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px; display: grid; grid-template-columns: 22px 1fr; gap: 10px">
+          <div style="position: relative; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #7A736A">
+            <span style="position: absolute; top: 22px; right: 0">–</span>
+            <span style="position: absolute; top: 58px; right: 0">✓</span>
+            <span style="position: absolute; top: 148px; right: 0">✓</span>
+            <span style="position: absolute; top: 262px; right: 0; color: #1B1917; font-weight: 500">✗</span>
+          </div>
+          <div style="border: 1px solid #E4DED4; border-radius: 3px; padding: 22px 24px">
+            <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #418F82; margin-bottom: 10px">FIELD NOTES</span>
+            <h3 style="font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 500; line-height: 1.1; margin: 0 0 14px">Reading is a physical act</h3>
+            <span style="display: inline-block; font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 9px 16px; background: #3D5A8C; color: #fff; border-radius: 2px; margin-bottom: 22px">Read the notes</span>
+            <div style="height: 60px; background: #E7E3DB; border-radius: 2px"></div>
+            <div style="margin-top: 8px; font-family: 'Source Serif 4', serif; font-size: 13px; color: #8A8478; text-decoration: underline dotted; text-underline-offset: 4px">Fig. 1 — The caption is where most pairings fail first.</div>
+          </div>
+        </div>
+        <p style="font-size: 14px; line-height: 1.55; color: #3B3733; margin: 12px 0 0; max-width: 46ch"><strong>Costs</strong> a 28px gutter and a rule for aligning marks with elements. <strong>Buys</strong> a page that reads at one scan, the failing line carried also by a dotted underline, and the same glyphs as the rating list. Numbers live in the ledger, not on the page. <strong>Recommended</strong>, paired with the ledger in <a href="#1g">1g</a>.</p>
+      </div>
+
+      <div id="1f" style="width: 400px">
+        <a href="#1f" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1f · TAGS ON FOCUS</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="border: 1px solid #E4DED4; border-radius: 3px; padding: 22px 24px">
+            <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #418F82; margin-bottom: 10px">FIELD NOTES</span>
+            <h3 style="font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 500; line-height: 1.1; margin: 0 0 14px">Reading is a physical act</h3>
+            <span style="display: inline-block; font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 9px 16px; background: #3D5A8C; color: #fff; border-radius: 2px; margin-bottom: 22px">Read the notes</span>
+            <div style="height: 60px; background: #E7E3DB; border-radius: 2px"></div>
+            <div style="position: relative; display: inline-block; margin-top: 8px; font-family: 'Source Serif 4', serif; font-size: 13px; color: #8A8478; box-shadow: 0 0 0 3px #FAF8F4, 0 0 0 5px #1B1917; border-radius: 1px">Fig. 1 — The caption is where most pairings fail first.<span style="position: absolute; left: 0; top: 100%; margin-top: 10px; white-space: nowrap; background: #1B1917; color: #FAF8F4; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.1em; padding: 6px 9px; border-radius: 2px">✗ CAPTION · Lc {{ lcLow }} · needs 75</span></div>
+          </div>
+          <div style="margin-top: 26px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #7A736A">10 ✓ &nbsp; 1 – &nbsp; 1 ✗ &nbsp; on the page</div>
+        </div>
+        <p style="font-size: 14px; line-height: 1.55; color: #3B3733; margin: 12px 0 0; max-width: 46ch"><strong>Costs</strong> discoverability: at rest the page shows nothing, only the count under it hints that something failed. <strong>Buys</strong> the cleanest page and the richest single verdict (number, threshold, name in one tag). Good for the opened state, weak as the only surface.</p>
+      </div>
+
+      <div id="1g" style="width: 400px">
+        <a href="#1g" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1g · LEDGER</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #7A736A; margin-bottom: 10px">ELEMENTS · 12</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; display: grid">
+            <div style="display: grid; grid-template-columns: 18px 1fr 50px 36px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #E4DED4"><span>–</span><span>EYEBROW</span><span style="color: #7A736A">P1 · G</span><span style="text-align: right">{{ lcEyebrow }}</span></div>
+            <div style="display: grid; grid-template-columns: 18px 1fr 50px 36px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #E4DED4"><span>✓</span><span>HEADLINE</span><span style="color: #7A736A">T · G</span><span style="text-align: right">{{ lcPair }}</span></div>
+            <div style="display: grid; grid-template-columns: 18px 1fr 50px 36px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #E4DED4"><span>✓</span><span>BUTTON</span><span style="color: #7A736A">W · P3</span><span style="text-align: right">{{ lcButton }}</span></div>
+            <div style="display: grid; grid-template-columns: 18px 1fr 50px 36px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #E4DED4"><span>✓</span><span>BODY</span><span style="color: #7A736A">T · G</span><span style="text-align: right">{{ lcPair }}</span></div>
+            <div style="display: grid; grid-template-columns: 18px 1fr 50px 36px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #E4DED4"><span>✓</span><span>LINK</span><span style="color: #7A736A">P3 · G</span><span style="text-align: right">{{ lcLink }}</span></div>
+            <div style="display: grid; grid-template-columns: 18px 1fr 50px 36px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #1B1917; font-weight: 500"><span>✗</span><span>CAPTION</span><span style="color: #7A736A; font-weight: 400">· G</span><span style="text-align: right">{{ lcLow }}</span></div>
+            <div style="display: grid; grid-template-columns: 18px 1fr 50px 36px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #E4DED4"><span>✓</span><span>TABLE NUM</span><span style="color: #7A736A">T · G</span><span style="text-align: right">{{ lcPair }}</span></div>
+            <div style="height: 44px; display: flex; align-items: center; color: #7A736A">+ 5 more</div>
+          </div>
+        </div>
+        <p style="font-size: 14px; line-height: 1.55; color: #3B3733; margin: 12px 0 0; max-width: 46ch"><strong>Costs</strong> ~500px of left column, or a collapse to the failing rows only. <strong>Buys</strong> the readable record the colouring flow needs anyway (element · colour · ground · Lc) — one table answers two briefs. Alone it separates verdict from thing; with <a href="#1e">1e</a>'s marks the two point at each other.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 1h–1l  COLOURING FLOW STATES ============ -->
+  <div style="display: grid; gap: 14px">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #5B554D">COLOURING FLOW · FIVE STATES · HEADLINE / BUTTONS CROP</span>
+    <div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap">
+
+      <div id="1h" style="width: 380px">
+        <a href="#1h" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1h · NOTHING CARRIED</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="border: 1px solid #E4DED4; border-radius: 3px; padding: 22px 24px">
+            <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #418F82; margin-bottom: 10px">FIELD NOTES</span>
+            <h3 style="display: inline-block; position: relative; font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 500; line-height: 1.1; margin: 30px 0 14px; outline: 1px dashed #7A736A; outline-offset: 5px"><span style="position: absolute; top: -28px; left: -6px; background: #1B1917; color: #FAF8F4; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; padding: 3px 7px; border-radius: 2px">HEADLINE · T</span>Reading is a physical act</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap"><span style="font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 9px 16px; background: #3D5A8C; color: #fff; border-radius: 2px">Read the notes</span><span style="font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 9px 16px; border: 1px solid #8F8A80; border-radius: 2px">Browse</span></div>
+          </div>
+          <p style="margin: 14px 0 0; font-size: 14px; color: #7A736A; line-height: 1.5">Hover or focus names an element and shows its dashed outline; nothing else marks the page at rest.</p>
+        </div>
+      </div>
+
+      <div id="1i" style="width: 380px">
+        <a href="#1i" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1i · CARRYING P2</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="border: 1px solid #E4DED4; border-radius: 3px; padding: 22px 24px; position: relative">
+            <span style="display: inline-block; position: relative; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #418F82; margin: 30px 0 14px; outline: 1px dashed #1B1917; outline-offset: 5px"><span style="position: absolute; top: -26px; left: -6px; background: #FAF8F4; color: #1B1917; border: 1px solid #1B1917; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; padding: 2px 6px; border-radius: 2px">EYEBROW</span>FIELD NOTES</span>
+            <h3 style="display: inline-block; position: relative; font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 500; line-height: 1.1; margin: 36px 0 44px; outline: 1px dashed #1B1917; outline-offset: 5px"><span style="position: absolute; top: -26px; left: -6px; background: #FAF8F4; color: #1B1917; border: 1px solid #1B1917; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; padding: 2px 6px; border-radius: 2px">HEADLINE</span>Reading is a physical act</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap">
+              <span style="position: relative; font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 9px 16px; background: #3D5A8C; color: #fff; border-radius: 2px; outline: 2px solid #1B1917; outline-offset: 5px"><span style="position: absolute; top: -30px; left: -6px; background: #1B1917; color: #FAF8F4; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; padding: 3px 7px; border-radius: 2px; white-space: nowrap">BUTTONS ← P2</span>Read the notes</span>
+              <span style="font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 9px 16px; border: 1px solid #8F8A80; border-radius: 2px; outline: 1px dashed #1B1917; outline-offset: 5px">Browse</span>
+            </div>
+            <div style="position: absolute; left: 150px; top: 208px; width: 32px; height: 32px; background: #3D758C; border: 2px solid #FAF8F4; border-radius: 2px; box-shadow: 0 0 0 1px #1B1917; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #fff">P2</div>
+          </div>
+          <p style="margin: 14px 0 0; font-size: 14px; color: #7A736A; line-height: 1.5">While a chip is carried every named element shows its dashed outline and name; the one under the pointer goes solid and names the drop.</p>
+        </div>
+      </div>
+
+      <div id="1j" style="width: 380px">
+        <a href="#1j" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1j · AFTER THREE DROPS</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="display: grid; grid-template-columns: 22px 1fr; gap: 10px">
+            <div style="position: relative; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #7A736A"><span style="position: absolute; top: 22px; right: 0">✓</span><span style="position: absolute; top: 58px; right: 0">✓</span><span style="position: absolute; top: 148px; right: 0; color: #1B1917; font-weight: 500">✗</span></div>
+            <div style="border: 1px solid #E4DED4; border-radius: 3px; padding: 22px 24px">
+              <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #40428C; margin-bottom: 10px">FIELD NOTES</span>
+              <h3 style="font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 500; line-height: 1.1; margin: 0 0 14px; color: #40428C">Reading is a physical act</h3>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap"><span style="font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 9px 16px; background: #418F82; color: #fff; border-radius: 2px; text-decoration: underline dotted; text-underline-offset: 4px">Read the notes</span><span style="font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 9px 16px; border: 1px solid #418F82; color: #418F82; border-radius: 2px">Browse</span></div>
+            </div>
+          </div>
+          <div style="margin-top: 22px">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #7A736A">PLACED COLOURS · 3</span><span style="height: 44px; display: inline-flex; align-items: center; padding: 0 12px; border: 1px solid #E4DED4; border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.1em">↺ RESET PAGE</span></div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px">
+              <div style="display: grid; grid-template-columns: 18px 1fr 28px 60px 44px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #E4DED4"><span>✓</span><span>HEADLINE</span><span style="width: 18px; height: 18px; background: #40428C; border-radius: 2px"></span><span>P4 · G</span><span style="text-align: right; color: #7A736A">↺</span></div>
+              <div style="display: grid; grid-template-columns: 18px 1fr 28px 60px 44px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #E4DED4"><span>✓</span><span>EYEBROW</span><span style="width: 18px; height: 18px; background: #40428C; border-radius: 2px"></span><span>P4 · G</span><span style="text-align: right; color: #7A736A">↺</span></div>
+              <div style="display: grid; grid-template-columns: 18px 1fr 28px 60px 44px; gap: 8px; height: 44px; align-items: center; border-bottom: 1px solid #1B1917; font-weight: 500"><span>✗</span><span>BUTTONS</span><span style="width: 18px; height: 18px; background: #418F82; border-radius: 2px"></span><span style="font-weight: 400">W · P1</span><span style="text-align: right; color: #7A736A">↺</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="1k" style="width: 380px">
+        <a href="#1k" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1k · NO-DRAG PATH</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="border: 1px solid #E4DED4; border-radius: 3px; padding: 22px 24px">
+            <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #418F82; margin-bottom: 10px">FIELD NOTES</span>
+            <h3 style="display: inline-block; font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 500; line-height: 1.1; margin: 0; box-shadow: 0 0 0 3px #FAF8F4, 0 0 0 5px #1B1917; border-radius: 1px">Reading is a physical act</h3>
+            <div style="margin-top: 18px; border: 1px solid #1B1917; background: #FFFDFA; border-radius: 2px; padding: 14px">
+              <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em"><span>HEADLINE · COLOUR</span><span style="color: #7A736A">ESC</span></div>
+              <div style="display: flex; gap: 4px; margin-top: 12px">
+                <span style="flex: 1; height: 44px; background: #418F82; border-radius: 2px"></span>
+                <span style="flex: 1; height: 44px; background: #3D758C; border-radius: 2px"></span>
+                <span style="flex: 1; height: 44px; background: #3D5A8C; border-radius: 2px"></span>
+                <span style="flex: 1; height: 44px; background: #40428C; border-radius: 2px; box-shadow: 0 0 0 3px #FFFDFA, 0 0 0 5px #1B1917; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px">✓</span>
+                <span style="flex: 1; height: 44px; background: #5E4796; border-radius: 2px"></span>
+                <span style="flex: 1; height: 44px; background: #1B1917; border-radius: 2px"></span>
+                <span style="flex: 1; height: 44px; background: #FAF8F4; border: 1px solid #E4DED4; border-radius: 2px"></span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span>P4 on G · Lc {{ lcP4 }} ✓</span><span style="height: 44px; display: inline-flex; align-items: center; color: #7A736A">↺ DEFAULT (T)</span></div>
+            </div>
+          </div>
+          <p style="margin: 14px 0 0; font-size: 14px; color: #7A736A; line-height: 1.5">Tab to an element, Enter opens the chooser, ← → move, Enter places, Backspace resets. Same names as the drag path and the ledger.</p>
+        </div>
+      </div>
+
+      <div id="1l" style="width: 380px">
+        <a href="#1l" style="display: inline-block; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none; margin-bottom: 10px">1l · VERDICT OPENED</a>
+        <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 24px">
+          <div style="display: grid; grid-template-columns: 22px 1fr; gap: 10px">
+            <div style="position: relative; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #7A736A"><span style="position: absolute; top: 22px; right: 0">✓</span><span style="position: absolute; top: 58px; right: 0">✓</span><span style="position: absolute; top: 148px; right: 0; color: #1B1917; font-weight: 500; box-shadow: 0 0 0 3px #FAF8F4, 0 0 0 5px #1B1917; border-radius: 1px">✗</span></div>
+            <div style="border: 1px solid #E4DED4; border-radius: 3px; padding: 22px 24px">
+              <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #40428C; margin-bottom: 10px">FIELD NOTES</span>
+              <h3 style="font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 500; line-height: 1.1; margin: 0 0 14px; color: #40428C">Reading is a physical act</h3>
+              <span style="display: inline-block; font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 9px 16px; background: #418F82; color: #fff; border-radius: 2px; text-decoration: underline dotted; text-underline-offset: 4px">Read the notes</span>
+              <div style="margin-top: 14px; border: 1px solid #1B1917; background: #FFFDFA; border-radius: 2px; padding: 14px; font-size: 14px; line-height: 1.5">
+                <div style="font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.12em; margin-bottom: 8px">✗ BUTTONS</div>
+                <div>White on P1 #418F82 · Body role 15/600</div>
+                <div>Lc {{ lcButtonP1 }} — needs 60 for text this size and weight.</div>
+                <div style="color: #7A736A; margin-top: 8px">Nearest pass in this palette: P4 (Lc {{ lcButtonP4 }}) or T.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 1m  NARROW 390 ============ -->
+  <div style="display: flex; gap: 48px; align-items: flex-start; flex-wrap: wrap">
+    <div id="1m" style="display: grid; gap: 14px">
+      <div style="display: flex; gap: 14px; align-items: baseline">
+        <a href="#1m" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none">1m</a>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #5B554D">NARROW · 390 · RECOMMENDED VERSION</span>
+      </div>
+      <div style="width: 390px; background: #FAF8F4; color: #1B1917; border: 1px solid #D6CFC4; padding: 20px 20px 40px">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid #E4DED4">
+          <span style="font-family: 'Instrument Serif', serif; font-size: 26px; line-height: 1">Color Tools</span>
+          <span style="height: 44px; width: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #E4DED4; border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 14px">◐</span>
+        </div>
+        <div style="display: flex; border: 1px solid #E4DED4; border-radius: 2px; overflow: hidden; margin-top: 16px">
+          <span style="flex: 1; height: 44px; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; color: #7A736A">STUDIO</span>
+          <span style="flex: 1; height: 44px; display: inline-flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4">CONTRAST</span>
+        </div>
+
+        <div style="margin-top: 22px; display: flex; gap: 4px">
+          <span style="flex: 1; height: 44px; background: #418F82; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #3D758C; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #3D5A8C; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #40428C; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #5E4796; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #1B1917; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #FAF8F4; border: 1px solid #E4DED4; border-radius: 2px"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 16px">
+          <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-family: 'Instrument Serif', serif; font-size: 48px; line-height: 0.9">{{ lcLow }}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #7A736A">Lc lowest</span></div>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #7A736A">10 ✓ · 1 – · 1 ✗</span>
+        </div>
+
+        <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid #E4DED4; border-radius: 2px; overflow: hidden">
+          <div style="height: 52px; display: flex; flex-direction: column; justify-content: center; padding: 0 10px; background: #1B1917; color: #FAF8F4"><span style="font-family: 'Instrument Serif', serif; font-size: 18px; line-height: 1">Aa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; margin-top: 3px">DISPLAY</span></div>
+          <div style="height: 52px; display: flex; flex-direction: column; justify-content: center; padding: 0 10px; border-left: 1px solid #E4DED4; color: #7A736A"><span style="font-size: 16px; line-height: 1">Aa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; margin-top: 4px">BODY</span></div>
+          <div style="height: 52px; display: flex; flex-direction: column; justify-content: center; padding: 0 10px; border-left: 1px solid #E4DED4; color: #7A736A"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; line-height: 1">Aa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; margin-top: 4px">MONO</span></div>
+        </div>
+        <div style="height: 44px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border: 1px solid #E4DED4; background: #F2EDE5; border-radius: 2px; font-size: 14px"><span>Instrument Serif · 44 / 500 / 1.10</span><span style="color: #7A736A">▾</span></div>
+
+        <div style="margin-top: 22px; display: grid; grid-template-columns: 18px 1fr; gap: 8px">
+          <div style="position: relative; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #7A736A"><span style="position: absolute; top: 18px; right: 0">–</span><span style="position: absolute; top: 48px; right: 0">✓</span><span style="position: absolute; top: 172px; right: 0">✓</span><span style="position: absolute; top: 300px; right: 0">✓</span><span style="position: absolute; top: 452px; right: 0; color: #1B1917; font-weight: 500">✗</span></div>
+          <div style="border: 1px solid #E4DED4; border-radius: 3px; overflow: hidden">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #F2EFE9; border-bottom: 1px solid #DCD8D0"><span style="font-family: 'Source Serif 4', serif; font-size: 15px; font-weight: 600; color: #3D5A8C">Meridian</span><span style="font-size: 16px">≡</span></div>
+            <div style="padding: 20px 16px">
+              <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: #418F82; margin-bottom: 10px">FIELD NOTES</span>
+              <h3 style="font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 12px">Reading is a physical act</h3>
+              <p style="font-family: 'Source Serif 4', serif; font-size: 16px; line-height: 1.5; margin: 0 0 16px; text-wrap: pretty">A contrast ratio tells you whether two colours can be separated by the eye.</p>
+              <div style="display: grid; gap: 8px"><span style="font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 12px 16px; background: #3D5A8C; color: #fff; border-radius: 2px; text-align: center">Read the notes</span><span style="font-family: 'Source Serif 4', serif; font-size: 14px; font-weight: 600; padding: 12px 16px; background: #E1DDD5; color: #8A8478; border-radius: 2px; text-align: center">Export (disabled)</span></div>
+              <p style="font-family: 'Source Serif 4', serif; font-size: 15px; line-height: 1.6; margin: 18px 0 0; text-wrap: pretty">Set the size you plan to ship, then <span style="color: #3D5A8C; text-decoration: underline; text-underline-offset: 3px">read the way a reader would</span>, quickly and at arm's length.</p>
+              <div style="height: 70px; background: #E7E3DB; border-radius: 2px; margin-top: 18px"></div>
+              <div style="margin-top: 8px; font-family: 'Source Serif 4', serif; font-size: 13px; color: #8A8478; text-decoration: underline dotted; text-underline-offset: 4px">Fig. 1 — The caption is where most pairings fail first.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 22px; border-top: 1px solid #E4DED4; padding-top: 14px; display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #7A736A">PLACED COLOURS · 0</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #7A736A">▸</span></div>
+        <div style="border-top: 1px solid #E4DED4; margin-top: 14px; padding-top: 14px; display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #7A736A">COLOR VISION</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #7A736A">▸</span></div>
+        <p style="margin: 18px 0 0; font-size: 14px; color: #7A736A; line-height: 1.5">Touch: tap a chip, then tap an element. The chooser from <a href="#1k">1k</a> opens on long-press.</p>
+      </div>
+    </div>
+
+    <!-- ============ 1n  DARK ============ -->
+    <div id="1n" style="display: grid; gap: 14px">
+      <div style="display: flex; gap: 14px; align-items: baseline">
+        <a href="#1n" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none">1n</a>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #5B554D">DEFAULT · DARK · 1240 (UPPER HALF)</span>
+      </div>
+      <div style="width: 1240px; background: #171512; color: #F1EDE6; border: 1px solid #0E0D0B; padding: 34px 34px 40px">
+        <div style="display: flex; align-items: center; gap: 28px; padding-bottom: 30px; border-bottom: 1px solid #302C25">
+          <span style="font-family: 'Instrument Serif', serif; font-size: 34px; line-height: 1">Color Tools</span>
+          <div style="display: flex; border: 1px solid #302C25; border-radius: 2px; overflow: hidden">
+            <span style="height: 44px; display: inline-flex; align-items: center; padding: 0 16px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; color: #98907F">STUDIO</span>
+            <span style="height: 44px; display: inline-flex; align-items: center; padding: 0 16px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; background: #F1EDE6; color: #171512">CONTRAST &amp; TYPE</span>
+          </div>
+          <span style="margin-left: auto; height: 44px; display: inline-flex; align-items: center; padding: 0 14px; border: 1px solid #302C25; border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; color: #98907F">LIGHT UI</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 52px; padding-top: 28px; align-items: start">
+          <div style="display: grid; gap: 26px">
+            <div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #98907F; margin-bottom: 10px">PAIR</div>
+              <div style="display: flex; align-items: center; gap: 10px; height: 44px"><span style="width: 36px; height: 36px; background: #F1EDE6; border-radius: 2px"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; flex: 1">T · #F1EDE6</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #98907F">text</span></div>
+              <div style="display: flex; align-items: center; gap: 10px; height: 44px"><span style="width: 36px; height: 36px; background: #171512; border: 1px solid #302C25; border-radius: 2px"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; flex: 1">G · #171512</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #98907F">ground</span></div>
+              <div style="display: flex; gap: 4px; margin-top: 12px"><span style="flex: 1; height: 44px; background: #418F82; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #3D758C; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #3D5A8C; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #40428C; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #5E4796; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #F1EDE6; border-radius: 2px"></span><span style="flex: 1; height: 44px; background: #171512; border: 1px solid #302C25; border-radius: 2px"></span></div>
+              <p style="margin: 10px 0 0; font-size: 14px; color: #98907F; line-height: 1.5">Drag a chip onto the page, or focus an element and press Enter.</p>
+            </div>
+            <div style="border-top: 1px solid #302C25; padding-top: 22px">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #98907F; margin-bottom: 8px">LOWEST ON PAGE</div>
+              <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-family: 'Instrument Serif', serif; font-size: 64px; line-height: 0.9">{{ lcLowDark }}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.12em; color: #98907F">Lc</span></div>
+              <div style="margin-top: 10px; font-size: 14px; line-height: 1.5">Eyebrow · Plex Mono 12/400 on G — needs 75, has {{ lcLowDark }}.</div>
+              <div style="margin-top: 14px; display: grid; gap: 6px; font-size: 14px">
+                <div style="display: flex; gap: 10px"><span style="width: 14px">✓</span><span style="color: #98907F; width: 40px">9</span><span>pass at their own size</span></div>
+                <div style="display: flex; gap: 10px"><span style="width: 14px">–</span><span style="color: #98907F; width: 40px">1</span><span>passes only as large text</span></div>
+                <div style="display: flex; gap: 10px"><span style="width: 14px">✗</span><span style="color: #98907F; width: 40px">2</span><span>fail on their ground</span></div>
+              </div>
+            </div>
+            <div style="border-top: 1px solid #302C25; padding-top: 22px">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; letter-spacing: 0.16em; color: #98907F; margin-bottom: 10px">TYPE ROLE</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid #302C25; border-radius: 2px; overflow: hidden">
+                <div style="height: 56px; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; background: #F1EDE6; color: #171512"><span style="font-family: 'Instrument Serif', serif; font-size: 20px; line-height: 1">Aa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; margin-top: 3px">DISPLAY</span></div>
+                <div style="height: 56px; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; border-left: 1px solid #302C25; color: #98907F"><span style="font-size: 18px; line-height: 1">Aa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; margin-top: 4px">BODY</span></div>
+                <div style="height: 56px; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; border-left: 1px solid #302C25; color: #98907F"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; line-height: 1">Aa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; margin-top: 4px">MONO</span></div>
+              </div>
+              <div style="display: grid; gap: 14px; margin-top: 16px">
+                <div style="height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border: 1px solid #302C25; background: #232019; border-radius: 2px; font-size: 14px"><span>Instrument Serif</span><span style="color: #98907F">▾</span></div>
+                <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #98907F">SIZE</span><span>44px</span></div><div style="position: relative; height: 12px; border: 1px solid #302C25; border-radius: 2px; background: #232019"><span style="position: absolute; top: 50%; left: 58%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #1F1D19; border: 1px solid #F1EDE6; border-radius: 2px"></span></div></div>
+                <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #98907F">WEIGHT</span><span>500</span></div><div style="position: relative; height: 12px; border: 1px solid #302C25; border-radius: 2px; background: #232019"><span style="position: absolute; top: 50%; left: 50%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #1F1D19; border: 1px solid #F1EDE6; border-radius: 2px"></span></div></div>
+                <div><div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"><span style="letter-spacing: 0.16em; color: #98907F">LEADING</span><span>1.10</span></div><div style="position: relative; height: 12px; border: 1px solid #302C25; border-radius: 2px; background: #232019"><span style="position: absolute; top: 50%; left: 8%; width: 13px; height: 28px; transform: translate(-50%, -50%); background: #1F1D19; border: 1px solid #F1EDE6; border-radius: 2px"></span></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 28px 1fr; gap: 10px">
+            <div style="position: relative; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #98907F"><span style="position: absolute; top: 22px; right: 0">–</span><span style="position: absolute; top: 122px; right: 0; color: #F1EDE6; font-weight: 500">✗</span><span style="position: absolute; top: 160px; right: 0">✓</span><span style="position: absolute; top: 290px; right: 0">✓</span><span style="position: absolute; top: 366px; right: 0">✓</span><span style="position: absolute; top: 470px; right: 0">✓</span></div>
+            <div style="background: #171512; color: #F1EDE6; border: 1px solid #302C25; border-radius: 3px; overflow: hidden">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; background: #1F1D19; border-bottom: 1px solid #302C25">
+                <span style="font-family: 'Source Serif 4', serif; font-size: 17px; font-weight: 600; color: #7FA6E0">Meridian</span>
+                <div style="display: flex; gap: 22px; align-items: center; font-family: 'Source Serif 4', serif; font-size: 14px"><span style="border-bottom: 2px solid #7FA6E0; padding-bottom: 2px">Notes</span><span style="color: #98907F">Palettes</span><span style="color: #98907F">About</span><span style="padding: 8px 12px; border: 1px solid #7FA6E0; color: #7FA6E0; border-radius: 2px">Sign in</span></div>
+              </div>
+              <div style="padding: 48px 48px 36px">
+                <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: #418F82; margin-bottom: 14px; text-decoration: underline dotted; text-underline-offset: 4px">FIELD NOTES</span>
+                <h2 style="font-family: 'Instrument Serif', serif; font-size: 44px; font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 18px; max-width: 24ch">Reading is a physical act</h2>
+                <p style="font-family: 'Source Serif 4', serif; font-size: 22px; line-height: 1.5; margin: 0; max-width: 52ch; text-wrap: pretty">A contrast ratio tells you whether two colours can be separated by the eye. It does not tell you whether the result is comfortable over a page of text.</p>
+                <div style="display: flex; gap: 12px; align-items: center; margin: 26px 0 40px; flex-wrap: wrap">
+                  <span style="font-family: 'Source Serif 4', serif; font-size: 15px; font-weight: 600; padding: 11px 20px; background: #3D5A8C; color: #FFFFFF; border-radius: 2px">Read the notes</span>
+                  <span style="font-family: 'Source Serif 4', serif; font-size: 15px; font-weight: 600; padding: 11px 20px; border: 1px solid #6E6960; color: #F1EDE6; border-radius: 2px">Browse palettes</span>
+                  <span style="font-family: 'Source Serif 4', serif; font-size: 15px; font-weight: 600; padding: 11px 20px; background: #2A2722; color: #7A736A; border-radius: 2px">Export (disabled)</span>
+                </div>
+                <p style="font-family: 'Source Serif 4', serif; font-size: 18px; line-height: 1.6; margin: 0; max-width: 66ch; text-wrap: pretty">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you plan to ship, then <span style="color: #7FA6E0; text-decoration: underline; text-underline-offset: 3px">read the way a reader would</span>.</p>
+                <p style="margin: 22px 0 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #98907F">… PAGE CONTINUES AS IN <a href="#1a" style="color: #F1EDE6">1a</a></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ NOTES ============ -->
+  <div id="1o" style="max-width: 760px; display: grid; gap: 14px">
+    <div style="display: flex; gap: 14px; align-items: baseline">
+      <a href="#1o" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; background: #1B1917; color: #FAF8F4; padding: 4px 8px; border-radius: 2px; text-decoration: none">1o</a>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #5B554D">POSITIONS ON THE OPEN QUESTIONS</span>
+    </div>
+    <div style="background: #FAF8F4; border: 1px solid #D6CFC4; padding: 28px 32px; font-size: 15px; line-height: 1.6; color: #1B1917; display: grid; gap: 18px">
+      <p style="margin: 0"><strong>The big Lc figure</strong> answers "what is the weakest text on this page, and where". It is the lowest Lc among elements that carry text, named beneath it. The pair's own Lc drops to a one-line footnote: the pair is now an input, not the result. When nothing fails, the figure is still the floor, and the caption says which element sets it.</p>
+      <p style="margin: 0"><strong>Palette change.</strong> A placed colour is stored as a slot (P2), not a hex. Switching from Analogous to Triad keeps "buttons = P2" and the buttons take the new P2; the ledger row stays. All schemes in the app have five slots, so no slot goes missing. If a future palette has fewer, the element falls back to its default role and its ledger row reads "P5 · not in palette · reset", kept for one session so the visitor sees what happened.</p>
+      <p style="margin: 0"><strong>Pair colours as targets.</strong> Yes. T and G sit at the end of the chip row and can be dropped like any slot, so a visitor can put the text colour on a button ground or the ground colour on a card. The pair itself is still set only by the two fields; dropping onto the page never changes T or G.</p>
+      <p style="margin: 0"><strong>A fourth role.</strong> The grown page wants one. Buttons, nav, table numbers and form labels are neither body nor mono; they are UI text at 13–15px, usually heavier, and their Lc thresholds differ from body copy. Recommendation: add <strong>UI</strong> as a fourth segment in <a href="#1b">1b</a> (four segments still fit 300px at 11px labels), defaulting to the body face at 15/600/1.2. Ship three first if the column is tight; the segment control grows without redesign.</p>
+      <p style="margin: 0; color: #5B554D; font-size: 14px">Lc values shown are computed with APCA 0.0.98G from the actual colours on the artboards. Thresholds used: 90 preferred body, 75 body minimum, 60 large or bold text, 45 spot text and UI; "–" marks an element that passes only at the large-text threshold.</p>
+    </div>
+  </div>
+
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  y(hex) {
+    const h = hex.replace('#', '');
+    const c = i => Math.pow(parseInt(h.slice(i, i + 2), 16) / 255, 2.4);
+    return 0.2126729 * c(0) + 0.7151522 * c(2) + 0.0721750 * c(4);
+  }
+  apca(txt, bg) {
+    let yt = this.y(txt), yb = this.y(bg);
+    const soft = v => v < 0.022 ? v + Math.pow(0.022 - v, 1.414) : v;
+    yt = soft(yt); yb = soft(yb);
+    let s;
+    if (yb > yt) { s = (Math.pow(yb, 0.56) - Math.pow(yt, 0.57)) * 1.14; s = s < 0.1 ? 0 : s - 0.027; }
+    else { s = (Math.pow(yb, 0.65) - Math.pow(yt, 0.62)) * 1.14; s = s > -0.1 ? 0 : s + 0.027; }
+    return Math.round(Math.abs(s * 100));
+  }
+  renderVals() {
+    return {
+      lcPair: this.apca('#1B1917', '#FAF8F4'),
+      lcLow: this.apca('#8A8478', '#FAF8F4'),
+      lcEyebrow: this.apca('#418F82', '#FAF8F4'),
+      lcButton: this.apca('#FFFFFF', '#3D5A8C'),
+      lcLink: this.apca('#3D5A8C', '#FAF8F4'),
+      lcP4: this.apca('#40428C', '#FAF8F4'),
+      lcButtonP1: this.apca('#FFFFFF', '#418F82'),
+      lcButtonP4: this.apca('#FFFFFF', '#40428C'),
+      lcLowDark: this.apca('#418F82', '#171512')
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,11 +1,12 @@
 import {EventInstance} from "@ngrx/signals/events";
 import chroma, {Color} from "chroma-js";
 import {AppState} from "@core/models/app-state.model";
-import {paletteColorFrom} from "@palettes/models/palette-color.model";
-import {generatePalette} from "@palettes/helper/palette.helper";
-import {ContrastColor} from "@contrast/models/contrast-color.model";
-import {ContrastColors} from "@contrast/models/contrast-colors.model";
-import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {paletteColorFrom} from "@engine/palette/palette-color.model";
+import {generatePalette} from "@engine/palette/palette.helper";
+import {ContrastColor} from "@engine/contrast/contrast-color.model";
+import {ContrastColors} from "@engine/contrast/contrast-colors.model";
+import {contrastIdFromColors} from "@engine/contrast/contrast-id.helper";
+import {contrastPairFromPalette} from "@engine/contrast/palette-pair.helper";
 
 
 export function useColorAsPaletteStarterReducer(
@@ -39,6 +40,22 @@ export function generatePaletteFromContrastReducer(
   const palette = generatePalette(state.paletteStyle, {color0, color1});
 
   return {currentPalette: palette};
+}
+
+
+/**
+ * Takes the pair out of the current palette - the most readable two of its five
+ * members; see `contrastPairFromPalette()` for why it is a gesture and not a
+ * reaction to the palette changing.
+ */
+export function sendPaletteToContrastReducer(
+  this: void,
+  event: EventInstance<"[Transfer] sendPaletteToContrast", void>,
+  state: AppState
+) {
+  return {
+    contrastColors: contrastPairFromPalette(state.currentPalette)
+  };
 }
 
 

@@ -1,0 +1,122 @@
+<!-- The app's own surface, for `VerdictPanel`'s reason: this is the app
+     offering a colour, not a part of the page it colours. Same width and same
+     viewport cap, so the two read as one card split by a rule rather than as
+     two popups that happened to line up. -->
+<div class="w-96 max-w-[calc(100vw-2rem)] rounded-xs border border-line bg-panel p-4 text-text shadow-lg">
+  <!-- Which element the popup is about. The side is the toggle's below, not a
+       word beside the caption: it is a choice now rather than a statement. -->
+  <p class="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+    <span class="font-mono text-sm tracking-widest">{{ caption() }}</span>
+    <span class="font-mono text-sm text-dim">ESC</span>
+  </p>
+
+  <!-- Which of the element's two colours the chips place on. The app's own
+       segmented control - see `TypeRoles` for the idiom: `divide-x` draws the
+       hairline between the two, the group's border closes the box,
+       `overflow-hidden` clips the pressed fill to the corners, and the
+       inversion plus `aria-pressed` is what carries the selection without
+       leaning on a hue.
+
+       `BACKGROUND` on an element that has a box of its own and `HIGHLIGHT` on
+       one that has not: a colour placed behind running text is a band drawn
+       for that one paragraph, and `background` would have promised a repainted
+       page. `SampleElement.boxed` says the rest. -->
+  <div role="group"
+       class="mt-3 grid grid-cols-2 divide-x divide-line overflow-hidden rounded-xs border border-line"
+       [attr.aria-label]="sidesLabel()">
+    @for (option of sides(); track option.side) {
+      <button type="button"
+              class="flex h-11 min-w-0 cursor-pointer items-center justify-center px-2 font-mono text-sm tracking-widest focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+              [class.bg-text]="option.selected"
+              [class.text-bg]="option.selected"
+              [class.text-dim]="!option.selected"
+              [class.hover:text-text]="!option.selected"
+              [attr.aria-pressed]="option.selected"
+              (click)="selectSide(option.side)">{{ option.caption }}</button>
+    }
+  </div>
+
+  <!-- A toolbar, because the arrow keys move between the chips and a press
+       places: the row is seven commands, not a list something else applies.
+       The label names the element, so a screen reader hears what the row is
+       for once rather than in every chip's name.
+
+       Four across below `sm`, seven from `sm` on: seven in one row at 320px
+       leaves 33px a chip, short of the hit area's width, and the gap cannot
+       pay for it here either - see `palette-chips.html` for why. Two rows of
+       four (the last one three wide) clear it at every width down to 320px;
+       `sm` is wide enough for seven across without the same shortfall. -->
+  <div role="toolbar"
+       aria-orientation="horizontal"
+       class="mt-3 grid grid-cols-4 gap-1 sm:grid-cols-7"
+       [attr.aria-label]="toolbarLabel()">
+    @for (chip of chips(); track chip.source; let index = $index) {
+      <!-- One tab stop for the row: the arrow keys move the stop, which is
+           what keeps seven chips from costing seven stops on the way past. The
+           keys are handled here rather than on the row, because the chip is
+           where the focus is and a row that took a keydown would have to be
+           focusable itself.
+
+           The ring is `text` on `panel` and needs no measuring - the offset
+           puts it on the card, not on the chip - but it still carries the
+           offset on the element itself, because the check reads one element
+           at a time.
+
+           The name is the colour **and** the verdict it would reach: the row
+           under the toolbar shows that for the focused chip but is no live
+           region, so a chip walked past with the arrow keys would otherwise
+           be a colour name and nothing else. -->
+      <button #chip
+              type="button"
+              class="flex h-11 items-center justify-center rounded-xs border border-line outline-offset-2 focus-visible:outline-2 focus-visible:outline-text"
+              [style.background-color]="chip.background"
+              [attr.tabindex]="index === active() ? 0 : -1"
+              [attr.aria-label]="chip.label"
+              [attr.aria-pressed]="chip.placed"
+              (focus)="onFocus(index)"
+              (keydown)="onKeydown($event)"
+              (click)="place(chip.source)">
+        @if (chip.placed) {
+          <!-- The tick, not the colour, is what says this one is on the
+               element: the chips are the colours the page is coloured from, so
+               a chip told apart by its colour is told apart by nothing. Black
+               or white against the chip's own colour, because it is the one
+               thing here drawn on a colour the visitor picked. -->
+          <svg class="size-5"
+               viewBox="0 0 16 16" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true"
+               [style.color]="chip.tick">
+            <path d="M3 8.5l3.5 3.5L13 5"/>
+          </svg>
+        }
+      </button>
+    }
+  </div>
+
+  <!-- What the chip under the arrow keys would do, before it is pressed. The
+       shape and the word travel together here as everywhere: an arrow on its
+       own says nothing. -->
+  <p class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+    <ct-verdict-shape class="size-4" [state]="preview().state"/>
+    <!-- The handle first, because seven swatches in the app's own panel say
+         nothing about which is which - and two of them are the pair's, which
+         no colour tells apart. It is the same word the chip in the row and the
+         ledger's rows carry. -->
+    <span class="font-mono">{{ preview().handle }} · {{ preview().name }} · Lc {{ preview().lc }}</span>
+    <span class="text-dim">{{ preview().word }}</span>
+  </p>
+
+  <!-- The way back, spelled out rather than left to `Backspace` alone: a key
+       nobody is told about is not a way back. Disabled while the element wears
+       its default colour, because there is nothing to take away.
+
+       The ring is the chips': the app defines no global focus style, so a
+       control without one is ringed by the browser instead and stands out from
+       every other control in the popup. -->
+
+  <button type="button"
+          class="mt-3 flex h-11 w-full items-center justify-center rounded-xs border border-line text-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-text disabled:text-dim"
+          [disabled]="!placedSource()"
+          (click)="reset()">{{ resetLabel() }}</button>
+</div>

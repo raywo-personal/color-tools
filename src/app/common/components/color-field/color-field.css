@@ -1,0 +1,24 @@
+/* The native color swatch brings a padding and a border of its own, so
+   without these the color sits in a box inside the control instead of filling
+   it.
+
+   The radius is inherited rather than repeated as a length: it then follows the
+   rounding utility on the input itself, and there is no second place to keep in
+   step.
+
+   One rule per vendor pseudo-element on purpose. A browser drops a whole rule
+   whose selector list contains one it does not understand, so joining the two
+   with a comma would style neither. */
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: inherit;
+}
+
+input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: inherit;
+}

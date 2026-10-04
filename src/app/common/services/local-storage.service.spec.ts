@@ -1,0 +1,79 @@
+import {TestBed} from "@angular/core/testing";
+import {provideZonelessChangeDetection} from "@angular/core";
+import {afterEach, beforeEach, describe, expect, it} from "vitest";
+import {LocalStorage} from "@common/services/local-storage.service";
+import {EMPTY_SETTINGS, LOCAL_STORAGE_KEY} from "@common/models/local-storage.model";
+
+
+describe("LocalStorage", () => {
+
+  let service: LocalStorage;
+
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({providers: [provideZonelessChangeDetection()]});
+    service = TestBed.inject(LocalStorage);
+  });
+
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+
+  it("reports nothing for a key EMPTY_SETTINGS does not carry", () => {
+    // The caller's own fallback is only reachable through this null. A value
+    // in EMPTY_SETTINGS would make `chroma.random()` on the other side dead
+    // code without anything failing.
+    expect(EMPTY_SETTINGS.currentColor).toBeUndefined();
+    expect(service.get("currentColor")).toBeNull();
+  });
+
+
+  it("leaves the theme to the caller's fallback", () => {
+    // The one place the theme default lives is `initialState`, so the reducer's
+    // `getOrDefault("colorTheme", state.colorTheme)` has to be able to reach
+    // it. A value here would make that line unreachable and the two defaults
+    // would have to be kept equal by hand.
+    expect(EMPTY_SETTINGS.colorTheme).toBeUndefined();
+    expect(service.get("colorTheme")).toBeNull();
+  });
+
+
+  it("reports the EMPTY_SETTINGS value for a key it does carry", () => {
+    expect(service.get("address")).toBe(EMPTY_SETTINGS.address);
+  });
+
+
+  it("reports nothing for a key a stored map predates", () => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({colorTheme: "light"}));
+
+    expect(service.get("currentColor")).toBeNull();
+    expect(service.get("colorTheme")).toBe("light");
+  });
+
+
+  it("falls back to the defaults when the stored entry is unreadable", () => {
+    // The constructor reads the entry, so an unguarded parse throws right
+    // here - and with it every `inject(LocalStorage)`, which is how the app
+    // loads its state at all.
+    localStorage.setItem(LOCAL_STORAGE_KEY, "{not json");
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({providers: [provideZonelessChangeDetection()]});
+
+    const corrupted = TestBed.inject(LocalStorage);
+
+    expect(corrupted.get("address")).toBe(EMPTY_SETTINGS.address);
+    expect(corrupted.get("colorTheme")).toBeNull();
+  });
+
+
+  it("keeps the other keys when one is written", () => {
+    service.set("colorTheme", "dark");
+    service.set("address", "an-address");
+
+    expect(service.get("colorTheme")).toBe("dark");
+    expect(service.get("address")).toBe("an-address");
+  });
+
+});

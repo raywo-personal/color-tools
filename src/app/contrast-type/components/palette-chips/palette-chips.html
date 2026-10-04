@@ -1,0 +1,128 @@
+<!-- Seven in one row at every width, unlike the Studio's palette: the chips are
+     h-11 rather than square, so the touch minimum is met by their height. The
+     shell's px-4 leaves 288px of a 320px screen, and seven across it with the
+     six gaps leave 37px each.
+
+     **37px is the narrowest a chip gets, and it is short of the width the hit
+     area asks for.** The rule wants h-11 in both directions; here the height
+     carries the touch minimum and the width is what one row of seven leaves at
+     320px. Do not buy the width back out of the gap: the ring is offset off
+     the chip and the 4px gap is what it lands on - 2px of offset plus 2px of
+     ring reach exactly to the neighbour's edge, so all four sides sit on the
+     page ground where the text token always shows. A narrower gap puts a chip's
+     ring on its neighbour's colour.
+
+     `T` and `BG` come last and in the pair's own order, so the two chips stand
+     under the two fields whose initials they carry. -->
+<ul role="list"
+    aria-label="Palette colors and the pair"
+    class="grid grid-cols-7 gap-1">
+  @for (chip of chips(); track chip.source) {
+    <li class="min-w-0">
+      <!-- One button, two gestures - the component says how they are kept
+           apart. `cdkDrag` with no drop list: the elements that answer a carry
+           live in the preview's own component tree, so the two halves talk
+           through `carriedChip` in the store rather than through a connected
+           list that would have to cross both trees.
+
+           `cdkMenuTriggerFor` is the press: CDK opens on a click and on
+           `Space` or `Enter`, focuses the first item, closes on `Escape` and
+           hands focus back to this chip afterwards - and it writes
+           `aria-haspopup` and `aria-expanded` itself, which is what says a
+           press opens something rather than applying a colour. The trigger is
+           handed to the drag because a press on the chip is not an outside
+           click, so an open menu would otherwise hang at the chip's old place
+           for the length of the carry.
+
+           `pointer-events-none` while the chip is out is what makes a drop
+           land on the element under the pointer rather than on the chip
+           itself - see `dragging`.
+
+           `relative z-30` on the carried chip alone, so it stays on top of
+           what it is carried over. The preview is `sticky` from `lg`, which
+           puts it in the positioned layer and paints it over anything still in
+           the flow - the chip went under it halfway across and the visitor lost
+           sight of what they were holding. **On the row rather than on the one
+           chip it lifted nothing**: seven chips on one z-index in one stacking
+           context are painted in document order, so each one to the right of
+           the carried chip covered it - see `draggedChip`. The z-index costs
+           the drop nothing: a hit test skips an element with
+           `pointer-events: none` whatever it paints over, which is what
+           `dragging` rests on. -->
+      <button type="button"
+              cdkDrag
+              #trigger="cdkMenuTriggerFor"
+              [cdkDragStartDelay]="dragStartDelay"
+              [cdkMenuTriggerFor]="chipMenu"
+              class="flex h-11 w-full cursor-pointer items-end justify-center rounded-xs border border-line pb-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+              [class.pointer-events-none]="dragging()"
+              [class.relative]="draggedChip() === chip.source"
+              [class.z-30]="draggedChip() === chip.source"
+              [style.background-color]="chip.background"
+              [attr.aria-label]="chip.label"
+              (cdkDragStarted)="onDragStarted(chip, trigger)"
+              (cdkDragEnded)="onDragEnded($event)">
+        <!-- The handle, in whichever of black and white APCA puts further from
+             the chip: it is drawn on a colour the visitor picked, so the
+             draft's fixed white would vanish on a light `BG`. Bottom-aligned as
+             the draft has it, which keeps it clear of the chip's own colour at
+             the centre where the eye reads the hue.
+
+             `aria-hidden`, because the button's own name already opens with
+             this text - see the label in `palette-chips.ts`. -->
+        <span class="font-mono text-sm leading-none"
+              aria-hidden="true"
+              [style.color]="chip.ink">{{ chip.handle }}</span>
+      </button>
+
+      <!-- What this colour can be, in the app's own colours: it is the app
+           offering the visitor a pair, not a part of the page it colours -
+           `VerdictPanel` and `ColorChooser` are the same card. Nothing in it
+           is drawn on a visitor colour, so every pair here is a token pair and
+           none of it is measured.
+
+           The menu is named after the chip it belongs to, because it opens
+           away from the row and seven of them would otherwise be seven
+           identical menus in speech. `min-w-` rather than a width: the two
+           captions are what set it, and they are not translated. The cap is
+           the one the other popups carry: every length in here is `rem`, so at
+           a large browser font size the menu passes the viewport, and the
+           overlay is `fixed` - the `Lc` at an item's right-hand end would sit
+           off screen with nothing to scroll to it. `min-h-11` on the item is
+           the other half of the cap: a capped menu wraps the caption, and a
+           fixed `h-11` would cut it. -->
+      <ng-template #chipMenu>
+        <div cdkMenu
+             class="min-w-64 max-w-[calc(100vw-2rem)] rounded-xs border border-line bg-panel p-1 text-text shadow-lg"
+             [attr.aria-label]="chip.label">
+          @for (action of chip.actions; track action.role) {
+            <!-- The caption and the figure are the item's whole accessible
+                 name, in that order: what this press does, then what the pair
+                 would stand at. No `aria-label`, so the name a screen reader
+                 speaks is the text a visitor reads - and the Lc is a figure
+                 rather than a colour, which is what lets a listener learn a
+                 pairing fails before making it.
+
+                 The ring is `text` on `panel` and needs no measuring; the
+                 offset is on the element itself, because the check reads one
+                 element at a time. -->
+            <button cdkMenuItem
+                    type="button"
+                    class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-4 rounded-xs px-3 text-left text-base outline-offset-2 hover:bg-field focus-visible:outline-2 focus-visible:outline-text"
+                    (cdkMenuItemTriggered)="apply(chip, action.role)">
+              <span>{{ action.caption }}</span>
+              <span class="shrink-0 font-mono text-dim">Lc {{ action.lc }}</span>
+            </button>
+          }
+        </div>
+      </ng-template>
+    </li>
+  }
+</ul>
+
+<!-- What a press does, under the row rather than above it: the chips are
+     swatches and the sentence is what turns them into controls. It names the
+     press alone. The drag and the marks are said once already, beside
+     `PREVIEW` - `website-preview.html` says why that one line stands over the
+     page it is about rather than here. -->
+<p class="mt-2 text-sm text-dim">Press a color to use it as the text or the background.</p>

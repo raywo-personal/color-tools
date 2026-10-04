@@ -1,0 +1,100 @@
+import {randomBetween} from "@engine/helpers/random.helper";
+
+
+export const PaletteStyles = [
+  "random",
+  "analogous",
+  "muted-analog-split",
+  "harmonic",
+  "monochromatic",
+  "vibrant-balanced",
+  "high-contrast",
+  "triadic",
+  "complementary",
+  "split-complementary",
+  "tetradic"
+] as const;
+
+export type PaletteStyle = typeof PaletteStyles[number];
+
+
+/**
+ * The styles worth offering to a caller who does not see the result. `random`
+ * keeps the base color and rolls the other four independently of it, so it
+ * relates nothing to the color it was given - in the app that is a gesture,
+ * rolled again until it fits, and there the list stays `PaletteStyles`.
+ *
+ * It is the list a caller may *ask* for, not the list that may come back: a
+ * palette rolled in the app carries the style `random` into its id, so
+ * anything restoring a palette declares `PaletteStyles`.
+ */
+export const PaletteStylesWithoutRandom = PaletteStyles
+  .filter((style): style is Exclude<PaletteStyle, "random"> => style !== "random");
+export type PaletteStyleWithoutRandom = typeof PaletteStylesWithoutRandom[number];
+
+
+export function randomStyle(): PaletteStyle {
+  const randomIndex = Math.floor(randomBetween(0, PaletteStyles.length));
+
+  return PaletteStyles[randomIndex];
+}
+
+
+export function styleCaptionFor(style: PaletteStyle): string {
+  switch (style) {
+    case "random":
+      return "Random";
+    case "analogous":
+      return "Analogous";
+    case "muted-analog-split":
+      return "Muted Analogous";
+    case "harmonic":
+      return "Harmonic";
+    case "monochromatic":
+      return "Monochromatic";
+    case "vibrant-balanced":
+      return "Vibrant";
+    case "high-contrast":
+      return "High Contrast";
+    case "triadic":
+      return "Triadic";
+    case "complementary":
+      return "Complementary";
+    case "split-complementary":
+      return "Split Complementary";
+    case "tetradic":
+      return "Tetradic";
+    default:
+      return "";
+  }
+}
+
+
+export function styleDescriptionFor(style: PaletteStyle): string {
+  switch (style) {
+    case "random":
+      return "A random palette generated using a combination of random colors.";
+    case "analogous":
+      return "A palette using colors that are next to each other on the color wheel.";
+    case "muted-analog-split":
+      return "A muted palette featuring neutral, analogous, pastel and complementary colors with reduced saturation.";
+    case "harmonic":
+      return "A palette of the base color and its complement as accents, with two analogous neighbours and one tone near the complement.";
+    case "monochromatic":
+      return "A palette of one hue in five even steps of lightness, rising from the base color.";
+    case "vibrant-balanced":
+      return "A palette with three vibrant accent colors derived from a triad and two light complementary tones.";
+    case "high-contrast":
+      return "A high-contrast palette with vibrant accents, deep tones, and near-white colors for maximum visual impact.";
+    case "triadic":
+      return "A palette using three colors equally spaced around the color wheel.";
+    case "complementary":
+      return "A palette based on two colors positioned opposite each other on the color wheel.";
+    case "split-complementary":
+      return "A palette using a base color and two colors adjacent to its complement.";
+    case "tetradic":
+      return "A palette of four hues on a rectangle around the color wheel, led by the base color, with one pale tint of it.";
+    default:
+      return "";
+  }
+}

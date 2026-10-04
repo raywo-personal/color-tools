@@ -1,0 +1,490 @@
+import {describe, expect, it} from "vitest";
+import chroma from "chroma-js";
+import {createContrastColors} from "@engine/contrast/contrast-colors.model";
+import {FONT_SIZES, FONT_WEIGHTS, FontWeight} from "@engine/contrast/apca-lookup-table.model";
+import {BODY_COPY_MIN_LC, getRequiredLc, TEXT_KINDS} from "@engine/contrast/apca-rating.helper";
+import {findOptimalTextColor} from "@engine/contrast/optimal-text-color.helper";
+import {generatePaletteFrom} from "@engine/palette/palette.helper";
+import {DEFAULT_TYPE_ROLES, TypeRolesMap} from "@common/models/type-role-settings.model";
+import {ElementPlacements, SAMPLE_ELEMENTS, sampleElement, samplePage} from "@contrast-type/models/sample-page.model";
+import {
+  elementFontSize,
+  elementName,
+  elementVerdict,
+  pageVerdicts,
+  VERDICT_STATES,
+  verdictCountSentence,
+  verdictCounts,
+  verdictLabel,
+  verdictMark,
+  verdictFacts
+} from "@contrast-type/models/element-verdict.model";
+
+
+const BLACK_ON_WHITE = createContrastColors(chroma("#000000"), chroma("#ffffff"));
+/** A pair that separates by almost nothing, so no size in the table carries it. */
+const ALMOST_ONE_COLOR = createContrastColors(chroma("#7f7f7f"), chroma("#808080"));
+
+const PALETTE = generatePaletteFrom(chroma("#3366CC"), "harmonic", 5);
+
+
+function pageOf(pair = BLACK_ON_WHITE, placements: ElementPlacements = {}) {
+  return samplePage(pair, PALETTE, placements);
+}
+
+
+/** The default roles with one role's size and weight replaced. */
+function roles(role: keyof TypeRolesMap, fontSize: number, fontWeight: number): TypeRolesMap {
+  const current = DEFAULT_TYPE_ROLES[role];
+
+  return {
+    ...DEFAULT_TYPE_ROLES,
+    [role]: {...current, settings: {...current.settings, fontSize, fontWeight}}
+  };
+}
+
+
+describe("elementVerdict", () => {
+
+  it("measures the element's own ink on the ground it actually sits on", () => {
+    // The filled button's label sits on the accent out of the palette, not on
+    // the pair's background - which is the whole reason a page of verdicts
+    // says more than the pair's own Lc.
+    const page = pageOf();
+    const {accent} = page.colors;
+    const label = findOptimalTextColor(accent).color;
+    const verdict = elementVerdict(sampleElement("filledButton"), page, DEFAULT_TYPE_ROLES);
+
+    expect(verdict.ground.hex("rgb")).toBe(accent.hex("rgb"));
+    expect(verdict.ink.hex("rgb")).toBe(label.hex("rgb"));
+    expect(verdict.contrast)
+      .toBeCloseTo(chroma.contrastAPCA(label, accent), 6);
+  });
+
+
+  it("sets the element at its own share of the role's size", () => {
+    // The caption is the small print's size, not body text's - and the
+    // verdict has to be about the size the preview draws.
+    const set = roles("body", 18, 400);
+    const caption = sampleElement("imageCaption");
+
+    expect(elementFontSize(caption, set)).toBe(Math.round(18 * caption.sizeRatio));
+    expect(elementVerdict(caption, pageOf(), set).fontSize).toBe(13);
+  });
+
+
+  it("rounds the figure down, so it never clears a bar it has not reached", () => {
+    // Lc 74.76 rounded to the nearest would read 75 under a requirement of
+    // exactly 75.
+    const justUnder = createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"));
+    const verdict = elementVerdict(
+      sampleElement("bodyText"),
+      pageOf(justUnder),
+      roles("body", 18, 400)
+    );
+
+    expect(Math.abs(verdict.contrast)).toBeGreaterThan(74);
+    expect(verdict.lc).toBe(74);
+    expect(verdict.requiredLc).toBe(75);
+  });
+
+
+  it("calls a size the table declines to rate unrated, not failed", () => {
+    // Every cell of the 12px row is null. That is not a pairing that came up
+    // short, so it must not be counted as one.
+    const verdict = elementVerdict(
+      sampleElement("eyebrow"),
+      pageOf(),
+      roles("mono", 12, 400)
+    );
+
+    expect(verdict.sizeKey).toBe("12px");
+    expect(verdict.requiredLc).toBeNull();
+    expect(verdict.state).toBe("unrated");
+    expect(verdictMark(verdict.state)).toBe("dash");
+  });
+
+
+  it("separates a pairing a larger size carries from one no size carries", () => {
+    // Both miss the requirement at 18px / 400. The grey clears the 21px row,
+    // so a slider fixes it; the two near-identical colours clear nothing, so
+    // only the colours can move.
+    //
+    // A table cell rather than the running text: the cell is spot text, and
+    // the 21px row's plain Lc 70 is the figure that carries it. A column of
+    // body copy is held to `BODY_COPY_MIN_LC` at every size, so this grey
+    // fails it outright - the test below is that case.
+    const cell = sampleElement("tableCell");
+    const larger = elementVerdict(
+      cell,
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      roles("body", 22, 400)
+    );
+    const hopeless = elementVerdict(cell, pageOf(ALMOST_ONE_COLOR), roles("body", 22, 400));
+
+    expect(larger.sizeKey).toBe("18px");
+    expect(larger.state).toBe("largeOnly");
+    expect(larger.carriesAt).toBe("21px");
+    expect(verdictMark(larger.state)).toBe("arrow");
+
+    expect(hopeless.state).toBe("fail");
+    expect(hopeless.carriesAt).toBeNull();
+    expect(verdictMark(hopeless.state)).toBe("cross");
+  });
+
+
+  it("holds a column of body copy to the floor where its own row asks less", () => {
+    // The lead is 22px at the default body size, which the table rates on its
+    // 24px row - Lc 60 for spot text, and the floor for a column of it.
+    const lead = elementVerdict(sampleElement("lead"), pageOf(), roles("body", 18, 400));
+
+    expect(lead.sizeKey).toBe("24px");
+    expect(getRequiredLc("24px", "400", "spotText")).toBe(60);
+    expect(lead.requiredLc).toBe(BODY_COPY_MIN_LC);
+  });
+
+
+  it("calls a column of body copy under the floor a fail, not a largeOnly", () => {
+    // Lc 74 clears the 21px row and would carry a table cell there. For a
+    // column of body copy the floor holds at every size and every weight, so
+    // no slider fixes this one and the mark has to say so.
+    const grey = createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"));
+    const body = elementVerdict(sampleElement("bodyText"), pageOf(grey), roles("body", 18, 400));
+
+    expect(body.lc).toBe(74);
+    expect(body.requiredLc).toBe(BODY_COPY_MIN_LC);
+    expect(body.carriesAt).toBeNull();
+    expect(body.state).toBe("fail");
+    expect(verdictMark(body.state)).toBe("cross");
+  });
+
+
+  it("still calls it largeOnly where the row it misses sits above the floor", () => {
+    // Body text at 16px is rated on a row asking Lc 90, well above the floor:
+    // Lc 80 misses that and clears the 18px row, so a slider still fixes it
+    // and the floor changes nothing about this case.
+    const grey = createContrastColors(chroma("#636363"), chroma("#ffffff"));
+    const body = elementVerdict(sampleElement("bodyText"), pageOf(grey), roles("body", 16, 400));
+
+    expect(body.requiredLc).toBe(90);
+    expect(body.state).toBe("largeOnly");
+    expect(body.carriesAt).toBe("18px");
+  });
+
+
+  it("calls it largeOnly, not fail, where only a heavier weight carries it", () => {
+    // The headline one slider step below the default: no size at weight 400
+    // clears Lc 33, but weight 500 does - `carriesAt` alone used to leave this
+    // reading `fail`, a cross under a popup naming the very weight that
+    // carries it.
+    const verdict = elementVerdict(
+      sampleElement("headline"),
+      pageOf(createContrastColors(chroma("#c4c4c4"), chroma("#ffffff"))),
+      roles("display", 96, 400)
+    );
+
+    expect(verdict.carriesAt).toBeNull();
+    expect(verdict.state).toBe("largeOnly");
+    expect(verdictMark(verdict.state)).toBe("arrow");
+  });
+
+
+  it("names a pass by its shape as well", () => {
+    const verdict = elementVerdict(
+      sampleElement("bodyText"),
+      pageOf(),
+      roles("body", 18, 400)
+    );
+
+    expect(verdict.state).toBe("pass");
+    expect(verdictMark(verdict.state)).toBe("tick");
+  });
+
+
+  it("keeps the requirement in a largeOnly label and out of a fail's", () => {
+    // The number is what a visitor acts on where a size would fix it, and a
+    // bar named under a verdict no size reaches would suggest one does.
+    const cell = sampleElement("tableCell");
+    const larger = elementVerdict(
+      cell,
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      roles("body", 22, 400)
+    );
+    const hopeless = elementVerdict(cell, pageOf(ALMOST_ONE_COLOR), roles("body", 22, 400));
+
+    expect(verdictLabel(larger)).toBe("Needs Lc 75");
+    expect(verdictLabel(hopeless)).toBe("Fails at any size");
+  });
+
+});
+
+
+describe("apcaLookup as the verdict states read it", () => {
+
+  it("falls as the size grows in every weight and for both kinds of text", () => {
+    // `verdictState()` calls a contrast that misses its own row and clears
+    // another `largeOnly` without comparing the two sizes. That is only
+    // honest while every column is monotone: a retuned table with a
+    // requirement that rises with the size would let a *smaller* size be
+    // reported as the one that carries it.
+    //
+    // The body-copy kind is here because the footnote's own arithmetic does
+    // not hold this - adding Lc 15 below 70 makes six of the nine columns
+    // rise once, which is why it is applied as a floor. `BODY_COPY_MIN_LC`
+    // carries the reasoning; this is what would catch a change back.
+    for (const textKind of TEXT_KINDS) {
+      for (const weight of FONT_WEIGHTS) {
+        let previous: number | null = null;
+
+        for (const size of FONT_SIZES) {
+          const required = getRequiredLc(size, weight as FontWeight, textKind);
+
+          if (required === null) continue;
+          if (previous !== null) {
+            expect(required, `${size} / ${weight} / ${textKind}`).toBeLessThanOrEqual(previous);
+          }
+
+          previous = required;
+        }
+      }
+    }
+  });
+
+
+  it("measures a placed colour rather than the one the palette gave the element", () => {
+    // The placement reaches the verdict through the same `inkOf()` the
+    // preview paints with, so the mark cannot disagree with the element
+    // beside it.
+    const placed = pageOf(BLACK_ON_WHITE, {headline: {ink: "color1"}});
+    const headline = sampleElement("headline");
+    const verdict = elementVerdict(headline, placed, DEFAULT_TYPE_ROLES);
+
+    expect(verdict.ink.hex("rgb")).toBe(PALETTE.color1.color.hex("rgb"));
+    expect(verdict.ground.hex("rgb")).toBe(placed.colors.page.hex("rgb"));
+  });
+
+
+  it("judges the filled button's label against the fill a placement gave it", () => {
+    // The label follows its ground, so the mark and the popup are about the
+    // button the visitor is looking at rather than about the accent it was
+    // filled with before.
+    const placed = pageOf(BLACK_ON_WHITE, {filledButton: {ground: "color3"}});
+    const verdict = elementVerdict(sampleElement("filledButton"), placed, DEFAULT_TYPE_ROLES);
+    const fill = PALETTE.color3.color;
+
+    expect(verdict.ground.hex("rgb")).toBe(fill.hex("rgb"));
+    expect(verdict.ink.hex("rgb")).toBe(findOptimalTextColor(fill).color.hex("rgb"));
+    expect(verdict.contrast).toBeCloseTo(chroma.contrastAPCA(verdict.ink, fill), 6);
+  });
+
+
+  it("judges the pairing a placed ground made, not the surface behind it", () => {
+    // A band drawn behind one element is a pairing the visitor made, and the
+    // mark beside it has to be about that band rather than about the page the
+    // element used to sit on.
+    const placed = pageOf(BLACK_ON_WHITE, {bodyText: {ground: "color1"}});
+    const bodyText = sampleElement("bodyText");
+    const verdict = elementVerdict(bodyText, placed, DEFAULT_TYPE_ROLES);
+    const band = PALETTE.color1.color;
+
+    expect(verdict.ground.hex("rgb")).toBe(band.hex("rgb"));
+    expect(verdict.ink.hex("rgb")).toBe(BLACK_ON_WHITE.text.hex("rgb"));
+    expect(verdict.contrast).toBeCloseTo(chroma.contrastAPCA(verdict.ink, band), 6);
+  });
+
+
+  it("fails a placed colour that matches its ground, and says Lc 0", () => {
+    // A colour placed on the page's own colour is invisible, and the honest
+    // answer is the verdict rather than a correction: no size and no weight
+    // carry two identical colours, so the state is a fail at a figure of 0.
+    const ground = PALETTE.color1.color;
+    const onItsOwnGround = pageOf(
+      createContrastColors(chroma("#111111"), ground),
+      {bodyText: {ink: "color1"}}
+    );
+    const verdict = elementVerdict(sampleElement("bodyText"), onItsOwnGround, roles("body", 18, 400));
+
+    expect(verdict.lc).toBe(0);
+    expect(verdict.state).toBe("fail");
+    expect(verdict.carriesAt).toBeNull();
+  });
+
+});
+
+
+describe("pageVerdicts", () => {
+
+  it("judges every element of the page, in reading order", () => {
+    const verdicts = pageVerdicts(pageOf(), DEFAULT_TYPE_ROLES);
+
+    expect(verdicts.map(verdict => verdict.element.key))
+      .toEqual(SAMPLE_ELEMENTS.map(element => element.key));
+  });
+
+
+  it("counts every element into exactly one state", () => {
+    const verdicts = pageVerdicts(pageOf(), DEFAULT_TYPE_ROLES);
+    const counts = verdictCounts(verdicts);
+
+    expect(VERDICT_STATES.reduce((total, state) => total + counts[state], 0))
+      .toBe(SAMPLE_ELEMENTS.length);
+  });
+
+
+  it("reports the states best first, so the row reads as a scale", () => {
+    expect(VERDICT_STATES).toEqual(["pass", "largeOnly", "unrated", "fail"]);
+  });
+
+});
+
+
+describe("verdictCountSentence", () => {
+
+  it("names every state, including the ones at zero", () => {
+    // The sentence is what the announcement carries. One that dropped the
+    // empty states would change length as a slider moves, and a count of
+    // nothing is the answer to "how many failed".
+    expect(verdictCountSentence(verdictCounts([])))
+      .toBe("0 pass, 0 larger size needed, 0 not rated, 0 fail");
+  });
+
+});
+
+
+describe("verdictFacts", () => {
+
+  function valueOf(facts: readonly {label: string; value: string}[], label: string) {
+    return facts.find(fact => fact.label === label)?.value;
+  }
+
+
+  it("gives the two figures, the type, and what would carry it", () => {
+    // The two Lc figures are what the screen is about; the role, the size and
+    // the weight are values the visitor set. Nothing else is theirs to read.
+    //
+    // A table cell, because the rows have to name a size and a weight: it is
+    // spot text on the 18px row, where Lc 74 misses the requirement and the
+    // 21px row carries it. The running text at the same size is a column of
+    // body copy and has no size to name at this contrast.
+    const verdict = elementVerdict(
+      sampleElement("tableCell"),
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      roles("body", 22, 400)
+    );
+    const facts = verdictFacts(verdict, PALETTE);
+
+    expect(valueOf(facts, "Reached")).toBe("Lc 74");
+    expect(valueOf(facts, "Needed")).toBe("Lc 75");
+    expect(valueOf(facts, "Type")).toBe("BODY · 18px · 400");
+    expect(valueOf(facts, "Would pass at")).toBe("21px, or weight 500");
+  });
+
+
+  it("names nothing the visitor cannot already read off the page", () => {
+    // Prose here said which row of the APCA table rated a size and that a
+    // page has an "own colour" - neither is on screen, and the second is not
+    // a distinction at all. The colours are left out too: they are in the
+    // element the panel is about, at full size.
+    const verdict = elementVerdict(
+      sampleElement("imageCaption"),
+      pageOf(),
+      roles("body", 18, 400)
+    );
+    const written = verdictFacts(verdict, PALETTE)
+      .map(fact => `${fact.label} ${fact.value}`)
+      .join(" ");
+
+    expect(verdict.sizeKey).not.toBe(`${verdict.fontSize}px`);
+    expect(written).not.toContain("row");
+    expect(written).not.toContain("table");
+    expect(written).not.toContain("own colour");
+
+    // And no sentence: nothing in a value ends in a full stop.
+    for (const fact of verdictFacts(verdict, PALETTE)) {
+      expect(fact.value, fact.label).not.toContain(".");
+    }
+  });
+
+
+  it("sets no bar where the table rates the size at all", () => {
+    // Not "Lc null" and not "Lc 0" - a figure here would read as a bar the
+    // element cleared.
+    const verdict = elementVerdict(sampleElement("eyebrow"), pageOf(), roles("mono", 12, 400));
+
+    expect(valueOf(verdictFacts(verdict, PALETTE), "Needed")).toBe("not rated at this size");
+  });
+
+
+  it("carries three rows for a pass and no way out", () => {
+    // What would carry something already carried is a question nobody asked,
+    // and a nearest-pass row under a tick reads as a correction.
+    const passing = elementVerdict(sampleElement("bodyText"), pageOf(), roles("body", 18, 400));
+
+    expect(passing.state).toBe("pass");
+    expect(verdictFacts(passing, PALETTE).map(fact => fact.label))
+      .toEqual(["Reached", "Needed", "Type"]);
+  });
+
+
+  it("suggests a colour only where something came up short", () => {
+    // An unrated element missed no bar, so a nearest-pass row would name one
+    // the table never set.
+    const unrated = elementVerdict(sampleElement("eyebrow"), pageOf(), roles("mono", 12, 400));
+    const failing = elementVerdict(
+      sampleElement("bodyText"),
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      roles("body", 18, 400)
+    );
+
+    expect(unrated.state).toBe("unrated");
+    expect(verdictFacts(unrated, PALETTE).map(fact => fact.label))
+      .toEqual(["Reached", "Needed", "Type", "Would pass at"]);
+
+    const nearest = verdictFacts(failing, PALETTE).at(-1);
+
+    // `Nearest color`, not `Nearest`: on its own the label asked
+    // "nearest what?".
+    expect(nearest?.label).toBe("Nearest color");
+    expect(nearest?.value).toMatch(/^(.+ · Lc \d+|none in this palette)$/);
+  });
+
+
+  it("offers the suggestion on an element whose ink the app computes for itself", () => {
+    // The row used to be held back on the filled button, the disabled label
+    // and the error line, on the grounds that the ink there was not the
+    // visitor's to move. It is now - the computed value is only the default -
+    // so a colour that would carry the element is a fix everywhere.
+    const failing = elementVerdict(sampleElement("filledButton"), pageOf(), roles("ui", 14, 400));
+
+    expect(failing.state).toBe("largeOnly");
+    expect(verdictFacts(failing, PALETTE).map(fact => fact.label)).toContain("Nearest color");
+  });
+
+
+  it("hands the suggestion its colour, so the row points at a chip", () => {
+    // A name alone asks the visitor to recognise it in the chip row above.
+    const failing = elementVerdict(
+      sampleElement("bodyText"),
+      pageOf(createContrastColors(chroma("#6f6f6f"), chroma("#ffffff"))),
+      roles("body", 18, 400)
+    );
+    const nearest = verdictFacts(failing, PALETTE).at(-1);
+
+    if (nearest?.value === "none in this palette") return;
+
+    expect(nearest?.swatch).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+});
+
+
+describe("elementName", () => {
+
+  it("writes the all-caps caption as the start of a sentence", () => {
+    // The caption is what the rating shows; a screen reader spells all caps
+    // out letter by letter, and a sentence needs the name either way.
+    expect(elementName(sampleElement("smallPrint"))).toBe("Small print");
+    expect(elementName(sampleElement("filledButton"))).toBe("Filled button");
+  });
+
+});

@@ -1,0 +1,46 @@
+import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
+import {WebStandardStreamableHTTPServerTransport} from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import {registerDescribeColor} from "./tools/describe-color";
+import {registerCheckContrast} from "./tools/check-contrast";
+import {registerFindTextColor} from "./tools/find-text-color";
+import {registerGeneratePalette} from "./tools/generate-palette";
+import {registerReadPalette} from "./tools/read-palette";
+import {registerPaletteStyles} from "./resources/palette-styles";
+import {registerTintsAndShades} from "./tools/tints-and-shades";
+import {registerAuditPairs} from "./tools/audit-pairs";
+import {registerAdjustColorForContrast} from "./tools/adjust-color-for-contrast";
+import {registerSimulateColorVision} from "./tools/simulate-color-vision";
+
+
+export function createMcpServer(): McpServer {
+  const server = new McpServer({name: "colortools", version: "0.0.8"});
+
+  // Tools
+  registerDescribeColor(server);
+  registerCheckContrast(server);
+  registerFindTextColor(server);
+  registerGeneratePalette(server);
+  registerReadPalette(server);
+  registerTintsAndShades(server);
+  registerAuditPairs(server);
+  registerAdjustColorForContrast(server);
+  registerSimulateColorVision(server);
+
+  // Resources
+  registerPaletteStyles(server);
+
+  return server;
+}
+
+
+export async function handleMcpRequest(request: Request): Promise<Response> {
+  const server = createMcpServer();
+  const transport = new WebStandardStreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+    enableJsonResponse: true
+  });
+
+  await server.connect(transport);
+
+  return transport.handleRequest(request);
+}

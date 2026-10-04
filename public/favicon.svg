@@ -1,11 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-palette2" viewBox="0 0 16 16" xmlns:bx="https://boxy-svg.com">
-  <defs>
-    <linearGradient id="gradient-0" bx:pinned="true">
-      <stop offset="0.056" style="stop-color: rgb(253, 163, 0);"/>
-      <stop offset="1" style="stop-color: rgb(24, 23, 36);"/>
-    </linearGradient>
-    <linearGradient id="gradient-0-0" href="#gradient-0" gradientUnits="userSpaceOnUse" x1="8" y1="0" x2="8" y2="16" spreadMethod="pad"/>
-  </defs>
-  <path d="M0 .5A.5.5 0 0 1 .5 0h5a.5.5 0 0 1 .5.5v5.277l4.147-4.131a.5.5 0 0 1 .707 0l3.535 3.536a.5.5 0 0 1 0 .708L10.261 10H15.5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5H3a3 3 0 0 1-2.121-.879A3 3 0 0 1 0 13.044m6-.21 7.328-7.3-2.829-2.828L6 7.188zM4.5 13a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0M15 15v-4H9.258l-4.015 4zM0 .5v12.495zm0 12.495V13z" style="fill: url('#gradient-0-0'); paint-order: fill;"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- "Ct" in Instrument Serif, the face of the wordmark, converted to
+       outlines: a favicon cannot load a web font. The tile and the glyph
+       are the `text` and `bg` tokens of src/styles.css, and they swap
+       with the colour scheme so the tile never sinks into the tab strip. -->
+  <style>
+    .tile { fill: #1B1917; }
+    .glyph { fill: #FAF8F4; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #F1EDE6; }
+      .glyph { fill: #272521; }
+    }
+  </style>
+  <rect class="tile" width="32" height="32" rx="6"/>
+  <path class="glyph" d="M12.91 27.84L12.91 27.84Q10.54 27.84 8.76 26.37Q6.98 24.89 6.00 22.22Q5.03 19.54 5.03 15.89L5.03 15.89Q5.03 12.36 6.10 9.72Q7.17 7.08 8.98 5.62Q10.79 4.16 13.00 4.16L13.00 4.16Q14.32 4.16 15.31 4.40Q16.30 4.64 17.07 5.03L17.07 5.03Q17.46 5.25 17.46 5.70L17.46 5.70L17.55 10.57Q17.55 11.11 17.17 11.11L17.17 11.11Q16.82 11.11 16.72 10.70L16.72 10.70L16.40 9.51Q15.73 7.01 14.85 6.05Q13.97 5.09 12.75 5.09L12.75 5.09Q10.50 5.09 9.01 7.86Q7.52 10.63 7.52 15.89L7.52 15.89Q7.52 19.48 8.28 21.94Q9.03 24.41 10.23 25.66Q11.43 26.91 12.78 26.91L12.78 26.91Q14.22 26.91 15.10 26.01Q15.98 25.12 16.59 22.55L16.59 22.55L16.98 20.98Q17.07 20.50 17.49 20.57L17.49 20.57Q17.84 20.63 17.84 21.11L17.84 21.11L17.71 26.30Q17.71 26.75 17.30 26.97L17.30 26.97Q16.53 27.36 15.49 27.60Q14.45 27.84 12.91 27.84ZM23.83 27.84L23.83 27.84Q22.71 27.84 21.99 27.05Q21.27 26.27 21.27 24.48L21.27 24.48L21.27 12.49Q21.27 12.11 20.89 12.11L20.89 12.11L19.96 12.11Q19.44 12.11 19.44 11.72L19.44 11.72Q19.44 11.47 19.73 11.27L19.73 11.27Q20.79 10.54 21.43 9.69Q22.07 8.84 22.55 7.36L22.55 7.36Q22.78 6.69 23.10 6.69L23.10 6.69Q23.45 6.69 23.45 7.20L23.45 7.20L23.45 10.76Q23.45 11.21 23.90 11.21L23.90 11.21L25.98 11.21Q26.49 11.21 26.49 11.66L26.49 11.66Q26.49 12.11 25.98 12.11L25.98 12.11L23.90 12.11Q23.45 12.11 23.45 12.56L23.45 12.56L23.45 24.51Q23.45 25.21 23.67 25.61Q23.90 26.01 24.51 26.01L24.51 26.01Q25.18 26.01 25.61 25.34Q26.05 24.67 26.17 23.16L26.17 23.16Q26.24 22.71 26.59 22.71L26.59 22.71Q26.97 22.71 26.97 23.19L26.97 23.19Q26.88 25.66 25.97 26.75Q25.05 27.84 23.83 27.84Z"/>
 </svg>

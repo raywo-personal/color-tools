@@ -1,0 +1,23 @@
+<!-- The whole page's tally, and the legend for the marks beside the preview in
+     one - which is why each state keeps its word rather than standing as a row
+     of bare glyphs. A tick and a cross can be read off a page; an arrow cannot,
+     and this is the one place all four shapes stand together.
+
+     A wrapping row, not a column: stacked, the four pushed the type controls
+     off the screen, and the sliders are what a visitor reaches for next.
+
+     `role="list"`, because Preflight strips the marker and Safari with
+     VoiceOver then stops announcing the element as a list. -->
+<ul role="list"
+    aria-label="Verdicts on the page"
+    class="flex flex-wrap items-center gap-x-4 gap-y-1">
+  @for (entry of counts(); track entry.state) {
+    <li class="flex items-center gap-1.5 text-sm"
+        [class.text-text]="entry.count > 0"
+        [class.text-dim]="entry.count === 0">
+      <ct-verdict-shape class="size-4 shrink-0" [state]="entry.state"/>
+      <span class="font-mono tabular-nums">{{ entry.count }}</span>
+      <span>{{ entry.word }}</span>
+    </li>
+  }
+</ul>

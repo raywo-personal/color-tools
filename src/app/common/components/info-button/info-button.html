@@ -1,0 +1,61 @@
+<!-- Icon-only, so the name is the whole of what the control says. The glyph is
+     `aria-hidden`, as every icon in this app is. -->
+<button type="button"
+        cdkOverlayOrigin
+        #origin="cdkOverlayOrigin"
+        #trigger
+        class="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xs text-dim hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
+        [attr.aria-label]="label()"
+        [attr.aria-expanded]="open()"
+        (click)="toggle()">
+  <svg class="size-5"
+       viewBox="0 0 20 20" fill="none" stroke="currentColor"
+       stroke-width="1.5" stroke-linecap="round"
+       aria-hidden="true">
+    <circle cx="10" cy="10" r="8"/>
+    <path d="M10 9v5M10 6.2v.1"/>
+  </svg>
+</button>
+
+<!-- A CDK overlay rather than a block in the flow, and in the app's own
+     surfaces - the same two decisions `verdict-mark` makes and for the same
+     reasons: nothing beside the button moves when the text appears, and the
+     panel reads as the app explaining itself.
+
+     No backdrop, for `verdict-mark`'s reason as well: a full-viewport backdrop
+     absorbs the click meant for the next control, so closing one panel and
+     opening another would cost a dead click. `overlayOutsideClick` reaches the
+     same "a click anywhere closes it". -->
+<ng-template cdkConnectedOverlay
+             [cdkConnectedOverlayOrigin]="origin"
+             [cdkConnectedOverlayOpen]="open()"
+             [cdkConnectedOverlayPositions]="positions"
+             [cdkConnectedOverlayViewportMargin]="8"
+             (attach)="onAttach()"
+             (overlayOutsideClick)="close()"
+             (detach)="close()"
+             (overlayKeydown)="onOverlayKeydown($event)">
+  <!-- The panel is the dialog and the focus target in one, so it takes
+       `tabindex="-1"`: `focus()` needs it, and it keeps the panel out of the
+       tab order, which is `cdkTrapFocus`'s job.
+
+       **Focus has to land inside.** The text used to stand on the page, so a
+       screen reader met it while reading the block. Behind a button it is
+       reachable only if pressing the button takes the reader there - the panel
+       renders at the end of the body, nowhere near the caption row, and
+       `aria-describedby` on the trigger is not re-announced to a reader
+       already standing on it. `cdkTrapFocus` then keeps `Tab` from walking out
+       of a panel that has nothing else to walk to, and Escape is the way back.
+
+       Focused from `(attach)` rather than through `cdkFocusInitial`: the CDK
+       measures the element first and declines one with no geometry, which is
+       every element under a test renderer. -->
+  <div #panel
+       role="dialog"
+       cdkTrapFocus
+       tabindex="-1"
+       class="w-80 max-w-[calc(100vw-2rem)] rounded-xs border border-line bg-panel p-4 text-sm text-pretty text-text shadow-lg"
+       [attr.aria-label]="label()">
+    <ng-content/>
+  </div>
+</ng-template>

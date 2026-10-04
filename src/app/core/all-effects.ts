@@ -3,18 +3,21 @@ import {persistenceEvents} from "@core/common/persistence.events";
 import {commonEvents} from "@core/common/common.events";
 import {converterEvents} from "@core/converter/converter.events";
 import {palettesEvents} from "@core/palettes/palettes.events";
-import {inject} from "@angular/core";
+import {inject, Injector} from "@angular/core";
 import {LocalStorage} from "@common/services/local-storage.service";
+import {AnnouncementService} from "@common/services/announcement.service";
 import {ColorThemeService} from "@common/services/color-theme.service";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
-import {Router} from "@angular/router";
-import {colorThemeChangeEffect, fontSelectedEffect} from "@core/common/common.effects";
-import {colorChangedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
+import {colorThemeChangeEffect, fontAnnouncedEffect, loadFontsEffect, resolveFontsEffect} from "@core/common/common.effects";
+import {colorChangedEffect, randomColorAnnouncedEffect, useAsBackgroundChangedEffect} from "@core/converter/converter.effects";
+import {newPaletteAnnouncedEffect} from "@core/palettes/palettes.effects";
+import {contrastPairAnnouncedEffect, placementAnnouncedEffect} from "@core/contrast/contrast.effects";
 import {map} from "rxjs";
 import {saveStateEffect} from "@core/common/persistence.effects";
-import {navigateToContrast, navigateToConvert, navigateToPaletteIdEffect} from "@core/common/navigation.effects";
 import {contrastEvents} from "@core/contrast/contrast.events";
 import {transferEvents} from "@core/common/transfer.events";
+import {Router} from "@angular/router";
+import {contrastTypeAddressEffect, studioAddressEffect} from "@core/common/navigation.effects";
 
 
 export function allEffects(
@@ -26,37 +29,63 @@ export function allEffects(
   localStorageService = inject(LocalStorage),
   themeService = inject(ColorThemeService),
   fontLoaderService = inject(GoogleFontLoaderService),
+  // Every polite sentence the effects raise goes through this one service,
+  // which decides between a gesture's own sentence and the page's tally -
+  // `AnnouncementService` says why. Do not inject `LiveAnnouncer` here.
+  announcements = inject(AnnouncementService),
+  injector = inject(Injector),
   router = inject(Router)
 ) {
   return {
     setColorTheme$: colorThemeChangeEffect(events, themeService),
 
-    loadFont$: fontSelectedEffect(events, fontLoaderService),
+    loadFonts$: loadFontsEffect(events, fontLoaderService, store),
+
+    resolveFonts$: resolveFontsEffect(events, injector, store),
+
+    fontAnnounced$: fontAnnouncedEffect(events, announcements, store),
 
     setBackgroundColor$: useAsBackgroundChangedEffect(events, themeService, store),
 
-    navigateToPalette$: navigateToPaletteIdEffect(events, router, store),
-
-    navigateToContrast$: navigateToContrast(events, router, store),
-
-    navigateToConvert$: navigateToConvert(events, router),
-
     colorChanged$: colorChangedEffect(events, themeService, store),
+
+    randomColorAnnounced$: randomColorAnnouncedEffect(events, announcements, store),
+
+    newPaletteAnnounced$: newPaletteAnnouncedEffect(events, announcements, store),
+
+    contrastPairAnnounced$: contrastPairAnnouncedEffect(events, announcements, store),
+
+    placementAnnounced$: placementAnnouncedEffect(events, announcements, store),
+
+    studioAddress$: studioAddressEffect(events, router, store),
+
+    contrastTypeAddress$: contrastTypeAddressEffect(events, router, store),
 
     anyPersistableEvents$: events
       .on(
         commonEvents.colorThemeChanged,
         commonEvents.fontSelected,
+        commonEvents.fontsResolved,
+        commonEvents.typeSettingsChanged,
         converterEvents.newRandomColorWithNav,
         converterEvents.colorChanged,
         palettesEvents.paletteChanged,
         palettesEvents.paletteChangedWithoutNav,
+        palettesEvents.styleChanged,
+        // A restore from the url wins over the storage loaded before it, and
+        // is saved so the next reload opens on what the link showed.
+        palettesEvents.restorePalette,
+        contrastEvents.restoreContrastType,
         contrastEvents.switchColors,
         contrastEvents.textColorChanged,
         contrastEvents.backgroundColorChanged,
         contrastEvents.contrastColorsChangedWithoutNav,
         contrastEvents.newRandomColorsWithNav,
-        transferEvents.sendColorToContrast
+        contrastEvents.colorPlaced,
+        contrastEvents.placementReset,
+        contrastEvents.placementsReset,
+        transferEvents.sendColorToContrast,
+        transferEvents.sendPaletteToContrast
       )
       .pipe(
         map(() => persistenceEvents.saveAppState())

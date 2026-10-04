@@ -1,0 +1,25 @@
+/* A fade rather than a slide: the toast sits at the top of the narrow column
+   and at the bottom of the wide one, so any direction that reads as arriving
+   in the one reads as leaving in the other.
+
+   Keyframes are not scoped by Angular's emulated encapsulation, hence the
+   prefix. */
+@keyframes ct-copy-confirmation {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.ct-toast {
+  animation: ct-copy-confirmation 160ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-toast {
+    animation: none;
+  }
+}

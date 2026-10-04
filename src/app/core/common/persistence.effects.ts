@@ -1,12 +1,16 @@
 import {persistenceEvents} from "./persistence.events";
 import {tap} from "rxjs";
-import {SettingKey, SettingsMap} from "@common/models/local-storage.model";
 import {Events} from "@ngrx/signals/events";
 import {LocalStorage} from "@common/services/local-storage.service";
 import {AppStateStore} from "../app-state.store";
-import {contrastIdFromColors} from "@contrast/helper/contrast-id.helper";
+import {contrastTypeAddressFrom} from "@contrast-type/models/contrast-type-address.model";
+import {contrastTypePageOf} from "@core/contrast/contrast.reducers";
 
 
+/**
+ * Writes the theme and the address of the state. Nothing else: the address
+ * carries both views, and the v1 keys are read and never written.
+ */
 export function saveStateEffect(events: Events,
                                 localStorageService: LocalStorage,
                                 store: unknown) {
@@ -20,21 +24,16 @@ export function saveStateEffect(events: Events,
         // a circular referencing. So we cast it to the correct type.
         const typedStore = store as AppStateStore;
 
-        const contrastId = contrastIdFromColors(typedStore.contrastColors());
+        const address = contrastTypeAddressFrom(contrastTypePageOf({
+          currentPalette: typedStore.currentPalette(),
+          paletteSeed: typedStore.paletteSeed(),
+          contrastColors: typedStore.contrastColors(),
+          typeRoles: typedStore.typeRoles(),
+          placements: typedStore.placements()
+        }));
 
-        const state: SettingsMap = {
-          currentColor: typedStore.currentColor().hex(),
-          currentPaletteId: typedStore.currentPalette().id,
-          colorTheme: typedStore.colorTheme(),
-          selectedFont: typedStore.selectedFont(),
-          contrastId
-        };
-
-        Object.keys(state)
-          .forEach(key => {
-            const typedKey = key as SettingKey;
-            localStorageService.set(typedKey, state[typedKey]);
-          });
+        localStorageService.set("colorTheme", typedStore.colorTheme());
+        localStorageService.set("address", address);
       })
     );
 }

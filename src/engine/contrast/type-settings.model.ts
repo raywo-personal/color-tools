@@ -1,0 +1,144 @@
+import {FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
+
+
+/**
+ * The type the visitor is designing for: what the website preview is set in,
+ * and what the APCA rating answers about.
+ *
+ * **The size is a pixel value and stays one.** APCA is defined on pixel sizes,
+ * and `apcaLookup` is keyed by them - the preview is the thing being measured
+ * rather than app chrome, so the rule that turns a length into a rem does not
+ * reach it.
+ */
+export interface TypeSettings {
+
+  readonly fontSize: number;
+  readonly fontWeight: number;
+  readonly lineHeight: number;
+
+}
+
+
+/** The range a control covers, and the step it moves in. */
+export interface TypeSettingRange {
+
+  readonly min: number;
+  readonly max: number;
+  readonly step: number;
+
+}
+
+
+export const FONT_SIZE_RANGE: TypeSettingRange = {min: 11, max: 34, step: 1};
+
+/**
+ * The step is 100, not 1: `apcaLookup` is keyed by the nine values of
+ * `FONT_WEIGHTS`, so a weight of 437 has no row to be rated against.
+ */
+export const FONT_WEIGHT_RANGE: TypeSettingRange = {min: 300, max: 700, step: 100};
+
+/**
+ * 0.05, so every stop is a value `toFixed(2)` writes without rounding.
+ *
+ * The floor is 1.0 rather than a comfortable reading value: a display line
+ * is set at 1.1 and a button label at 1.2, and one range serves every role.
+ */
+export const LINE_HEIGHT_RANGE: TypeSettingRange = {min: 1, max: 2, step: 0.05};
+
+/**
+ * What body text opens on, and what a value outside the ranges falls back to.
+ * Here rather than in `initialState`, which takes it from here, so the default
+ * sits beside the ranges it has to fit into. The other roles' defaults are in
+ * `type-role.model.ts`, next to the ranges that differ per role.
+ */
+export const DEFAULT_TYPE_SETTINGS: TypeSettings = {
+  fontSize: 18,
+  fontWeight: 400,
+  lineHeight: 1.6
+};
+
+/**
+ * The weights the slider can stand on where nothing narrows them further,
+ * taken from the lookup table rather than from the step: the grid the control
+ * moves on is the set of rows the rating has, and stating it this way keeps
+ * the two from drifting apart.
+ *
+ * A chosen typeface narrows it again - see `weightStopsFor()`. A weight a
+ * family does not ship is synthesised by the browser, and a rating about a
+ * faux-bold answers a question nobody asked.
+ */
+export const WEIGHT_STOPS: readonly number[] = FONT_WEIGHTS
+  .map(Number)
+  .filter(weight => weight >= FONT_WEIGHT_RANGE.min && weight <= FONT_WEIGHT_RANGE.max);
+
+
+/**
+ * The settings as the app is willing to hold them.
+ *
+ * A value can arrive from outside the controls - localStorage is editable by
+ * hand and outlives a change of range - and a weight off the `FONT_WEIGHTS`
+ * grid is the one that does real damage: it has no row in `apcaLookup`, so the
+ * rating would answer about a size and weight nobody is looking at.
+ *
+ * `weightStops` is the set of weights the chosen typeface actually ships, so
+ * the same normalization also keeps the weight off a synthesised one. Left
+ * out, the whole grid stands - which is what a preview on the app's own type
+ * stack needs.
+ *
+ * `sizeRange` and `defaults` are the role's: a display line moves over other
+ * sizes than body text does, and a value that is not a number has to land on
+ * that role's default rather than on body text's. `normalizedTypeSettingsFor()`
+ * in `type-role.model.ts` fills both in from the role.
+ */
+export function normalizedTypeSettings(
+  settings: TypeSettings,
+  weightStops: readonly number[] = WEIGHT_STOPS,
+  sizeRange: TypeSettingRange = FONT_SIZE_RANGE,
+  defaults: TypeSettings = DEFAULT_TYPE_SETTINGS
+): TypeSettings {
+  return {
+    fontSize: snapped(settings.fontSize, sizeRange, defaults.fontSize),
+    fontWeight: nearestStop(settings.fontWeight, weightStops, defaults.fontWeight),
+    lineHeight: snapped(settings.lineHeight, LINE_HEIGHT_RANGE, defaults.lineHeight)
+  };
+}
+
+
+/**
+ * The value clamped into the range and put on its step grid.
+ *
+ * The step is counted from `min`, the way a range input counts it, and the
+ * result is rounded to the step's own precision - `1.2 + 3 * 0.05` is
+ * 1.3500000000000003 in binary floating point, and that value would travel
+ * into the preview's `line-height` and into localStorage.
+ */
+function snapped(value: number, range: TypeSettingRange, fallback: number): number {
+  if (!Number.isFinite(value)) return fallback;
+
+  const clamped = Math.min(Math.max(value, range.min), range.max);
+  const steps = Math.round((clamped - range.min) / range.step);
+  const decimals = decimalsOf(range.step);
+
+  return Number((range.min + steps * range.step).toFixed(decimals));
+}
+
+
+/**
+ * The stop closest to `value`, with a tie going to the lighter one.
+ *
+ * The fallback is a value rather than a result: an empty stop list and a
+ * weight that is not a number both have to end on a stop the caller's list
+ * actually holds, and a family that ships no 400 must not be handed one.
+ */
+function nearestStop(value: number, stops: readonly number[], fallback: number): number {
+  const usable = stops.length > 0 ? stops : WEIGHT_STOPS;
+  const target = Number.isFinite(value) ? value : fallback;
+
+  return usable.reduce((closest, stop) =>
+    Math.abs(stop - target) < Math.abs(closest - target) ? stop : closest);
+}
+
+
+function decimalsOf(step: number): number {
+  return String(step).split(".")[1]?.length ?? 0;
+}

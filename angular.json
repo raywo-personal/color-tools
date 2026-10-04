@@ -7,7 +7,7 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss",
+          "style": "css",
           "inlineStyle": true,
           "skipTests": true
         }
@@ -22,7 +22,7 @@
             "outputPath": "dist/ColorTools",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
+            "inlineStyleLanguage": "css",
             "assets": [
               {
                 "glob": "**/*",
@@ -30,22 +30,7 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
-            ],
-            "stylePreprocessorOptions": {
-              "sass": {
-                "silenceDeprecations": [
-                  "import"
-                ]
-              }
-            },
-            "allowedCommonJsDependencies": [
-              "color-namer/lib/colors/basic",
-              "color-namer/lib/colors/html",
-              "color-namer/lib/colors/ntc",
-              "color-namer/lib/colors/pantone",
-              "color-namer/lib/colors/roygbiv",
-              "color-namer/lib/colors/x11"
+              "src/styles.css"
             ],
             "polyfills": [
               "@angular/localize/init"
@@ -56,8 +41,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1MB",
-                  "maximumError": "1.2MB"
+                  "maximumWarning": "879kB",
+                  "maximumError": "960kB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -65,14 +50,19 @@
                   "maximumError": "8kB"
                 }
               ],
+              "optimization": {
+                "styles": {
+                  "inlineCritical": false
+                }
+              },
               "outputHashing": "all"
             },
             "cloudflare": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1MB",
-                  "maximumError": "1.2MB"
+                  "maximumWarning": "879kB",
+                  "maximumError": "960kB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -80,6 +70,11 @@
                   "maximumError": "8kB"
                 }
               ],
+              "optimization": {
+                "styles": {
+                  "inlineCritical": false
+                }
+              },
               "outputHashing": "all",
               "localize": false,
               "fileReplacements": [

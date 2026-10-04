@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+<style>
+html, body { margin: 0; padding: 0; }
+* { box-sizing: border-box; }
+body { background: var(--bg, #FAF8F4); color: var(--text, #1B1917); font-family: 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: var(--text, #1B1917); text-decoration: underline; text-underline-offset: 3px; }
+a:hover { color: var(--dim, #7A736A); }
+input, button, select, textarea { font-family: inherit; }
+input[type=color] { -webkit-appearance: none; appearance: none; border: none; padding: 0; background: none; }
+input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type=color]::-webkit-color-swatch { border: 1px solid var(--line, #E4DED4); border-radius: 2px; }
+@keyframes ct-toast { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+</style>
+</helmet>
+
+<div style="max-width: 1240px; margin: 0 auto; padding: 34px 34px 90px">
+
+  <header style="display: flex; align-items: center; gap: 28px; padding-bottom: 30px; flex-wrap: wrap">
+    <h1 style="font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 34px; line-height: 1; letter-spacing: -0.01em; margin: 0">Color Tools</h1>
+    <div style="display: flex; border: 1px solid var(--line, #E4DED4); border-radius: 2px; overflow: hidden">
+      <button onClick="{{ goStudio }}" style="{{ studioTabStyle }}">STUDIO</button>
+      <button onClick="{{ goContrast }}" style="{{ contrastTabStyle }}">CONTRAST &amp; TYPE</button>
+    </div>
+    <button onClick="{{ toggleTheme }}" style="{{ themeBtnStyle }}">{{ themeBtnLabel }}</button>
+  </header>
+
+  <sc-if value="{{ onStudio }}" hint-placeholder-val="{{ true }}">
+  <div style="border-top: 1px solid var(--line, #E4DED4); padding-top: 28px">
+    <div style="display: grid; grid-template-columns: minmax(240px, 300px) minmax(360px, 1fr); gap: 52px; align-items: start">
+
+      <div>
+        <div style="{{ swatchStyle }}"></div>
+        <div style="display: flex; gap: 8px; margin-top: 12px; align-items: center">
+          <input type="color" value="{{ hex }}" onChange="{{ onPick }}" style="width: 40px; height: 38px; border-radius: 2px; cursor: pointer; flex: none" />
+          <input type="text" value="{{ hexField }}" onChange="{{ onHexInput }}" onBlur="{{ onHexCommit }}" onKeyDown="{{ onHexKey }}" spellcheck="false" style="flex: 1; min-width: 0; height: 38px; padding: 0 10px; border: 1px solid var(--line, #E4DED4); background: var(--field, #F2EDE5); color: var(--text, #1B1917); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; outline: none" />
+          <button onClick="{{ randomize }}" title="Random color" style="height: 38px; padding: 0 11px; border: 1px solid var(--line, #E4DED4); background: transparent; color: var(--dim, #7A736A); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; cursor: pointer; flex: none" style-hover="color: var(--text, #1B1917)">RND</button>
+        </div>
+
+        <div style="margin-top: 22px">
+          <sc-for list="{{ conversions }}" as="row" hint-placeholder-count="6">
+            <button onClick="{{ row.copy }}" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 4px; background: transparent; border: none; border-bottom: 1px solid var(--line, #E4DED4); cursor: pointer; text-align: left; color: var(--text, #1B1917)" style-hover="background: var(--field, #F2EDE5)">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--dim, #7A736A); width: 46px; flex: none">{{ row.label }}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">{{ row.value }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div>
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: var(--dim, #7A736A)">PLAY</span>
+          <div style="display: flex; margin-left: auto; border: 1px solid var(--line, #E4DED4); border-radius: 2px; overflow: hidden">
+            <button onClick="{{ setHslMode }}" style="{{ hslTabStyle }}">HSL</button>
+            <button onClick="{{ setOklchMode }}" style="{{ oklchTabStyle }}">OKLCH</button>
+          </div>
+        </div>
+
+        <div style="display: grid; gap: 16px">
+          <sc-for list="{{ sliders }}" as="s" hint-placeholder-count="3">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--dim, #7A736A)">{{ s.label }}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">{{ s.display }}</span>
+              </div>
+              <div onPointerDown="{{ s.onDown }}" style="{{ s.trackStyle }}">
+                <div style="{{ s.thumbStyle }}"></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="margin-top: 34px">
+          <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: var(--dim, #7A736A)">PALETTE</span>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap">
+              <sc-for list="{{ schemes }}" as="s" hint-placeholder-count="6">
+                <button onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px">
+            <sc-for list="{{ palette }}" as="p" hint-placeholder-count="5">
+              <div>
+                <div onClick="{{ p.copy }}" onDoubleClick="{{ p.setBase }}" title="Click to copy · double-click to make base" style="{{ p.style }}"></div>
+                <div style="margin-top: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px">{{ p.hex }}</div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: var(--dim, #7A736A); margin-top: 2px">{{ p.role }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin: 12px 0 0; font-size: 11px; color: var(--dim, #7A736A)">{{ schemeNote }}</p>
+        </div>
+
+        <div style="margin-top: 34px; display: grid; gap: 16px">
+          <sc-for list="{{ scales }}" as="scale" hint-placeholder-count="2">
+            <div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--dim, #7A736A); margin-bottom: 7px">{{ scale.label }}</div>
+              <div style="display: flex; gap: 2px">
+                <sc-for list="{{ scale.steps }}" as="st" hint-placeholder-count="10">
+                  <div onClick="{{ st.copy }}" onDoubleClick="{{ st.setBase }}" title="{{ st.hex }}" style="{{ st.style }}">
+                    <span style="{{ st.textStyle }}">{{ st.hex }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 44px; border-top: 1px solid var(--line, #E4DED4); padding-top: 14px">
+      <button onClick="{{ toggleExport }}" style="display: flex; align-items: center; gap: 10px; background: transparent; border: none; padding: 4px 0; color: var(--dim, #7A736A); cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em" style-hover="color: var(--text, #1B1917)">
+        <span>{{ exportCaret }}</span><span>EXPORT PALETTE</span>
+      </button>
+      <sc-if value="{{ exportOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 14px">
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px">
+            <div style="display: flex; border: 1px solid var(--line, #E4DED4); border-radius: 2px; overflow: hidden">
+              <button onClick="{{ setCssTab }}" style="{{ cssTabStyle }}">CSS</button>
+              <button onClick="{{ setJsonTab }}" style="{{ jsonTabStyle }}">JSON</button>
+            </div>
+            <button onClick="{{ copyExport }}" style="height: 28px; padding: 0 12px; border: 1px solid var(--line, #E4DED4); background: transparent; color: var(--dim, #7A736A); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; cursor: pointer" style-hover="color: var(--text, #1B1917)">COPY ALL</button>
+          </div>
+          <pre style="margin: 0; padding: 18px; background: var(--field, #F2EDE5); border: 1px solid var(--line, #E4DED4); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.65; max-height: 300px; overflow: auto; color: var(--text, #1B1917)">{{ exportText }}</pre>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ onContrast }}" hint-placeholder-val="{{ false }}">
+  <div style="border-top: 1px solid var(--line, #E4DED4); padding-top: 28px">
+    <div style="display: grid; grid-template-columns: minmax(240px, 290px) minmax(380px, 1fr); gap: 52px; align-items: start">
+
+      <div>
+        <div style="display: grid; gap: 18px">
+          <sc-for list="{{ pairFields }}" as="f" hint-placeholder-count="2">
+            <div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--dim, #7A736A); margin-bottom: 8px">{{ f.label }}</div>
+              <div style="display: flex; gap: 8px; align-items: center">
+                <input type="color" value="{{ f.hex }}" onChange="{{ f.onPick }}" style="width: 36px; height: 34px; border-radius: 2px; cursor: pointer; flex: none" />
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; flex: 1">{{ f.hex }}</span>
+                <button onClick="{{ f.useCurrent }}" style="height: 34px; padding: 0 9px; border: 1px solid var(--line, #E4DED4); background: transparent; color: var(--dim, #7A736A); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; cursor: pointer; flex: none" style-hover="color: var(--text, #1B1917)">BASE</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; gap: 4px; margin-top: 14px">
+          <sc-for list="{{ paletteChips }}" as="c" hint-placeholder-count="5">
+            <div onClick="{{ c.asBg }}" title="Click: use as background · double-click: use as text" onDoubleClick="{{ c.asFg }}" style="{{ c.style }}"></div>
+          </sc-for>
+        </div>
+        <button onClick="{{ swapPair }}" style="margin-top: 14px; height: 32px; padding: 0 13px; border: 1px solid var(--line, #E4DED4); background: transparent; color: var(--dim, #7A736A); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; cursor: pointer" style-hover="color: var(--text, #1B1917)">SWAP</button>
+
+        <div style="border-top: 1px solid var(--line, #E4DED4); margin-top: 24px; padding-top: 20px">
+          <div style="display: flex; align-items: baseline; gap: 8px">
+            <span style="font-family: 'Instrument Serif', Georgia, serif; font-size: 54px; line-height: 0.9">{{ ratio }}</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--dim, #7A736A)">: 1</span>
+          </div>
+          <div style="display: grid; gap: 5px; margin-top: 16px">
+            <sc-for list="{{ badges }}" as="b" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 9px">
+                <span style="{{ b.dotStyle }}"></span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em; width: 86px; color: var(--dim, #7A736A)">{{ b.label }}</span>
+                <span style="{{ b.textStyle }}">{{ b.verdict }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin: 14px 0 0; font-size: 11px; color: var(--dim, #7A736A); line-height: 1.5; text-wrap: pretty">{{ sizeNote }}</p>
+        </div>
+
+        <div style="border-top: 1px solid var(--line, #E4DED4); margin-top: 24px; padding-top: 20px; display: grid; gap: 16px">
+          <label style="display: block">
+            <span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--dim, #7A736A); margin-bottom: 8px">TYPEFACE</span>
+            <select value="{{ fontName }}" onChange="{{ onFontChange }}" style="width: 100%; height: 34px; padding: 0 9px; border: 1px solid var(--line, #E4DED4); background: var(--field, #F2EDE5); color: var(--text, #1B1917); border-radius: 2px; font-size: 12px">
+              <sc-for list="{{ fontOptions }}" as="f" hint-placeholder-count="8">
+                <option value="{{ f.name }}">{{ f.name }}</option>
+              </sc-for>
+            </select>
+          </label>
+          <sc-for list="{{ typeSliders }}" as="s" hint-placeholder-count="3">
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 7px">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--dim, #7A736A)">{{ s.label }}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px">{{ s.display }}</span>
+              </div>
+              <div onPointerDown="{{ s.onDown }}" style="{{ s.trackStyle }}">
+                <div style="{{ s.thumbStyle }}"></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border-top: 1px solid var(--line, #E4DED4); margin-top: 24px; padding-top: 20px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--dim, #7A736A); margin-bottom: 12px">COLOR VISION</div>
+          <div style="display: grid; gap: 8px">
+            <sc-for list="{{ visionRows }}" as="v" hint-placeholder-count="5">
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span style="font-size: 11px; color: var(--dim, #7A736A); width: 96px; flex: none">{{ v.name }}</span>
+                <div style="display: flex; gap: 2px; flex: 1">
+                  <sc-for list="{{ v.chips }}" as="c" hint-placeholder-count="5">
+                    <div style="{{ c.style }}"></div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="{{ siteStyle }}">
+        <div style="{{ siteNavStyle }}">
+          <span style="{{ siteMarkStyle }}">Meridian</span>
+          <div style="display: flex; gap: 22px; align-items: center">
+            <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="3">
+              <span style="{{ n.style }}">{{ n.label }}</span>
+            </sc-for>
+            <span style="{{ siteBtnSmallStyle }}">Sign in</span>
+          </div>
+        </div>
+
+        <div style="padding: 54px 48px 40px">
+          <span style="{{ siteEyebrowStyle }}">Field notes</span>
+          <h2 style="{{ siteH1Style }}">Reading is a physical act</h2>
+          <p style="{{ siteLeadStyle }}">A contrast ratio tells you whether two colors are far enough apart to be separated by the eye. It does not tell you whether the result is comfortable over a page of text.</p>
+          <div style="display: flex; gap: 12px; align-items: center; margin: 26px 0 40px">
+            <span style="{{ siteBtnStyle }}">Read the notes</span>
+            <span style="{{ siteBtnGhostStyle }}">Browse palettes</span>
+          </div>
+
+          <p style="{{ siteBodyStyle }}">A pairing can clear every threshold and still feel harsh, or sit close to the limit and read easily because the hues are related and the counters stay open. Set the size and weight you actually plan to ship, then read this the way a reader would: quickly, at arm's length, without looking for problems.</p>
+          <p style="{{ siteBodyStyle }}">Watch the line endings and the gaps between words. If your eye keeps returning to the same line, the issue is usually spacing or weight rather than color. If the text seems to vibrate against its background, the two colors are close in lightness but far apart in hue, and no amount of extra size will fix it. Long passages punish decisions that look fine in a headline: thin weights lose their stems, saturated backgrounds bleed into the letterforms, and near-black on near-white can read as cold rather than clear.</p>
+
+          <div style="{{ siteCardStyle }}">
+            <div style="{{ siteCardLabelStyle }}">Pull quote</div>
+            <p style="{{ siteQuoteStyle }}">Adjust one variable at a time and keep the paragraph in view.</p>
+          </div>
+
+          <p style="{{ siteBodyStyle }}">Where a palette earns its keep is in the parts nobody photographs: the disabled button, the error line, the caption under an image, the row of small numbers in a table. Those are the places to look before signing off on a color.</p>
+
+          <div style="{{ siteFooterStyle }}">
+            <span style="{{ siteSmallStyle }}">Small print, captions and legal notes. This is where most pairings fail first.</span>
+            <span style="{{ siteSmallStyle }}">© Meridian</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); padding: 10px 17px; background: var(--text, #1B1917); color: var(--bg, #FAF8F4); border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.04em; animation: ct-toast 160ms ease-out; z-index: 50">{{ toast }}</div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#3D5A8C&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#3D5A8C&quot;,&quot;#B4462F&quot;,&quot;#3F7D4E&quot;,&quot;#6C4B8B&quot;]},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;light&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { hex: null, hsl: null, oklch: null, mode: 'hsl', scheme: 'analogous',
+    view: 'studio', exportOpen: false, fg: null, bg: null,
+    fontName: 'Source Serif 4', fontSize: 18, fontWeight: 400, lineHeight: 1.6,
+    tab: 'css', toast: null, theme: null };
+
+  clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+  hexToRgb(hex) {
+    let h = String(hex || '').trim().replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+  rgbToHex(r, g, b) {
+    const f = n => this.clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0');
+    return ('#' + f(r) + f(g) + f(b)).toUpperCase();
+  }
+  rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    let h = 0;
+    if (d) {
+      if (mx === r) h = ((g - b) / d) % 6;
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60; if (h < 0) h += 360;
+    }
+    const l = (mx + mn) / 2;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    return { h, s: s * 100, l: l * 100 };
+  }
+  hslToRgb(h, s, l) {
+    h = ((h % 360) + 360) % 360; s = this.clamp(s, 0, 100) / 100; l = this.clamp(l, 0, 100) / 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; }
+    else if (h < 180) { g = c; b = x; } else if (h < 240) { g = x; b = c; }
+    else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
+    return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+  }
+  hslHex(h, s, l) { const r = this.hslToRgb(h, s, l); return this.rgbToHex(r[0], r[1], r[2]); }
+  toLin(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  toSrgb(c) { const v = c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; return v * 255; }
+  rgbToOklch(r, g, b) {
+    const R = this.toLin(r), G = this.toLin(g), B = this.toLin(b);
+    const l = Math.cbrt(0.4122214708 * R + 0.5363325363 * G + 0.0514459929 * B);
+    const m = Math.cbrt(0.2119034982 * R + 0.6806995451 * G + 0.1073969566 * B);
+    const s = Math.cbrt(0.0883024619 * R + 0.2817188376 * G + 0.6299787005 * B);
+    const L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+    const A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+    const Bb = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+    let H = Math.atan2(Bb, A) * 180 / Math.PI; if (H < 0) H += 360;
+    return { L, C: Math.sqrt(A * A + Bb * Bb), H };
+  }
+  oklchToRgbRaw(L, C, H) {
+    const hr = H * Math.PI / 180, A = Math.cos(hr) * C, B = Math.sin(hr) * C;
+    const l_ = L + 0.3963377774 * A + 0.2158037573 * B;
+    const m_ = L - 0.1055613458 * A - 0.0638541728 * B;
+    const s_ = L - 0.0894841775 * A - 1.2914855480 * B;
+    const l = l_ * l_ * l_, m = m_ * m_ * m_, s = s_ * s_ * s_;
+    return [
+      this.toSrgb(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+      this.toSrgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+      this.toSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s)
+    ];
+  }
+  oklchToHex(L, C, H) {
+    let c = C;
+    for (let i = 0; i < 30; i++) {
+      const p = this.oklchToRgbRaw(L, c, H);
+      if (p.every(v => v >= -0.6 && v <= 255.6)) break;
+      c *= 0.94;
+    }
+    const p = this.oklchToRgbRaw(L, c, H);
+    return this.rgbToHex(p[0], p[1], p[2]);
+  }
+  lum(hex) {
+    const rgb = this.hexToRgb(hex) || [0, 0, 0];
+    const [r, g, b] = rgb.map(v => this.toLin(v));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  contrast(a, b) {
+    const la = this.lum(a), lb = this.lum(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  mix(hex, target, t) {
+    const a = this.hexToRgb(hex) || [0, 0, 0], b = this.hexToRgb(target);
+    return this.rgbToHex(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t);
+  }
+  readable(bg, dark, light) {
+    return this.contrast(bg, dark) >= this.contrast(bg, light) ? dark : light;
+  }
+  simulate(hex, m) {
+    const rgb = this.hexToRgb(hex) || [0, 0, 0];
+    if (!m) return hex;
+    if (m === 'mono') { const g = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]; return this.rgbToHex(g, g, g); }
+    const M = {
+      prot: [0.567, 0.433, 0, 0.558, 0.442, 0, 0, 0.242, 0.758],
+      deut: [0.625, 0.375, 0, 0.700, 0.300, 0, 0, 0.300, 0.700],
+      trit: [0.950, 0.050, 0, 0, 0.433, 0.567, 0, 0.475, 0.525]
+    }[m];
+    return this.rgbToHex(
+      M[0] * rgb[0] + M[1] * rgb[1] + M[2] * rgb[2],
+      M[3] * rgb[0] + M[4] * rgb[1] + M[5] * rgb[2],
+      M[6] * rgb[0] + M[7] * rgb[1] + M[8] * rgb[2]
+    );
+  }
+
+  themes = {
+    light: { bg: '#FAF8F4', panel: '#FFFDFA', text: '#1B1917', dim: '#7A736A', line: '#E4DED4', field: '#F2EDE5' },
+    dark: { bg: '#171512', panel: '#1F1D19', text: '#F1EDE6', dim: '#98907F', line: '#302C25', field: '#232019' }
+  };
+  theme() { return this.state.theme || this.props.defaultTheme || 'light'; }
+  applyTheme() {
+    const t = this.themes[this.theme()] || this.themes.light;
+    const r = document.documentElement;
+    Object.keys(t).forEach(k => r.style.setProperty('--' + k, t[k]));
+    document.body.style.background = t.bg;
+    document.body.style.color = t.text;
+  }
+  componentDidMount() { this.applyTheme(); this.loadFont(this.state.fontName); }
+  componentDidUpdate() { this.applyTheme(); }
+
+  fonts = [
+    { name: 'Source Serif 4', stack: "'Source Serif 4', Georgia, serif" },
+    { name: 'Newsreader', stack: "'Newsreader', Georgia, serif" },
+    { name: 'Lora', stack: "'Lora', Georgia, serif" },
+    { name: 'EB Garamond', stack: "'EB Garamond', Georgia, serif" },
+    { name: 'Instrument Serif', stack: "'Instrument Serif', Georgia, serif" },
+    { name: 'Source Sans 3', stack: "'Source Sans 3', system-ui, sans-serif" },
+    { name: 'Work Sans', stack: "'Work Sans', system-ui, sans-serif" },
+    { name: 'Public Sans', stack: "'Public Sans', system-ui, sans-serif" },
+    { name: 'Libre Franklin', stack: "'Libre Franklin', system-ui, sans-serif" },
+    { name: 'Atkinson Hyperlegible', stack: "'Atkinson Hyperlegible', system-ui, sans-serif" },
+    { name: 'IBM Plex Mono', stack: "'IBM Plex Mono', ui-monospace, monospace" }
+  ];
+  loaded = {};
+  loadFont(name) {
+    if (!name || this.loaded[name]) return;
+    this.loaded[name] = true;
+    const fam = name.replace(/ /g, '+');
+    const l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?family=' + fam + ':ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap';
+    l.onerror = () => { const f = document.createElement('link'); f.rel = 'stylesheet'; f.href = 'https://fonts.googleapis.com/css2?family=' + fam + '&display=swap'; document.head.appendChild(f); };
+    document.head.appendChild(l);
+  }
+
+  base() { return this.state.hex || this.props.startColor || '#3D5A8C'; }
+  hsl() { if (this.state.hsl) return this.state.hsl; const r = this.hexToRgb(this.base()) || [0, 0, 0]; return this.rgbToHsl(r[0], r[1], r[2]); }
+  ok() { if (this.state.oklch) return this.state.oklch; const r = this.hexToRgb(this.base()) || [0, 0, 0]; return this.rgbToOklch(r[0], r[1], r[2]); }
+  fg() { return this.state.fg || (this.theme() === 'dark' ? '#F1EDE6' : '#1B1917'); }
+  bg() { return this.state.bg || (this.theme() === 'dark' ? '#171512' : '#FAF8F4'); }
+  setBase(hex) { this.setState({ hex: hex.toUpperCase(), hsl: null, oklch: null, hexField: undefined }); }
+  say(msg) {
+    clearTimeout(this._t);
+    this.setState({ toast: msg });
+    this._t = setTimeout(() => this.setState({ toast: null }), 1400);
+  }
+  copy(text) { try { navigator.clipboard.writeText(text); } catch (e) {} this.say('Copied  ' + text); }
+
+  drag(key, min, max, e) {
+    const track = e.currentTarget;
+    const move = ev => {
+      const r = track.getBoundingClientRect();
+      const pct = this.clamp((ev.clientX - r.left) / r.width, 0, 1);
+      this.applyValue(key, min + pct * (max - min));
+    };
+    move(e);
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+  applyValue(key, v) {
+    if (key === 'h' || key === 's' || key === 'l') {
+      const h = Object.assign({}, this.hsl(), { [key]: v });
+      this.setState({ hsl: h, hex: this.hslHex(h.h, h.s, h.l), oklch: null });
+    } else if (key === 'L' || key === 'C' || key === 'H') {
+      const o = Object.assign({}, this.ok(), { [key]: v });
+      this.setState({ oklch: o, hex: this.oklchToHex(o.L, o.C, o.H), hsl: null });
+    } else if (key === 'fontSize') this.setState({ fontSize: Math.round(v) });
+    else if (key === 'fontWeight') this.setState({ fontWeight: Math.round(v / 100) * 100 });
+    else if (key === 'lineHeight') this.setState({ lineHeight: Math.round(v * 20) / 20 });
+  }
+  mkSlider(key, label, value, min, max, display, gradient, h) {
+    const pct = this.clamp((value - min) / (max - min), 0, 1);
+    const hh = h || 12;
+    return {
+      label, display,
+      trackStyle: { position: 'relative', height: hh + 'px', borderRadius: '2px', background: gradient, border: '1px solid var(--line, #E4DED4)', cursor: 'pointer', touchAction: 'none' },
+      thumbStyle: { position: 'absolute', top: '50%', left: (pct * 100) + '%', width: '13px', height: (hh + 16) + 'px', transform: 'translate(-50%, -50%)', background: 'var(--panel, #fff)', border: '1px solid var(--text, #1B1917)', borderRadius: '2px', boxShadow: '0 1px 3px rgba(0,0,0,.16)', pointerEvents: 'none' },
+      onDown: e => this.drag(key, min, max, e)
+    };
+  }
+  ramp(fn, n) {
+    const out = [];
+    for (let i = 0; i <= n; i++) out.push(fn(i / n));
+    return 'linear-gradient(90deg, ' + out.join(', ') + ')';
+  }
+
+  schemeDefs = {
+    monochrome: { label: 'MONO', note: 'One hue, five lightness steps — safest for interfaces.', build: h => [
+      { role: 'BASE', hex: this.hslHex(h.h, h.s, h.l) },
+      { role: 'LIGHT', hex: this.hslHex(h.h, h.s * 0.6, Math.min(h.l + 26, 94)) },
+      { role: 'PALE', hex: this.hslHex(h.h, h.s * 0.35, Math.min(h.l + 42, 97)) },
+      { role: 'DEEP', hex: this.hslHex(h.h, Math.min(h.s + 8, 100), Math.max(h.l - 22, 8)) },
+      { role: 'INK', hex: this.hslHex(h.h, Math.min(h.s + 14, 100), Math.max(h.l - 38, 5)) }
+    ] },
+    analogous: { label: 'ANALOGOUS', note: 'Neighbouring hues — calm, low-conflict combinations.', build: h => [-40, -20, 0, 20, 40].map((d, i) => ({
+      role: d === 0 ? 'BASE' : (d < 0 ? 'H' + d : 'H+' + d), hex: this.hslHex(h.h + d, h.s, h.l + (i === 0 || i === 4 ? 6 : 0))
+    })) },
+    complementary: { label: 'COMPLEMENT', note: 'Base plus its opposite — strong accent, use sparingly.', build: h => [
+      { role: 'BASE', hex: this.hslHex(h.h, h.s, h.l) },
+      { role: 'BASE LT', hex: this.hslHex(h.h, h.s * 0.7, Math.min(h.l + 28, 94)) },
+      { role: 'NEUTRAL', hex: this.hslHex(h.h, 8, 50) },
+      { role: 'COMP', hex: this.hslHex(h.h + 180, h.s, h.l) },
+      { role: 'COMP DK', hex: this.hslHex(h.h + 180, h.s, Math.max(h.l - 24, 8)) }
+    ] },
+    split: { label: 'SPLIT', note: 'Two hues either side of the complement — contrast without clash.', build: h => [
+      { role: 'BASE', hex: this.hslHex(h.h, h.s, h.l) },
+      { role: 'BASE LT', hex: this.hslHex(h.h, h.s * 0.6, Math.min(h.l + 30, 94)) },
+      { role: 'SPLIT A', hex: this.hslHex(h.h + 150, h.s, h.l) },
+      { role: 'SPLIT B', hex: this.hslHex(h.h + 210, h.s, h.l) },
+      { role: 'INK', hex: this.hslHex(h.h, Math.min(h.s + 10, 100), Math.max(h.l - 36, 6)) }
+    ] },
+    triad: { label: 'TRIAD', note: 'Three evenly spaced hues — balanced but loud at full strength.', build: h => [
+      { role: 'BASE', hex: this.hslHex(h.h, h.s, h.l) },
+      { role: '+120', hex: this.hslHex(h.h + 120, h.s, h.l) },
+      { role: '+240', hex: this.hslHex(h.h + 240, h.s, h.l) },
+      { role: 'BASE LT', hex: this.hslHex(h.h, h.s * 0.5, Math.min(h.l + 34, 95)) },
+      { role: 'INK', hex: this.hslHex(h.h, Math.min(h.s + 10, 100), Math.max(h.l - 34, 6)) }
+    ] },
+    tetradic: { label: 'TETRAD', note: 'Four hues on a rectangle — needs one clear dominant color.', build: h => [
+      { role: 'BASE', hex: this.hslHex(h.h, h.s, h.l) },
+      { role: '+90', hex: this.hslHex(h.h + 90, h.s, h.l) },
+      { role: '+180', hex: this.hslHex(h.h + 180, h.s, h.l) },
+      { role: '+270', hex: this.hslHex(h.h + 270, h.s, h.l) },
+      { role: 'PALE', hex: this.hslHex(h.h, h.s * 0.3, Math.min(h.l + 40, 96)) }
+    ] },
+    oklchScale: { label: 'OKLCH RAMP', note: 'Perceptually even lightness ramp at constant chroma and hue.', build: (h, ok) => [0.92, 0.76, 0.58, 0.4, 0.24].map((L, i) => ({
+      role: 'L ' + Math.round(L * 100), hex: this.oklchToHex(L, ok.C * (i === 0 ? 0.5 : 1), ok.H)
+    })) }
+  };
+
+  renderVals() {
+    const hex = this.base(), hsl = this.hsl(), ok = this.ok();
+    const rgb = this.hexToRgb(hex) || [0, 0, 0];
+    const mono = "'IBM Plex Mono', monospace";
+    const r0 = v => Math.round(v);
+    const cmyk = (() => {
+      const [r, g, b] = rgb.map(v => v / 255);
+      const k = 1 - Math.max(r, g, b);
+      if (k === 1) return [0, 0, 0, 100];
+      return [(1 - r - k) / (1 - k) * 100, (1 - g - k) / (1 - k) * 100, (1 - b - k) / (1 - k) * 100, k * 100].map(r0);
+    })();
+    const conversions = [
+      { label: 'HEX', value: hex },
+      { label: 'RGB', value: 'rgb(' + rgb.map(r0).join(' ') + ')' },
+      { label: 'HSL', value: 'hsl(' + r0(hsl.h) + ' ' + r0(hsl.s) + '% ' + r0(hsl.l) + '%)' },
+      { label: 'OKLCH', value: 'oklch(' + (ok.L * 100).toFixed(1) + '% ' + ok.C.toFixed(3) + ' ' + r0(ok.H) + ')' },
+      { label: 'CMYK', value: 'cmyk(' + cmyk.join('% ') + '%)' }
+    ].map(c => Object.assign(c, { copy: () => this.copy(c.value) }));
+
+    const isHsl = this.state.mode === 'hsl';
+    const sliders = isHsl ? [
+      this.mkSlider('h', 'HUE', hsl.h, 0, 360, r0(hsl.h) + '°', this.ramp(t => 'hsl(' + t * 360 + ' ' + r0(hsl.s) + '% ' + r0(hsl.l) + '%)', 12)),
+      this.mkSlider('s', 'SATURATION', hsl.s, 0, 100, r0(hsl.s) + '%', this.ramp(t => 'hsl(' + r0(hsl.h) + ' ' + t * 100 + '% ' + r0(hsl.l) + '%)', 6)),
+      this.mkSlider('l', 'LIGHTNESS', hsl.l, 0, 100, r0(hsl.l) + '%', this.ramp(t => 'hsl(' + r0(hsl.h) + ' ' + r0(hsl.s) + '% ' + t * 100 + '%)', 8))
+    ] : [
+      this.mkSlider('L', 'LIGHTNESS', ok.L, 0, 1, (ok.L * 100).toFixed(1) + '%', this.ramp(t => this.oklchToHex(t, ok.C, ok.H), 10)),
+      this.mkSlider('C', 'CHROMA', ok.C, 0, 0.37, ok.C.toFixed(3), this.ramp(t => this.oklchToHex(ok.L, t * 0.37, ok.H), 8)),
+      this.mkSlider('H', 'HUE', ok.H, 0, 360, r0(ok.H) + '°', this.ramp(t => this.oklchToHex(ok.L, Math.max(ok.C, 0.12), t * 360), 14))
+    ];
+
+    const tab = active => ({ height: '30px', padding: '0 14px', border: 'none', background: active ? 'var(--text, #1B1917)' : 'transparent', color: active ? 'var(--bg, #FAF8F4)' : 'var(--dim, #7A736A)', fontFamily: mono, fontSize: '10px', letterSpacing: '0.12em', cursor: 'pointer' });
+    const chip = active => ({ height: '26px', padding: '0 10px', border: '1px solid ' + (active ? 'var(--text, #1B1917)' : 'var(--line, #E4DED4)'), background: active ? 'var(--text, #1B1917)' : 'transparent', color: active ? 'var(--bg, #FAF8F4)' : 'var(--dim, #7A736A)', borderRadius: '2px', fontFamily: mono, fontSize: '9px', letterSpacing: '0.12em', cursor: 'pointer' });
+
+    const schemeKeys = ['monochrome', 'analogous', 'complementary', 'split', 'triad', 'tetradic', 'oklchScale'];
+    const active = this.state.scheme;
+    const schemes = schemeKeys.map(k => ({
+      label: this.schemeDefs[k].label, style: chip(k === active), pick: () => this.setState({ scheme: k })
+    }));
+    const paletteRaw = this.schemeDefs[active].build(hsl, ok);
+    const palette = paletteRaw.map(p => ({
+      role: p.role, hex: p.hex,
+      style: { height: '92px', background: p.hex, borderRadius: '2px', border: '1px solid rgba(0,0,0,.08)', cursor: 'pointer' },
+      copy: () => this.copy(p.hex), setBase: () => this.setBase(p.hex)
+    }));
+
+    const stepText = h2 => ({ fontFamily: mono, fontSize: '8px', color: this.contrast(h2, '#FFFFFF') > 2.6 ? '#FFFFFF' : '#000000', opacity: 0.8 });
+    const mkScale = (label, target) => ({
+      label,
+      steps: Array.from({ length: 10 }, (_, i) => {
+        const h2 = this.mix(hex, target, i / 10);
+        return {
+          hex: h2, textStyle: stepText(h2),
+          style: { flex: 1, height: '52px', background: h2, cursor: 'pointer', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '4px', borderRadius: '1px' },
+          copy: () => this.copy(h2), setBase: () => this.setBase(h2)
+        };
+      })
+    });
+    const scales = [mkScale('TINTS  →  WHITE', '#FFFFFF'), mkScale('SHADES  →  BLACK', '#000000')];
+
+    // ---- contrast + site preview ----
+    const fg = this.fg(), bg = this.bg();
+    const ratio = this.contrast(fg, bg);
+    const size = this.state.fontSize, weight = this.state.fontWeight;
+    const isLarge = size >= 24 || (size >= 18.66 && weight >= 700);
+    const badge = (label, min) => {
+      const pass = ratio >= min;
+      return {
+        label, verdict: pass ? 'Pass  ' + min + ':1' : 'Fail  needs ' + min + ':1',
+        dotStyle: { width: '7px', height: '7px', borderRadius: '50%', background: pass ? '#3F7D4E' : '#B4462F', flex: 'none' },
+        textStyle: { fontSize: '11px', color: pass ? 'var(--text, #1B1917)' : '#B4462F' }
+      };
+    };
+    const badges = [badge('AA NORMAL', 4.5), badge('AAA NORMAL', 7), badge('AA LARGE', 3), badge('AAA LARGE', 4.5)];
+    const pairFields = [
+      { label: 'TEXT', hex: fg, onPick: e => this.setState({ fg: e.target.value.toUpperCase() }), useCurrent: () => this.setState({ fg: hex }) },
+      { label: 'BACKGROUND', hex: bg, onPick: e => this.setState({ bg: e.target.value.toUpperCase() }), useCurrent: () => this.setState({ bg: hex }) }
+    ];
+    const paletteChips = paletteRaw.map(p => ({
+      style: { flex: 1, height: '30px', background: p.hex, borderRadius: '1px', cursor: 'pointer', border: '1px solid rgba(0,0,0,.08)' },
+      asBg: () => this.setState({ bg: p.hex }), asFg: () => this.setState({ fg: p.hex })
+    }));
+    const typeSliders = [
+      this.mkSlider('fontSize', 'SIZE', size, 11, 34, size + 'px', 'var(--field, #F2EDE5)'),
+      this.mkSlider('fontWeight', 'WEIGHT', weight, 300, 700, String(weight), 'var(--field, #F2EDE5)'),
+      this.mkSlider('lineHeight', 'LEADING', this.state.lineHeight, 1.2, 2, this.state.lineHeight.toFixed(2), 'var(--field, #F2EDE5)')
+    ];
+    const stack = (this.fonts.find(f => f.name === this.state.fontName) || this.fonts[0]).stack;
+
+    const accent = paletteRaw[0].hex;
+    const accent2 = paletteRaw[Math.min(2, paletteRaw.length - 1)].hex;
+    const navBg = this.mix(bg, this.lum(bg) > 0.4 ? '#000000' : '#FFFFFF', 0.05);
+    const cardBg = this.mix(bg, accent, 0.09);
+    const onAccent = this.readable(accent, '#111111', '#FFFFFF');
+    const dimText = this.mix(fg, bg, 0.4);
+
+    const visionRows = [
+      { name: 'Normal', m: null }, { name: 'Deuteranopia', m: 'deut' }, { name: 'Protanopia', m: 'prot' },
+      { name: 'Tritanopia', m: 'trit' }, { name: 'Achromatopsia', m: 'mono' }
+    ].map(row => ({
+      name: row.name,
+      chips: paletteRaw.map(p => ({ style: { flex: 1, height: '22px', background: this.simulate(p.hex, row.m), borderRadius: '1px' } }))
+    }));
+
+    const exportText = this.state.tab === 'css'
+      ? [':root {', '  --base: ' + hex + ';', '  --base-oklch: oklch(' + (ok.L * 100).toFixed(1) + '% ' + ok.C.toFixed(3) + ' ' + r0(ok.H) + ');', '  /* palette: ' + this.schemeDefs[active].label.toLowerCase() + ' */']
+        .concat(paletteRaw.map((p, i) => '  --palette-' + (i + 1) + ': ' + p.hex + ';  /* ' + p.role.toLowerCase() + ' */'))
+        .concat(scales[0].steps.map((s, i) => '  --tint-' + (i * 10) + ': ' + s.hex + ';'))
+        .concat(scales[1].steps.slice(1).map((s, i) => '  --shade-' + ((i + 1) * 10) + ': ' + s.hex + ';'))
+        .concat(['  --text: ' + fg + ';', '  --surface: ' + bg + ';', '}']).join('\n')
+      : JSON.stringify({
+          base: hex,
+          oklch: { l: +ok.L.toFixed(4), c: +ok.C.toFixed(4), h: +ok.H.toFixed(1) },
+          scheme: active,
+          palette: paletteRaw.map(p => ({ role: p.role, hex: p.hex })),
+          tints: scales[0].steps.map(s => s.hex),
+          shades: scales[1].steps.map(s => s.hex),
+          contrast: { text: fg, background: bg, ratio: +ratio.toFixed(2) }
+        }, null, 2);
+
+    return {
+      hex, hexField: this.state.hexField !== undefined ? this.state.hexField : hex,
+      swatchStyle: { height: '190px', background: hex, borderRadius: '2px', border: '1px solid rgba(0,0,0,.08)' },
+      conversions, sliders, schemes, palette, scales, schemeNote: this.schemeDefs[active].note,
+      onStudio: this.state.view === 'studio', onContrast: this.state.view === 'contrast',
+      studioTabStyle: tab(this.state.view === 'studio'), contrastTabStyle: tab(this.state.view === 'contrast'),
+      goStudio: () => this.setState({ view: 'studio' }), goContrast: () => this.setState({ view: 'contrast' }),
+      hslTabStyle: tab(isHsl), oklchTabStyle: tab(!isHsl),
+      setHslMode: () => this.setState({ mode: 'hsl' }), setOklchMode: () => this.setState({ mode: 'oklch' }),
+      exportOpen: this.state.exportOpen, exportCaret: this.state.exportOpen ? '—' : '+',
+      toggleExport: () => this.setState({ exportOpen: !this.state.exportOpen }),
+      cssTabStyle: tab(this.state.tab === 'css'), jsonTabStyle: tab(this.state.tab === 'json'),
+      setCssTab: () => this.setState({ tab: 'css' }), setJsonTab: () => this.setState({ tab: 'json' }),
+      exportText, copyExport: () => { try { navigator.clipboard.writeText(exportText); } catch (e) {} this.say('Copied export'); },
+      pairFields, paletteChips, badges, typeSliders, visionRows, ratio: ratio.toFixed(2),
+      fontOptions: this.fonts, fontName: this.state.fontName,
+      onFontChange: e => { this.loadFont(e.target.value); this.setState({ fontName: e.target.value }); },
+      sizeNote: 'At ' + size + 'px / ' + weight + ', WCAG counts this as ' + (isLarge ? 'large text — 3:1 is the AA threshold.' : 'normal text — 4.5:1 is the AA threshold.'),
+      swapPair: () => this.setState({ fg: bg, bg: fg }),
+
+      siteStyle: { background: bg, color: fg, borderRadius: '3px', border: '1px solid var(--line, #E4DED4)', overflow: 'hidden' },
+      siteNavStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: navBg, borderBottom: '1px solid ' + this.mix(bg, fg, 0.12) },
+      siteMarkStyle: { fontFamily: stack, fontSize: '17px', fontWeight: 600, letterSpacing: '-0.01em', color: accent },
+      navItems: ['Notes', 'Palettes', 'About'].map(l => ({ label: l, style: { fontFamily: stack, fontSize: '13px', color: dimText } })),
+      siteBtnSmallStyle: { fontFamily: stack, fontSize: '12px', padding: '6px 12px', borderRadius: '2px', border: '1px solid ' + accent, color: accent },
+      siteEyebrowStyle: { display: 'block', fontFamily: mono, fontSize: '10px', letterSpacing: '0.18em', color: accent2, marginBottom: '14px' },
+      siteH1Style: { fontFamily: stack, fontSize: Math.round(size * 2.5) + 'px', fontWeight: Math.max(weight, 500), lineHeight: 1.1, letterSpacing: '-0.02em', margin: '0 0 18px', maxWidth: '24ch' },
+      siteLeadStyle: { fontFamily: stack, fontSize: Math.round(size * 1.22) + 'px', fontWeight: weight, lineHeight: this.state.lineHeight * 0.95, margin: 0, maxWidth: '52ch', color: fg, textWrap: 'pretty' },
+      siteBtnStyle: { fontFamily: stack, fontSize: size * 0.85 + 'px', fontWeight: 500, padding: '11px 20px', background: accent, color: onAccent, borderRadius: '2px' },
+      siteBtnGhostStyle: { fontFamily: stack, fontSize: size * 0.85 + 'px', fontWeight: 500, padding: '11px 20px', border: '1px solid ' + this.mix(bg, fg, 0.3), color: fg, borderRadius: '2px' },
+      siteBodyStyle: { fontFamily: stack, fontSize: size + 'px', fontWeight: weight, lineHeight: this.state.lineHeight, margin: '0 0 1.1em', maxWidth: '66ch', textWrap: 'pretty' },
+      siteCardStyle: { background: cardBg, borderLeft: '2px solid ' + accent, padding: '22px 26px', margin: '30px 0', borderRadius: '2px' },
+      siteCardLabelStyle: { fontFamily: mono, fontSize: '9px', letterSpacing: '0.18em', color: dimText, marginBottom: '10px' },
+      siteQuoteStyle: { fontFamily: stack, fontSize: Math.round(size * 1.3) + 'px', fontWeight: weight, fontStyle: 'italic', lineHeight: 1.35, margin: 0, maxWidth: '40ch' },
+      siteFooterStyle: { display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap', borderTop: '1px solid ' + this.mix(bg, fg, 0.14), marginTop: '34px', paddingTop: '18px' },
+      siteSmallStyle: { fontFamily: stack, fontSize: Math.round(size * 0.72) + 'px', fontWeight: weight, color: dimText },
+
+      themeBtnLabel: this.theme() === 'dark' ? 'LIGHT UI' : 'DARK UI',
+      themeBtnStyle: { marginLeft: 'auto', height: '30px', padding: '0 13px', border: '1px solid var(--line, #E4DED4)', background: 'transparent', color: 'var(--dim, #7A736A)', borderRadius: '2px', fontFamily: mono, fontSize: '10px', letterSpacing: '0.12em', cursor: 'pointer', flex: 'none' },
+      toggleTheme: () => this.setState({ theme: this.theme() === 'dark' ? 'light' : 'dark', fg: null, bg: null }),
+      toast: this.state.toast,
+      randomize: () => this.setBase(this.oklchToHex(0.35 + Math.random() * 0.4, 0.05 + Math.random() * 0.2, Math.random() * 360)),
+      onPick: e => this.setBase(e.target.value),
+      onHexInput: e => {
+        const v = e.target.value;
+        this.setState({ hexField: v });
+        if (this.hexToRgb(v)) this.setState({ hex: (v.startsWith('#') ? v : '#' + v).toUpperCase(), hsl: null, oklch: null });
+      },
+      onHexCommit: () => this.setState({ hexField: undefined }),
+      onHexKey: e => { if (e.key === 'Enter') this.setState({ hexField: undefined }); }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

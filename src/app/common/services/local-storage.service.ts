@@ -1,12 +1,13 @@
-import {Service} from '@angular/core';
-import {EMPTY_SETTINGS, LOCAL_STORAGE_KEY, SettingKey, SettingsMap} from '@common/models/local-storage.model';
+import {Service} from "@angular/core";
+import {EMPTY_SETTINGS, LOCAL_STORAGE_KEY, SettingKey, SettingsMap} from "@common/models/local-storage.model";
 import {BehaviorSubject} from "rxjs";
 
 
 @Service()
 export class LocalStorage {
 
-  private readonly settings = new Map<SettingKey, BehaviorSubject<SettingsMap[SettingKey]>>();
+  private readonly settings =
+    new Map<SettingKey, BehaviorSubject<SettingsMap[SettingKey] | undefined>>();
 
 
   constructor() {
@@ -16,7 +17,7 @@ export class LocalStorage {
 
   public set<K extends SettingKey>(key: K, value: SettingsMap[K]): void {
     const currentSettings = this.getAllSettings();
-    const newSettings: SettingsMap = {
+    const newSettings: Partial<SettingsMap> = {
       ...currentSettings,
       [key]: value
     };
@@ -44,16 +45,27 @@ export class LocalStorage {
   }
 
 
-  private getAllSettings(): SettingsMap {
+  /**
+   * An unreadable entry falls back to the defaults rather than throwing.
+   * `initSettings()` runs from the constructor and `loadAppStateReducer`
+   * injects this service, so a throw here leaves the visitor without an app at
+   * all - a blank viewport, not a wrong theme. The boot script in
+   * `index.html` makes the same promise for the same reason.
+   */
+  private getAllSettings(): Partial<SettingsMap> {
     const storedSettings = localStorage.getItem(LOCAL_STORAGE_KEY);
 
     if (!storedSettings) return EMPTY_SETTINGS;
 
-    return JSON.parse(storedSettings) as SettingsMap;
+    try {
+      return JSON.parse(storedSettings) as Partial<SettingsMap>;
+    } catch {
+      return EMPTY_SETTINGS;
+    }
   }
 
 
-  private saveAllSettings(settings: SettingsMap): void {
+  private saveAllSettings(settings: Partial<SettingsMap>): void {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings));
   }
 

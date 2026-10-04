@@ -1,0 +1,357 @@
+import {Component, computed, inject} from "@angular/core";
+import {CdkScrollable} from "@angular/cdk/scrolling";
+import {Color} from "chroma-js";
+import {AppStateStore} from "@core/app-state.store";
+import {fontFamilyFor, TypeRolesMap} from "@common/models/type-role-settings.model";
+import {groundOf, inkOf, sampleElement, SamplePage, samplePage} from "@contrast-type/models/sample-page.model";
+import {elementFontSize} from "@contrast-type/models/element-verdict.model";
+import {VerdictMark} from "@contrast-type/components/verdict-mark/verdict-mark";
+import {PlaceTarget} from "@contrast-type/components/verdict-mark/place-target.directive";
+
+
+/**
+ * The leadings that do not take the role's value as it is: the lead paragraph
+ * rides slightly tighter than the body it introduces, and the quote tighter
+ * still, both as a share of body text's leading so the slider still moves
+ * them.
+ */
+const LEAD_LEADING_FACTOR = 0.95;
+const QUOTE_LEADING_FACTOR = 0.85;
+
+/**
+ * The fake site's wordmark, in pixels and not following any role.
+ *
+ * The draft draws it this way and a real site does too: a wordmark does not
+ * track the type of the article below it. It is the one piece of text on the
+ * page outside the four roles, and the rating leaves it alone for the same
+ * reason.
+ *
+ * Pixels, like every font size inside the preview: the preview is the thing
+ * being measured, and APCA is defined on pixel sizes. See `TypeSettings`. The
+ * preview's spacing is not measured and stays on Tailwind's rem scale.
+ */
+const WORDMARK_SIZE = 17;
+
+/**
+ * The table's columns. `number` right-aligns the column, which is what makes
+ * a column of figures read as a column.
+ */
+const TABLE_COLUMNS: readonly {readonly caption: string; readonly number: boolean}[] = [
+  {caption: "ELEMENT", number: false},
+  {caption: "SIZE", number: true},
+  {caption: "WEIGHT", number: true}
+];
+
+/**
+ * The elements the table reports on, and the names it calls them by.
+ *
+ * **The table is about this page.** Sample figures would contradict the
+ * sliders the moment one of them moved - a display role set to 96 beside a
+ * table still saying 44 reads as a bug, not as sample copy - so the numbers
+ * are the ones the page is actually set in.
+ */
+const TABLE_ELEMENTS: readonly {readonly key: string; readonly element: string}[] = [
+  {key: "headline", element: "Headline"},
+  {key: "bodyText", element: "Body"},
+  {key: "imageCaption", element: "Caption"}
+];
+
+
+/** One row of the table: the element it names, then its figures. */
+interface TableRow {
+
+  readonly element: string;
+  readonly values: readonly number[];
+
+}
+
+
+/**
+ * One element's own bindings: the type it is set in, and the two colours it is
+ * drawn in.
+ *
+ * **The colours are per element, not per surface.** A placed colour belongs to
+ * the one element it was placed on - `muted` is both the disabled button and
+ * the picture, `nav` is three elements - so a surface that is only ever one
+ * element's ink is no longer a field of `PreviewStyle`. Bind
+ * `style().eyebrow.ink`, never a surface of its own, or a placement stops
+ * reaching the page. `inkOf()` and `groundOf()` are where both come from, the
+ * same two functions the rating measures through.
+ *
+ * **Both are bound on every element, `ground` included.** An element nobody
+ * has placed anything on paints exactly what is already behind it, so the
+ * binding costs nothing until it is used and there is no element the lever
+ * misses. Where the element draws a box of its own - the three buttons, `Sign
+ * in`, the form field - the ground lands in that box; elsewhere it is a band
+ * behind the one element, which is what `SampleElement.boxed` is the word for.
+ *
+ * The surfaces several elements share - the nav bar, the card, the picture -
+ * stay fields of `PreviewStyle`, because that is what they are: a placement
+ * may not move one, so nothing binds them per element.
+ */
+interface ElementStyle {
+
+  readonly fontFamily: string;
+  readonly fontSize: string;
+  readonly fontWeight: number;
+  readonly lineHeight: number;
+  readonly ink: string;
+  readonly ground: string;
+
+}
+
+
+interface PreviewStyle {
+
+  /** Body text's face, on the page itself, so the wordmark inherits it. */
+  readonly fontFamily: string;
+
+  readonly pageBackground: string;
+  readonly pageColor: string;
+  readonly navBackground: string;
+  readonly navBorder: string;
+  readonly accent: string;
+  readonly cardBackground: string;
+  /**
+   * The ghost button's outline, and it stays a shared surface although only
+   * one element draws it.
+   *
+   * **A border follows its element's ink only where the two are the same
+   * colour at rest.** On `signIn` they are, so words that moved without their
+   * box would read as half applied - which is why that one binds
+   * `signIn.ink`. Here they are not: the outline is a palette role against the
+   * pair's text colour, already two colours, so a placement moving the label
+   * alone reads as intended. `navActive`'s underline stays on `accent` for a
+   * third reason - it is the "you are here" carrier the item must keep
+   * whatever colour the item itself takes.
+   */
+  readonly ghostBorder: string;
+  readonly rule: string;
+  /** The picture's surface. The form field's is `fieldText.ground`. */
+  readonly mutedBackground: string;
+
+  readonly wordmarkSize: string;
+
+  readonly navActive: ElementStyle;
+  readonly navItems: ElementStyle;
+  readonly signIn: ElementStyle;
+  readonly eyebrow: ElementStyle;
+  readonly headline: ElementStyle;
+  readonly lead: ElementStyle;
+  readonly filledButton: ElementStyle;
+  readonly ghostButton: ElementStyle;
+  readonly disabledButton: ElementStyle;
+  readonly bodyText: ElementStyle;
+  readonly bodyLink: ElementStyle;
+  readonly fieldLabel: ElementStyle;
+  readonly fieldText: ElementStyle;
+  readonly errorLine: ElementStyle;
+  readonly imageLabel: ElementStyle;
+  readonly imageCaption: ElementStyle;
+  readonly tableHeader: ElementStyle;
+  readonly tableCell: ElementStyle;
+  readonly tableNumber: ElementStyle;
+  readonly cardLabel: ElementStyle;
+  readonly quote: ElementStyle;
+  readonly smallPrint: ElementStyle;
+
+}
+
+
+/**
+ * A page of sample copy set in the pair, in the four type roles at the faces,
+ * sizes, weights and leadings the type controls hold.
+ *
+ * **Every element takes its type from its role.** Which role that is, and at
+ * what share of the role's size the element is set, is `SAMPLE_ELEMENTS` in
+ * `sample-page.model.ts` - the same list the rating measures, so the figure
+ * in the left column is about the page on the right. Nothing in here derives
+ * one role from another: the headline's weight is the display role's, not a
+ * step up from body text's, so a display face that ships one weight is set in
+ * that weight rather than in a synthesised semibold.
+ *
+ * **The colors come from `samplePage()`**, for the same reason: the rating
+ * measures the inks and grounds the page is drawn in, and one derivation
+ * keeps the two from drifting apart. `samplePageColors()` says why the pair
+ * is painted as it is and how the palette is read; a colour the visitor
+ * placed on one element reaches the page through the same two functions the
+ * rating measures with - see `ElementStyle`.
+ *
+ * **Every element paints both of its colours.** A visitor can put a colour on
+ * an element's text and on what sits behind it, so each one binds its ink and
+ * its ground; unplaced, the ground is the surface that was already there and
+ * nothing moves. The shared surfaces are still painted by the boxes that own
+ * them - the nav bar, the card, the picture - because a placement may not move
+ * a surface several elements sit on.
+ *
+ * **No sample content in here is focusable or announced as a control**, and
+ * placing a colour on it did not change that. The nav links, `Sign in`, the
+ * three buttons and the form field are text: a focusable button that does
+ * nothing is worse than no button, a fake nav in the tab order competes with
+ * the real one in the app header, and an input here would swallow keystrokes
+ * meant for the app - the arrow keys the chooser walks the palette with
+ * included. The field's focus ring is drawn rather than reached. The region
+ * carries a name instead, so a screen reader can tell the sample page from the
+ * app around it and skip past it.
+ *
+ * **The marks are the exception, and they are still the only one.** Every
+ * element carries a `ct-verdict-mark` in front of it - a control, focusable,
+ * named after the element, opening its verdict and the palette that can
+ * recolour it. An element that appears more than once - the running text, the
+ * nav items, the table's cells, the small print - gets one mark, because one
+ * ink on one ground at one size is one verdict and one placement.
+ *
+ * **So `Tab` to an element and press is a path the page already had**, which
+ * is why the keyboard's way of placing a colour needed no second control per
+ * element. A second one would have put forty-four stops inside a page that is
+ * not the app, and given one element two names to be reached by. What a chip
+ * is released on is the mark's own box, badge included - `verdict-mark.ts`
+ * says how, and `PlacementGesture` decides what a release means.
+ *
+ * **A verdict opens as a popup on the body, so nothing here moves.** That is
+ * also what lets the table's three marks sit inside its cells: a block in a
+ * `<td>` re-apportioned the columns every time it opened. `VerdictMark` says
+ * the rest.
+ *
+ * **From `lg` the preview keeps its place while the controls scroll.** It is
+ * `sticky` at the distance from the top that the app's own container already
+ * keeps, and the page inside it scrolls - see the template.
+ *
+ * **The cap on the height is what makes the sticky useful.** A sticky element
+ * taller than the viewport pins at the top and never moves again: its lower
+ * part sits below the fold and is out of reach until the control column has
+ * ended. So the host is held to the viewport less the gap it keeps at either
+ * end, and the overflow goes to the page rather than to the window. Do not
+ * drop the cap and keep the sticky.
+ *
+ * Both arrive with `lg:`, because that is where the preview first stands
+ * beside a column. Stacked under the controls it has nothing to stay level
+ * with, and a capped box scrolling inside a page that also scrolls is two
+ * scrollbars where the visitor wanted one.
+ */
+@Component({
+  selector: "ct-website-preview",
+  imports: [VerdictMark, PlaceTarget, CdkScrollable],
+  templateUrl: "./website-preview.html",
+  host: {
+    "class": "block min-w-0 lg:sticky lg:top-8 lg:flex lg:max-h-[calc(100dvh-4rem)] lg:flex-col"
+  }
+})
+export class WebsitePreview {
+
+  readonly #stateStore = inject(AppStateStore);
+
+  /**
+   * The nav items after the active one. `Notes` is set apart in the template
+   * because it carries the accent underline and the page's own text colour -
+   * the state a nav has to show without relying on the colour alone.
+   */
+  protected readonly navItems = ["Palettes", "About"];
+
+  protected readonly tableColumns = TABLE_COLUMNS;
+
+  protected readonly tableRows = computed<readonly TableRow[]>(() => {
+    const roles = this.#stateStore.typeRoles();
+
+    return TABLE_ELEMENTS.map(({key, element}) => {
+      const sample = sampleElement(key);
+
+      return {
+        element,
+        values: [elementFontSize(sample, roles), roles[sample.role].settings.fontWeight]
+      };
+    });
+  });
+
+  protected readonly style = computed<PreviewStyle>(() => {
+    const page = samplePage(
+      this.#stateStore.contrastColors(),
+      this.#stateStore.currentPalette(),
+      this.#stateStore.placements()
+    );
+    const colors = page.colors;
+    const roles = this.#stateStore.typeRoles();
+    const element = (key: string, leadingFactor?: number) =>
+      elementStyle(key, roles, page, leadingFactor);
+
+    return {
+      fontFamily: fontFamilyFor("body", roles.body.font),
+
+      pageBackground: hex(colors.page),
+      pageColor: hex(colors.text),
+      navBackground: hex(colors.nav),
+      navBorder: hex(colors.navBorder),
+      accent: hex(colors.accent),
+      cardBackground: hex(colors.card),
+      ghostBorder: hex(colors.ghostBorder),
+      rule: hex(colors.rule),
+      mutedBackground: hex(colors.muted),
+
+      wordmarkSize: px(WORDMARK_SIZE),
+
+      navActive: element("navActive"),
+      navItems: element("navItems"),
+      signIn: element("signIn"),
+      eyebrow: element("eyebrow"),
+      headline: element("headline"),
+      lead: element("lead", LEAD_LEADING_FACTOR),
+      filledButton: element("filledButton"),
+      ghostButton: element("ghostButton"),
+      disabledButton: element("disabledButton"),
+      bodyText: element("bodyText"),
+      bodyLink: element("bodyLink"),
+      fieldLabel: element("fieldLabel"),
+      fieldText: element("fieldText"),
+      errorLine: element("errorLine"),
+      imageLabel: element("imageLabel"),
+      imageCaption: element("imageCaption"),
+      tableHeader: element("tableHeader"),
+      tableCell: element("tableCell"),
+      tableNumber: element("tableNumber"),
+      cardLabel: element("cardLabel"),
+      quote: element("quote", QUOTE_LEADING_FACTOR),
+      smallPrint: element("smallPrint")
+    };
+  });
+
+}
+
+
+/**
+ * One element's bindings: its role's face, weight and leading, the role's size
+ * at the element's share of it, and the two colours it is drawn in.
+ *
+ * The colours come through `inkOf()` and `groundOf()`, which is also what the
+ * rating measures and the marks judge - so a placed colour reaches the page
+ * without a second branch here, and the figure in the left column stays about
+ * the page on the right.
+ */
+function elementStyle(key: string,
+                      roles: TypeRolesMap,
+                      page: SamplePage,
+                      leadingFactor = 1): ElementStyle {
+  const element = sampleElement(key);
+  const {font, settings} = roles[element.role];
+
+  return {
+    fontFamily: fontFamilyFor(element.role, font),
+    // Through `elementFontSize()`, which is also what the verdict looks up in
+    // the APCA table: the mark beside an element has to be about the size the
+    // element is drawn at, and two roundings of the same product would drift.
+    fontSize: px(elementFontSize(element, roles)),
+    fontWeight: settings.fontWeight,
+    lineHeight: settings.lineHeight * leadingFactor,
+    ink: hex(inkOf(element, page)),
+    ground: hex(groundOf(element, page))
+  };
+}
+
+
+function hex(color: Color): string {
+  return color.hex("rgb");
+}
+
+
+function px(size: number): string {
+  return `${size}px`;
+}
