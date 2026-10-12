@@ -31,7 +31,7 @@ module.exports = defineConfig(
   // block for plain .js would otherwise pull them in.
   globalIgnores([
     ".angular/**",
-    // `wrangler pages dev` writes its bundled Worker here while it runs.
+    // `wrangler dev` writes its bundled Worker here while it runs.
     ".wrangler/**",
     "dist/**",
     "tmp/**",

@@ -131,15 +131,17 @@ pnpm run build:cloudflare  # the build the deployment ships
 pnpm run mcp:dev           # app plus MCP server locally, from dist/
 ```
 
-`pnpm run mcp:dev` serves what `pnpm run build:cloudflare` produced, so run the
-build first. The MCP server then answers under `http://localhost:8788/mcp`.
+`pnpm run mcp:dev` runs the Worker from `wrangler.jsonc` and serves what
+`pnpm run build:cloudflare` produced, so run the build first. The app and the
+MCP server then answer under `http://localhost:8787`, the server at `/mcp`.
 
-The MCP server is bundled by Wrangler, which resolves imports more strictly
-than TypeScript and Vitest do. Before pushing a change under `functions/`, run
-the bundle once:
+The Worker is bundled by Wrangler, which resolves imports more strictly than
+TypeScript and Vitest do. Before pushing a change under `functions/`, run the
+bundle once, after `pnpm run build:cloudflare` – the dry run fails without the
+app's build output:
 
 ```bash
-pnpm exec wrangler pages functions build --outdir /tmp/mcp-bundle
+pnpm exec wrangler deploy --dry-run --outdir /tmp/worker-bundle
 ```
 
 Conventions for the code are in `CLAUDE.md`.
@@ -152,32 +154,46 @@ repository.
 
 ## Deployment
 
-The workflow `.github/workflows/deploy-to-cloudflare-pages.yml` runs on every
-pull request and on every push to `main` or `redesign-v2`. It lints, runs both
-test suites, type-checks and bundles the MCP server, and builds with the
-`cloudflare` configuration. On a push it then deploys `dist/ColorTools/browser`
-with `wrangler pages deploy`; a pull request stops after the build.
+The app and the MCP server deploy as one Cloudflare Worker with static assets,
+named `color-tools` and configured in `wrangler.jsonc`. The Angular build is
+the assets; `functions/worker.ts` is the Worker's entry.
 
-The deploy takes `functions/` along as a Pages Function, which is how `/mcp`
-reaches the same origin as the app. `wrangler` bundles it from the working
-directory at deploy time, so the deploy job checks out the repository and
-installs before it downloads the built app.
+The workflow `.github/workflows/deploy-to-cloudflare.yml` runs on every pull
+request and on every push to `main` or `redesign-v2`. It lints, runs both test
+suites, builds with the `cloudflare` configuration, and type-checks and
+bundles the Worker. On a push it then deploys; a pull request stops after the
+build.
 
-The deploy hands `wrangler` the branch it was triggered on, and the Pages
-project uses `main` as its production branch. A push to `main` therefore
-updates production; every other branch in the trigger list lands as a preview
-under its own alias – `redesign-v2` is served at
-<https://redesign-v2.color-tools-5hv.pages.dev>. Changing the production branch
-in the Cloudflare dashboard would silently demote `main` to a preview, so leave
-it where it is.
+`wrangler` bundles `functions/` from the working directory at deploy time, so
+the deploy job checks out the repository and installs before it downloads the
+built app. Without that step the deploy fails to resolve the Worker's imports.
 
-It needs two repository secrets: `CLOUDFLARE_API_TOKEN` (permission *Cloudflare
-Pages: Edit*) and `CLOUDFLARE_ACCOUNT_ID`. The Pages project must
-be named `color-tools`; the name is hardcoded in the workflow's deploy call.
-SPA routing is handled by `public/_redirects`, which rewrites every path to
-`index.html` except the v1 paths `/convert` and `/palettes`, answered with a
-301 to `/`; Functions run before static assets, so the rewrite never reaches
-`/mcp`.
+A push to `main` runs `wrangler deploy` and updates production on
+<https://color-tools.skillbird.de>, the custom domain `wrangler.jsonc`
+declares. Every other branch in the trigger list runs `wrangler versions
+upload --preview-alias <branch>`: a version that is uploaded, not deployed,
+and served at `https://<branch>-color-tools.<subdomain>.workers.dev`. The
+alias has to be lowercase letters, digits and dashes, starting with a letter.
+Production has no `workers.dev` URL; `preview_urls` keeps the previews.
+
+It reads the organisation secret `SKILLBIRD_CLOUDFLARE_API_TOKEN`
+(permissions *Workers Scripts: Edit* on the account, and *Workers Routes:
+Edit* on the `skillbird.de` zone for the custom domain) and the organisation
+variable `SKILLBIRD_CLOUDFLARE_ACCOUNT_ID`.
+
+Routing:
+
+- `/mcp` and every path below it reach the Worker first through
+  `run_worker_first`
+- a path with an asset gets the asset
+- every other path gets `index.html` through `not_found_handling:
+  "single-page-application"`; the Worker hands what reaches it outside `/mcp`
+  back to the assets
+- `public/_redirects` answers the v1 paths `/convert` and `/palettes` with a
+  301 to `/`
+- `/webfonts*` never reaches this Worker: a route on the zone sends it to
+  `google-webfonts-proxy`, and a route runs ahead of a custom domain, which
+  Cloudflare treats as the origin
 
 ### Running wrangler locally
 
@@ -195,14 +211,14 @@ in the repository root:
 
 ```
 CLOUDFLARE_ACCOUNT_ID=<account id>
-CLOUDFLARE_API_TOKEN=<token with Cloudflare Pages: Edit>
+CLOUDFLARE_API_TOKEN=<token with the permissions listed under Deployment>
 ```
 
 Every call through the script then talks to this project's account:
 
 ```bash
 pnpm run cf whoami
-pnpm run cf pages deployment list --project-name=color-tools
+pnpm run cf deployments list
 ```
 
 `.cloudflare.env` is gitignored and has to stay that way – it holds a live API

@@ -66,6 +66,16 @@ describe("app routes", () => {
   }
 
 
+  /** The rules in public/_redirects, each split into its fields. */
+  function redirectRules(): string[][] {
+    return readFileSync("public/_redirects", "utf8")
+      .split("\n")
+      .map(line => line.trim())
+      .filter(line => line !== "" && !line.startsWith("#"))
+      .map(line => line.split(/\s+/));
+  }
+
+
   const palette = generatePaletteFrom(chroma("#3366cc"), "triadic", 11);
   const studioSegment = paletteSegmentFrom(palette, 11);
   const contrastPage: ContrastTypePage = {
@@ -291,20 +301,21 @@ describe("app routes", () => {
 
   describe("the files the server reads first", () => {
 
-    it("answers the v1 paths without an id with a 301 to the start page, ahead of the app", () => {
-      const rules = readFileSync("public/_redirects", "utf8")
-        .split("\n")
-        .map(line => line.trim())
-        .filter(line => line !== "" && !line.startsWith("#"))
-        .map(line => line.split(/\s+/));
-      const fallback = rules.findIndex(([from]) => from === "/*");
+    it("answers the v1 paths without an id with a 301 to the start page", () => {
+      const rules = redirectRules();
 
       for (const path of ["/convert", "/convert/", "/palettes", "/palettes/"]) {
-        const index = rules.findIndex(([from]) => from === path);
-
-        expect(rules[index]).toEqual([path, "/", "301"]);
-        expect(index).toBeLessThan(fallback);
+        expect(rules.find(([from]) => from === path)).toEqual([path, "/", "301"]);
       }
+    });
+
+
+    it("leaves the SPA fallback to not_found_handling, not to a catch-all rule", () => {
+      // Wrangler drops `/* /index.html 200` as an infinite loop, so a
+      // catch-all here would be dead at best.
+      expect(redirectRules().find(([from]) => from === "/*")).toBeUndefined();
+      expect(readFileSync("wrangler.jsonc", "utf8"))
+        .toMatch(/"not_found_handling":\s*"single-page-application"/);
     });
 
 

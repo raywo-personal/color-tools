@@ -20,7 +20,7 @@
     "lint": "eslint . ; e=$? ; node tools/lint-sizes.js ; exit $(( e || $? ))",
     "lint:fix": "eslint . --fix ; e=$? ; node tools/lint-sizes.js ; exit $(( e || $? ))",
     "cf": "set -a && . ./.cloudflare.env && set +a && wrangler",
-    "mcp:dev": "wrangler pages dev dist/ColorTools/browser",
+    "mcp:dev": "wrangler dev",
     "mcp:test": "vitest run --config vitest.config.mcp.ts"
   },
   "private": true,
