@@ -159,7 +159,7 @@ named `color-tools` and configured in `wrangler.jsonc`. The Angular build is
 the assets; `functions/worker.ts` is the Worker's entry.
 
 The workflow `.github/workflows/deploy-to-cloudflare.yml` runs on every pull
-request and on every push to `main` or `redesign-v2`. It lints, runs both test
+request against `main` and on every push to it. It lints, runs both test
 suites, builds with the `cloudflare` configuration, and type-checks and
 bundles the Worker. On a push it then deploys; a pull request stops after the
 build.
@@ -170,11 +170,9 @@ built app. Without that step the deploy fails to resolve the Worker's imports.
 
 A push to `main` runs `wrangler deploy` and updates production on
 <https://color-tools.skillbird.de>, the custom domain `wrangler.jsonc`
-declares. Every other branch in the trigger list runs `wrangler versions
-upload --preview-alias <branch>`: a version that is uploaded, not deployed,
-and served at `https://<branch>-color-tools.<subdomain>.workers.dev`. The
-alias has to be lowercase letters, digits and dashes, starting with a letter.
-Production has no `workers.dev` URL; `preview_urls` keeps the previews.
+declares. There are no previews: neither `workers_dev` nor `preview_urls` is
+on, so nothing of the Worker answers on `workers.dev`, outside the zone's
+rate limiting rule.
 
 It reads the organisation secret `SKILLBIRD_CLOUDFLARE_API_TOKEN` and the
 organisation variable `SKILLBIRD_CLOUDFLARE_ACCOUNT_ID`. The token needs

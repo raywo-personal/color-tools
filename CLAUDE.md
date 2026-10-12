@@ -346,7 +346,7 @@ Its comments say which convention each rule mirrors.
 ## MCP Server
 
 `functions/mcp/` is deployed in the same Worker as the app's static assets
-and served under `/mcp` on the app's origin, preview branches included.
+and served under `/mcp` on the app's origin.
 
 ### Layout
 
@@ -430,9 +430,10 @@ it.
 - The deploy job checks out and installs before it downloads the built app,
   because `wrangler deploy` reads `wrangler.jsonc` and bundles `functions/`
   from the working directory
-- `main` runs `wrangler deploy`; every other branch runs `wrangler versions
-  upload --preview-alias <branch>`, never `deploy`, which would put the
+- Only `main` deploys. `wrangler deploy` from any other branch puts that
   branch on the custom domain
+- `workers_dev` and `preview_urls` stay `false`: a `workers.dev` URL sits
+  outside the zone's rate limiting rule on `/mcp`
 
 ## Accessibility
 

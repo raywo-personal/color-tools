@@ -21,10 +21,10 @@
   // Production answers on the custom domain alone. A routes entry turns
   // workers.dev off anyway; say so rather than rely on it.
   "workers_dev": false,
-  // Branch previews are aliased version URLs on workers.dev, configured
-  // apart from workers_dev. Without this they answer with Cloudflare's
-  // notice page instead of the app.
-  "preview_urls": true,
+  // Version URLs are configured apart from workers_dev and sit on
+  // workers.dev too, outside the zone's rate limiting rule. Explicit,
+  // because an omitted value leaves whatever the Worker had before.
+  "preview_urls": false,
   "observability": {
     "enabled": true
   }

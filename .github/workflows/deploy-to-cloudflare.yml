@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - main
-      - redesign-v2
   pull_request:
     types: [ opened, synchronize, reopened ]
     branches:
       - "main"
-      - "redesign-v2"
 
 permissions:
   contents: read
@@ -96,34 +94,18 @@ jobs:
           name: dist
           path: dist/ColorTools/browser
 
-      # main is production. Every other branch in the trigger list uploads a
-      # version without deploying it and reaches it through an alias named
-      # after the branch, so a preview never touches the custom domain. An
-      # alias is lowercase letters, digits and dashes and starts with a
-      # letter; a branch named otherwise fails here.
-      - name: Deploy to production
+      - name: Deploy to Cloudflare Workers
         id: deploy
-        if: github.ref_name == 'main'
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.SKILLBIRD_CLOUDFLARE_API_TOKEN }}
           accountId: ${{ vars.SKILLBIRD_CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
 
-      - name: Upload a preview
-        id: preview
-        if: github.ref_name != 'main'
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.SKILLBIRD_CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ vars.SKILLBIRD_CLOUDFLARE_ACCOUNT_ID }}
-          command: versions upload --preview-alias ${{ github.ref_name }}
-
-      # Only one of the two steps above ran; the other's output is empty.
       - name: Report the deployment URLs
         env:
           BRANCH: ${{ github.ref_name }}
-          OUTPUT: ${{ steps.deploy.outputs.command-output }}${{ steps.preview.outputs.command-output }}
+          OUTPUT: ${{ steps.deploy.outputs.command-output }}
         run: |
           {
             echo "### Deployed \`$BRANCH\`"
