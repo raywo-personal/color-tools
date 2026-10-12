@@ -179,8 +179,8 @@ Production has no `workers.dev` URL; `preview_urls` keeps the previews.
 It reads the organisation secret `SKILLBIRD_CLOUDFLARE_API_TOKEN` and the
 organisation variable `SKILLBIRD_CLOUDFLARE_ACCOUNT_ID`. The token needs
 *Workers Scripts* and *Workers Editor* on the account, and *Workers Routes* on
-the `skillbird.de` zone for the custom domain. Without *Workers Editor* a
-deploy of a Worker that does not exist yet fails.
+the `skillbird.de` zone for the custom domain. The deploy that created the
+Worker ran with these three.
 
 Routing:
 
