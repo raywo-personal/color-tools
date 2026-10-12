@@ -2,5 +2,9 @@ import {Environment} from "./environment.model";
 
 
 export const environment: Environment = {
-  webFontsApiUrl: "https://google-webfonts-proxy.ray-7b9.workers.dev/webfonts"
+  // Relative on purpose: a Worker route on the skillbird.de zone sends
+  // color-tools.skillbird.de/webfonts* to google-webfonts-proxy, so the
+  // request stays same-origin and no workers.dev URL is called. The route
+  // does not reach *.pages.dev, so a preview has no font list.
+  webFontsApiUrl: "/webfonts"
 };
