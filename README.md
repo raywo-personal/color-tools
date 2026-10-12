@@ -176,10 +176,11 @@ and served at `https://<branch>-color-tools.<subdomain>.workers.dev`. The
 alias has to be lowercase letters, digits and dashes, starting with a letter.
 Production has no `workers.dev` URL; `preview_urls` keeps the previews.
 
-It reads the organisation secret `SKILLBIRD_CLOUDFLARE_API_TOKEN`
-(permissions *Workers Scripts: Edit* on the account, and *Workers Routes:
-Edit* on the `skillbird.de` zone for the custom domain) and the organisation
-variable `SKILLBIRD_CLOUDFLARE_ACCOUNT_ID`.
+It reads the organisation secret `SKILLBIRD_CLOUDFLARE_API_TOKEN` and the
+organisation variable `SKILLBIRD_CLOUDFLARE_ACCOUNT_ID`. The token needs
+*Workers Scripts* and *Workers Editor* on the account, and *Workers Routes* on
+the `skillbird.de` zone for the custom domain. Without *Workers Editor* a
+deploy of a Worker that does not exist yet fails.
 
 Routing:
 
