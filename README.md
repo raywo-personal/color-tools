@@ -20,20 +20,90 @@ The colour engine is exposed under `/mcp` on the app's origin as a stateless
 Streamable HTTP server: `https://color-tools.skillbird.de/mcp`. Every tool is
 read-only.
 
-| Tool              | What it answers                                                                                                    |
-|-------------------|--------------------------------------------------------------------------------------------------------------------|
-| `describe_color`  | Name, HEX, RGB, HSL and OKLCH of a color, plus the chroma its hue can hold                                         |
-| `check_contrast`  | The APCA contrast of a text color on a background and its verdict, at a size and weight, as body copy or spot text |
-| `find_text_color` | A text color for a background – the strongest, the softest that still passes, or one on the background's hue       |
+| Tool                        | What it answers                                                                                                         |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `describe_color`            | Name, HEX, RGB, HSL and OKLCH of a color, plus the chroma its hue can hold                                              |
+| `check_contrast`            | The APCA contrast of a text color on a background and its verdict, at a size and weight, as body copy or spot text      |
+| `find_text_color`           | A text color for a background – the strongest, the softest that still passes, or one on the background's hue            |
+| `generate_palette`          | A five-color palette on a base color in a given style, with each slot's role, an id and a seed that reproduce it        |
+| `read_palette`              | The palette an id from `generate_palette` stands for                                                                    |
+| `tints_and_shades`          | Two perceptually even eleven-step ramps from a color, one towards white and one towards black                           |
+| `audit_pairs`               | Up to 50 text and background pairs checked against APCA at once, with a suggested text color for every pair that fails  |
+| `adjust_color_for_contrast` | The smallest lightness shift of one color in a pair that meets the APCA requirement, keeping its hue                    |
+| `simulate_color_vision`     | Colors that appear together as seen under four color-vision deficiencies, and which of them merge                       |
 
-Connect it from Claude Code:
+The resource `colortools://palette-styles` lists every style
+`generate_palette` accepts, with what it does.
+
+There is no session and no authentication: the server holds no state and calls
+no paid service.
+
+### Connecting
+
+**Claude.ai** – Customize → Connectors → Add → Add custom connector. Enter a
+name and the URL `https://color-tools.skillbird.de/mcp`, choose *No sign in*
+under Authentication and leave the request headers empty. Then switch the
+connector on per chat under + → Connectors
+([custom connectors](https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp)).
+
+**Claude Code:**
 
 ```bash
 claude mcp add --transport http colortools https://color-tools.skillbird.de/mcp
 ```
 
-Any MCP client that speaks Streamable HTTP works the same way; there is no
-session and no authentication.
+**VS Code** – in `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "colortools": {
+      "type": "http",
+      "url": "https://color-tools.skillbird.de/mcp"
+    }
+  }
+}
+```
+
+Any other client that speaks Streamable HTTP takes the same URL.
+
+### Without an MCP client
+
+The server answers a POST with a JSON body, and a single `tools/call` needs no
+`initialize` before it. So a CI job can audit a set of design tokens with
+`curl` alone. The `Accept` header has to name both types, or the server
+answers 406:
+
+```bash
+curl -s https://color-tools.skillbird.de/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "audit_pairs",
+      "arguments": {
+        "pairs": [
+          {"label": "body-on-page", "textColor": "#334155",
+           "backgroundColor": "#ffffff", "textKind": "bodyCopy"},
+          {"label": "button", "textColor": "#ffffff",
+           "backgroundColor": "#60a5fa", "fontSize": "14px",
+           "fontWeight": "600"}
+        ]
+      }
+    }
+  }' | jq -e '.result.structuredContent.failed == 0'
+```
+
+`result.structuredContent` holds `passed`, `failed` and one entry per pair;
+`jq -e` turns a failing pair into a non-zero exit code. The example fails on
+purpose: white on that blue at 14px/600 is short of the requirement.
+
+`/mcp` is rate limited per IP: more than 10 requests within 10 seconds get a
+429 for the next 10 seconds. A job that audits more than 50 pairs sends them
+in batches with a pause between, rather than in a burst.
 
 ## Development
 
