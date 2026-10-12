@@ -1,0 +1,31 @@
+// The app and the MCP server as one Worker: the Angular build is served as
+// static assets, `/mcp` runs functions/worker.ts.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "color-tools",
+  "main": "functions/worker.ts",
+  "compatibility_date": "2026-08-20",
+  "assets": {
+    "directory": "dist/ColorTools/browser",
+    "binding": "ASSETS",
+    // Every path the app routes itself gets index.html with a 200, which is
+    // what the `/* /index.html 200` rule in _redirects did on Pages.
+    "not_found_handling": "single-page-application",
+    // Assets win by default; `/mcp` has to reach the Worker first. Keep in
+    // step with isMcpPath() in functions/worker.ts.
+    "run_worker_first": ["/mcp", "/mcp/*"]
+  },
+  "routes": [
+    {"pattern": "color-tools.skillbird.de", "custom_domain": true}
+  ],
+  // Production answers on the custom domain alone. A routes entry turns
+  // workers.dev off anyway; say so rather than rely on it.
+  "workers_dev": false,
+  // Version URLs are configured apart from workers_dev and sit on
+  // workers.dev too, outside the zone's rate limiting rule. Explicit,
+  // because an omitted value leaves whatever the Worker had before.
+  "preview_urls": false,
+  "observability": {
+    "enabled": true
+  }
+}

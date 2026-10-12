@@ -22,8 +22,8 @@ protects – read it there, and put a new one there too.
 
 ColorTools is an Angular 22 web application for color manipulation and
 analysis: a color studio and a contrast checker. State is a signal store on
-@ngrx/signals, the app is zoneless, and it deploys to Cloudflare Pages together
-with an MCP server on the same colour engine.
+@ngrx/signals, the app is zoneless, and it deploys as one Cloudflare Worker
+with static assets together with an MCP server on the same colour engine.
 
 Live site: https://color-tools.skillbird.de/
 
@@ -39,13 +39,14 @@ The README lists the everyday commands. The ones with a catch:
   a single run
 - `pnpm run mcp:test` – the MCP server's specs under `functions/**`, through
   `vitest.config.mcp.ts` in node. The two runs do not overlap
-- `pnpm run mcp:dev` – serves `dist/` plus the MCP server; needs a
-  `pnpm run build:cloudflare` first
+- `pnpm run mcp:dev` – `wrangler dev`: serves `dist/` plus the MCP server;
+  needs a `pnpm run build:cloudflare` first
 - `pnpm run cf <args>` – wrangler against this project's account; sources the
   untracked `.cloudflare.env`
-- `pnpm exec wrangler pages functions build --outdir <tmp>` – the only local
-  run that resolves the Worker's imports the way the deploy does (see "MCP
-  Server")
+- `pnpm exec wrangler deploy --dry-run --outdir <tmp>` – the only local run
+  that resolves the Worker's imports the way the deploy does (see "MCP
+  Server"). Needs a `pnpm run build:cloudflare` first: it fails without the
+  `assets.directory`
 
 ## Claude Code Agents And Skills
 
@@ -64,7 +65,7 @@ covers here; the step itself stays the workflow's.
 |------|---------|
 | `implement-issue/user-docs` | `README.md`, section "MCP Server": one row in the tool table per registered tool, in English. The app's screens have no user documentation |
 | `review-changes/user-docs` | Same as `implement-issue/user-docs` |
-| `review-changes/checks` | Every rule marked **Review** under "Accessibility"; for a change under `functions/`, `pnpm exec wrangler pages functions build --outdir <tmp>` as well |
+| `review-changes/checks` | Every rule marked **Review** under "Accessibility"; for a change under `functions/` or to `wrangler.jsonc`, `pnpm exec wrangler deploy --dry-run --outdir <tmp>` after a `pnpm run build:cloudflare` as well |
 | `implement-issue/dependents` | A change to the palette id or the Contrast & Type address keeps existing links readable; a new entry in an indexed list goes at the end |
 | `implement-issue/technical-docs` | `README.md` (Development, Deployment) and this file, when a command, a deploy step or a rule they state changes |
 
@@ -94,7 +95,8 @@ including this one, and code comments.
   screens, declared in `app.routes.ts`
 - `src/app/common/` – shared components, services and app models
 - `src/testing/` – test helpers, reachable as `@testing/*`
-- `functions/mcp/` – the MCP server, a Cloudflare Pages Function
+- `functions/worker.ts` – the Worker's entry; `wrangler.jsonc` configures it
+- `functions/mcp/` – the MCP server
 
 Path aliases are declared in `tsconfig.json`, one per top-level folder. Import
 through them, never through relative `../../` paths.
@@ -343,13 +345,20 @@ Its comments say which convention each rule mirrors.
 
 ## MCP Server
 
-`functions/mcp/` is deployed as a Cloudflare Pages Function beside the app and
-served under `/mcp` on the app's origin, preview branches included.
+`functions/mcp/` is deployed in the same Worker as the app's static assets
+and served under `/mcp` on the app's origin.
 
 ### Layout
 
-- `functions/mcp/[[path]].ts` is the entry and knows only Pages: it hands the
-  request to `handleMcpRequest()`. Swapping the host means replacing this file
+- `functions/worker.ts` is the entry and the only file that knows the host:
+  it hands `/mcp` to `handleMcpRequest()` and every other path back to
+  `env.ASSETS`. Swapping the host means replacing this file
+- **`isMcpPath()` and `run_worker_first` in `wrangler.jsonc` list the same
+  paths.** A request with no asset that is no navigation reaches the Worker
+  even outside the list, so the entry never answers it from the MCP server
+- `public/_redirects` holds the v1 301s and no `/* /index.html 200`:
+  `not_found_handling: "single-page-application"` is the SPA fallback, and
+  Wrangler drops the old rule as an infinite loop
 - `functions/mcp/server.ts` holds `createMcpServer()`, which registers every
   tool and resource, and `handleMcpRequest()`, which wraps it in the HTTP
   transport. Keep them separate: the tests connect the server to an in-memory
@@ -384,7 +393,7 @@ Every request gets a new `McpServer` and a new
 Object, no `agents` SDK, no SSE transport. `enableJsonResponse: true` makes a
 POST answer with a JSON body, so a stateless server loses nothing and the
 response reads with `curl`. The transport answers the HTTP half of the protocol
-itself, so the entry does no routing.
+itself; the entry routes nothing below `/mcp`.
 
 ### Every Tool Is Read-Only And Typed
 
@@ -405,11 +414,11 @@ itself, so the entry does no routing.
 `import ... from "@modelcontextprotocol/sdk/server/mcp.js"` – with the
 extension. The SDK's exports map adds nothing, so esbuild in Wrangler cannot
 resolve the bare path while TypeScript and Vitest resolve it silently. Only
-`pnpm exec wrangler pages functions build --outdir <tmp>` catches the omission
+`pnpm exec wrangler deploy --dry-run --outdir <tmp>` catches the omission
 before the deploy does.
 
-There is no `nodejs_compat` flag and no `wrangler.jsonc`; add either only when a
-bundle actually asks for it.
+There is no `nodejs_compat` flag; add it only when a bundle actually asks for
+it.
 
 ### Tests And Deploy
 
@@ -419,9 +428,12 @@ bundle actually asks for it.
 - **Pin behaviour, not colours.** Assert determinism, roles, round trips and
   shapes – never a concrete hex value a retuned generator would change
 - The deploy job checks out and installs before it downloads the built app,
-  because `wrangler pages deploy` bundles `functions/` from the working
-  directory. Without that step the deployment succeeds and `/mcp` answers
-  with the SPA's `index.html`
+  because `wrangler deploy` reads `wrangler.jsonc` and bundles `functions/`
+  from the working directory
+- Only `main` deploys. `wrangler deploy` from any other branch puts that
+  branch on the custom domain
+- `workers_dev` and `preview_urls` stay `false`: a `workers.dev` URL sits
+  outside the zone's rate limiting rule on `/mcp`
 
 ## Accessibility
 

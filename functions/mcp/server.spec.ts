@@ -28,7 +28,7 @@ const INITIALIZE = {
 
 
 /**
- * The HTTP half the Pages Function hands over: a web-standard Request in, a
+ * The HTTP half the Worker's entry hands over: a web-standard Request in, a
  * Response out. The tool itself is covered through the protocol in
  * describe-color.spec.ts; this pins the transport's stateless behaviour.
  */
@@ -51,7 +51,7 @@ describe("handleMcpRequest", () => {
 
   it("should answer a tool call without a preceding initialize on the same connection", async () => {
     // Stateless: every request builds its own server, so a client that
-    // initialized against one Pages invocation may call a tool on the next.
+    // initialized against one Worker invocation may call a tool on the next.
     const response = await handleMcpRequest(jsonRpc({
       jsonrpc: "2.0",
       id: 2,

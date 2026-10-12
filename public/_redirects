@@ -1,9 +1,10 @@
-# The 301s stand ahead of the fallback: the first rule that matches wins.
-# Pages matches a path literally, so the slashed form needs a rule of its
-# own. Without it the fallback serves the app, which has no route for a
+# A rule matches a path literally, so the slashed form needs a rule of its
+# own. Without it the SPA fallback serves the app, which has no route for a
 # bare v1 path and shows the not-found page.
+#
+# No `/* /index.html 200` fallback: `not_found_handling` in wrangler.jsonc
+# serves index.html for every path without an asset.
 /convert     /    301
 /convert/    /    301
 /palettes    /    301
 /palettes/   /    301
-/*    /index.html   200

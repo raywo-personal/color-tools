@@ -1,15 +1,13 @@
-name: Build and deploy to Cloudflare Pages
+name: Build and deploy to Cloudflare Workers
 
 on:
   push:
     branches:
       - main
-      - redesign-v2
   pull_request:
     types: [ opened, synchronize, reopened ]
     branches:
       - "main"
-      - "redesign-v2"
 
 permissions:
   contents: read
@@ -44,13 +42,15 @@ jobs:
       - name: Run the MCP server tests
         run: pnpm run mcp:test
 
-      - name: Type-check and bundle the MCP server
-        run: |
-          pnpm exec tsc -p functions/tsconfig.json --noEmit
-          pnpm exec wrangler pages functions build --outdir tmp/functions-build
-
       - name: Build the app
         run: pnpm run build:cloudflare
+
+      # After the app build: the dry run reads `assets.directory` and fails
+      # when it does not exist yet.
+      - name: Type-check and bundle the Worker
+        run: |
+          pnpm exec tsc -p functions/tsconfig.json --noEmit
+          pnpm exec wrangler deploy --dry-run --outdir tmp/worker-build
 
       - name: Upload build output
         if: github.event_name != 'pull_request'
@@ -62,7 +62,7 @@ jobs:
           retention-days: 1
 
   deploy:
-    name: Deploy to Cloudflare Pages
+    name: Deploy to Cloudflare Workers
     runs-on: ubuntu-latest
 
     needs: build
@@ -70,10 +70,9 @@ jobs:
     if: github.event_name != 'pull_request'
 
     steps:
-      # `pages deploy` bundles the Pages Function from functions/ in the
-      # working directory, and that bundle imports from node_modules - so the
-      # deploy job needs the checkout and the dependencies, not just the
-      # built app.
+      # `wrangler deploy` bundles the Worker from functions/ in the working
+      # directory, and that bundle imports from node_modules - so the deploy
+      # job needs the checkout and the dependencies, not just the built app.
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -95,25 +94,21 @@ jobs:
           name: dist
           path: dist/ColorTools/browser
 
-      # The Pages project's production branch is main, so every other branch
-      # listed above deploys as a preview under its own branch alias.
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Workers
         id: deploy
         uses: cloudflare/wrangler-action@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist/ColorTools/browser --project-name=color-tools --branch=${{ github.ref_name }}
+          apiToken: ${{ secrets.SKILLBIRD_CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.SKILLBIRD_CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
 
       - name: Report the deployment URLs
         env:
           BRANCH: ${{ github.ref_name }}
-          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
-          ALIAS_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url }}
+          OUTPUT: ${{ steps.deploy.outputs.command-output }}
         run: |
           {
             echo "### Deployed \`$BRANCH\`"
             echo ""
-            echo "- Deployment: $DEPLOYMENT_URL"
-            echo "- Alias: $ALIAS_URL"
+            grep -oE 'https://[^[:space:]]+' <<< "$OUTPUT" | sort -u | sed 's/^/- /'
           } >> "$GITHUB_STEP_SUMMARY"
