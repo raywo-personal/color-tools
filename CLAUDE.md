@@ -55,6 +55,19 @@ Nothing under `.claude/` is committed. The plugin is shared across projects, so
 a convention that only holds for ColorTools goes in this file – and this file
 wins where the two differ.
 
+## Plugin Bindings
+
+Docking points of the `academy-dev-core` workflows. A row names what the step
+covers here; the step itself stays the workflow's.
+
+| Step | Binding |
+|------|---------|
+| `implement-issue/user-docs` | `README.md`, section "MCP Server": one row in the tool table per registered tool, in English. The app's screens have no user documentation |
+| `review-changes/user-docs` | Same as `implement-issue/user-docs` |
+| `review-changes/checks` | Every rule marked **Review** under "Accessibility"; for a change under `functions/`, `pnpm exec wrangler pages functions build --outdir <tmp>` as well |
+| `implement-issue/dependents` | A change to the palette id or the Contrast & Type address keeps existing links readable; a new entry in an indexed list goes at the end |
+| `implement-issue/technical-docs` | `README.md` (Development, Deployment) and this file, when a command, a deploy step or a rule they state changes |
+
 ## Writing Text For GitHub
 
 Anything GitHub renders as HTML is **not** hard-wrapped – its UI wraps, and a
