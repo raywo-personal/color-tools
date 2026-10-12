@@ -1,6 +1,6 @@
 import {Fetcher} from "@cloudflare/workers-types";
 import {describe, expect, it, vi} from "vitest";
-import worker, {isMcpPath, WorkerEnv} from "./worker";
+import worker, {isFontsPath, isMcpPath, WorkerEnv} from "./worker";
 
 
 const ORIGIN = "https://color-tools.skillbird.de";
@@ -17,10 +17,23 @@ const INITIALIZE = {
 };
 
 
-function assetsAnswering(body: string): {env: WorkerEnv; fetch: ReturnType<typeof vi.fn>} {
+function fetcherAnswering(body: string): {fetcher: Fetcher; fetch: ReturnType<typeof vi.fn>} {
   const fetch = vi.fn(async () => new Response(body));
 
-  return {env: {ASSETS: {fetch} as unknown as Fetcher}, fetch};
+  return {fetcher: {fetch} as unknown as Fetcher, fetch};
+}
+
+function assetsAnswering(body: string): {env: WorkerEnv; fetch: ReturnType<typeof vi.fn>} {
+  const {fetcher, fetch} = fetcherAnswering(body);
+
+  return {env: {ASSETS: fetcher, FONTS: fetcherAnswering("from the proxy").fetcher}, fetch};
+}
+
+function bothAnswering(): {env: WorkerEnv; assets: ReturnType<typeof vi.fn>; fonts: ReturnType<typeof vi.fn>} {
+  const assets = fetcherAnswering("from the assets");
+  const fonts = fetcherAnswering("from the proxy");
+
+  return {env: {ASSETS: assets.fetcher, FONTS: fonts.fetcher}, assets: assets.fetch, fonts: fonts.fetch};
 }
 
 function call(request: Request, env: WorkerEnv): Promise<Response> {
@@ -47,6 +60,23 @@ describe("isMcpPath", () => {
 });
 
 
+describe("isFontsPath", () => {
+
+  it("should take /webfonts and every path below it", () => {
+    expect(isFontsPath("/webfonts")).toBe(true);
+    expect(isFontsPath("/webfonts/")).toBe(true);
+    expect(isFontsPath("/webfonts/anything")).toBe(true);
+  });
+
+  it("should leave paths that only start with the same letters to the assets", () => {
+    expect(isFontsPath("/webfontsx")).toBe(false);
+    expect(isFontsPath("/web")).toBe(false);
+    expect(isFontsPath("/mcp")).toBe(false);
+  });
+
+});
+
+
 describe("worker", () => {
 
   it("should answer /mcp from the MCP server, not from the assets", async () => {
@@ -63,6 +93,18 @@ describe("worker", () => {
 
     expect(body.result.serverInfo.name).toBe("colortools");
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("should hand /webfonts to the fonts proxy unchanged, not to the assets", async () => {
+    const {env, assets, fonts} = bothAnswering();
+    const request = new Request(`${ORIGIN}/webfonts?sort=popularity`, {
+      headers: {"Sec-Fetch-Site": "same-origin"},
+    });
+    const response = await call(request, env);
+
+    expect(await response.text()).toBe("from the proxy");
+    expect(fonts).toHaveBeenCalledWith(request);
+    expect(assets).not.toHaveBeenCalled();
   });
 
   it("should hand every other path back to the assets", async () => {

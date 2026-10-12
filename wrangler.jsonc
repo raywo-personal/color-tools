@@ -1,5 +1,6 @@
 // The app and the MCP server as one Worker: the Angular build is served as
-// static assets, `/mcp` runs functions/worker.ts.
+// static assets, `/mcp` runs functions/worker.ts, and `/webfonts` goes on
+// to google-webfonts-proxy through the FONTS binding.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "color-tools",
@@ -11,10 +12,16 @@
     // Every path the app routes itself gets index.html with a 200, which is
     // what the `/* /index.html 200` rule in _redirects did on Pages.
     "not_found_handling": "single-page-application",
-    // Assets win by default; `/mcp` has to reach the Worker first. Keep in
-    // step with isMcpPath() in functions/worker.ts.
-    "run_worker_first": ["/mcp", "/mcp/*"]
+    // Assets win by default; `/mcp` and `/webfonts` have to reach the
+    // Worker first. Keep in step with isMcpPath() and isFontsPath() in
+    // functions/worker.ts.
+    "run_worker_first": ["/mcp", "/mcp/*", "/webfonts", "/webfonts/*"]
   },
+  // The proxy keeps its own repository, deploy and API key, and has no
+  // public entry: this binding is the only way in.
+  "services": [
+    {"binding": "FONTS", "service": "google-webfonts-proxy"}
+  ],
   "routes": [
     {"pattern": "color-tools.skillbird.de", "custom_domain": true}
   ],

@@ -182,17 +182,17 @@ Worker ran with these three.
 
 Routing:
 
-- `/mcp` and every path below it reach the Worker first through
-  `run_worker_first`
+- `/mcp`, `/webfonts` and every path below either reach the Worker first
+  through `run_worker_first`
 - a path with an asset gets the asset
 - every other path gets `index.html` through `not_found_handling:
   "single-page-application"`; the Worker hands what reaches it outside `/mcp`
-  back to the assets
+  and `/webfonts` back to the assets
 - `public/_redirects` answers the v1 paths `/convert` and `/palettes` with a
   301 to `/`
-- `/webfonts*` never reaches this Worker: a route on the zone sends it to
-  `google-webfonts-proxy`, and a route runs ahead of a custom domain, which
-  Cloudflare treats as the origin
+- `/webfonts` goes on unchanged to `google-webfonts-proxy` through the
+  service binding `FONTS`. The proxy has no route and no `workers.dev` URL;
+  the binding is its only entry
 
 ### Running wrangler locally
 
