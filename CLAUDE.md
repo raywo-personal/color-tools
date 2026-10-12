@@ -351,11 +351,17 @@ and served under `/mcp` on the app's origin.
 ### Layout
 
 - `functions/worker.ts` is the entry and the only file that knows the host:
-  it hands `/mcp` to `handleMcpRequest()` and every other path back to
-  `env.ASSETS`. Swapping the host means replacing this file
-- **`isMcpPath()` and `run_worker_first` in `wrangler.jsonc` list the same
-  paths.** A request with no asset that is no navigation reaches the Worker
-  even outside the list, so the entry never answers it from the MCP server
+  it hands `/mcp` to `handleMcpRequest()`, `/webfonts` to `env.FONTS`, and
+  every other path back to `env.ASSETS`. Swapping the host means replacing
+  this file
+- **`isMcpPath()` and `isFontsPath()` together list the paths of
+  `run_worker_first` in `wrangler.jsonc`.** A request with no asset that is
+  no navigation reaches the Worker even outside the list, so the entry never
+  answers it from the MCP server or the proxy
+- `FONTS` is a service binding to `google-webfonts-proxy`, which has no
+  route and no `workers.dev` URL. Forward the request unchanged: the proxy
+  admits a caller without an `Origin` only on the visitor's
+  `Sec-Fetch-Site: same-origin`
 - `public/_redirects` holds the v1 301s and no `/* /index.html 200`:
   `not_found_handling: "single-page-application"` is the SPA fallback, and
   Wrangler drops the old rule as an infinite loop
