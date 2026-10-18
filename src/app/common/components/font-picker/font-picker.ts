@@ -62,8 +62,9 @@ interface FontOption {
  * proxy behind `environment.webFontsApiUrl` can be down and a visitor can be
  * offline. Without the list nothing can be looked up, so the field is disabled
  * rather than left accepting input that can never match - but a family chosen
- * earlier stays chosen: its stylesheet comes from `fonts.googleapis.com`, not
- * from this catalog, so the preview keeps it.
+ * earlier stays chosen: its stylesheet is a request of its own, not part of
+ * this catalog, and one already in the head stays there, so the preview
+ * keeps it.
  */
 @Component({
   selector: "ct-font-picker",

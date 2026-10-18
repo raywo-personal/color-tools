@@ -57,6 +57,19 @@ describe("App", () => {
   });
 
 
+  it.each(["/", "/contrast", "/does-not-exist"])("links the privacy policy and the imprint on %s", async path => {
+    configure(routes);
+
+    const shell = await shellAt(path);
+    const links = Array.from(shell.querySelectorAll<HTMLAnchorElement>("footer a"), link => link.getAttribute("href"));
+
+    expect(links).toEqual([
+      "https://www.skillbird.de/datenschutz/",
+      "https://www.skillbird.de/impressum/"
+    ]);
+  });
+
+
   it("leaves the app header out on an unknown path, because the not-found page carries its own", async () => {
     configure(routes);
 

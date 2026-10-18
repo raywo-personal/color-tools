@@ -7,8 +7,8 @@ import {GoogleFontLoaderService} from "@common/services/google-font-loader.servi
  *
  * The real one appends `<link rel="stylesheet">` elements to the head, and
  * happy-dom fetches them - so every spec that raises `fontSelected` or
- * `loadAppState` would otherwise put a request to fonts.googleapis.com behind
- * an assertion about a `font-family` string, and offline print a NetworkError
+ * `loadAppState` would otherwise put a stylesheet request behind an
+ * assertion about a `font-family` string, and offline print a NetworkError
  * under a green summary. The two members are the whole of what the effects
  * call.
  */

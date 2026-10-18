@@ -31,8 +31,7 @@
   // Version URLs are configured apart from workers_dev and sit on
   // workers.dev too, outside the zone's rate limiting rule. Explicit,
   // because an omitted value leaves whatever the Worker had before.
-  "preview_urls": false,
-  "observability": {
-    "enabled": true
-  }
+  "preview_urls": false
+  // No `observability`: the privacy policy states that the operator stores
+  // no access data, and Workers Logs would store a record of every request.
 }

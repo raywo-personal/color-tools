@@ -362,6 +362,14 @@ and served under `/mcp` on the app's origin.
   route and no `workers.dev` URL. Forward the request unchanged: the proxy
   admits a caller without an `Origin` only on the visitor's
   `Sec-Fetch-Site: same-origin`
+- **The visitor's browser never contacts Google.** The app's own typefaces
+  are files under `public/fonts/`, each family beside its `OFL.txt`; a
+  chosen typeface's stylesheet comes from `/webfonts/css2`, whose font files
+  the proxy serves under `/webfonts/s/`. A link to `fonts.googleapis.com` or
+  `fonts.gstatic.com` hands every visitor's address to Google, and the
+  privacy policy says it does not happen
+- No `observability` in `wrangler.jsonc`: the privacy policy says the
+  operator stores no access data
 - `public/_redirects` holds the v1 301s and no `/* /index.html 200`:
   `not_found_handling: "single-page-application"` is the SPA fallback, and
   Wrangler drops the old rule as an infinite loop
