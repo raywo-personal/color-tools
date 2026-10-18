@@ -193,6 +193,10 @@ Routing:
 - `/webfonts` goes on unchanged to `google-webfonts-proxy` through the
   service binding `FONTS`. The proxy has no route and no `workers.dev` URL;
   the binding is its only entry
+- the proxy answers the font catalogue at `/webfonts`, a chosen typeface's
+  stylesheet at `/webfonts/css2` and its files at `/webfonts/s/…`, so the
+  visitor's browser never contacts Google. The app's own typefaces are files
+  under `public/fonts/`, each family beside its licence
 
 ### Running wrangler locally
 

@@ -4,6 +4,7 @@ import {TestBed} from "@angular/core/testing";
 import {beforeEach, describe, expect, it} from "vitest";
 import {SelectedFont} from "@common/models/google-font.model";
 import {GoogleFontLoaderService} from "@common/services/google-font-loader.service";
+import {environment} from "@environments/environment";
 
 
 function selection(family: string, weights: number[]): SelectedFont {
@@ -16,6 +17,7 @@ interface StubLink {
 
   id: string;
   rel: string;
+  crossOrigin: string | null;
   href: string;
 
   remove(): void;
@@ -27,8 +29,8 @@ interface StubLink {
  * A document that collects the link elements rather than loading them.
  *
  * The real one is happy-dom's, which fetches a `<link rel="stylesheet">` the
- * moment it reaches the head - so every run would ask fonts.googleapis.com
- * for a stylesheet, and a request that outlives the test prints a
+ * moment it reaches the head - so every run would ask the fonts proxy for a
+ * stylesheet, and a request that outlives the test prints a
  * NetworkError under a green summary. Offline that is every run. The members
  * below are the whole of what the service asks a document for.
  */
@@ -39,6 +41,7 @@ function stubDocument() {
     const link: StubLink = {
       id: "",
       rel: "",
+      crossOrigin: null,
       href: "",
       remove: () => {
         const index = links.indexOf(link);
@@ -91,6 +94,25 @@ describe("GoogleFontLoaderService", () => {
   function hrefs(): string[] {
     return stub.links.map(link => link.href);
   }
+
+
+  it("asks the fonts proxy for the stylesheet, never Google", () => {
+    // A link to fonts.googleapis.com sends the visitor's address to Google;
+    // the proxy fetches the stylesheet and points its files at itself.
+    loader().loadFonts([selection("Merriweather", [400])]);
+
+    expect(hrefs()[0].startsWith(`${environment.webFontsApiUrl}/css2?`)).toBe(true);
+    expect(hrefs()[0]).not.toMatch(/fonts\.(googleapis|gstatic)\.com/);
+  });
+
+
+  it("asks for the stylesheet in CORS mode, so a proxy on another origin sees an Origin", () => {
+    // Without an `Origin` the proxy admits only a same-origin caller, and
+    // under `pnpm start` it answers on a port of its own.
+    loader().loadFonts([selection("Merriweather", [400])]);
+
+    expect(stub.links[0].crossOrigin).toBe("anonymous");
+  });
 
 
   it("asks for the weights the family ships and no others", () => {

@@ -2,6 +2,7 @@ import {DOCUMENT} from "@angular/common";
 import {inject, Service} from "@angular/core";
 import {SelectedFont} from "@common/models/google-font.model";
 import {FONT_WEIGHTS} from "@engine/contrast/apca-lookup-table.model";
+import {environment} from "@environments/environment";
 
 
 /**
@@ -89,6 +90,11 @@ export class GoogleFontLoaderService {
       const added = this.#document.createElement("link");
       added.id = id;
       added.rel = "stylesheet";
+      // Without it a link to another origin - the proxy on its own port
+      // under `pnpm start` - carries no `Origin`, and the proxy admits a
+      // caller without one only on `Sec-Fetch-Site: same-origin`. On the
+      // app's own origin the request is same-origin either way.
+      added.crossOrigin = "anonymous";
       added.href = href;
 
       this.#document.head.appendChild(added);
@@ -135,17 +141,27 @@ function requestedWeights(font: SelectedFont): readonly number[] {
 }
 
 
-/** The `css2` url for a selection, weights and all. */
+/**
+ * The `css2` url for a selection, weights and all.
+ *
+ * Asked of the fonts proxy, never of fonts.googleapis.com: the proxy fetches
+ * the stylesheet and points its font files at itself, so the visitor's
+ * browser never contacts Google and Google only ever sees the Worker.
+ */
 function fontStylesheetUrl(font: SelectedFont): string {
   const familyParam = font.family.replace(/ /g, "+");
 
-  return `https://fonts.googleapis.com/css2?family=${familyParam}:wght@${requestedWeights(font).join(";")}&display=swap`;
+  return `${environment.webFontsApiUrl}/css2?family=${familyParam}:wght@${requestedWeights(font).join(";")}&display=swap`;
 }
 
 
-/** Whether a stylesheet url this service wrote asks for every given weight. */
+/**
+ * Whether a stylesheet url this service wrote asks for every given weight.
+ * The url may be relative, so it is read against a placeholder base; only
+ * its query counts.
+ */
 function covers(href: string, weights: readonly number[]): boolean {
-  const axis = new URL(href).searchParams.get("family")?.split(":wght@")[1] ?? "";
+  const axis = new URL(href, "http://localhost").searchParams.get("family")?.split(":wght@")[1] ?? "";
   const loaded = new Set(axis.split(";").map(Number));
 
   return weights.every(weight => loaded.has(weight));
