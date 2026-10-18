@@ -19,6 +19,19 @@
   <main>
     <router-outlet/>
   </main>
+
+  <!-- Outside the header's condition on purpose: privacy policy and imprint
+       have to be one click away from every view, the not-found page
+       included. -->
+  <footer class="mt-16 flex flex-wrap gap-x-6 border-t border-line pt-4 sm:mt-24">
+    <a href="https://www.skillbird.de/datenschutz/"
+       hreflang="de"
+       class="inline-flex h-11 items-center font-sans text-sm tracking-widest text-dim underline underline-offset-4 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">PRIVACY POLICY</a>
+
+    <a href="https://www.skillbird.de/impressum/"
+       hreflang="de"
+       class="inline-flex h-11 items-center font-sans text-sm tracking-widest text-dim underline underline-offset-4 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current">IMPRINT</a>
+  </footer>
 </div>
 
 <!-- Rendered here rather than by a copy target: every screen copies through
