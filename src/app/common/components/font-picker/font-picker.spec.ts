@@ -187,17 +187,26 @@ describe("FontPicker", () => {
 
   it("loads every weight the app's own type is offered at", () => {
     // With no typeface chosen the preview runs on `--font-sans` and the WEIGHT
-    // slider offers the whole grid. A weight `index.html` does not load is
+    // slider offers the whole grid. A weight `fonts.css` does not cover is
     // synthesised by the browser, and the rating beside it would be judging a
     // faux-bold - the one thing this slice set out to stop.
+    const fontsCss = readFileSync("public/fonts/fonts.css", "utf8");
+    const ranges = [...fontsCss.matchAll(/font-family: "IBM Plex Sans";[^}]*font-weight: (\d+)(?: (\d+))?;/g)]
+      .map(([, low, high]) => [Number(low), Number(high ?? low)] as const);
+
+    expect(ranges.length, "public/fonts/fonts.css declares no IBM Plex Sans face").toBeGreaterThan(0);
+
+    for (const [low, high] of ranges) {
+      expect(WEIGHT_STOPS.filter(weight => weight < low || weight > high)).toEqual([]);
+    }
+  });
+
+
+  it("takes the app's own type from its own origin, not from Google", () => {
     const indexHtml = readFileSync("src/index.html", "utf8");
-    const declaration = /IBM\+Plex\+Sans:wght@([\d;]+)/.exec(indexHtml);
 
-    expect(declaration, "src/index.html loads IBM Plex Sans without a wght list").not.toBeNull();
-
-    const loaded = (declaration?.[1] ?? "").split(";").map(Number);
-
-    expect(WEIGHT_STOPS.filter(weight => !loaded.includes(weight))).toEqual([]);
+    expect(indexHtml).toContain("href=\"fonts/fonts.css\"");
+    expect(indexHtml).not.toMatch(/fonts\.(googleapis|gstatic)\.com/);
   });
 
 

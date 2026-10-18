@@ -19,14 +19,23 @@ function selection(family: string, weights: number[], category = "serif"): Selec
 }
 
 
-/** The weights `index.html` asks Google Fonts for, for one family. */
+/**
+ * The weights `public/fonts/fonts.css` declares for one family, on the
+ * hundreds grid; a variable face's range counts every step inside it.
+ */
 function loadedWeights(family: string): number[] {
-  const html = readFileSync("src/index.html", "utf8");
-  const axis = new RegExp(`family=${family.replace(/ /g, "\\+")}:wght@([\\d;]+)`).exec(html);
+  const css = readFileSync("public/fonts/fonts.css", "utf8");
+  const faces = [...css.matchAll(new RegExp(`font-family: "${family}";[^}]*font-weight: (\\d+)(?: (\\d+))?;`, "g"))];
 
-  expect(axis, `src/index.html loads no weight axis for ${family}`).not.toBeNull();
+  expect(faces.length, `public/fonts/fonts.css declares no face for ${family}`).toBeGreaterThan(0);
 
-  return (axis?.[1] ?? "").split(";").map(Number);
+  const weights = new Set<number>();
+
+  for (const [, low, high] of faces) {
+    for (let weight = Number(low); weight <= Number(high ?? low); weight += 100) weights.add(weight);
+  }
+
+  return [...weights].sort((a, b) => a - b);
 }
 
 
@@ -53,7 +62,7 @@ describe("type role settings", () => {
 
 
   it("stands the mono fallback on the weights the head loads for it, and no others", () => {
-    // `index.html` asks for two weights of the mono face. A slider offering
+    // `fonts.css` declares two weights of the mono face. A slider offering
     // the whole grid would rate a weight the browser has to synthesise.
     const loaded = loadedWeights(appTypeFor("mono").family);
 
