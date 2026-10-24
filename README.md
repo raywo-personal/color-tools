@@ -159,10 +159,10 @@ named `color-tools` and configured in `wrangler.jsonc`. The Angular build is
 the assets; `functions/worker.ts` is the Worker's entry.
 
 The workflow `.github/workflows/deploy-to-cloudflare.yml` runs on every pull
-request against `main` and on every push to it. It lints, runs both test
-suites, builds with the `cloudflare` configuration, and type-checks and
-bundles the Worker. On a push it then deploys; a pull request stops after the
-build.
+request against `main` or a run branch `run/**` and on every push to `main`.
+It lints, runs both test suites, builds with the `cloudflare` configuration,
+and type-checks and bundles the Worker. On a push it then deploys; a pull
+request stops after the build.
 
 `wrangler` bundles `functions/` from the working directory at deploy time, so
 the deploy job checks out the repository and installs before it downloads the
