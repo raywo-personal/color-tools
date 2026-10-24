@@ -4,6 +4,8 @@ import {BODY_COPY_MIN_LC, TEXT_KINDS, TextKind} from "@engine/contrast/apca-rati
 import {z} from "zod";
 import {PIXEL_FONT_SIZE_PATTERN} from "@engine/helpers/font-size.helper";
 import chroma from "chroma-js";
+import {PaletteStyles} from "@engine/palette/palette-style.model";
+import {isRestorablePaletteId, styleIndexFromPaletteId} from "@engine/palette/palette-id.helper";
 
 
 /**
@@ -68,3 +70,43 @@ export const textKindInput = z.enum(TEXT_KINDS)
 export function textKindPhrase(textKind: TextKind): string {
   return textKind === "bodyCopy" ? "as body copy" : "as spot text";
 }
+
+
+/**
+ * A palette id the tools can restore a palette from.
+ *
+ * The id's shape is the whole guard. `paletteFromId()` throws on an id it
+ * cannot read, and answers a style index it does not know with a random style
+ * rather than an error - that id would decode into an invented palette, and
+ * the same id twice into two different ones. Rejected here, nothing reaches
+ * the decoder that it cannot restore, so a handler needs no try/catch: keep
+ * all three checks as long as the handlers stay that way.
+ *
+ * The style index is one base62 character like the rest of the id, so the
+ * alphabet alone says nothing about it: what makes it a guard is the index
+ * naming a style this version holds.
+ *
+ * The length alone does not make the guard either: 42 base62 characters reach
+ * past the 31 bytes the colors and the pinned mask fill, and
+ * `isRestorablePaletteId()` is the check the decoder itself applies. Asked
+ * here, an id out of range is answered with the sentence that says so rather
+ * than with the decoder's error.
+ *
+ * The shape check aborts: zod runs the refinements even after a check failed,
+ * and both of them read an id of this length - `styleIndexFromPaletteId()`
+ * throws on any other, which would answer a mistyped id with the decoder's
+ * own wording instead of the sentence that says what an id looks like.
+ */
+export const paletteIdInput = z.string()
+  .regex(/^[0-9A-Za-z]{43}$/,
+    {
+      abort: true,
+      message: "A palette id is 43 base62 characters: one for the style, then 42 for the colors."
+    }
+  )
+  .refine(id => styleIndexFromPaletteId(id) < PaletteStyles.length,
+    {message: "This palette id names a style that does not exist."}
+  )
+  .refine(id => isRestorablePaletteId(id),
+    {message: "This palette id is out of range: the 42 characters after the style character encode more than 31 bytes."}
+  );

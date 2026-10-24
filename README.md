@@ -31,6 +31,7 @@ read-only.
 | `audit_pairs`               | Up to 50 text and background pairs checked against APCA at once, with a suggested text color for every pair that fails  |
 | `adjust_color_for_contrast` | The smallest lightness shift of one color in a pair that meets the APCA requirement, keeping its hue                    |
 | `simulate_color_vision`     | Colors that appear together as seen under four color-vision deficiencies, and which of them merge                       |
+| `export_palette`            | A palette id as CSS, SCSS, Tailwind v4, JSON or W3C design tokens, exactly as the app's export panel copies it          |
 
 The resource `colortools://palette-styles` lists every style
 `generate_palette` accepts, with what it does.

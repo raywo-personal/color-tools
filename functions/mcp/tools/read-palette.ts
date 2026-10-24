@@ -2,50 +2,16 @@ import {z} from "zod";
 import {McpServer, ToolCallback} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {PaletteStyles} from "@engine/palette/palette-style.model";
 import {PALETTE_SLOTS} from "@engine/palette/palette.model";
-import {isRestorablePaletteId, paletteFromId, styleIndexFromPaletteId} from "@engine/palette/palette-id.helper";
+import {paletteFromId} from "@engine/palette/palette-id.helper";
 import {colorName} from "@engine/color/color-name.helper";
 import {roleCaptionFor} from "@engine/palette/palette-role.helper";
 import {TOOL_ANNOTATION} from "../helper/annotation.helper";
+import {paletteIdInput} from "../helper/tool-schemas.helper";
 import {formatColor} from "@engine/color/color-format.helper";
 
 
-/**
- * The id's shape is the whole guard. `paletteFromId()` throws on an id it
- * cannot read, and answers a style index it does not know with a random style
- * rather than an error - that id would decode into an invented palette, and
- * the same id twice into two different ones. Rejected here, nothing reaches
- * the decoder that it cannot restore, so the handler needs no try/catch: keep
- * all three checks if the handler stays that way.
- *
- * The style index is one base62 character like the rest of the id, so the
- * alphabet alone says nothing about it: what makes it a guard is the index
- * naming a style this version holds.
- *
- * The length alone does not make the guard either: 42 base62 characters reach
- * past the 31 bytes the colors and the pinned mask fill, and
- * `isRestorablePaletteId()` is the check the decoder itself applies. Asked
- * here, an id out of range is answered with the sentence that says so rather
- * than with the decoder's error.
- *
- * The shape check aborts: zod runs the refinements even after a check failed,
- * and both of them read an id of this length - `styleIndexFromPaletteId()`
- * throws on any other, which would answer a mistyped id with the decoder's
- * own wording instead of the sentence that says what an id looks like.
- */
 const inputSchema = {
-  id: z.string()
-    .regex(/^[0-9A-Za-z]{43}$/,
-      {
-        abort: true,
-        message: "A palette id is 43 base62 characters: one for the style, then 42 for the colors."
-      }
-    )
-    .refine(id => styleIndexFromPaletteId(id) < PaletteStyles.length,
-      {message: "This palette id names a style that does not exist."}
-    )
-    .refine(id => isRestorablePaletteId(id),
-      {message: "This palette id is out of range: the 42 characters after the style character encode more than 31 bytes."}
-    )
+  id: paletteIdInput
 };
 
 const outputSchema = {
