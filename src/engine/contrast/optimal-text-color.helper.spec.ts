@@ -1,12 +1,16 @@
 import chroma, {Color} from "chroma-js";
 
-import {MAX_USABLE_LIGHTNESS} from "@engine/color/oklch.helper";
+import {MAX_USABLE_LIGHTNESS, maxChroma, MIN_USABLE_LIGHTNESS} from "@engine/color/oklch.helper";
+import {isLightColor} from "@engine/color/color.helper";
+import {rangeToArray} from "@engine/helpers/iterables.helper";
 import {
   DEFAULT_COLOR_CONFIG,
   findHarmonicTextColor,
   findMinimumContrastTextColor,
   findOptimalTextColor,
   findTextColor,
+  HARMONIC_LIGHTNESS_STEP,
+  harmonicCandidateColor,
   OptimalTextColorResult
 } from "./optimal-text-color.helper";
 import {calculateAPCAContrast, meetsAPCARequirement} from "./apca-rating.helper";
@@ -521,6 +525,52 @@ describe("Optimal Text Color Helper", () => {
       });
 
       expect(result.requiredContrast).toBe(45);
+    });
+
+    it("should find the pole never outdone by a candidate on its walk", () => {
+      // The search measures the pole first and skips the walk where it fails,
+      // which is sound only while no candidate on the walk reaches further
+      // than the pole. The property holds for every requirement or for none,
+      // since it compares candidates with each other, so one grid of
+      // backgrounds covers every font size and weight. Should it fail, the
+      // pole-first shortcut goes, not the grid's resolution - no tolerance.
+      //
+      // Each background sits exactly on its grid hue, and every walk lands on
+      // the hundredths, so the backgrounds of one hue share one row of
+      // candidates; building it once per hue is what keeps the grid fast.
+      const hues = rangeToArray(0, 355, 5);
+      const lightnesses = rangeToArray(MIN_USABLE_LIGHTNESS, MAX_USABLE_LIGHTNESS, 0.02);
+      const chromaShares = [0.25, 0.5, 0.75, 1];
+      const counterexamples: string[] = [];
+
+      for (const hue of hues) {
+        const candidates = new Map<number, Color>();
+        const candidateAt = (lightness: number): Color => {
+          if (!candidates.has(lightness)) candidates.set(lightness, harmonicCandidateColor(lightness, hue));
+
+          return candidates.get(lightness)!;
+        };
+
+        for (const bgLightness of lightnesses) {
+          for (const share of chromaShares) {
+            const bg = chroma.oklch(bgLightness, share * maxChroma(bgLightness, hue), hue);
+            const sign = isLightColor(bg) ? 1 : -1;
+            const end = sign > 0 ? MIN_USABLE_LIGHTNESS : MAX_USABLE_LIGHTNESS;
+            const poleLc = sign * chroma.contrastAPCA(candidateAt(end), bg);
+
+            for (const lightness of rangeToArray(bgLightness, end, HARMONIC_LIGHTNESS_STEP)) {
+              const lc = sign * chroma.contrastAPCA(candidateAt(lightness), bg);
+
+              if (lc > poleLc) {
+                counterexamples.push(`L ${bgLightness} C ${share} of the ceiling H ${hue}: `
+                  + `Lc ${lc} at L ${lightness} beyond the pole's ${poleLc}`);
+              }
+            }
+          }
+        }
+      }
+
+      expect(counterexamples).toEqual([]);
     });
 
   });

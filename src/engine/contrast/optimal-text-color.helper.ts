@@ -3,7 +3,7 @@ import chroma, {Color} from "chroma-js";
 import {FontSize, FontWeight} from "@engine/contrast/apca-lookup-table.model";
 import {getRequiredLc, TextKind} from "@engine/contrast/apca-rating.helper";
 import {generateRange} from "@engine/helpers/iterables.helper";
-import {fromOklch} from "@engine/color/color-from-oklch.helper";
+import {hueWrap} from "@engine/color/hsl.helper";
 import {MAX_USABLE_LIGHTNESS, maxChroma, MIN_USABLE_LIGHTNESS} from "@engine/color/oklch.helper";
 import {BLACK, isLightColor, toColor, WHITE} from "@engine/color/color.helper";
 
@@ -90,7 +90,7 @@ export type TextColorFinder = (bgColor: Color | string, config?: Partial<Optimal
 const HARMONIC_CHROMA_SHARE = 0.5;
 
 /** OKLch lightness between two harmonic candidates. */
-const HARMONIC_LIGHTNESS_STEP = 0.01;
+export const HARMONIC_LIGHTNESS_STEP = 0.01;
 
 
 /**
@@ -289,20 +289,27 @@ function findSoftestHarmonicColor(
   const start = Math.min(Math.max(bgLightness, MIN_USABLE_LIGHTNESS), MAX_USABLE_LIGHTNESS);
   const end = darkText ? MIN_USABLE_LIGHTNESS : MAX_USABLE_LIGHTNESS;
 
+  // The pole is the strongest candidate the hue has - the `never outdone by
+  // a candidate on its walk` spec pins that - so where it fails, every
+  // candidate on the walk fails too and the walk is not taken: a search
+  // that finds nothing costs one candidate instead of one per step. Where it
+  // passes, the walk still decides, and it ends here at the latest. The walk
+  // starts at the background's own lightness, which is no point on the
+  // lattice the pole sits on, so it reaches `end` only where the two are a
+  // whole number of steps apart; without the pole as the last answer a
+  // background whose only passing lightness is the pole would come back
+  // empty and the text would fall back to gray.
+  const pole = harmonicCandidate(end, hue, bg, sign, requiredContrast);
+
+  if (!pole) return null;
+
   for (const lightness of generateRange(start, end, HARMONIC_LIGHTNESS_STEP)) {
     const match = harmonicCandidate(lightness, hue, bg, sign, requiredContrast);
 
     if (match) return match;
   }
 
-  // The walk starts at the background's own lightness, which is no point on
-  // the lattice the pole sits on: `end` is reached only where the two are a
-  // whole number of steps apart, and a measured lightness almost never is.
-  // The pole is the strongest candidate the hue has, so it is measured here
-  // rather than left to the step count - without it a background whose only
-  // passing lightness is the pole comes back empty and the text falls back
-  // to gray.
-  return harmonicCandidate(end, hue, bg, sign, requiredContrast);
+  return pole;
 }
 
 
@@ -323,11 +330,32 @@ function harmonicCandidate(
   sign: number,
   requiredContrast: number
 ): { color: Color; contrast: number } | null {
-  const chromacity = HARMONIC_CHROMA_SHARE * maxChroma(lightness, hue);
-  const color = chroma(fromOklch({l: lightness, c: chromacity, h: hue}).hex());
+  const color = harmonicCandidateColor(lightness, hue);
   const contrast = chroma.contrastAPCA(color, bg);
 
   return sign * contrast >= requiredContrast ? {color, contrast} : null;
+}
+
+
+/**
+ * The color the harmonic search tries at one lightness on a hue: the share
+ * of the chroma sRGB holds there, rounded to the 8-bit color its hex names.
+ *
+ * Built with `chroma.oklch()`, not `fromOklch()`. `fromOklch()` would clamp
+ * the chroma to `maxChroma()` a second time, and a share of the ceiling never
+ * exceeds the ceiling, so its clamp does nothing here but cost a second
+ * bisection - which is where the search spent half its time. Going back to
+ * `fromOklch()` changes no color and doubles the cost of every search.
+ *
+ * @param lightness - The OKLch lightness, inside the usable band
+ * @param hue - The OKLch hue in degrees; never NaN
+ * @returns The candidate as the 8-bit color its hex names
+ */
+export function harmonicCandidateColor(lightness: number, hue: number): Color {
+  const wrappedHue = hueWrap(hue);
+  const chromacity = HARMONIC_CHROMA_SHARE * maxChroma(lightness, wrappedHue);
+
+  return chroma(chroma.oklch(lightness, chromacity, wrappedHue).hex());
 }
 
 
