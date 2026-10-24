@@ -14,6 +14,7 @@ import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import {DEFAULT_TYPE_SETTINGS_BY_ROLE} from "@engine/contrast/type-role.model";
 import {contrastTypePageOf} from "@core/contrast/contrast.reducers";
 import {PALETTE_SEGMENT_LENGTH} from "@engine/palette/palette-segment.helper";
+import {provideSilentFontLoader} from "@testing/font-loader.fake";
 
 
 describe("contrastGuard", () => {
@@ -21,7 +22,12 @@ describe("contrastGuard", () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])]
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        // A restored address hands its typefaces to the font loader.
+        provideSilentFontLoader()
+      ]
     });
   });
 
