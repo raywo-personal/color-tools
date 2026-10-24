@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - main
+  # run/** carries the issue pull requests of an academy-dev-core
+  # run-issues run, which merges each one only once its checks pass.
+  # Pull requests never deploy; see the deploy job's condition.
   pull_request:
     types: [ opened, synchronize, reopened ]
     branches:
       - "main"
+      - "run/**"
 
 permissions:
   contents: read
