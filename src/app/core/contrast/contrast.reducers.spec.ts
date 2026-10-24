@@ -16,6 +16,7 @@ import {generatePaletteFrom} from "@engine/palette/palette.helper";
 import {DEFAULT_TYPE_SETTINGS_BY_ROLE} from "@engine/contrast/type-role.model";
 import {samplePage, sampleElement, inkOf} from "@contrast-type/models/sample-page.model";
 import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
+import {provideSilentFontLoader} from "@testing/font-loader.fake";
 
 
 /**
@@ -272,7 +273,13 @@ describe("restoring the Contrast & Type address", () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideFakeLiveAnnouncer(), provideFakeGoogleFonts()]
+      providers: [
+        provideZonelessChangeDetection(),
+        provideFakeLiveAnnouncer(),
+        provideFakeGoogleFonts(),
+        // A restore hands the address's typefaces to the font loader.
+        provideSilentFontLoader()
+      ]
     });
   });
 

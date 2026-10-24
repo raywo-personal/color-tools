@@ -8,9 +8,20 @@ import {provideFakeLiveAnnouncer} from "@testing/live-announcer.fake";
 import {provideSilentFontLoader} from "@testing/font-loader.fake";
 
 
+/** The font links in the head, whichever spec put them there. */
+function fontLinks(): NodeListOf<HTMLLinkElement> {
+  return document.head.querySelectorAll<HTMLLinkElement>("link[id^='ct-google-font']");
+}
+
+
 describe("provideSilentFontLoader", () => {
 
   beforeEach(() => {
+    // Spec files that share a worker share one happy-dom document, so a link
+    // another file left behind would otherwise count against this one. Start
+    // from a head without any, and whatever the assertion finds is what this
+    // spec's own dispatch added.
+    fontLinks().forEach(link => link.remove());
     localStorage.clear();
     TestBed.configureTestingModule({
       providers: [
@@ -31,7 +42,7 @@ describe("provideSilentFontLoader", () => {
       font: {family: "Lobster", category: "display", variant: "regular", weights: [400]}
     }));
 
-    expect(document.head.querySelectorAll("link[id^='ct-google-font']")).toHaveLength(0);
+    expect(fontLinks()).toHaveLength(0);
   });
 
 });
