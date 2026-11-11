@@ -2,7 +2,7 @@ import {Component, computed, inject, input, linkedSignal, model} from "@angular/
 import {FormsModule} from "@angular/forms";
 import {LiveAnnouncer} from "@angular/cdk/a11y";
 import {Color} from "chroma-js";
-import {colorFrom} from "@engine/color/color-format-parser.helper";
+import {colorFrom, reducesOklchChroma} from "@engine/color/color-format-parser.helper";
 import {formatColor} from "@engine/color/color-format.helper";
 import {colorName} from "@engine/color/color-name.helper";
 
@@ -59,6 +59,8 @@ export class ColorField {
 
   protected readonly inputId = `ct-color-field-${nextInstance++}`;
 
+  protected readonly hintId = `${this.inputId}-hint`;
+
   /**
    * What the picker shows. The native control only ever holds a valid hex, so
    * this needs no rejection path - it exists so that a color arriving from the
@@ -73,6 +75,34 @@ export class ColorField {
   protected readonly fieldValue = linkedSignal(
     () => formatColor(this.color(), "hex")
   );
+
+  // The source of `#chromaReduced` is a `computed()` of its own on purpose. An
+  // inline function makes the linked signal depend on `color()` directly, and
+  // every new object would reset it; only a computed compares the hex codes.
+  readonly #hex = computed(() => this.color().hex());
+
+  /**
+   * Whether the color on display is one the field reduced in chroma to fit
+   * sRGB.
+   *
+   * Linked to the hex code, not to the color: any other color - from the
+   * field, the picker, the projected button, a palette or a link - clears it,
+   * while a caller that writes the same color back as a new object does not.
+   * The value field shows hex once committed, so without this nothing on screen
+   * says the color is not the one that was entered.
+   */
+  readonly #chromaReduced = linkedSignal({
+    source: this.#hex,
+    computation: () => false
+  });
+
+  /**
+   * Names the chroma the color holds, written the way the conversion row
+   * writes it, so the two never disagree in the last digit.
+   */
+  protected readonly chromaHint = computed(() => this.#chromaReduced()
+    ? `Chroma reduced to ${this.color().oklch()[1].toFixed(3)}: the value lies outside sRGB.`
+    : null);
 
   /**
    * The picker carries no visible label of its own - the caption above names
@@ -90,6 +120,15 @@ export class ColorField {
    * name, and an `aria-label` beside it would replace the text on screen.
    */
   protected readonly fieldLabel = computed(() => this.label() ? null : "Color value");
+
+  /** Whether the visitor typed into the field since its last commit. */
+  #edited = false;
+
+
+  /** Marks the field as edited, on every `input` event. */
+  protected markEdited(): void {
+    this.#edited = true;
+  }
 
 
   /**
@@ -123,18 +162,27 @@ export class ColorField {
    * rather than comparing what comes out of it - so `rgb(51 102 204)` becomes
    * `#3366CC` even where the color was already that. The spec pins both, with
    * and without a caller writing back.
+   *
+   * Only an edit is committed. Enter is followed by a blur once the visitor
+   * moves on, and a focus without typing ends in one too; both would commit
+   * the hex the field shows and so clear the chroma hint, since that hex is
+   * no OKLch value. Do not compare the field with the current hex instead: a
+   * visitor who types that hex on purpose entered a value that fits, and the
+   * hint has to go.
    */
   protected commitField(): void {
+    if (!this.#edited) return;
+
+    this.#edited = false;
+
     const current = this.color();
-    const color = colorFrom(this.fieldValue().trim());
+    const value = this.fieldValue().trim();
+    const color = colorFrom(value);
 
     if (!color) {
-      const caption = this.label();
-      const opening = caption ? `${caption}: Not a color` : "Not a color";
-
       this.fieldValue.set(formatColor(current, "hex"));
       void this.#announcer.announce(
-        `${opening}. Keeping ${colorName(current)}`,
+        this.#captioned(`Not a color. Keeping ${colorName(current)}`),
         "assertive"
       );
 
@@ -142,6 +190,27 @@ export class ColorField {
     }
 
     this.color.set(color);
+    this.#chromaReduced.set(reducesOklchChroma(value));
+
+    const hint = this.chromaHint();
+
+    // Announced for the reason the rejection is: the field is rewritten in
+    // place, in hex, and the hint below it is not where the cursor is.
+    if (hint) {
+      void this.#announcer.announce(this.#captioned(hint), "assertive");
+    }
+  }
+
+
+  /**
+   * Prefixes the caption where there is one: a commit on `blur` is spoken after
+   * the focus has left, and on a screen with two fields nothing else says which
+   * one answered.
+   */
+  #captioned(message: string): string {
+    const caption = this.label();
+
+    return caption ? `${caption}: ${message}` : message;
   }
 
 
@@ -155,7 +224,10 @@ export class ColorField {
   protected commitPicker(): void {
     const color = colorFrom(this.pickerValue());
 
-    if (color) this.color.set(color);
+    if (!color) return;
+
+    this.color.set(color);
+    this.#chromaReduced.set(false);
   }
 
 }

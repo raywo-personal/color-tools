@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest";
 import chroma from "chroma-js";
-import {colorFrom, isHex, isHsl, isOklch, isRgb, isTranslucent} from "@engine/color/color-format-parser.helper";
+import {colorFrom, isHex, isHsl, isOklch, isRgb, isTranslucent, reducesOklchChroma} from "@engine/color/color-format-parser.helper";
+import {formatColor} from "@engine/color/color-format.helper";
 import {maxChroma} from "@engine/color/oklch.helper";
 
 
@@ -183,6 +184,60 @@ describe("colorFrom", () => {
   it("keeps black and white parsable, where no chroma fits", () => {
     expect(colorFrom("oklch(0% 0 0)")?.hex()).toBe("#000000");
     expect(colorFrom("oklch(100% 0 0)")?.hex()).toBe("#ffffff");
+  });
+
+});
+
+
+describe("reducesOklchChroma", () => {
+
+  it("calls a chroma outside sRGB reduced", () => {
+    expect(reducesOklchChroma("oklch(70% 0.3 150)")).toBe(true);
+    expect(reducesOklchChroma("oklch(0.5 0.9 145deg)")).toBe(true);
+  });
+
+
+  it("leaves a chroma inside sRGB alone", () => {
+    expect(reducesOklchChroma("oklch(53.25% 0.17 262.29)")).toBe(false);
+    expect(reducesOklchChroma("oklch(0% 0 0)")).toBe(false);
+  });
+
+
+  it("does not call the row of a color on the boundary reduced", () => {
+    // The row rounds chroma to the thousandth, which may land a hair above
+    // what `maxChroma()` reports - rounding, not a color sRGB cannot hold.
+    for (const hue of [0, 30, 90, 145, 200, 264, 330]) {
+      const boundary = chroma.oklch(0.7, maxChroma(0.7, hue), hue);
+
+      expect(reducesOklchChroma(formatColor(boundary, "oklch")), `hue ${hue}`).toBe(false);
+    }
+  });
+
+
+  it("does not call the row of any sRGB color reduced", () => {
+    // The row also rounds hue to the degree and lightness to a tenth of a
+    // percent, and near a cusp of the gamut either moves `maxChroma()` by
+    // more than the chroma step. Every color with a channel at 0 or 255 sits
+    // on the boundary; the primaries and secondaries are among them.
+    for (let first = 0; first < 256; first += 15) {
+      for (let second = 0; second < 256; second += 15) {
+        for (const edge of [0, 255]) {
+          for (const rgb of [[edge, first, second], [first, edge, second], [first, second, edge]]) {
+            const row = formatColor(chroma(rgb[0], rgb[1], rgb[2]), "oklch");
+
+            expect(reducesOklchChroma(row), `rgb(${rgb.join(" ")}) as ${row}`).toBe(false);
+          }
+        }
+      }
+    }
+  });
+
+
+  it("answers false for anything that is not a readable OKLch color", () => {
+    expect(reducesOklchChroma(null)).toBe(false);
+    expect(reducesOklchChroma("#3366cc")).toBe(false);
+    expect(reducesOklchChroma("rgb(51 102 204)")).toBe(false);
+    expect(reducesOklchChroma("oklch(500% 0.9 145)")).toBe(false);
   });
 
 });
