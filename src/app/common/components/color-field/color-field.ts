@@ -121,6 +121,15 @@ export class ColorField {
    */
   protected readonly fieldLabel = computed(() => this.label() ? null : "Color value");
 
+  /** Whether the visitor typed into the field since its last commit. */
+  #edited = false;
+
+
+  /** Marks the field as edited, on every `input` event. */
+  protected markEdited(): void {
+    this.#edited = true;
+  }
+
 
   /**
    * Commits the field, on blur and on Enter.
@@ -153,8 +162,19 @@ export class ColorField {
    * rather than comparing what comes out of it - so `rgb(51 102 204)` becomes
    * `#3366CC` even where the color was already that. The spec pins both, with
    * and without a caller writing back.
+   *
+   * Only an edit is committed. Enter is followed by a blur once the visitor
+   * moves on, and a focus without typing ends in one too; both would commit
+   * the hex the field shows and so clear the chroma hint, since that hex is
+   * no OKLch value. Do not compare the field with the current hex instead: a
+   * visitor who types that hex on purpose entered a value that fits, and the
+   * hint has to go.
    */
   protected commitField(): void {
+    if (!this.#edited) return;
+
+    this.#edited = false;
+
     const current = this.color();
     const value = this.fieldValue().trim();
     const color = colorFrom(value);

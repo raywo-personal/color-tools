@@ -290,6 +290,30 @@ describe("ColorField", () => {
       expect(hintOf(element)).not.toBeNull();
     });
 
+
+    it("survives the blur that follows Enter", async () => {
+      const {element, type, pressEnter, blur} = await field();
+
+      await type("oklch(70% 0.3 150)");
+      await pressEnter();
+      await blur();
+
+      expect(hintOf(element)).not.toBeNull();
+    });
+
+
+    it("survives leaving the field without an edit", async () => {
+      const {element, input, type, blur} = await field();
+
+      await type("oklch(70% 0.3 150)");
+      await blur();
+
+      input.dispatchEvent(new Event("focus"));
+      await blur();
+
+      expect(hintOf(element)).not.toBeNull();
+    });
+
   });
 
 

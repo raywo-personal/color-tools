@@ -21,6 +21,7 @@
          autocomplete="off"
          spellcheck="false"
          [(ngModel)]="fieldValue"
+         (input)="markEdited()"
          (blur)="commitField()"
          (keydown.enter)="commitField()">
 
