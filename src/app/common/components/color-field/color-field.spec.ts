@@ -196,6 +196,103 @@ describe("ColorField", () => {
   });
 
 
+  describe("the chroma hint", () => {
+
+    function hintOf(element: HTMLElement): string | null {
+      return element.querySelector("p")?.textContent?.trim() ?? null;
+    }
+
+
+    it("names the chroma a value outside sRGB was reduced to", async () => {
+      const {host, element, input, type, blur} = await field();
+
+      await type("oklch(70% 0.3 150)");
+      await blur();
+
+      const chromacity = host.color().oklch()[1];
+
+      expect(chromacity).toBeLessThan(0.3);
+      expect(hintOf(element)).toBe(
+        `Chroma reduced to ${chromacity.toFixed(3)}: the value lies outside sRGB.`
+      );
+
+      const hint = element.querySelector("p") as HTMLElement;
+
+      expect(input.getAttribute("aria-describedby")).toBe(hint.id);
+    });
+
+
+    it("announces the reduction, because the field is rewritten in place", async () => {
+      const announcer = fakeLiveAnnouncer();
+      const {element, type, pressEnter} = await field("TEXT");
+
+      await type("oklch(70% 0.3 150)");
+      await pressEnter();
+
+      expect(announcer.last).toEqual({
+        message: `TEXT: ${hintOf(element)}`,
+        politeness: "assertive"
+      });
+    });
+
+
+    it("stays away for a value sRGB holds", async () => {
+      const announcer = fakeLiveAnnouncer();
+      const {element, input, type, blur} = await field();
+
+      await type("oklch(53.25% 0.17 262.29)");
+      await blur();
+
+      expect(hintOf(element)).toBeNull();
+      expect(input.getAttribute("aria-describedby")).toBeNull();
+      expect(announcer.last).toBeUndefined();
+    });
+
+
+    it("disappears when a color arrives from elsewhere", async () => {
+      const {fixture, host, element, type, blur} = await field();
+
+      await type("oklch(70% 0.3 150)");
+      await blur();
+      expect(hintOf(element)).not.toBeNull();
+
+      host.color.set(chroma("#FF5733"));
+      await fixture.whenStable();
+
+      expect(hintOf(element)).toBeNull();
+    });
+
+
+    it("disappears when the next value fits, even where it is the same color", async () => {
+      const {host, element, type, blur} = await field();
+
+      await type("oklch(70% 0.3 150)");
+      await blur();
+
+      // The hex the field now shows is that same color, and it was entered
+      // as it is - nothing was reduced this time.
+      await type(host.color().hex());
+      await blur();
+
+      expect(hintOf(element)).toBeNull();
+    });
+
+
+    it("survives a caller writing the same color back as a new object", async () => {
+      const {fixture, host, element, type, blur} = await field();
+
+      await type("oklch(70% 0.3 150)");
+      await blur();
+
+      host.color.set(chroma(host.color().hex()));
+      await fixture.whenStable();
+
+      expect(hintOf(element)).not.toBeNull();
+    });
+
+  });
+
+
   describe("the picker", () => {
 
     it("shows the color it was given", async () => {

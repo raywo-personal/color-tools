@@ -8,6 +8,18 @@ const HSL_PATTERN = /^hsl\(\s*(\d+(?:\.\d+)?)(?:\s*deg)?\s*(?:,|\s)\s*(?:(\d+(?:
 const OKLCH_PATTERN = /^oklch\(\s*(?:(\d+(?:\.\d+)?|\.\d+)%|(\d+(?:\.\d+)?|\.\d+))\s+(\d+(?:\.\d+)?|\.\d+)\s+(\d+(?:\.\d+)?|\.\d+)(?:\s*deg)?\s*\)$/;
 
 
+/** One step of the thousandths `formatColor()` writes chroma in. */
+const VISIBLE_CHROMA_REDUCTION = 1e-3;
+
+/**
+ * Half a step of the lightness, as a fraction, and of the hue, in degrees,
+ * that `formatColor()` writes: how far a row may sit from the color it was
+ * written for.
+ */
+const ROW_LIGHTNESS_ROUNDING = 5e-4;
+const ROW_HUE_ROUNDING = 0.5;
+
+
 export function isTranslucent(this: void, color: Color): boolean {
   return color.alpha() !== 1;
 }
@@ -100,7 +112,85 @@ function handleHsl(value: string): Color | null {
 }
 
 
+/**
+ * Determines whether reading a value as a color pulls its OKLch chroma back to
+ * the sRGB boundary.
+ *
+ * A separate question rather than a second result of `colorFrom()`: that
+ * returns `Color | null` to every caller in the app and the MCP server, and
+ * only the field a visitor types into has anybody to tell. The answer is
+ * about the value, not the screen - the app holds sRGB colors only, so the
+ * same link says the same thing on any display.
+ *
+ * The value is measured against the most chroma sRGB holds anywhere within
+ * the rounding of a conversion row, not at the coordinates as written. The
+ * row writes lightness to a tenth of a percent and hue to the degree, and
+ * near a cusp of the gamut either moves `maxChroma()` by more than the chroma
+ * step; a row pasted back - `#00FF00`'s among them - would otherwise be
+ * called out of gamut by its own rounding. A reduction smaller than
+ * `VISIBLE_CHROMA_REDUCTION` does not count either, for the rounding of the
+ * chroma itself.
+ *
+ * @param {string | null} value - What the visitor entered.
+ * @return {boolean} True for a readable OKLch value whose chroma sRGB cannot
+ *                   hold; false for any other value, including one that is no
+ *                   color at all.
+ */
+export function reducesOklchChroma(this: void, value: string | null): boolean {
+  const coordinates = value ? oklchCoordinates(value) : null;
+
+  if (!coordinates) return false;
+
+  const {lightness, chromacity, hue} = coordinates;
+
+  return chromacity - maxChromaWithinRowRounding(lightness, hue) >= VISIBLE_CHROMA_REDUCTION;
+}
+
+
+/**
+ * The most chroma sRGB holds at any lightness and hue a conversion row could
+ * have rounded to these.
+ */
+function maxChromaWithinRowRounding(lightness: number, hue: number): number {
+  let most = 0;
+
+  for (const lightnessStep of [-1, 0, 1]) {
+    for (const hueStep of [-1, 0, 1]) {
+      most = Math.max(most, maxChroma(
+        lightness + lightnessStep * ROW_LIGHTNESS_ROUNDING,
+        hue + hueStep * ROW_HUE_ROUNDING
+      ));
+    }
+  }
+
+  return most;
+}
+
+
 function handleOklch(value: string): Color | null {
+  const coordinates = oklchCoordinates(value);
+
+  if (!coordinates) return null;
+
+  const {lightness, chromacity, hue} = coordinates;
+
+  // Chroma is unbounded in OKLch, so a pasted value may sit outside sRGB.
+  // Pulling it back to the gamut boundary keeps lightness and hue, while
+  // chroma-js' per-channel clipping would shift both. `reducesOklchChroma()`
+  // answers whether this happened.
+  const chromaValue = Math.min(chromacity, maxChroma(lightness, hue));
+
+  return chroma.oklch(lightness, chromaValue, hue);
+}
+
+
+/**
+ * Reads an OKLch value into its coordinates, lightness as a fraction.
+ *
+ * @return The coordinates, or null where the value is no OKLch color or a
+ *         coordinate lies outside its range. Chroma is left as written.
+ */
+function oklchCoordinates(value: string): {lightness: number; chromacity: number; hue: number} | null {
   const matches = value.match(OKLCH_PATTERN);
 
   if (!matches) return null;
@@ -116,10 +206,5 @@ function handleOklch(value: string): Color | null {
   if (!inOklchLightnessRange(lightness)) return null;
   if (!inOklchHueRange(hue)) return null;
 
-  // Chroma is unbounded in OKLch, so a pasted value may sit outside sRGB.
-  // Pulling it back to the gamut boundary keeps lightness and hue, while
-  // chroma-js' per-channel clipping would shift both.
-  const chromaValue = Math.min(Number(chromaRaw), maxChroma(lightness / 100, hue));
-
-  return chroma.oklch(lightness / 100, chromaValue, hue);
+  return {lightness: lightness / 100, chromacity: Number(chromaRaw), hue};
 }

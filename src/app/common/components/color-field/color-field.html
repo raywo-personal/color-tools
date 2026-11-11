@@ -16,6 +16,7 @@
          class="h-11 min-w-0 flex-1 rounded-xs border border-line bg-field px-3 font-mono text-base tracking-wide focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current"
          [id]="inputId"
          [attr.aria-label]="fieldLabel()"
+         [attr.aria-describedby]="chromaHint() ? hintId : null"
          placeholder="#RRGGBB"
          autocomplete="off"
          spellcheck="false"
@@ -25,3 +26,9 @@
 
   <ng-content/>
 </div>
+
+<!-- Announced from the component when it appears; no live region here, or a
+     screen reader would read it twice. -->
+@if (chromaHint(); as hint) {
+  <p class="mt-2 text-base" [id]="hintId">{{ hint }}</p>
+}
